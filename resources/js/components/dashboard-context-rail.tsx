@@ -105,9 +105,9 @@ function RecommendationReady({
     const { recommendation } = region;
 
     return (
-        <div className="mt-4 border border-border bg-card">
-            <div className="flex items-start gap-3 border-b border-border px-4 py-4">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
+        <div className="mt-4 overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm transition-all duration-standard hover:shadow-md">
+            <div className="flex items-center gap-3.5 border-b border-border/80 bg-muted/20 px-4 py-3.5">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-primary border border-primary/20 shadow-2xs">
                     <UsersRound aria-hidden="true" className="size-5" />
                 </span>
                 <div className="min-w-0">
@@ -115,39 +115,39 @@ function RecommendationReady({
                         {recommendation.title}
                     </p>
                     <p className="mt-1 text-sm wrap-anywhere text-muted-foreground">
-                        Peran: {recommendation.role}
+                        Peran: <span className="font-semibold text-foreground">{recommendation.role}</span>
                     </p>
                 </div>
             </div>
 
-            <ul className="grid gap-3 px-4 py-4">
+            <ul className="grid gap-2.5 px-4 py-3">
                 {recommendation.reasons.map((reason) => (
                     <li
                         key={reason}
-                        className="flex min-w-0 items-start gap-2 text-sm leading-5"
+                        className="flex min-w-0 items-start gap-2.5 text-sm leading-5"
                         data-test="dashboard-recommendation-reason"
                     >
                         <span
-                            className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-primary"
+                            className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-primary border border-verified/30 shadow-2xs"
                             data-test="dashboard-recommendation-marker"
                         >
-                            <Check aria-hidden="true" className="size-3.5" />
+                            <Check aria-hidden="true" className="size-3.5 stroke-[2.5]" />
                         </span>
-                        <span className="min-w-0 wrap-anywhere">{reason}</span>
+                        <span className="min-w-0 wrap-anywhere text-foreground/90">{reason}</span>
                     </li>
                 ))}
             </ul>
 
-            <div className="border-t border-border p-4">
+            <div className="border-t border-border/80 bg-muted/10 p-3">
                 <Button
                     type="button"
                     variant="outline"
                     size="lg"
-                    className="w-full border-primary text-primary hover:text-primary"
+                    className="group w-full border-primary/40 text-primary transition-all hover:bg-primary hover:text-white"
                     onClick={() => onDemoAction(recommendation.actionLabel)}
                 >
                     {recommendation.actionLabel}
-                    <ArrowRight aria-hidden="true" />
+                    <ArrowRight aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-1" />
                 </Button>
             </div>
         </div>
@@ -165,26 +165,28 @@ export function DashboardContextRail({
             data-test="dashboard-context-rail"
         >
             <div className="lg:col-span-2 xl:col-span-1">
-                <p className="font-label text-label font-semibold text-muted-foreground">
+                <p className="font-label text-label font-semibold text-muted-foreground uppercase tracking-wider">
                     Ringkasan kerja
                 </p>
-                <h2 className="mt-2 text-title font-bold">Minggu ini</h2>
+                <h2 className="mt-1 text-title font-bold">Minggu ini</h2>
             </div>
 
             <section aria-labelledby="review-queue-heading">
                 <h3 id="review-queue-heading" className="text-sm font-semibold">
                     Menunggu tinjauan
                 </h3>
-                <div className="mt-3 flex items-center gap-3 border-y border-pending/30 bg-pending-subtle px-4 py-4 text-pending-subtle-foreground">
-                    <Clock3
-                        aria-hidden="true"
-                        className="size-7 shrink-0 stroke-[1.6]"
-                    />
+                <div className="mt-3 flex items-center gap-3.5 rounded-xl border border-pending/30 bg-gradient-to-r from-pending-subtle via-pending-subtle/90 to-pending-subtle/40 px-4 py-4 text-pending-subtle-foreground shadow-sm">
+                    <span className="flex p-2 rounded-lg bg-pending/20 text-pending shrink-0 shadow-2xs">
+                        <Clock3
+                            aria-hidden="true"
+                            className="size-6 stroke-[1.8]"
+                        />
+                    </span>
                     <p className="min-w-0 text-sm leading-5">
-                        <span className="block font-bold">
+                        <span className="block font-bold text-base">
                             {reviewQueue.count} {reviewQueue.itemLabel}
                         </span>
-                        <span className="wrap-anywhere">
+                        <span className="wrap-anywhere opacity-90">
                             {reviewQueue.statusLabel}
                         </span>
                     </p>
@@ -193,7 +195,7 @@ export function DashboardContextRail({
 
             <section
                 aria-labelledby="recommendation-heading"
-                className="border-t border-border pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8 xl:border-t xl:border-l-0 xl:pt-8 xl:pl-0"
+                className="border-t border-border/80 pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8 xl:border-t xl:border-l-0 xl:pt-8 xl:pl-0"
             >
                 <div className="flex items-center gap-2">
                     <Lightbulb

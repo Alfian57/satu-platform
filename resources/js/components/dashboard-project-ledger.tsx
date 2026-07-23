@@ -72,43 +72,48 @@ function ProjectRow({
     return (
         <li
             data-test="dashboard-project-row"
-            className="border-b border-border last:border-b-0"
+            className="border-b border-border/80 last:border-b-0"
         >
             <button
                 type="button"
-                className="grid min-h-11 w-full grid-cols-[2.75rem_minmax(0,1fr)] items-stretch text-left transition-colors duration-fast ease-ledger hover:bg-accent/60 motion-reduce:transition-none md:grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem]"
+                className="group grid min-h-11 w-full grid-cols-[2.75rem_minmax(0,1fr)] items-stretch text-left transition-colors duration-fast ease-ledger hover:bg-accent/50 motion-reduce:transition-none md:grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem]"
                 onClick={() => onDemoAction(`Buka project ${project.name}`)}
             >
-                <span className="self-center px-3 py-4 text-right font-label text-label text-muted-foreground md:px-4">
+                <span className="self-center px-3 py-4 text-right font-label text-label font-bold text-muted-foreground transition-colors group-hover:text-primary md:px-4">
                     {project.index}
                 </span>
 
                 <MobileProjectFacts project={project} />
 
-                <span className="hidden min-w-0 border-l border-border px-4 py-3 font-semibold wrap-anywhere md:block">
+                <span className="hidden min-w-0 items-center border-l border-border/80 px-4 py-3 font-semibold wrap-anywhere md:flex">
                     {project.name}
                 </span>
-                <span className="hidden min-w-0 border-l border-border px-4 py-3 text-sm leading-5 wrap-anywhere md:block">
+                <span className="hidden min-w-0 items-center border-l border-border/80 px-4 py-3 text-sm leading-5 wrap-anywhere text-muted-foreground md:flex">
                     {project.nextTask}
                 </span>
-                <span
-                    className={cn(
-                        'hidden min-w-0 items-center gap-2 border-l border-border px-4 py-3 text-sm font-semibold md:inline-flex',
-                        project.deadlineTone === 'correction'
-                            ? 'text-correction'
-                            : 'text-foreground',
-                    )}
-                >
-                    <CalendarDays
-                        aria-hidden="true"
-                        className="size-4 shrink-0"
-                    />
-                    <time dateTime={project.deadlineIso}>
-                        {project.deadline}
-                    </time>
+                <span className="hidden min-w-0 items-center border-l border-border/80 px-4 py-3 text-sm font-semibold md:flex">
+                    <span
+                        className={cn(
+                            'inline-flex items-center gap-1.5 text-xs font-semibold',
+                            project.deadlineTone === 'correction'
+                                ? 'rounded border border-correction/30 bg-correction-subtle px-2 py-0.5 text-correction-subtle-foreground'
+                                : 'text-foreground',
+                        )}
+                    >
+                        <CalendarDays
+                            aria-hidden="true"
+                            className="size-3.5 shrink-0"
+                        />
+                        <time dateTime={project.deadlineIso}>
+                            {project.deadline}
+                        </time>
+                    </span>
                 </span>
                 <span className="hidden items-center justify-center md:flex">
-                    <ChevronRight aria-hidden="true" className="size-4" />
+                    <ChevronRight
+                        aria-hidden="true"
+                        className="size-4 text-muted-foreground/70 transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                    />
                 </span>
             </button>
         </li>
@@ -127,20 +132,22 @@ function ProjectRegionState({
 
     return (
         <div
-            className="flex flex-col gap-4 border-y border-border bg-card px-4 py-5 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-4 rounded-xl border border-border/80 bg-card px-5 py-6 shadow-sm sm:flex-row sm:items-center sm:justify-between"
             data-test={`dashboard-projects-${region.state}`}
             role={region.state === 'error' ? 'alert' : undefined}
         >
-            <div className="flex min-w-0 items-start gap-3">
-                <Icon
-                    aria-hidden="true"
-                    className={cn(
-                        'mt-0.5 size-5 shrink-0',
-                        region.state === 'error'
-                            ? 'text-correction'
-                            : 'text-primary',
-                    )}
-                />
+            <div className="flex min-w-0 items-start gap-3.5">
+                <span className="p-2.5 rounded-lg bg-accent text-primary shrink-0">
+                    <Icon
+                        aria-hidden="true"
+                        className={cn(
+                            'size-5',
+                            region.state === 'error'
+                                ? 'text-correction'
+                                : 'text-primary',
+                        )}
+                    />
+                </span>
                 <div className="min-w-0">
                     <p className="font-semibold">{region.title}</p>
                     <p className="mt-1 max-w-[65ch] text-sm leading-6 text-muted-foreground">
@@ -153,7 +160,7 @@ function ProjectRegionState({
                     type="button"
                     variant="outline"
                     size="lg"
-                    className="w-full shrink-0 border-primary text-primary hover:text-primary sm:w-auto"
+                    className="w-full shrink-0 border-primary/40 text-primary hover:bg-primary hover:text-white transition-all sm:w-auto"
                     onClick={() => onDemoAction(actionLabel)}
                 >
                     {actionLabel}
@@ -169,7 +176,7 @@ function ProjectLoading({ announcement }: { announcement: string }) {
         <div
             aria-busy="true"
             aria-live="polite"
-            className="border-y border-border"
+            className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-sm"
             data-test="dashboard-projects-loading"
             role="status"
         >
@@ -178,7 +185,7 @@ function ProjectLoading({ announcement }: { announcement: string }) {
                 {[0, 1].map((index) => (
                     <div
                         key={index}
-                        className="grid grid-cols-[2.75rem_minmax(0,1fr)] border-b border-border px-3 py-4 last:border-b-0 md:grid-cols-[3.25rem_minmax(0,1fr)_minmax(0,1fr)_6.5rem]"
+                        className="grid grid-cols-[2.75rem_minmax(0,1fr)] border-b border-border/80 px-3 py-4 last:border-b-0 md:grid-cols-[3.25rem_minmax(0,1fr)_minmax(0,1fr)_6.5rem]"
                     >
                         <Skeleton className="h-4 w-5" />
                         <Skeleton className="h-4 w-3/4" />
@@ -206,7 +213,7 @@ export function DashboardProjectLedger({ region, onDemoAction }: Props) {
             aria-labelledby="active-projects-heading"
             data-test="dashboard-ledger"
         >
-            <div className="mb-3 flex items-baseline gap-2">
+            <div className="mb-3 flex items-center gap-2.5">
                 <h2
                     id="active-projects-heading"
                     className="text-title font-bold"
@@ -216,7 +223,7 @@ export function DashboardProjectLedger({ region, onDemoAction }: Props) {
                 {totalCount !== undefined && (
                     <span
                         aria-label={`${totalCount} project`}
-                        className="font-label text-label text-muted-foreground"
+                        className="inline-flex items-center rounded-full border border-primary/20 bg-accent px-2.5 py-0.5 font-label text-label font-bold text-accent-foreground"
                         data-test="dashboard-project-count"
                     >
                         {totalCount}
@@ -236,25 +243,25 @@ export function DashboardProjectLedger({ region, onDemoAction }: Props) {
             )}
 
             {region.state === 'ready' && (
-                <>
+                <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
                     <div
                         aria-hidden="true"
-                        className="hidden grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem] border-y border-border bg-muted/35 font-label text-label font-semibold text-muted-foreground md:grid"
+                        className="hidden grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem] border-b border-border/80 bg-muted/50 font-label text-[11px] font-semibold uppercase tracking-wider text-muted-foreground md:grid"
                     >
                         <span />
-                        <span className="border-l border-border px-4 py-2">
+                        <span className="border-l border-border/80 px-4 py-2.5">
                             Project
                         </span>
-                        <span className="border-l border-border px-4 py-2">
+                        <span className="border-l border-border/80 px-4 py-2.5">
                             Tugas berikutnya
                         </span>
-                        <span className="border-l border-border px-4 py-2">
+                        <span className="border-l border-border/80 px-4 py-2.5">
                             Batas waktu
                         </span>
                         <span />
                     </div>
 
-                    <ol className="border-y border-border md:border-t-0">
+                    <ol className="divide-y divide-border/80">
                         {region.projects.map((project) => (
                             <ProjectRow
                                 key={project.index}
@@ -265,22 +272,25 @@ export function DashboardProjectLedger({ region, onDemoAction }: Props) {
                     </ol>
 
                     {remainingActionLabel && (
-                        <div className="border-b border-border py-2">
+                        <div className="border-t border-border/80 bg-muted/20 px-2 py-2">
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="lg"
-                                className="w-full justify-between text-primary hover:text-primary"
+                                className="group w-full justify-between text-primary transition-colors hover:bg-accent/80 hover:text-primary"
                                 onClick={() =>
                                     onDemoAction(remainingActionLabel)
                                 }
                             >
                                 {remainingActionLabel}
-                                <ArrowRight aria-hidden="true" />
+                                <ArrowRight
+                                    aria-hidden="true"
+                                    className="size-4 transition-transform group-hover:translate-x-1"
+                                />
                             </Button>
                         </div>
                     )}
-                </>
+                </div>
             )}
         </section>
     );

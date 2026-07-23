@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { show as onboarding } from '@/routes/onboarding';
 import type {
     InstitutionMembershipStatus,
     NavItem,
@@ -51,31 +52,51 @@ const membershipStatuses: Record<
 
 function InstitutionMembershipContext({ shell }: { shell: ShellContext }) {
     const membership = shell.institutionMembership;
+    const membershipContent = membership ? (
+        <>
+            <p className="truncate text-sm font-semibold">
+                {membership.institutionName}
+            </p>
+            <span
+                className={cn(
+                    'w-fit border px-2 py-1 text-xs font-medium',
+                    membershipStatuses[membership.status].className,
+                )}
+            >
+                {membershipStatuses[membership.status].label}
+            </span>
+        </>
+    ) : (
+        <>
+            <Building2 aria-hidden="true" className="size-4 shrink-0" />
+            <span className="text-sm font-semibold">Hubungkan kampus</span>
+        </>
+    );
 
     return (
         <div aria-label="Afiliasi kampus" className="px-6 py-5">
             <p className="font-label text-label leading-none text-sidebar-foreground/65">
                 Afiliasi kampus
             </p>
-            {membership ? (
-                <div className="mt-3 grid gap-2">
-                    <p className="truncate text-sm font-semibold">
-                        {membership.institutionName}
-                    </p>
-                    <span
-                        className={cn(
-                            'w-fit border px-2 py-1 text-xs font-medium',
-                            membershipStatuses[membership.status].className,
-                        )}
-                    >
-                        {membershipStatuses[membership.status].label}
-                    </span>
-                </div>
+            {membership?.status === 'verified' ? (
+                <div className="mt-3 grid gap-2">{membershipContent}</div>
             ) : (
-                <div className="mt-3 flex items-center gap-3 text-muted-foreground">
-                    <Building2 aria-hidden="true" className="size-4 shrink-0" />
-                    <span className="text-sm">Belum terhubung</span>
-                </div>
+                <Link
+                    href={onboarding()}
+                    aria-label={
+                        membership
+                            ? `Buka status afiliasi ${membership.institutionName}`
+                            : 'Hubungkan akun dengan kampus'
+                    }
+                    className={cn(
+                        'mt-3 min-h-control-md cursor-pointer',
+                        membership
+                            ? 'grid gap-2 hover:underline'
+                            : 'flex items-center gap-3 text-primary hover:underline',
+                    )}
+                >
+                    {membershipContent}
+                </Link>
             )}
         </div>
     );

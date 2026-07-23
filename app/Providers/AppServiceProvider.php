@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -45,6 +48,19 @@ class AppServiceProvider extends ServiceProvider
                 ->symbols()
                 ->uncompromised()
             : null,
+        );
+
+        RateLimiter::for(
+            'institution-membership-request',
+            function (Request $request): Limit {
+                $user = $request->user();
+
+                return Limit::perMinute(5)->by(implode(':', [
+                    'user',
+                    $user?->getAuthIdentifier() ?? $request->ip(),
+                    hash('sha256', (string) $user?->email),
+                ]));
+            },
         );
     }
 }

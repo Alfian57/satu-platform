@@ -244,6 +244,15 @@
         text-rendering: optimizeLegibility;
     }
 
+    html.theme-switching *,
+    html.theme-switching *::before,
+    html.theme-switching *::after {
+        transition-delay: 0s !important;
+        transition-duration: 0s !important;
+        animation-delay: 0s !important;
+        animation-duration: 0s !important;
+    }
+
     :where(
         a,
         button,

@@ -11,6 +11,7 @@ export type UseAppearanceReturn = {
 
 const listeners = new Set<() => void>();
 let currentAppearance: Appearance = 'system';
+let themeSwitchTimeout: number | null = null;
 
 const prefersDark = (): boolean => {
     if (typeof window === 'undefined') {
@@ -46,10 +47,21 @@ const applyTheme = (appearance: Appearance): void => {
         return;
     }
 
+    if (themeSwitchTimeout !== null) {
+        window.clearTimeout(themeSwitchTimeout);
+    }
+
+    document.documentElement.classList.add('theme-switching');
+
     const isDark = isDarkMode(appearance);
 
     document.documentElement.classList.toggle('dark', isDark);
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+
+    themeSwitchTimeout = window.setTimeout(() => {
+        document.documentElement.classList.remove('theme-switching');
+        themeSwitchTimeout = null;
+    }, 200);
 };
 
 const subscribe = (callback: () => void) => {

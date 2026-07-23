@@ -1,22 +1,23 @@
 ---
-current_phase: P07
-current_phase_file: docs/implementation/phases/01-visual-authority/P07-approve-and-document-the-reference-system.md
-next_phase: P08
-state: awaiting_approval
-completed_through: P06
-completed_count: 6
+current_phase: P16
+current_phase_file: docs/implementation/phases/02-identity-tenancy/P16-onboarding-hardening.md
+next_phase: P17
+state: blocked
+completed_through: P15
+completed_count: 15
 total_phases: 69
-blocker: null
-updated_at: 2026-07-23
+blocker: Pest/browser verification cannot create a local listening socket in the current sandbox; rerun focused and browser tests in an environment that permits local sockets.
+updated_at: 2026-07-24
 ---
 
 # Implementation Progress
 
-**Latest outcome:** P07 approval feedback is implemented: copy and punctuation
-are normalized, the navbar has a persistent light/dark shortcut, active controls
-use pointer affordances, and the dashboard grid fills the remaining main height.
+**Latest outcome:** P16 implementation selesai dengan active-institution authority,
+rate limiting, duplicate prevention, session/network/permission recovery,
+overflow hardening, dan browser coverage untuk onboarding edge states. Runtime
+verification masih menunggu environment dengan local socket.
 
-**Last checks:** 117 tests passed or were intentionally skipped (113 passed, 4
-skipped; 602 assertions); Pint, Larastan, Prettier, ESLint, TypeScript,
-Impeccable detector, Chromium browser regression, production build, and four
-refreshed visual captures passed.
+**Last checks:** TypeScript, ESLint, Prettier, Pint, PHPStan, PHP lint, route
+list, Impeccable detector, dan git diff check lulus. Focused P16 run sebelumnya
+45/46 lulus sebelum satu assertion lama diperbaiki; rerun terblokir oleh socket
+sandbox.

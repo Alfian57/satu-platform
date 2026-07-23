@@ -53,12 +53,12 @@ export default function Dashboard() {
                             </h1>
                         </div>
 
-                        <div className="flex max-w-2xl items-start gap-3 border-y border-border py-3 text-sm text-muted-foreground xl:max-w-none">
+                        <div className="flex max-w-2xl items-center gap-3 rounded-lg border border-border/80 bg-card/60 px-3.5 py-2.5 text-xs text-muted-foreground shadow-2xs backdrop-blur-xs xl:max-w-none">
                             <Info
                                 aria-hidden="true"
-                                className="mt-0.5 size-4 shrink-0 text-primary"
+                                className="size-4 shrink-0 text-primary"
                             />
-                            <p>{scenario.syntheticLabel}</p>
+                            <p className="leading-relaxed">{scenario.syntheticLabel}</p>
                         </div>
                     </header>
 
