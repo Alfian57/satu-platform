@@ -10,7 +10,23 @@ export type User = {
 };
 
 export type Auth = {
+    user: User | null;
+};
+
+export type AuthenticatedAuth = {
     user: User;
+};
+
+export type InstitutionMembershipStatus =
+    'unverified' | 'pending' | 'verified' | 'suspended';
+
+export type InstitutionMembershipSummary = {
+    institutionName: string;
+    status: InstitutionMembershipStatus;
+};
+
+export type ShellContext = {
+    institutionMembership: InstitutionMembershipSummary | null;
 };
 
 /* @chisel-passkeys */

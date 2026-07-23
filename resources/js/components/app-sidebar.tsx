@@ -1,64 +1,106 @@
-import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { Building2, LayoutDashboard } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
     SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import type { NavItem } from '@/types';
+import type {
+    InstitutionMembershipStatus,
+    NavItem,
+    ShellContext,
+} from '@/types';
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
-        icon: LayoutGrid,
+        icon: LayoutDashboard,
     },
 ];
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
+const membershipStatuses: Record<
+    InstitutionMembershipStatus,
+    { label: string; className: string }
+> = {
+    unverified: {
+        label: 'Belum terverifikasi',
+        className: 'bg-muted text-muted-foreground border-sidebar-border',
     },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
+    pending: {
+        label: 'Menunggu tinjauan',
+        className:
+            'bg-pending-subtle text-pending-subtle-foreground border-pending/30',
     },
-];
+    verified: {
+        label: 'Terverifikasi',
+        className:
+            'bg-verified-subtle text-verified-subtle-foreground border-verified/30',
+    },
+    suspended: {
+        label: 'Akses ditangguhkan',
+        className:
+            'bg-correction-subtle text-correction-subtle-foreground border-correction/30',
+    },
+};
+
+function InstitutionMembershipContext({ shell }: { shell: ShellContext }) {
+    const membership = shell.institutionMembership;
+
+    return (
+        <div aria-label="Afiliasi kampus" className="px-6 py-5">
+            <p className="font-label text-label leading-none text-sidebar-foreground/65">
+                Afiliasi kampus
+            </p>
+            {membership ? (
+                <div className="mt-3 grid gap-2">
+                    <p className="truncate text-sm font-semibold">
+                        {membership.institutionName}
+                    </p>
+                    <span
+                        className={cn(
+                            'w-fit border px-2 py-1 text-xs font-medium',
+                            membershipStatuses[membership.status].className,
+                        )}
+                    >
+                        {membershipStatuses[membership.status].label}
+                    </span>
+                </div>
+            ) : (
+                <div className="mt-3 flex items-center gap-3 text-muted-foreground">
+                    <Building2 aria-hidden="true" className="size-4 shrink-0" />
+                    <span className="text-sm">Belum terhubung</span>
+                </div>
+            )}
+        </div>
+    );
+}
 
 export function AppSidebar() {
+    const { shell } = usePage().props;
+
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
-                                <AppLogo />
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
+        <Sidebar collapsible="offcanvas" variant="sidebar">
+            <SidebarHeader className="border-b border-sidebar-border px-6 py-7">
+                <Link aria-label="SATU: Dashboard" href={dashboard()} prefetch>
+                    <AppLogo
+                        className="text-sidebar-foreground"
+                        ruleClassName="bg-sidebar-primary"
+                    />
+                </Link>
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="py-6">
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 
-            <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
-                <NavUser />
+            <SidebarFooter className="border-t border-sidebar-border p-0">
+                <InstitutionMembershipContext shell={shell} />
             </SidebarFooter>
         </Sidebar>
     );

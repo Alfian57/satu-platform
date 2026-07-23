@@ -1,3 +1,108 @@
+<satu-project-context>
+=== project rules ===
+
+# SATU Project Context
+
+SATU (Sistem Aktivitas Talenta Universitas) is a multi-institution collaboration platform for students, campus operators, and, later, recruiters. The current codebase is still a Laravel React starter; planned capabilities must not be described as already implemented.
+
+## AI Entry and Source of Truth
+
+Immediately after this file, read `START_HERE.md`, then `docs/implementation/PROGRESS.md`, then only the active phase file. Do not load every phase.
+
+`START_HERE.md` controls work scope, not product truth. Within its referenced sources, use this precedence:
+
+1. `PRODUCT.md` for durable product truth and non-negotiable boundaries.
+2. `docs/product/PRD.md` for requirements, scope, and acceptance criteria.
+3. `DESIGN.md` for global visual authority.
+4. `docs/ux/` and the matching `.impeccable/surfaces/*.md` brief for UI behavior.
+5. `docs/engineering/` for architecture, data, security, and privacy contracts.
+6. The active file in `docs/implementation/phases/` and `docs/implementation/TEST_STRATEGY.md` for execution and verification.
+7. `docs/governance/DECISIONS.md` for accepted decisions and open gates.
+8. `docs/reference/proposal_lomba.md` is historical input, not a runtime specification.
+
+When documents conflict, the earlier source wins. Update the owning source instead of silently overriding it in code.
+
+## Active Phase Workflow
+
+- Work on exactly `current_phase_file` from `docs/implementation/PROGRESS.md` unless the user explicitly changes scope.
+- Check the phase prerequisites before editing. Do not skip unmet prerequisites by inventing substitute behavior.
+- Read only the phase's `Read Before Work` sources, then follow its deliverables, exclusions, verification, exit criteria, and gate.
+- Do not begin the next phase as cleanup or convenience work.
+- At a human gate, set the state to `awaiting_approval`, present inspectable evidence, and stop.
+- `docs/implementation/PROGRESS.md` is the only phase-status source. Advance it only after all exit criteria pass and any required approval is explicit.
+- Finish with the four-line report contract from `START_HERE.md`; omit file lists and raw logs unless needed to explain a failure.
+
+## Product Invariants
+
+- Open registration creates a normal student account only. Privileged roles are assigned through controlled workflows.
+- Campus affiliation is separate from account registration and becomes verified through an approved email domain or campus-admin review.
+- Tenant-owned data is institution-scoped in queries, policies, jobs, caches, storage, exports, and broadcasts.
+- Social Network Analysis measures collaboration opportunity and risk of exclusion. It is not a mental-health diagnosis.
+- Do not analyze message content for sentiment, psychological state, or diagnosis.
+- Matching is transparent and versioned. Its supported dimensions are `skill_fit`, `project_need`, `availability`, and `connectivity_opportunity`.
+- Inclusion signals are restricted to authorized human review. Never expose them to students, teammates, or recruiters.
+- Recruiters receive only explicitly visible portfolio projections. They never receive inclusion, private discussion, raw audit, or private evidence data.
+- The database is the source of truth. Laravel Reverb delivers authorized realtime deltas after commit.
+- Do not invent customers, prices, testimonials, pilot results, benchmarks, or impact claims. Label synthetic demonstration data.
+
+## Architecture Direction
+
+- Target production database: MySQL. SQLite may remain for lightweight local/test use only when behavior stays compatible.
+- Use a Laravel modular monolith and existing framework directories. Do not introduce a new architectural base folder without approval.
+- Prefer explicit Actions for business operations, Policies for every protected resource, Form Requests for validation/authorization, Jobs for retryable work, and Events for realtime delivery.
+- Use named Laravel routes and Wayfinder from React. Do not hardcode backend URLs.
+- Use Inertia for initial page state and commands. Use private/presence Reverb channels for workspace deltas.
+- Keep external academic, SSO, billing, and notification providers behind contracts.
+- Preserve append-only history for validation, consent, inclusion review, and sensitive decisions.
+
+## Database Migrations
+
+- Saat menambah atau mengubah kolom pada tabel yang sudah ada, edit migration tabel tersebut secara langsung.
+- Jangan membuat migration tambahan dengan pola `add_*_column_*` untuk perubahan kolom pada tabel yang sudah memiliki migration.
+- Buat migration baru hanya untuk tabel baru atau struktur yang belum memiliki migration asal.
+
+## UI/UX Workflow
+
+- Before any UI change, read `PRODUCT.md`, `docs/product/PRD.md`, `DESIGN.md`, `docs/ux/SCREEN_INVENTORY.md`, and the matching surface brief.
+- If a new surface has no brief, run `$impeccable shape <surface>`, confirm it, and persist its surface brief before implementation.
+- Application surfaces use `Operate`; public portfolio may use `Experience`; landing pages use `Persuade`.
+- The visual world is **Buku Besar Kolaborasi**. The Laravel starter, neutral shadcn defaults, and placeholder dashboard are scaffolding, not SATU's identity.
+- A local feature inherits `DESIGN.md`; do not create a new visual identity per page.
+- Design empty, loading, processing, success, validation, network, reconnect, stale, forbidden, overflow, and destructive states as applicable.
+- Meet WCAG 2.2 AA. Preserve keyboard operation, visible focus, semantic structure, reduced motion, text alternatives, and status cues beyond color.
+- Write product copy and first-party documentation in Indonesian using the canonical terms in `docs/ux/CONTENT_ACCESSIBILITY.md`.
+- Do not use the Unicode em dash character in first-party UI or documentation. Use a period, comma, colon, or parentheses according to the sentence meaning.
+- Every enabled clickable or tappable target must show a pointer cursor. Disabled targets must show a not-allowed cursor.
+- Never use labels such as “vulnerable”, “isolated”, or mental-health inference in student/recruiter UI.
+- After the first real SATU surface establishes tokens and components, run `$impeccable document` to replace the seed `DESIGN.md`.
+- Before UI release, use scoped `$impeccable audit`, `$impeccable harden`, and `$impeccable polish`.
+- Jika surface membutuhkan asset bitmap dan belum ada asset yang disetujui, agent boleh membuat asset gambar sendiri. Ikuti kebijakan asset pada `docs/ux/README.md`.
+
+## Documentation Maintenance
+
+- Product change: update `PRODUCT.md`.
+- Requirement/scope change: update PRD and traceability.
+- Global visual change: update `DESIGN.md`.
+- Route-specific UX change: update its surface brief and relevant UX document.
+- Entity/event/permission/integration change: update the relevant engineering document.
+- Roadmap, phase, progress, or release-gate change: update `docs/implementation/`.
+- Governance decision: update `docs/governance/DECISIONS.md` and security/privacy documentation.
+- Phase state or completion: update only `docs/implementation/PROGRESS.md`.
+
+Do not close an `open` decision in `docs/governance/DECISIONS.md` by assumption.
+
+## Verification
+
+- Every runtime change requires programmatic tests.
+- Use Pest feature tests by default, unit tests for pure calculations, and browser tests for critical JavaScript/user flows.
+- Test cross-tenant denial, policies, score version/explanation, Reverb channel authorization, restricted serialization, and recovery states where relevant.
+- Run the narrowest affected test first, then formatting/static/frontend checks warranted by the change.
+- Jangan menjalankan `npm run build` kecuali pengguna memintanya secara eksplisit atau build diperlukan untuk mendiagnosis error Vite. Untuk perubahan biasa, lint, typecheck yang relevan, dan test yang terdampak sudah cukup.
+- Documentation changes must pass Prettier, internal-link review, surface-brief resolution, and `git diff --check`.
+- A phase is not complete until every verification and exit criterion in its active phase file passes.
+
+</satu-project-context>
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
@@ -32,7 +137,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 
 ## Skills Activation
 
-This project has domain-specific skills available in `**/skills/**`. You MUST activate the relevant skill whenever you work in that domain—don't wait until you're stuck.
+This project has domain-specific skills available in `**/skills/**`. You MUST activate the relevant skill whenever you work in that domain: don't wait until you're stuck.
 
 ## Conventions
 
@@ -97,7 +202,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
 - Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
-  - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
+    - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
 
 === php rules ===
 

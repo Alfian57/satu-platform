@@ -19,14 +19,16 @@
             })();
         </script>
 
-        {{-- Inline style to set the HTML background color based on our theme in app.css --}}
+        {{-- Match the design tokens before Vite CSS loads to avoid a theme flash. --}}
         <style>
             html {
-                background-color: oklch(1 0 0);
+                color-scheme: light;
+                background-color: #f7f9fc;
             }
 
             html.dark {
-                background-color: oklch(0.145 0 0);
+                color-scheme: dark;
+                background-color: #0d1422;
             }
         </style>
 

@@ -12,8 +12,20 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
+                bunny('Familjen Grotesk', {
+                    weights: [400, 500, 600, 700],
+                    preload: [
+                        { weight: 400, style: 'normal' },
+                        { weight: 600, style: 'normal' },
+                    ],
+                    fallbacks: ['system-ui', 'sans-serif'],
+                    optimizedFallbacks: false,
+                }),
+                bunny('Azeret Mono', {
                     weights: [400, 500, 600],
+                    preload: false,
+                    fallbacks: ['ui-monospace', 'monospace'],
+                    optimizedFallbacks: false,
                 }),
             ],
         }),

@@ -12,32 +12,36 @@ export default function AppearanceToggleTab({
     const { appearance, updateAppearance } = useAppearance();
 
     const tabs: { value: Appearance; icon: LucideIcon; label: string }[] = [
-        { value: 'light', icon: Sun, label: 'Light' },
-        { value: 'dark', icon: Moon, label: 'Dark' },
-        { value: 'system', icon: Monitor, label: 'System' },
+        { value: 'light', icon: Sun, label: 'Terang' },
+        { value: 'dark', icon: Moon, label: 'Gelap' },
+        { value: 'system', icon: Monitor, label: 'Sistem' },
     ];
 
     return (
         <div
+            aria-label="Tampilan"
             className={cn(
-                'inline-flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800',
+                'inline-flex gap-1 rounded-md bg-muted p-1',
                 className,
             )}
+            role="group"
             {...props}
         >
             {tabs.map(({ value, icon: Icon, label }) => (
                 <button
                     key={value}
+                    aria-pressed={appearance === value}
+                    type="button"
                     onClick={() => updateAppearance(value)}
                     className={cn(
-                        'flex items-center rounded-md px-3.5 py-1.5 transition-colors',
+                        'flex h-control-sm items-center rounded-sm px-3 text-sm font-medium transition-colors duration-fast ease-ledger motion-reduce:transition-none',
                         appearance === value
-                            ? 'bg-white shadow-xs dark:bg-neutral-700 dark:text-neutral-100'
-                            : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60',
+                            ? 'bg-background text-foreground'
+                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                     )}
                 >
-                    <Icon className="-ml-1 h-4 w-4" />
-                    <span className="ml-1.5 text-sm">{label}</span>
+                    <Icon aria-hidden="true" className="-ml-0.5 size-4" />
+                    <span className="ml-1.5">{label}</span>
                 </button>
             ))}
         </div>
