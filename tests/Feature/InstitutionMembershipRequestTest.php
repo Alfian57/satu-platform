@@ -200,6 +200,7 @@ test('an expired CSRF session returns safe onboarding recovery without mutation'
 
     $this->actingAs($user)
         ->from(route('onboarding.show'))
+        ->withHeaders(['X-Inertia' => 'true'])
         ->post(route('institution-memberships.store'), [
             'institution_id' => $institution->getKey(),
         ])
@@ -208,6 +209,32 @@ test('an expired CSRF session returns safe onboarding recovery without mutation'
 
     expect(InstitutionMembership::query()->count())->toBe(0)
         ->and(AuditLog::query()->count())->toBe(0);
+});
+
+test('a permission loss returns safe onboarding recovery without mutation', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->active()->create();
+    $membership = InstitutionMembership::factory()
+        ->suspended()
+        ->for($user)
+        ->for($institution)
+        ->create();
+    Event::fake();
+
+    $this->actingAs($user)
+        ->from(route('onboarding.show'))
+        ->withHeaders(['X-Inertia' => 'true'])
+        ->post(route('institution-memberships.store'), [
+            'institution_id' => $institution->getKey(),
+        ])
+        ->assertRedirect(route('onboarding.show'))
+        ->assertSessionHas('onboarding_recovery', 'forbidden');
+
+    expect($membership->refresh()->status)->toBe(InstitutionMembershipStatus::Suspended)
+        ->and(InstitutionMembership::query()->count())->toBe(1)
+        ->and(AuditLog::query()->count())->toBe(0);
+    Event::assertNotDispatched(InstitutionMembershipRequested::class);
+    Event::assertNotDispatched(InstitutionMembershipVerified::class);
 });
 
 test('the request route validates only active institution selections', function () {

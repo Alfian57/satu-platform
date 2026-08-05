@@ -131,4 +131,4 @@ Retention period adalah governance gate. Deletion tidak boleh merusak required a
 
 ## 13. Migration Review
 
-Saat mengubah tabel yang sudah memiliki migration asal, edit migration tersebut langsung sesuai project rule. Test wajib mencakup unique constraint, foreign key, tenant index, idempotency, cross-tenant denial, restricted serialization, dan MySQL compatibility.
+Saat mengubah tabel yang sudah memiliki migration asal, edit migration asal tabel tersebut secara langsung sesuai project rule. Jangan membuat migration tambahan dengan pola `add_*_column_*` untuk perubahan kolom. Test wajib mencakup unique constraint, foreign key, tenant index, idempotency, cross-tenant denial, restricted serialization, dan MySQL compatibility.

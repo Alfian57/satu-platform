@@ -39,9 +39,10 @@ class OnboardingController extends Controller
         $membershipOutcome = InstitutionMembershipStatus::tryFrom(
             (string) $request->session()->get('membership_status', ''),
         );
-        $submissionIssue = $request->session()->get('onboarding_recovery') === 'session_expired'
-            ? 'session_expired'
-            : null;
+        $submissionIssue = match ($request->session()->get('onboarding_recovery')) {
+            'session_expired', 'forbidden' => $request->session()->get('onboarding_recovery'),
+            default => null,
+        };
 
         return Inertia::render('onboarding', [
             'account' => [

@@ -251,17 +251,19 @@ test('onboarding exposes a safe one-time outcome after a membership request', fu
         );
 });
 
-test('onboarding exposes only the allowlisted expired-session recovery state', function () {
+test('onboarding exposes only the allowlisted recovery states', function () {
     $user = User::factory()->create();
 
-    $this->withSession(['onboarding_recovery' => 'session_expired'])
-        ->actingAs($user)
-        ->get(route('onboarding.show'))
-        ->assertSuccessful()
-        ->assertInertia(
-            fn (Assert $page) => $page
-                ->where('submissionIssue', 'session_expired'),
-        );
+    foreach (['session_expired', 'forbidden'] as $recoveryState) {
+        $this->withSession(['onboarding_recovery' => $recoveryState])
+            ->actingAs($user)
+            ->get(route('onboarding.show'))
+            ->assertSuccessful()
+            ->assertInertia(
+                fn (Assert $page) => $page
+                    ->where('submissionIssue', $recoveryState),
+            );
+    }
 
     $this->withSession(['onboarding_recovery' => '<script>unsafe</script>'])
         ->actingAs($user)

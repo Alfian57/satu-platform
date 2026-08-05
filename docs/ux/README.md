@@ -32,7 +32,7 @@ Jika brief belum ada, jalankan Impeccable `shape`, konfirmasi direction, dan sim
 
 ## Asset Gambar
 
-Gunakan asset hanya bila memberi informasi atau atmosfer yang tidak efektif melalui semantic UI. Asset bitmap baru boleh dibuat dengan image generation jika belum ada asset yang disetujui. Simpan source, alt purpose, license atau generation provenance, dan optimized output. Jangan mengganti chart, graph, status, atau interactive control dengan gambar statis.
+Gunakan asset hanya bila memberi informasi atau atmosfer yang tidak efektif melalui semantic UI. AI agent boleh membuat gambar sendiri dengan image generation jika belum ada asset yang disetujui. Simpan source, alt purpose, license atau generation provenance, dan optimized output. Jangan mengganti chart, graph, status, atau interactive control dengan gambar statis.
 
 ## Ownership
 

@@ -11,7 +11,7 @@ Membuktikan correctness, tenant isolation, privacy projection, idempotency, acce
 - Browser tests untuk critical JavaScript flow, realtime/reconnect, keyboard, accessibility, dan responsive state.
 - Architecture/static tests untuk forbidden dependencies, serialization boundary, dan tenant conventions.
 
-Jalankan narrowest affected tests terlebih dahulu. PHP change diakhiri `vendor/bin/pint --dirty --format agent`. Frontend change menjalankan lint dan typecheck yang relevan. Local `npm run build` hanya jika diminta atau diperlukan untuk diagnosis Vite.
+Jalankan narrowest affected tests terlebih dahulu. PHP change diakhiri `vendor/bin/pint --dirty --format agent`. Frontend change menjalankan lint dan typecheck yang relevan. Production build pada CI atau saat pengguna memintanya. Local `npm run build` hanya jika diminta atau diperlukan untuk diagnosis Vite.
 
 ## 3. Test Data
 
@@ -94,6 +94,8 @@ Measure realistic per-tenant volume, query count, N+1, pagination, search latenc
 8. documentation link and formatting checks.
 
 Required branch check memakai actual GitHub Actions check name from `.github/workflows/tests.yml`.
+
+`CLAUDE.md` hanya menunjuk ke file tersebut sebagai konteks legacy; `AGENTS.md` tetap menjadi sumber aturan agent.
 
 ## 9. Documentation-only Verification
 

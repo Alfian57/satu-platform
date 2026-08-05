@@ -384,13 +384,18 @@ export default function Onboarding({
     const errorSummary = useRef<HTMLDivElement>(null);
     const recoverySummary = useRef<HTMLDivElement>(null);
     const submitting = useRef(false);
+    const focusRequestSequence = useRef(0);
+    const [focusRequest, setFocusRequest] = useState<{
+        target: 'error' | 'recovery';
+        sequence: number;
+    } | null>(null);
     const [submissionIssue, setSubmissionIssue] =
         useState<SubmissionIssue | null>(initialSubmissionIssue);
     const form = useForm<{ institution_id: number | '' }>(
         'onboarding-affiliation',
         {
             institution_id:
-                canRetry &&
+                (canRetry || initialSubmissionIssue === 'forbidden') &&
                 membership &&
                 institutions.some(
                     (institution) =>
@@ -404,23 +409,55 @@ export default function Onboarding({
     const isVerified = membership?.status === 'verified';
     const status = membership ? statusCopy[membership.status] : null;
     const StatusIcon = status?.icon ?? Building2;
+    const showRequestForm = canRequest || submissionIssue === 'forbidden';
 
     useEffect(() => {
-        if (initialSubmissionIssue === null) {
-            return;
-        }
-
         const frame = requestAnimationFrame(() => {
             setSubmissionIssue(initialSubmissionIssue);
-            recoverySummary.current?.focus();
+
+            if (initialSubmissionIssue !== null) {
+                setFocusRequest({
+                    target: 'recovery',
+                    sequence: ++focusRequestSequence.current,
+                });
+            }
         });
 
         return () => cancelAnimationFrame(frame);
     }, [initialSubmissionIssue]);
 
+    useEffect(() => {
+        if (focusRequest === null) {
+            return;
+        }
+
+        let secondFrame: number | null = null;
+        const firstFrame = requestAnimationFrame(() => {
+            secondFrame = requestAnimationFrame(() => {
+                const summary =
+                    focusRequest.target === 'error'
+                        ? errorSummary.current
+                        : recoverySummary.current;
+
+                summary?.focus();
+            });
+        });
+
+        return () => {
+            cancelAnimationFrame(firstFrame);
+
+            if (secondFrame !== null) {
+                cancelAnimationFrame(secondFrame);
+            }
+        };
+    }, [focusRequest, hasErrors, submissionIssue]);
+
     function focusRecovery(issue: SubmissionIssue) {
         setSubmissionIssue(issue);
-        requestAnimationFrame(() => recoverySummary.current?.focus());
+        setFocusRequest({
+            target: 'recovery',
+            sequence: ++focusRequestSequence.current,
+        });
     }
 
     function requestMembership() {
@@ -433,7 +470,10 @@ export default function Onboarding({
         form.submit(store(), {
             preserveScroll: true,
             onError: () => {
-                requestAnimationFrame(() => errorSummary.current?.focus());
+                setFocusRequest({
+                    target: 'error',
+                    sequence: ++focusRequestSequence.current,
+                });
             },
             onNetworkError: () => {
                 focusRecovery('network');
@@ -558,7 +598,22 @@ export default function Onboarding({
                                     />
                                 </div>
 
-                                {canRequest && (
+                                {submissionIssue && (
+                                    <div
+                                        ref={recoverySummary}
+                                        tabIndex={-1}
+                                        data-test="onboarding-recovery-focus"
+                                        className="px-5 pt-6 sm:px-6"
+                                    >
+                                        <SubmissionRecovery
+                                            issue={submissionIssue}
+                                            processing={form.processing}
+                                            onRetry={requestMembership}
+                                        />
+                                    </div>
+                                )}
+
+                                {showRequestForm && (
                                     <form
                                         className="grid gap-4 px-5 py-6 sm:px-6"
                                         onSubmit={submitMembership}
@@ -574,20 +629,6 @@ export default function Onboarding({
                                                     errors={Object.values(
                                                         form.errors,
                                                     )}
-                                                />
-                                            </div>
-                                        )}
-
-                                        {submissionIssue && (
-                                            <div
-                                                ref={recoverySummary}
-                                                tabIndex={-1}
-                                                data-test="onboarding-recovery-focus"
-                                            >
-                                                <SubmissionRecovery
-                                                    issue={submissionIssue}
-                                                    processing={form.processing}
-                                                    onRetry={requestMembership}
                                                 />
                                             </div>
                                         )}
