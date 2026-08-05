@@ -34,6 +34,8 @@ Owner label menunjukkan accountable role. GitHub assignee belum dipakai sampai k
 
 ## Branch dan Pull Request
 
+Panduan authoring template ada di [PR_TEMPLATE_GUIDE.md](./PR_TEMPLATE_GUIDE.md). Perbarui guide tersebut bersama `.github/PULL_REQUEST_TEMPLATE.md` jika kontrak evidence atau merge berubah.
+
 - Branch: `<type>/<issue-number>-<slug>`.
 - Satu issue, satu branch, satu pull request.
 - Conventional Commit.

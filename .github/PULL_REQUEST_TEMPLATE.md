@@ -1,3 +1,5 @@
+<!-- Authoring contract: docs/implementation/PR_TEMPLATE_GUIDE.md -->
+
 ## Ringkasan
 
 <!-- Outcome utama dan alasan perubahan. -->
