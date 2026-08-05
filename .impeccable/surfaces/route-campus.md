@@ -1,15 +1,20 @@
 ---
-version: 1
+version: 2
 slug: 'route-campus'
 primary_target: 'route:/campus'
-related_targets: ['route:/campus/memberships', 'route:/campus/validations']
+related_targets:
+    [
+        'route:/campus/affiliations',
+        'route:/campus/contributions',
+        'route:/campus/integrations',
+    ]
 ---
 
-# Campus Operations, Membership, and Validation
+# Campus Operations, Roster, Affiliation, and Validation
 
 ## Job and Audience
 
-Campus admin menangani membership dan contribution queues dengan volume tinggi serta tuntutan audit. Mode: **Operate**.
+Campus admin menangani roster import, affiliation review, dan contribution queues dengan volume tinggi serta tuntutan audit. Mode: **Operate**.
 
 ## Outcome and Proof
 
@@ -21,12 +26,12 @@ Mewarisi **Buku Besar Kolaborasi** sebagai registrar docket modern. Dense queue 
 
 ## Scope and Boundaries
 
-Mencakup overview, membership verification, project oversight, contribution validation, filter, review detail, reason, audit, dan report entry point. Tidak mencakup platform-wide tenant management atau recruiter analytics.
+Mencakup overview, roster import history, exact-match outcome, affiliation review, project oversight, contribution validation, filter, review detail, reason, audit, dan integration entry point. Tidak mencakup platform-wide tenant management atau recruiter analytics.
 
 ## States and Ranges
 
 - Empty queue, 20–100 typical, 10,000 paginated.
-- Missing evidence, duplicate membership, conflicting domain.
+- Invalid roster row, duplicate NIM/phone, ambiguous match, missing evidence.
 - Reviewer permission loss, stale item, concurrent decision.
 - Bulk selection hanya untuk safe reversible operations.
 
@@ -36,4 +41,4 @@ Queue dapat dipakai keyboard, memiliki saved URL filter, dan membuka docket tanp
 
 ## Constraints and Open Decisions
 
-Semua query institution-scoped dan policy-authorized. Reviewer identity, reason, timestamp, dan policy version disimpan. Validation authority tetap open gate.
+Semua query institution-scoped dan policy-authorized. Reviewer identity, reason, timestamp, dan policy version disimpan. Contribution validation authority adalah campus reviewer. Roster format dan review SLA tetap governance gate.

@@ -1,39 +1,42 @@
 ---
-version: 1
+version: 2
 slug: 'route'
 primary_target: 'route:/'
-related_targets: []
+related_targets: ['route:/register', 'route:/login']
 ---
 
-# SATU Product Landing
+# SATU Product Landing dan Synthetic Network Demo
 
 ## Job and Audience
 
-Student, campus leader, dan recruiter pertama kali menilai apa itu SATU, mengapa mekanismenya berbeda, dan tindakan apa yang tersedia. Mode: **Persuade**.
+Student, campus leader, recruiter, dan competition evaluator menilai apa itu SATU, bagaimana opportunity menjadi verified proof, serta batas privacy produk. Mode: **Persuade**.
 
 ## Outcome and Proof
 
-Pengunjung memahami bahwa SATU menghubungkan opportunity, collaboration work, dan verified contribution tanpa diagnosis atau data sensitif recruiter. CTA mengikuti readiness product yang nyata.
+Pengunjung dapat menjelaskan alur `opportunity -> team -> work -> validation -> portfolio`, mengetahui bahwa graph demo synthetic dan non-diagnostic, lalu memilih CTA yang sesuai.
 
 ## Selected Direction
 
-Mewarisi **Buku Besar Kolaborasi** sebagai live record of opportunity-to-proof. First viewport harus mendemonstrasikan alur recommendation → work → verified contribution, bukan generic headline dan floating dashboard cards.
+Live record of opportunity-to-proof dalam visual world **Buku Besar Kolaborasi**. First viewport menunjukkan mekanisme nyata melalui ledger yang berkembang menjadi graph dan verified contribution, bukan generic hero dengan floating cards.
 
 ## Scope and Boundaries
 
-Mencakup offer, mechanism demonstration, role value, privacy promise yang dapat dibuktikan, evidence, dan CTA. Tidak mengarang customer, benchmark, pricing, testimonial, atau hasil pilot.
+Offer, mechanism, role value, interactive synthetic graph, privacy promise yang dapat dibuktikan, limitation copy, dan role-specific CTA. Tidak mencakup invented customer, price, testimonial, pilot statistic, impact result, atau partner logo.
 
 ## States and Ranges
 
-- Pre-pilot: CTA daftar minat/design partner.
-- Pilot open: CTA sesuai eligibility.
-- Product available: role-specific entry.
-- Synthetic demonstration diberi label.
+- JavaScript ready, loading, reduced motion, dan no-JavaScript fallback.
+- Demo idle, focus node, filter, reset, keyboard table alternative.
+- CTA competition demo, student registration, campus discussion, atau recruiter interest sesuai release state.
 
 ## Interaction and Layout
 
-Offer, mechanism, dan CTA terbaca dalam first viewport. Scroll berganti antara demonstration, proof, dan quiet explanation. Mobile mempertahankan mechanism sequence. Motion membantu melihat record terbentuk dan dapat dinonaktifkan.
+First viewport memuat offer, mechanism cue, dan primary CTA. Scroll mengungkap evidence lifecycle. Demo memungkinkan memilih node dan filter collaboration type dengan table equivalent. Motion hanya menjelaskan hubungan dan hilang pada reduced motion.
 
-## Constraints and Open Decisions
+## Accessibility and Performance
 
-Fase lanjutan. Statistik proposal harus diverifikasi ke sumber primer. CTA final bergantung pada launch state dan audience priority.
+Canvas atau SVG memiliki text alternative dan equivalent list/table. Keyboard tidak dipaksa menavigasi setiap decorative edge. Target Core Web Vitals, lazy-load demo di bawah critical content, serta asset budget tercatat pada issue.
+
+## Constraints and Gates
+
+Semua demonstration record dilabeli `Data synthetic`. CTA dan claim mengikuti capability yang benar-benar tersedia saat release.

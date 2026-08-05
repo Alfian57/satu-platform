@@ -2,157 +2,59 @@
 
 ## 1. Student Activation
 
-```mermaid
-flowchart TD
-    A[Register] --> B[Verify email]
-    B --> C[Choose institution]
-    C --> D{Domain approved?}
-    D -->|Yes| E[Membership verified]
-    D -->|No| F[Submit affiliation evidence]
-    F --> G[Membership pending]
-    E --> H[Add skills and availability]
-    G --> H
-    H --> I[Set portfolio and recruiter visibility]
-    I --> J[Review consent summary]
-    J --> K[Dashboard]
-```
+`Nomor WhatsApp -> OTP -> private username dan password -> consent -> institution dan NIM -> roster match -> profile minimum -> dashboard`
 
-### Recovery
+Recovery:
 
-- Duplicate email mengarah ke login/reset password.
-- Invalid domain tidak menyebut daftar internal domain secara berlebihan.
-- Pending membership menjelaskan apa yang tetap dapat dilakukan.
-- User dapat menyimpan onboarding progress.
+- OTP terlambat atau expired: resend dengan cooldown dan attempt feedback.
+- Phone sudah dipakai: tampilkan account recovery tanpa mengungkap detail account.
+- NIM atau phone mismatch: buat manual review dan jelaskan kemampuan yang masih tersedia.
+- Roster belum tersedia: simpan request tanpa menyatakan student tidak sah.
 
-## 2. Recommendation to Active Team
+## 2. Recommendation sampai Active Team
 
-```mermaid
-flowchart TD
-    A[Open recommendation] --> B[Read match reasons]
-    B --> C[View project detail]
-    C --> D{Action}
-    D -->|Request to join| E[Submit request]
-    D -->|Accept invitation| F[Confirm availability]
-    D -->|Not relevant| G[Give reason or hide]
-    E --> H[Owner review]
-    F --> I{Capacity available?}
-    H -->|Accept| I
-    H -->|Decline| J[Safe explanation]
-    I -->|Yes| K[Active team membership]
-    I -->|No| L[Waitlist or closed role]
-    K --> M[Workspace orientation]
-```
+`Profile siap -> discovery/recommendation -> explanation -> project detail -> join/invite -> atomic decision -> active team -> workspace`
 
-### Guardrails
+Capacity penuh, request ganda, permission hilang, dan stale recommendation harus memiliki recovery yang deterministic.
 
-- Tidak ada alasan yang menyebut student diprioritaskan karena “rentan”.
-- Action menunjukkan commitment dan deadline.
-- Capacity transition dilakukan atomic.
+## 3. Realtime Task
 
-## 3. Realtime Task Flow
+`Buka workspace -> initial state dari database -> subscribe authorized channel -> command -> commit -> delta -> reconciliation`
 
-```mermaid
-sequenceDiagram
-    actor U as Team member
-    participant UI as Inertia React UI
-    participant L as Laravel
-    participant DB as MySQL
-    participant R as Reverb
-    participant T as Team clients
+Drag adalah enhancement. Keyboard dan button command tetap lengkap. Ketika reconnect, UI menunjukkan stale boundary sampai reconciliation selesai.
 
-    U->>UI: Update task
-    UI->>L: Wayfinder command
-    L->>L: Authorize and validate
-    L->>DB: Commit task + audit
-    DB-->>L: Success
-    L-->>UI: Confirmed state
-    L->>R: Broadcast after commit
-    R-->>T: TaskUpdated
-    T->>T: Merge by id/version
-```
+## 4. Contribution sampai Recognition
 
-### Failure paths
+`Submit version dan evidence -> campus queue -> approve/revision/reject -> portfolio projection -> XP ledger -> badge evaluation -> notification`
 
-- Validation error mempertahankan input.
-- Authorization loss mengembalikan object ke server state.
-- Reverb disconnect menampilkan connection state tanpa memblokir local reading.
-- Reconnect memicu state reconciliation.
-- Duplicate event diabaikan berdasarkan event/object version.
+Campus reviewer mengambil keputusan langsung. Team confirmation tidak diperlukan. Revision membuat version baru tanpa menimpa history.
 
-## 4. Contribution Validation
+## 5. Leaderboard
 
-```mermaid
-flowchart TD
-    A[Select completed task] --> B[Describe contribution]
-    B --> C[Attach evidence]
-    C --> D[Review visibility and declaration]
-    D --> E[Submit]
-    E --> F[Pending review]
-    F -->|Request revision| G[Show actionable feedback]
-    G --> C
-    F -->|Approve| H[Verified contribution]
-    F -->|Reject| I[Closed with reason and appeal path]
-    H --> J[Choose portfolio visibility]
-```
+`Pilih semester dan scope -> baca rule dan cohort -> lihat ranking -> buka explanation`
 
-## 5. Campus Validation Queue
-
-```mermaid
-flowchart TD
-    A[Open queue] --> B[Filter by age, project, program]
-    B --> C[Open review docket]
-    C --> D[Inspect task, evidence, team context, policy]
-    D --> E{Decision}
-    E -->|Approve| F[Confirm outcome and credit]
-    E -->|Revision| G[Write actionable request]
-    E -->|Reject| H[Select reason and explanation]
-    F --> I[Audit + notification]
-    G --> I
-    H --> I
-    I --> J[Next queue item]
-```
+Individual flow menambahkan `opt-in -> preview visibility -> confirm -> publish`, serta `withdraw -> hilang dari projection berikutnya`. Tie menggunakan shared rank.
 
 ## 6. Inclusion Review
 
-```mermaid
-flowchart TD
-    A[Restricted queue] --> B[Open signal explanation]
-    B --> C[Review data sufficiency and recent context]
-    C --> D{Human judgment}
-    D -->|Artifact or irrelevant| E[Dismiss]
-    D -->|Observe| F[Acknowledge]
-    D -->|Offer opportunity| G[Choose non-stigmatizing action]
-    G --> H[Send ordinary project/support invitation]
-    E --> I[Record reason]
-    F --> I
-    H --> I
-```
+`Feature aktif dan governance disetujui -> authorized reviewer -> signal queue -> evidence summary -> human review -> support action -> append-only record`
 
-Student menerima opportunity atau support copy biasa, bukan risk label.
+Feature disabled, synthetic-only, insufficient data, stale version, dan permission denied harus menjadi explicit state. Tidak ada auto-contact atau adverse action.
 
-## 7. Recruiter Contact: Later
+## 7. Recruiter Contact
 
-```mermaid
-flowchart TD
-    A[Search talent] --> B[Open redacted portfolio]
-    B --> C[Inspect verified contribution]
-    C --> D[Send contact request]
-    D --> E[Student reviews company and opportunity]
-    E -->|Accept| F[Approved contact exchange]
-    E -->|Decline| G[Request closed]
-    E -->|Ignore| H[Request expires]
-```
+`Organization verified -> entitlement active -> search safe projection -> candidate detail -> contact request -> student notification -> accept/decline -> limited contact handoff`
 
-## 8. Account and Data Rights
+Jika visibility dicabut atau entitlement expired, kandidat hilang dari search dan action baru ditolak. History minimal dipertahankan sesuai retention.
 
-```mermaid
-flowchart TD
-    A[Privacy settings] --> B{Request}
-    B -->|Correct profile| C[Edit and audit]
-    B -->|Export data| D[Create secure export job]
-    B -->|Delete account| E[Explain retention and consequences]
-    B -->|Withdraw recruiter visibility| F[Hide from new recruiter search]
-    D --> G[Notify when expiring download is ready]
-    E --> H[Confirm identity]
-    H --> I[Execute approved deletion/anonymization workflow]
-```
+## 8. Academic Sync
+
+`Mapping valid -> approved activity -> sync candidate -> queued -> provider response -> success atau review queue -> retry/reconcile`
+
+Sandbox harus dapat memicu success, validation error, timeout, duplicate, dan recovery secara repeatable.
+
+## 9. Account dan Data Rights
+
+`Request -> verify identity -> classify data -> fulfill/correct/restrict/delete -> record result -> notify`
+
+Append-only review dan audit data mengikuti approved retention serta legal exception. UI menjelaskan bagian yang tidak dapat langsung dihapus dan alasannya.

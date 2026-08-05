@@ -1,146 +1,84 @@
 # Business Flow SATU
 
-## 1. Actor Map
+## 1. Prinsip Alur
 
-```mermaid
-flowchart LR
-    Student[Student]
-    Campus[Campus admin]
-    Platform[Platform admin]
-    Recruiter[Recruiter]
-    Academic[Academic system]
+- Account, institution affiliation, portfolio visibility, dan recruiter entitlement adalah state yang terpisah.
+- Open registration hanya menghasilkan student account.
+- In-app notification adalah canonical. WhatsApp adalah delivery channel terpilih, bukan source of truth.
+- Seluruh operasi tenant-owned memerlukan active institution context.
+- Recovery path dirancang sebagai bagian utama, bukan pengecualian tersembunyi.
 
-    Student -->|project, task, evidence| SATU[SATU]
-    Campus -->|verification, validation, review| SATU
-    Platform -->|institution and abuse operations| SATU
-    Recruiter -->|search and contact request| SATU
-    SATU -. planned adapter .-> Academic
-```
+## 2. Provisioning Institution dan Campus Admin
 
-## 2. Open Registration dan Campus Verification
+1. Platform admin membuat atau meninjau institution.
+2. Platform admin menyetujui institution dan mencatat keputusan audit.
+3. Platform admin memasukkan nomor WhatsApp calon campus admin.
+4. Sistem membuat invitation sekali pakai, mengantrekannya melalui Fonnte adapter, dan mencatat status delivery.
+5. Penerima memverifikasi nomor, menetapkan private username dan password, lalu menerima role terkontrol.
+6. Invitation expired, replayed, atau salah nomor masuk recovery tanpa memberikan privileged role.
 
-```mermaid
-flowchart TD
-    A[User registers] --> B[Verify email]
-    B --> C[Select institution]
-    C --> D{Approved email domain?}
-    D -->|Yes| E[Membership verified]
-    D -->|No| F[Membership pending]
-    F --> G[Campus admin reviews evidence]
-    G -->|Approve| E
-    G -->|Request correction| H[User updates request]
-    G -->|Reject| I[Membership unverified]
-    E --> J[Verified credit features enabled]
-    I --> K[General profile and allowed discovery remain available]
-```
+## 3. Registrasi Student dan Affiliation
 
-## 3. Project Discovery dan Team Formation
+1. Student memasukkan nomor WhatsApp, meminta OTP, dan menyelesaikan challenge.
+2. Student menetapkan private username, password, display name, dan consent yang diperlukan.
+3. Sistem membuat normal student account tanpa privileged role.
+4. Student memilih institution dan mengisi NIM.
+5. Sistem membandingkan normalized NIM dan verified phone terhadap roster aktif.
+6. Exact match mengaktifkan verified affiliation. Tidak cocok, ambigu, atau record tidak aktif masuk manual review.
+7. Student dapat memakai fitur umum yang diizinkan sambil menunggu, tetapi verified credit dan campus validation membutuhkan affiliation verified.
 
-```mermaid
-sequenceDiagram
-    actor S as Student
-    participant M as Matching engine
-    participant P as Project
-    actor O as Project owner
+## 4. Project sampai Team
 
-    S->>M: Request recommendations
-    M->>M: Score skill, need, availability, connectivity
-    M-->>S: Ranked matches + explanations + version
-    S->>P: View project and open roles
-    S->>O: Request to join
-    O->>P: Review fit and capacity
-    alt Accepted
-        P-->>S: Active team membership
-    else Revision needed
-        O-->>S: Safe, actionable reason
-    else Declined
-        O-->>S: Decline without sensitive inference
-    end
-```
+1. Student melengkapi profile skill dan availability.
+2. Student mencari project atau melihat recommendation yang menjelaskan alasan utama.
+3. Student membuat join request atau project owner mengundang kandidat.
+4. Policy memeriksa institution, lifecycle, capacity, dan actor authority.
+5. Atomic transition membentuk team membership dan mengirim in-app notification.
 
-## 4. Realtime Workspace dan Contribution
+## 5. Workspace sampai Verified Contribution
 
-```mermaid
-flowchart TD
-    A[Team member changes task] --> B[Authorize command]
-    B --> C[Commit state to MySQL]
-    C --> D[Create audit/event record]
-    D --> E[Broadcast through Reverb]
-    E --> F[Authorized team clients update]
-    C --> G[Student attaches evidence]
-    G --> H[Submit contribution]
-    H --> I[Campus review queue]
-    I -->|Approve| J[Verified contribution]
-    I -->|Request revision| K[Student revises]
-    I -->|Reject| L[Closed with reason]
-    J --> M[Portfolio entry]
-    J -. planned .-> N[Academic credit adapter]
-```
+1. Team membuat task, assignment, discussion, evidence, dan deadline.
+2. Database commit menjadi source of truth, lalu Reverb mengirim authorized delta.
+3. Student mengajukan contribution version beserta evidence.
+4. Campus reviewer meninjau langsung tanpa team confirmation.
+5. Reviewer approve, request revision, atau reject dengan reason.
+6. Approval membuat verified portfolio projection, XP ledger entry, dan evaluasi badge secara idempotent.
+7. Notification center diperbarui. Revision atau deadline penting dapat dikirim melalui WhatsApp sesuai purpose dan preference.
 
-## 5. Inclusion Review
+## 6. Gamification
 
-```mermaid
-flowchart TD
-    A[Collaboration metadata reaches minimum sample] --> B[Versioned graph calculation]
-    B --> C{Connectivity opportunity threshold}
-    C -->|Not met| D[No signal]
-    C -->|Met| E[Restricted inclusion signal]
-    E --> F[Campus human review]
-    F -->|Data artifact| G[Dismiss with reason]
-    F -->|Needs observation| H[Acknowledge and monitor]
-    F -->|Useful outreach| I[Record non-stigmatizing outreach]
-    I --> J[Offer relevant opportunity or support]
-    G --> K[Audit outcome]
-    H --> K
-    J --> K
-```
+1. Verified XP dihitung dari ledger dalam semester aktif.
+2. Program studi dan team projection dipublikasikan hanya jika cohort minimal lima active member.
+3. Score kelompok memakai average verified XP per active member.
+4. Student hanya muncul pada individual leaderboard setelah explicit opt-in.
+5. Tie berbagi rank. Inclusion dan connectivity data tidak pernah menjadi input.
 
-Inclusion flow tidak memberi diagnosis, tidak mengirim label risiko kepada student, dan tidak tersedia bagi recruiter.
+## 7. Inclusion Review
 
-## 6. Recruiter Flow: Fase Lanjutan
+1. Authorized collaboration events membentuk graph projection tanpa membaca isi pesan.
+2. Versioned engine menghasilkan signal di balik feature flag.
+3. Pada synthetic demo, record ditandai synthetic.
+4. Pada real data, engine tetap nonaktif sampai governance gate selesai.
+5. Authorized reviewer melihat evidence summary, mencatat human review, dan memilih tindakan dukungan yang tidak memberi label atau adverse action otomatis.
 
-```mermaid
-flowchart TD
-    A[Recruiter organization applies] --> B[Platform verification]
-    B -->|Approved| C[Entitlement active]
-    C --> D[Search recruiter-visible portfolio]
-    D --> E[View redacted candidate profile]
-    E --> F[Save candidate]
-    E --> G[Send contact request]
-    G --> H{Student response}
-    H -->|Accept| I[Share approved contact channel]
-    H -->|Decline| J[Close request]
-    H -->|No response| K[Expire request]
-```
+## 8. Talent Portal
 
-## 7. Academic Integration: Fase Lanjutan
+1. Platform admin memverifikasi recruiter organization dan membership.
+2. Internal entitlement mengaktifkan portal untuk periode dan scope tertentu.
+3. Search hanya membaca recruiter-safe projection dari student yang discoverable.
+4. Recruiter menyimpan kandidat atau membuat contact request.
+5. Student menerima in-app notification dan WhatsApp untuk request penting, lalu accept atau decline.
+6. Recruiter hanya memperoleh contact detail yang diizinkan setelah acceptance. Revocation menghentikan exposure berikutnya.
 
-```mermaid
-sequenceDiagram
-    participant S as SATU
-    participant Q as Queue
-    participant A as Academic adapter
-    participant U as University system
+## 9. Academic Integration
 
-    S->>Q: Enqueue verified credit sync
-    Q->>A: Send idempotent sync command
-    A->>U: Map and submit activity record
-    alt Success
-        U-->>A: External reference
-        A-->>S: Mark synced
-    else Retryable failure
-        A-->>Q: Retry with backoff
-    else Permanent failure
-        A-->>S: Mark failed and require review
-    end
-```
+1. Campus admin memilih sandbox connection atau provider connection yang telah disetujui.
+2. Campus admin memetakan activity atau badge ke credit code.
+3. Approved contribution membuat sync candidate.
+4. Idempotent job mengirim payload, menyimpan external reference dan status, serta retry dengan batas.
+5. Failure masuk review queue. Reconciliation membandingkan database SATU dan provider.
+6. Sandbox mensimulasikan success, validation error, timeout, duplicate, dan recovery.
 
-## 8. Business Control Points
+## 10. Data Rights dan Security Recovery
 
-- Campus verification mengontrol klaim afiliasi.
-- Validation policy mengontrol verified contribution.
-- Consent dan visibility mengontrol recruiter exposure.
-- Human review mengontrol inclusion action.
-- Entitlement mengontrol Talent Portal.
-- Idempotency mengontrol academic sync.
-- Audit log menghubungkan setiap keputusan sensitif dengan aktor dan alasan.
+Request access, correction, consent withdrawal, portfolio revocation, dan deletion mengikuti retention serta append-only audit boundary. Security event seperti recovery, phone change, atau privileged invitation dicatat tanpa menyimpan OTP atau secret dalam log.

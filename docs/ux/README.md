@@ -1,100 +1,39 @@
 # UI/UX Playbook SATU
 
-## Tujuan
+## Urutan Baca
 
-Folder ini mengatur bagaimana pengalaman SATU dibentuk sebelum kode UI ditulis. PRD menjelaskan apa yang harus tersedia; UX docs menjelaskan bagaimana pengguna memahami dan mengoperasikannya; `DESIGN.md` mengatur dunia visual; Impeccable surface brief mengatur satu route atau flow secara spesifik.
+Sebelum UI work, baca `PRODUCT.md`, `docs/product/PRD.md`, `DESIGN.md`, `docs/ux/SCREEN_INVENTORY.md`, `docs/ux/CONTENT_ACCESSIBILITY.md`, lalu matching surface brief di `.impeccable/surfaces/`.
 
-## Urutan Baca untuk UI Work
+Jika brief belum ada, jalankan Impeccable `shape`, konfirmasi direction, dan simpan brief sebelum implementasi. Untuk route yang sudah memiliki brief, update brief saat behavior route berubah.
 
-1. [`PRODUCT.md`](../../PRODUCT.md)
-2. [`PRD.md`](../product/PRD.md)
-3. [`DESIGN.md`](../../DESIGN.md)
-4. [`UX_STRATEGY.md`](UX_STRATEGY.md)
-5. [`INFORMATION_ARCHITECTURE.md`](INFORMATION_ARCHITECTURE.md)
-6. [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md)
-7. Matching file di [`.impeccable/surfaces/`](../../.impeccable/surfaces/)
-8. [`CONTENT_ACCESSIBILITY.md`](CONTENT_ACCESSIBILITY.md)
+## Lifecycle
 
-Jika sebuah surface belum memiliki brief, jangan langsung mengimplementasikannya. Jalankan:
+1. Shape: job, audience, mode, outcome, boundaries, states, ranges, interaction, dan open gate.
+2. Build: gunakan token dan primitive Buku Besar Kolaborasi.
+3. Audit: hierarchy, accessibility, responsive behavior, performance, dan product truth.
+4. Harden: error, overflow, offline, stale, permission, empty, destructive, dan synthetic state.
+5. Polish: motion, copy, alignment, density, dan final interaction.
 
-```text
-$impeccable shape <surface>
-```
+## Definition of Ready
 
-Shape brief harus mengunci job, outcome, hierarchy, states, interaction, responsive behavior, dan boundaries sebelum build.
+- Issue memiliki acceptance criteria, references, dependencies, owner role, dan package decision.
+- Surface brief tersedia dan tidak konflik dengan DESIGN.
+- Backend route, Policy, projection, dan state contract diketahui.
+- Minimum, typical, maximum content serta error/recovery state didefinisikan.
 
-## Impeccable Lifecycle
+## Definition of Done
 
-```mermaid
-flowchart LR
-    Product[PRODUCT + PRD] --> Shape[impeccable shape]
-    Shape --> Brief[Surface brief]
-    Brief --> Design[DESIGN seed/world]
-    Design --> Build[Implement surface]
-    Build --> Document[impeccable document]
-    Document --> Audit[impeccable audit]
-    Audit --> Harden[impeccable harden]
-    Harden --> Polish[impeccable polish]
-```
-
-- `shape` merancang surface tanpa kode.
-- `DESIGN.md` mengatur visual world lintas surface.
-- `document` dijalankan setelah surface pertama memiliki token dan komponen nyata.
-- `audit` memeriksa accessibility, responsiveness, dan technical quality.
-- `harden` menangani edge cases, errors, permissions, dan production states.
-- `polish` menjadi finishing pass, bukan pengganti requirement.
-
-## Visitor Modes
-
-| Surface                              | Mode       | Success                                        |
-| ------------------------------------ | ---------- | ---------------------------------------------- |
-| Student/campus/recruiter application | Operate    | Pengguna menyelesaikan task dengan aman        |
-| Public portfolio                     | Experience | Artifact dan contribution memimpin             |
-| Marketing landing page               | Persuade   | Pengunjung memahami mekanisme dan bertindak    |
-| Help/documentation                   | Read       | Pengguna menemukan jawaban dan kembali bekerja |
-
-Mode ditentukan per surface, bukan per product. Semua application surface tetap mewarisi `DESIGN.md`.
-
-## Definition of Ready: UI
-
-Sebuah surface siap dibangun jika:
-
-- Role dan permission diketahui.
-- Primary job dan success outcome diketahui.
-- Minimum, typical, dan maximum content range tersedia.
-- Empty, loading, error, success, stale, reconnect, dan forbidden states yang relevan sudah ditentukan.
-- Route atau target file sudah dipetakan.
-- Surface brief tersedia.
-- Data yang synthetic ditandai.
-- Accessibility acceptance criteria tersedia.
-
-## Definition of Done: UI
-
-- Behavior sesuai surface brief.
-- Visual sesuai `DESIGN.md`.
-- Mobile dan desktop diperiksa.
-- Keyboard, focus, screen-reader name, contrast, status text, dan reduced motion diperiksa.
-- Tidak ada hardcoded backend URL; gunakan Wayfinder.
-- Form memiliki processing, validation, success, dan failure feedback.
-- Realtime state dapat pulih melalui server refresh.
-- Browser test critical flow dan no-console-error check tersedia.
-- Impeccable audit, harden, dan polish telah dilakukan sesuai risiko.
+- UI konsisten dengan selected direction dan reusable primitives.
+- Wayfinder dipakai untuk backend route.
+- WCAG 2.2 AA, keyboard, focus, reduced motion, responsive, dan semantic state diperiksa.
+- UI issue menyertakan screenshot atau rekaman state penting.
+- Test mencakup critical flow dan JavaScript recovery yang relevan.
+- Impeccable audit, harden, dan polish dilakukan sebelum release gate.
 
 ## Asset Gambar
 
-Jika sebuah surface membutuhkan asset bitmap dan belum ada asset yang disetujui,
-AI agent boleh membuat gambar sendiri dengan kemampuan image generation yang
-tersedia. Pilih asset yang mendukung tujuan interface, periksa hasilnya secara
-visual, dan simpan hanya asset yang benar-benar dipakai oleh produk. Jangan
-menghasilkan gambar bila SVG, icon system, CSS, atau asset yang sudah tersedia
-lebih tepat.
+Gunakan asset hanya bila memberi informasi atau atmosfer yang tidak efektif melalui semantic UI. Asset bitmap baru boleh dibuat dengan image generation jika belum ada asset yang disetujui. Simpan source, alt purpose, license atau generation provenance, dan optimized output. Jangan mengganti chart, graph, status, atau interactive control dengan gambar statis.
 
 ## Ownership
 
-- Product truth: `PRODUCT.md` dan PRD.
-- Global visual world: `DESIGN.md`.
-- Route-specific strategy: matching surface brief.
-- Cross-surface UX: dokumen dalam folder ini.
-- Runtime contract: technical documentation dan code.
-
-Jangan menyalin token global ke surface brief atau menyalin seluruh PRD ke UX docs.
+Global visual change dimiliki `DESIGN.md`. Route behavior dimiliki surface brief. Canonical copy dan accessibility dimiliki `CONTENT_ACCESSIBILITY.md`. Task status dimiliki GitHub issue, bukan dokumen UX.

@@ -1,40 +1,43 @@
 ---
-version: 1
+version: 2
 slug: 'route-onboarding'
 primary_target: 'route:/onboarding'
-related_targets: []
+related_targets: ['route:/register', 'route:/notifications']
 ---
 
-# Student Onboarding, Profile, and Skills
+# Student Onboarding, Affiliation, Profile, and Skills
 
 ## Job and Audience
 
-Student baru ingin memperoleh account yang dapat dipakai, menyatakan afiliasi, dan memberi cukup informasi untuk recommendation tanpa merasa sedang dinilai secara psikologis. Mode: **Operate**.
+Student baru ingin mengaktifkan account, membuktikan afiliasi kampus, dan memberi cukup informasi untuk recommendation tanpa merasa dinilai secara psikologis. Mode: **Operate**.
 
 ## Outcome and Proof
 
-Student menyelesaikan email verification, institution request, minimum profile, skill, availability, consent, dan visibility. Mereka memahami perbedaan account aktif dengan membership `verified`.
+Student memahami perbedaan phone verified, account active, dan affiliation verified. Mereka menyelesaikan institution, NIM, profile minimum, skills, availability, consent, notification preference, dan portfolio visibility.
 
 ## Selected Direction
 
-Mewarisi **Buku Besar Kolaborasi** sebagai enrollment ledger yang progresif. Setiap tahap menjadi indexed section dengan status dan akibat yang jelas; bukan wizard dekoratif dengan progress palsu.
+Enrollment ledger progresif dalam visual world **Buku Besar Kolaborasi**. Setiap section memiliki status, akibat, dan next action. Bukan decorative wizard dan tidak memakai progress palsu.
 
 ## Scope and Boundaries
 
-Mencakup registration handoff, affiliation, profile, skills, availability, consent, dan visibility. Tidak meminta mental-health questionnaire, social popularity, atau data recruiter yang belum dibutuhkan. SSO berada di fase lanjut.
+Mencakup handoff setelah phone verification, roster match, manual review recovery, profile, skills, availability, consent, notification preference, dan visibility. Tidak meminta email, mental-health questionnaire, popularity, atau recruiter data yang belum diperlukan.
 
 ## States and Ranges
 
-- Approved domain auto-verification.
-- Manual review pending, revision, reject, verified.
-- Duplicate skill, custom skill proposal, no skill yet.
-- Save/resume, expired session, validation/network error.
-- 0–30 skills; 0–5 evidence items per skill.
+- Roster: exact match, pending review, ambiguous, roster unavailable, revision, reject, verified.
+- Profile: empty, partial, valid, duplicate skill, custom skill proposal.
+- Save: idle, processing, saved, network error, stale session.
+- 0 sampai 30 skills dan 0 sampai 5 evidence items per skill.
 
 ## Interaction and Layout
 
-Progress menunjukkan section lengkap dan blocking requirement. Pengguna dapat kembali tanpa kehilangan data. Privacy explanation ditempatkan dekat toggle. Mobile memakai single column; desktop boleh menampilkan summary rail. Primary action selalu menyebut tahap berikutnya.
+Section index dapat diklik untuk item yang tersedia dan menunjukkan blocker. Data tersimpan per section. Privacy explanation berada dekat toggle. Mobile single column, desktop boleh menampilkan summary rail. Primary action selalu menyebut akibat berikutnya.
 
-## Constraints and Open Decisions
+## Accessibility
 
-Email verification wajib sebelum collaboration features. Campus admin/recruiter role tidak tersedia di public registration. Institution evidence fields menunggu policy kampus pilot.
+Status roster tidak bergantung pada warna. Focus dipindah ke section error setelah submit. Pending result memakai status semantics tanpa polling noise. Semua informasi phone dimasking setelah verification.
+
+## Constraints and Gates
+
+Roster format, active-member definition, dan manual-review SLA ditentukan melalui governance issue. Campus admin/recruiter role tidak tersedia melalui registrasi publik.

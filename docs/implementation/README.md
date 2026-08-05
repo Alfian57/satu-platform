@@ -1,114 +1,69 @@
 # Implementation Workflow: SATU
 
-Folder ini mengatur urutan eksekusi Increment 1. AI tidak membaca seluruh phase sekaligus.
-Mulai dari [`PROGRESS.md`](PROGRESS.md), buka file phase aktif, lalu baca hanya sumber yang
-tercantum pada `Read Before Work`.
+## Source of Truth
 
-## Structure
+GitHub issues menyimpan atomic task, status, dependencies, owner role, gate, acceptance criteria, dan handoff. GitHub milestones menyimpan release sequence. Pull request menyimpan implementation evidence. Dokumen ini mendefinisikan workflow, bukan progress.
 
-```text
-implementation/
-├── README.md
-├── ROADMAP.md
-├── PROGRESS.md
-├── TEST_STRATEGY.md
-└── phases/
-    ├── 01-visual-authority/
-    ├── 02-identity-tenancy/
-    ├── 03-profile-skills/
-    ├── 04-projects-matching-teams/
-    ├── 05-realtime-workspace/
-    ├── 06-contribution-portfolio/
-    ├── 07-campus-inclusion/
-    └── 08-production-readiness/
-```
+## Issue Contract
 
-## Stage Index
+Setiap implementation issue wajib memiliki:
 
-| Stage | Phase   | Outcome                                                     |
-| ----- | ------- | ----------------------------------------------------------- |
-| 01    | P01–P07 | Visual direction, reference dashboard, dan design authority |
-| 02    | P08–P16 | Identity, institution membership, tenancy, dan onboarding   |
-| 03    | P17–P20 | Student profile, skills, availability, dan visibility       |
-| 04    | P21–P31 | Projects, explainable matching, dan team formation          |
-| 05    | P32–P40 | Database-first realtime workspace                           |
-| 06    | P41–P50 | Contribution validation dan portfolio provenance            |
-| 07    | P51–P59 | Campus operations dan governed inclusion review             |
-| 08    | P60–P69 | Production readiness, recovery, release rehearsal, dan UAT  |
+1. Latar Belakang
+2. Hasil yang Diharapkan
+3. Acceptance Criteria
+4. Verifikasi
+5. Di Luar Scope
+6. Dependencies dan Handoff
+7. Library/Package
+8. Referensi
+9. Pull Request
+10. Metadata
 
-Rationale dan release gates berada di [`ROADMAP.md`](ROADMAP.md). Verification lintas
-capability berada di [`TEST_STRATEGY.md`](TEST_STRATEGY.md).
+Issue UI juga menunjuk surface brief. Issue yang membutuhkan library menyebut exact package, install command, reason, compatibility, license review, dan fake/test strategy. Jika framework-native cukup, jelaskan alasannya.
 
-## Phase File Contract
+## Labels
 
-Setiap file phase memiliki metadata statis:
+- Type: `type:feature`, `type:ux`, `type:quality`, `type:documentation`, `type:governance`, `type:infrastructure`.
+- Area: `area:identity`, `area:tenancy`, `area:profile`, `area:project`, `area:matching`, `area:workspace`, `area:contribution`, `area:portfolio`, `area:gamification`, `area:campus`, `area:inclusion`, `area:talent`, `area:integration`, `area:notification`, `area:platform`.
+- Owner: `owner:backend`, `owner:frontend`, `owner:fullstack`, `owner:qa`, `owner:devops`, `owner:product-design`, `owner:security-privacy`.
+- Priority: `priority:p0` sampai `priority:p3`.
+- Gate: `gate:human`, `gate:external`, `gate:conditional`.
+- State helpers: `historical`, `superseded`, `blocked`, `ready`.
 
-```yaml
----
-id: P01
-title: 'Shape dashboard mahasiswa'
-stage: 01-visual-authority
-depends_on: []
-gate: human
-next: P02
----
-```
+Owner label menunjukkan accountable role. GitHub assignee belum dipakai sampai komposisi developer final.
 
-Allowed `gate` values:
+## Branch dan Pull Request
 
-- `automatic`: dapat ditutup setelah seluruh verification dan exit criteria lulus;
-- `human`: memerlukan persetujuan eksplisit;
-- `conditional`: memerlukan persetujuan hanya jika kondisi pada phase terjadi;
-- `external`: memerlukan keputusan governance, institution, legal, atau operations.
+- Branch: `<type>/<issue-number>-<slug>`.
+- Satu issue, satu branch, satu pull request.
+- Conventional Commit.
+- Draft PR sampai acceptance criteria dan verifikasi lengkap.
+- Body mencantumkan `Closes #<issue>`.
+- UI: screenshot mobile/desktop serta state penting.
+- Data/security: migration impact, threat/authorization note, rollback/recovery.
+- Verification: affected Pest tests, lint, typecheck, accessibility/browser checks yang relevan.
+- Jangan menjalankan local production build kecuali diperlukan untuk diagnosis atau diminta pengguna. CI tetap menjalankan required build/check.
 
-Body setiap phase wajib memiliki:
+## Dependency dan Handoff
 
-1. `Outcome`
-2. `Prerequisites`
-3. `Read Before Work`
-4. `Deliverables`
-5. `Out of Scope`
-6. `Verification`
-7. `Exit Criteria`
-8. `Gate and Next Phase`
+`Blocked by` hanya memuat hard dependency. Pekerjaan yang bisa paralel dicatat terpisah. Handoff menyebut consumer berikutnya dan artifact yang diberikan. Issue berlabel gate berhenti pada evidence dan menunggu keputusan eksplisit.
 
-Phase file tidak menyimpan status. [`PROGRESS.md`](PROGRESS.md) adalah satu-satunya sumber
-status agar handoff lintas-agent tidak mengalami drift.
+## Definition of Ready
 
-## Execution Rules
+- Tidak ada hard dependency terbuka.
+- Owning docs dan surface brief tersedia.
+- Acceptance criteria dapat diuji.
+- Package decision dan approval diketahui.
+- Risk serta gate teridentifikasi.
 
-1. Satu sesi AI mengerjakan satu phase.
-2. Ubah state menjadi `in_progress` ketika pekerjaan benar-benar dimulai.
-3. Jangan melewati prerequisite atau mengerjakan next phase sebagai cleanup.
-4. Jalankan verification yang tercantum sebelum mengubah state.
-5. Pada human/external gate, gunakan `awaiting_approval` atau `blocked` dan berhenti.
-6. Setelah phase automatic selesai, perbarui pointer ke next phase tetapi tetap akhiri sesi.
-7. Detail histori berada di Git; jangan membuat jurnal pelaporan panjang.
+## Definition of Done
 
-## Progress State
+- Acceptance criteria dan verification lulus.
+- Test dan docs sesuai perubahan.
+- Review conversation selesai.
+- Required check lulus dan minimal satu approval tersedia.
+- Squash merge ke protected `main` menutup issue.
 
-Allowed states:
+## Historical Mapping
 
-- `ready`
-- `in_progress`
-- `blocked`
-- `awaiting_approval`
-- `completed`
-
-`completed_through` selalu sequential. Phase tidak boleh ditandai selesai secara lompat.
-Ketika P69 selesai, `current_phase`, `current_phase_file`, dan `next_phase` menjadi `null`,
-sedangkan `state` menjadi `completed`.
-
-## Concise Report Contract
-
-Laporan default kepada pengguna tepat empat baris:
-
-```text
-Phase: Pxx: completed|awaiting_approval|blocked
-Outcome: satu kalimat hasil utama
-Checks: pemeriksaan utama dan statusnya
-Next: Pyy: judul phase | Blocker: satu kalimat
-```
-
-Jangan mencantumkan seluruh file, diff, atau raw test output kecuali dibutuhkan untuk
-menjelaskan kegagalan atau pengguna memintanya.
+Legacy P01 sampai P69 dipertahankan sebagai metadata pada migrated issue. P01 sampai P15 ditutup sebagai historical completed. P16 ditutup sebagai superseded. P17 sampai P69 tetap open dan disesuaikan dengan current contracts. Phase file tidak dibuat kembali.

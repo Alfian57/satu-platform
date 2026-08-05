@@ -1,0 +1,31 @@
+## Ringkasan
+
+<!-- Outcome utama dan alasan perubahan. -->
+
+## Issue
+
+Closes #
+
+## Perubahan
+
+-
+
+## Verifikasi
+
+- [ ] Affected Pest tests lulus
+- [ ] PHP formatting lulus bila ada perubahan PHP
+- [ ] Frontend lint/typecheck lulus bila ada perubahan frontend
+- [ ] Accessibility dan browser flow diperiksa bila relevan
+- [ ] Documentation checks lulus bila ada perubahan docs
+
+## UI Evidence
+
+<!-- Sertakan mobile/desktop dan state penting. Tulis N/A untuk non-UI. -->
+
+## Data, Security, dan Recovery
+
+<!-- Jelaskan migration, tenant/Policy, sensitive projection, provider, rollback/recovery. Tulis N/A bila tidak relevan. -->
+
+## Handoff
+
+<!-- Dependency yang dibuka, follow-up issue, atau gate yang masih menunggu. -->

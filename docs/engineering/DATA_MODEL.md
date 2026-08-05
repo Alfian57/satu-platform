@@ -2,302 +2,133 @@
 
 ## 1. Principles
 
-- MySQL adalah production source of truth.
-- Semua tenant-owned records membawa `institution_id` secara langsung atau melalui parent yang tidak ambigu.
-- Foreign key, unique constraint, dan index menegakkan invariant yang dapat ditegakkan database.
-- Enum domain memiliki canonical identifier; UI label diterjemahkan.
-- Sensitive derivation dipisahkan dari recruiter-visible projection.
-- History keputusan tidak ditimpa.
-- Migration dibuat dengan Artisan dan tidak menggabungkan schema dengan seed data.
+- MySQL adalah target production.
+- Primary key internal tidak boleh menjadi authorization proof.
+- Tenant-owned record membawa `institution_id` atau memiliki jalur relasi tenant yang tidak ambigu.
+- Sensitive history untuk consent, validation, entitlement, inclusion review, dan sync bersifat append-only.
+- Planned schema pada dokumen ini belum dianggap implemented sampai migration issue selesai.
 
-## 2. Conceptual ERD
-
-```mermaid
-erDiagram
-    USERS ||--o{ INSTITUTION_MEMBERSHIPS : has
-    INSTITUTIONS ||--o{ INSTITUTION_MEMBERSHIPS : includes
-    USERS ||--o| STUDENT_PROFILES : owns
-    STUDENT_PROFILES ||--o{ PROFILE_SKILLS : declares
-    SKILLS ||--o{ PROFILE_SKILLS : classifies
-    INSTITUTIONS ||--o{ PROJECTS : owns
-    USERS ||--o{ PROJECTS : creates
-    PROJECTS ||--o{ PROJECT_ROLES : needs
-    SKILLS ||--o{ PROJECT_ROLE_SKILLS : required_by
-    PROJECT_ROLES ||--o{ PROJECT_ROLE_SKILLS : requires
-    PROJECTS ||--o{ TEAM_MEMBERSHIPS : has
-    USERS ||--o{ TEAM_MEMBERSHIPS : joins
-    PROJECTS ||--o{ TASKS : contains
-    TASKS ||--o{ TASK_ASSIGNMENTS : assigned
-    USERS ||--o{ TASK_ASSIGNMENTS : receives
-    PROJECTS ||--o{ MESSAGES : contains
-    USERS ||--o{ MESSAGES : authors
-    TASKS ||--o{ CONTRIBUTIONS : supports
-    USERS ||--o{ CONTRIBUTIONS : submits
-    CONTRIBUTIONS ||--o{ CONTRIBUTION_VERSIONS : versions
-    CONTRIBUTIONS ||--o{ CONTRIBUTION_REVIEWS : reviewed
-    USERS ||--o{ CONTRIBUTION_REVIEWS : reviews
-    CONTRIBUTIONS ||--o| PORTFOLIO_ENTRIES : publishes
-    USERS ||--o{ RECOMMENDATIONS : receives
-    PROJECTS ||--o{ RECOMMENDATIONS : recommended
-    MATCH_RUNS ||--o{ RECOMMENDATIONS : produces
-    USERS ||--o{ CONSENT_RECORDS : grants
-    USERS ||--o{ INCLUSION_SIGNALS : subject
-    INSTITUTIONS ||--o{ INCLUSION_SIGNALS : scopes
-    INCLUSION_SIGNALS ||--o{ INCLUSION_REVIEWS : reviewed
-    USERS ||--o{ INCLUSION_REVIEWS : handles
-    USERS ||--o{ AUDIT_LOGS : acts
-```
-
-Recruiter entities ditambahkan pada fase Talent Portal dan tidak mengubah ownership portfolio.
-
-## 3. Identity dan Tenancy
+## 2. Identity dan Institution
 
 ### `users`
 
-Core Fortify identity: name, email, verification, password, security fields. User tidak menyimpan satu global role.
+Private `username`, password, display name, status, last authenticated timestamp, dan security metadata. Target schema tidak memakai email. Username dinormalisasi, unique, login-only, dan tidak masuk public/recruiter projection.
 
-Indexes:
+### `phone_numbers`
 
-- Unique normalized email.
-- Email verification query bila diperlukan.
+User, normalized E.164 number, masked display, verified-at, status, dan change history. Raw phone classified restricted.
 
-### `institutions`
+### `otp_challenges`
 
-Core fields:
+Purpose, target hash/reference, OTP hash, expires-at, attempts, resend count, consumed-at, invalidated-at, request context, dan audit timestamps. OTP plaintext tidak disimpan.
 
-- `id`, `name`, `slug`, `status`, timezone, locale.
-- Settings non-secret yang benar-benar institution-owned.
+### `institutions`, `institution_memberships`
 
-Constraints:
+Institution identity/status dan membership role/status/history. Role berasal dari membership relationship, bukan global user role.
 
-- Unique `slug`.
-- Status canonical: `pending`, `active`, `suspended`, `archived`.
+### `institution_rosters`, `institution_roster_rows`
 
-### `institution_domains`
+Import batch, effective semester, source filename metadata, checksum, normalized NIM, normalized phone hash/encrypted value, student display data minimum, active flag, validation outcome, dan row error. Import history immutable setelah committed.
 
-- Institution, normalized domain, verification status, verified timestamp.
-- Unique active domain lintas institution kecuali policy secara eksplisit mengizinkan shared domain.
+### `affiliation_requests`, `affiliation_reviews`
 
-### `institution_memberships`
+Student, institution, NIM, roster match result, status, reviewer, reason code, note, timestamps, dan append-only transition history.
 
-- User, institution, role, status, institutional identifier, verification method, verified by/at.
-- Role: `student`, `campus_admin`.
-- Status: `unverified`, `pending`, `verified`, `suspended`.
+### `privileged_invitations`
 
-Indexes/constraints:
+Institution/recruiter organization, intended role, normalized phone, token hash, expiry, delivery status, accepted/revoked timestamps, issuer, dan audit reference.
 
-- Unique user + institution + role bila multi-role tidak dibutuhkan.
-- Institution + status untuk admin queue.
-- User + status untuk context selection.
+## 3. Profile, Projects, dan Workspace
 
-## 4. Profile dan Skills
+- `student_profiles`, `skills`, `profile_skills`, `availability_windows`
+- `projects`, `project_roles`, `project_role_skills`, `team_memberships`
+- `tasks`, `task_assignments`, `messages`, `attachments`
 
-### `student_profiles`
+Project, team, task, message, dan attachment selalu memiliki institution ownership. Attachment memakai private storage path dan authorized download.
 
-- User, primary institution context, program, cohort, bio, availability, recruiter discoverability.
-- Public/recruiter visibility tidak disimpulkan dari nullable field; gunakan explicit setting.
+## 4. Matching
 
-### `skills`
+- `match_score_versions`: immutable weights, dimensions, activation time, author, notes.
+- `match_runs`: version, normalized input snapshot, institution, actor, computed-at.
+- `recommendations`: component score, total, explanation projection, expiry.
+- `recommendation_feedback`: user outcome tanpa mengubah historical score.
 
-- Canonical name, slug, category, status.
-- Global taxonomy atau institution extension harus diputuskan sebelum implementation detail.
+Supported dimension hanya `skill_fit`, `project_need`, `availability`, dan `connectivity_opportunity`.
 
-### `profile_skills`
+## 5. Contribution dan Portfolio
 
-- Profile, skill, proficiency, evidence note, verification level.
-- Unique profile + skill.
+- `contributions`: owner, project/team, lifecycle, current version pointer.
+- `contribution_versions`: immutable claim and summary.
+- `contribution_evidence`: private source metadata dan storage reference.
+- `contribution_reviews`: campus reviewer decision, reason, note, reviewed-at.
+- `portfolio_entries`: approved source, visible fields, visibility level, published/withdrawn-at.
 
-Skill verification tidak boleh memakai badge yang sama dengan institution-verified contribution.
+Team confirmation tidak menjadi state requirement. Approval campus reviewer adalah validation authority.
 
-## 5. Projects dan Teams
+## 6. Gamification
 
-### `projects`
+### `xp_ledger_entries`
 
-- Institution, owner user, type, title, summary, outcome, deadline, capacity, status, visibility.
-- Status: `draft`, `open`, `forming`, `active`, `completed`, `cancelled`, `archived`.
+User, institution, semester, amount, reason, source type/id, policy version, awarded-at, reversal reference, dan unique idempotency key.
 
-Indexes:
+### `badge_definitions`, `badge_rule_versions`, `badge_awards`
 
-- Institution + status + deadline.
-- Owner + status.
-- Search index diputuskan berdasarkan MySQL version dan query nyata.
+Taxonomy, public description, rule version, evidence/source, award/revoke history.
 
-### `project_roles`
+### `leaderboard_periods`, `leaderboard_preferences`, `leaderboard_projections`
 
-- Project, title, description, capacity, status.
+Semester, scope type/id, rank, shared-rank group, score, verified XP total, active-member denominator, cohort size, suppressed flag, rule version, computed-at. Individual preference default off. Inclusion fields dilarang.
 
-### `project_role_skills`
+## 7. Notifications dan WhatsApp
 
-- Project role, skill, required proficiency, importance.
+- Laravel database notifications atau equivalent canonical in-app records.
+- `notification_preferences`: purpose dan channel preference.
+- `message_outbox`: purpose, recipient reference, template/version, payload hash/encrypted data, status, attempts, next attempt.
+- `message_deliveries`: provider, external ID, status history, callback timestamp, sanitized error.
 
-### `team_memberships`
+Provider token, plaintext OTP, dan full message payload tidak disimpan pada log.
 
-- Project, user, project role, status, joined/left timestamps.
-- Status: `invited`, `requested`, `active`, `left`, `removed`, `completed`.
+## 8. Inclusion
 
-Constraints:
+- `collaboration_events`: metadata aktivitas yang diizinkan, bukan message content.
+- `inclusion_signal_versions`: metric/rule/version/governance status.
+- `inclusion_signals`: institution, subject, period, restricted feature state, evidence summary.
+- `inclusion_reviews`: reviewer, human conclusion, support action, reason, timestamps.
 
-- Unique active relationship per user/project.
-- Capacity tetap membutuhkan transaction/lock; unique constraint saja tidak cukup.
+Real and synthetic records memiliki provenance flag yang eksplisit.
 
-## 6. Workspace
+## 9. Talent
 
-### `tasks`
-
-- Project, creator, title, description, status, priority, due date, sort position, version.
-- Index project + status + due date.
-- Version mendukung optimistic/concurrent merge.
-
-### `task_assignments`
-
-- Task dan user.
-- Unique task + user.
-
-### `messages`
-
-- Project, author, optional task context, body, edited/deleted timestamps.
-- Isi message tidak dipakai untuk sentiment atau mental-health inference.
-- Index project + created time.
-
-### `attachments`
-
-- Institution, uploader, attachable type/id, private disk/path, original name, MIME, size, checksum, status.
-- Storage path bukan public URL.
-
-## 7. Contributions dan Portfolio
-
-### `contributions`
-
-- Institution, project, task, student, current status, current version, submitted/decided timestamps.
-- Status: `draft`, `pending`, `revision_requested`, `approved`, `rejected`, `archived`.
-
-### `contribution_versions`
-
-- Contribution, version number, description, declaration, submitted timestamp.
-- Immutable setelah submit.
-- Unique contribution + version.
-
-### `contribution_evidence`
-
-- Version dan attachment.
-- Menyimpan evidence ordering/description bila dibutuhkan.
-
-### `contribution_reviews`
-
-- Contribution/version, reviewer, decision, reason, policy version, created timestamp.
-- Append-only.
-
-### `portfolio_entries`
-
-- Student, contribution, title/summary override, visibility, published timestamp.
-- Verification level berasal dari contribution provenance, bukan request user.
-- Visibility: `private`, `institution`, `recruiter`, `public`.
-
-## 8. Matching
-
-### `match_score_versions`
-
-- Version key, weight/config snapshot, activation timestamp, status, author/approval.
-
-### `match_runs`
-
-- Institution, subject user, score version, input snapshot reference/hash, started/completed status.
-
-### `recommendations`
-
-- Run, student, project/role, total score, component scores, explanation keys, rank, status, expiry.
-- Component score disimpan dalam typed columns atau validated JSON; keputusan final mengikuti query/evaluation needs.
-- Status: `active`, `acted`, `hidden`, `expired`, `invalidated`.
-
-### `recommendation_feedback`
-
-- Recommendation, student, reason, optional note.
-- Tidak langsung mengubah weight production.
-
-## 9. Inclusion
-
-### `collaboration_events`
-
-- Institution, actor, project, event type, occurred time, minimal relationship metadata.
-- Bukan salinan message body.
-- Digunakan hanya untuk purpose yang didokumentasikan.
-
-### `inclusion_signal_versions`
-
-- Calculation version, minimum sample, thresholds, status, approval.
-
-### `inclusion_signals`
-
-- Institution, student, version, factors, data window, status, expiry.
-- Restricted model/query boundary.
-- Tidak pernah direlasikan ke recruiter organization.
-
-### `inclusion_reviews`
-
-- Signal, reviewer, outcome, reason, outreach category, timestamp.
-- Append-only.
-
-## 10. Consent, Audit, dan Integration
-
-### `consent_records`
-
-- User, purpose, policy version, granted/withdrawn timestamps, source.
-- Append history atau event model; current consent dapat diproyeksikan.
-
-### `audit_logs`
-
-- Institution nullable untuk platform action, actor, operation, auditable type/id, safe before/after summary, reason, request context, timestamp.
-- Tidak menyimpan password, secret, message content, raw sensitive evidence, atau full token.
-
-### `integration_connections`
-
-- Institution, provider type, status, encrypted credentials/config reference.
-
-### `integration_syncs`
-
-- Connection, local object, idempotency key, external reference, status, attempts, error class.
-
-## 11. Recruiter: Later
-
-### Entities
-
-- `recruiter_organizations`
-- `recruiter_memberships`
-- `talent_entitlements`
+- `recruiter_organizations`, `recruiter_memberships`, `recruiter_verification_reviews`
+- `talent_entitlements` dan append-only entitlement events
+- `talent_profile_projections` sebagai recruiter-safe allowlisted view
 - `saved_candidates`
-- `contact_requests`
+- `contact_requests` dan status history
 
-Search memakai dedicated recruiter-visible projection/query. Jangan join unrestricted profile, inclusion, audit, atau private attachment.
+Projection tidak memuat username, phone sebelum consent handoff, NIM, inclusion, private evidence, messages, raw audit, atau hidden matching input.
 
-## 12. Data Classification
+## 10. Academic Integration
 
-| Class        | Examples                                        | Default access                  |
-| ------------ | ----------------------------------------------- | ------------------------------- |
-| Public       | Published portfolio item                        | Explicit public audience        |
-| Internal     | Project summary, task status                    | Authorized project/institution  |
-| Confidential | Email, institutional id, private evidence       | Subject dan authorized operator |
-| Restricted   | Inclusion signal, consent history, audit reason | Narrow policy + audit           |
-| Secret       | Password, app secret, integration credential    | Never exposed; encrypted/config |
+- `integration_connections`: institution, provider key, mode sandbox/real, encrypted config reference, status.
+- `credit_mappings` dan immutable mapping versions.
+- `integration_syncs`: source, mapping version, idempotency key, payload digest, status, external reference, attempt timestamps.
+- `integration_sync_events`: append-only status/retry/reconcile history.
 
-## 13. Retention dan Deletion
+## 11. Consent dan Audit
 
-Retention period adalah open gate. Implementasi harus mendukung:
+`consent_records` menyimpan purpose, notice version, decision, source, dan timestamp. `audit_logs` menyimpan actor, tenant context, action, target, outcome, request correlation, serta safe metadata. Audit tidak menjadi tempat menyalin sensitive payload.
 
-- Expiry per data class.
-- Consent withdrawal effect.
-- Secure export.
-- Account deletion/anonymization workflow.
-- Legal/institutional hold yang terdokumentasi.
-- Portfolio unpublish tanpa merusak audit provenance.
-- Message/evidence deletion policy yang konsisten dengan project record.
+## 12. Classification dan Retention
 
-Jangan hard-delete record yang diperlukan untuk audit tanpa approved policy. Jangan mempertahankan data tanpa purpose hanya karena storage murah.
+| Class        | Contoh                                          | Default access                     |
+| ------------ | ----------------------------------------------- | ---------------------------------- |
+| Public       | visible portfolio projection                    | explicit public/recruiter audience |
+| Internal     | project metadata, task title                    | authorized team/campus             |
+| Confidential | NIM, phone, private evidence                    | subject dan authorized operator    |
+| Restricted   | OTP data, inclusion, provider secret, raw audit | narrow service/reviewer role       |
 
-## 14. Migration and Query Review
+Retention period adalah governance gate. Deletion tidak boleh merusak required append-only proof. Subject-facing projection dapat ditarik sambil mempertahankan minimal lawful audit record.
 
-- Setiap foreign key memiliki delete behavior yang disengaja.
-- Filter/join/order columns diindeks berdasarkan query plan.
-- Large tables memakai explicit ordering dan pagination.
-- Cross-tenant composite index dimulai dengan `institution_id` bila sesuai query.
-- JSON tidak menggantikan relation yang perlu diotorisasi atau di-query konsisten.
-- Saat menambah atau mengubah kolom pada tabel yang sudah memiliki migration, edit migration asal tabel tersebut. Jangan buat migration `add_*_column_*`.
+## 13. Migration Review
+
+Saat mengubah tabel yang sudah memiliki migration asal, edit migration tersebut langsung sesuai project rule. Test wajib mencakup unique constraint, foreign key, tenant index, idempotency, cross-tenant denial, restricted serialization, dan MySQL compatibility.

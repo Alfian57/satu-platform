@@ -181,7 +181,7 @@ flash.
 ### Don't:
 
 - **Don't** menampilkan label “rentan”, “terisolasi”, atau mental-health inference kepada student atau recruiter.
-- **Don't** menjadikan leaderboard sebagai pusat motivasi.
+- **Don't** menjadikan leaderboard sebagai pusat motivasi, nilai diri, atau elemen dominan pada dashboard. Peringkat hanya menjadi supporting ledger dengan opt-in, cohort protection, explanation, dan reduced-motion behavior.
 - **Don't** menggunakan generic grid tiga kartu sebagai jawaban default untuk dashboard.
 - **Don't** meniru approved comp secara piksel atau menjadikan generated asset
   sebagai pengganti semantic UI.

@@ -2,134 +2,63 @@
 
 ## 1. Model
 
-SATU memakai model B2B2C:
+SATU menggunakan hipotesis B2B2C. Student tidak dibebankan biaya. Institution memperoleh collaboration operations dan verified activity workflow. Recruiter organization memperoleh Talent Portal melalui entitlement yang dikelola platform.
 
-- **Student** memperoleh collaboration workspace dan portfolio tanpa biaya.
-- **Campus** menjadi institutional validator dan pilot partner.
-- **Recruiter organization** membayar subscription Talent Portal untuk pencarian dan workflow kandidat yang telah diizinkan.
-
-Subscription perusahaan adalah hypothesis monetisasi utama. Harga, packaging, dan willingness to pay belum tervalidasi.
+Rilis perlombaan menguji kelayakan produk dan alur nilai, bukan transaksi komersial. Billing provider, pricing production, pelanggan, dan revenue tidak boleh direkayasa.
 
 ## 2. Value Proposition
 
 ### Student
 
-- Akses project tidak bergantung pada lingkaran pertemanan.
-- Recommendation menjelaskan kecocokan dan next action.
-- Kontribusi menghasilkan rekam jejak dengan tingkat provenance yang jelas.
-- Visibility ke recruiter berada di bawah kendali student.
+- akses proyek di luar circle yang sudah terbentuk;
+- evidence kontribusi tervalidasi;
+- portfolio dan recognition yang dapat dikendalikan;
+- contact opportunity tanpa membocorkan inclusion data.
 
 ### Campus
 
-- Activity record lebih mudah diverifikasi.
-- Review workload dan exception terlihat dalam satu operational surface.
-- Inclusion review berangkat dari pola partisipasi, bukan diagnosis.
-- Pilot menghasilkan evidence untuk keputusan perluasan.
+- roster dan affiliation verification yang dapat diaudit;
+- validation queue untuk kegiatan non-akademik;
+- participation overview dan responsible inclusion review;
+- sandbox integrasi kredit sebelum terhubung ke sistem akademik nyata.
 
 ### Recruiter
 
-- Kandidat dapat dicari berdasarkan verified work, bukan hanya self-claimed skill.
-- Search dan contact workflow mengurangi screening administratif.
-- Recruiter tidak menerima data sensitif yang tidak relevan dengan pekerjaan.
+- search berdasarkan visible verified evidence;
+- saved candidate dan consent-aware contact request;
+- batas data yang eksplisit dan dapat dipercaya.
 
-## 3. Customer dan User Segments
+## 3. Rollout
 
-| Segment            | Peran        | Kebutuhan utama                        | Status        |
-| ------------------ | ------------ | -------------------------------------- | ------------- |
-| Student aktif      | User         | Project, team, contribution, portfolio | Increment 1   |
-| Campus admin       | User/partner | Verification, oversight, reporting     | Increment 1   |
-| Recruiter          | User/payer   | Verified talent discovery              | Fase lanjutan |
-| HR/recruiting lead | Buyer        | Efisiensi pipeline dan governance      | Fase lanjutan |
-| Campus leadership  | Sponsor      | Outcome partisipasi dan administrasi   | Pilot         |
+1. Competition demo dengan synthetic data dan satu tenant.
+2. Design-partner validation dengan satu institution pilot.
+3. Limited pilot setelah privacy, retention, roster, support, dan API gates selesai.
+4. Multi-institution rollout hanya setelah isolation dan operating model terbukti.
 
-## 4. Revenue Hypothesis
+## 4. Entitlement
 
-Talent Portal menggunakan subscription per recruiter organization dengan entitlement yang dapat mencakup:
+Talent access pada rilis memakai internal entitlement dengan status, start, end, scope, issuer, dan audit history. Entitlement bukan bukti pembayaran. Package name dan tier boleh digunakan sebagai synthetic demo label hanya jika ditandai synthetic.
 
-- Jumlah recruiter seat.
-- Saved candidate dan talent pool.
-- Contact request quota.
-- Reporting dan integration tier.
+## 5. Metrics
 
-Dokumen tidak menetapkan harga sebelum interview buyer dan willingness-to-pay test. Student tidak dikenai biaya untuk core collaboration.
+- activation: phone verified, affiliation outcome, profile completion;
+- collaboration: join-to-team, active project, task completion, validated contribution;
+- inclusion: opportunity distribution dan human-review outcome, tanpa klaim diagnosis;
+- operations: roster match rate, review lead time, sync success dan recovery;
+- talent: discoverability opt-in, relevant search, contact request, student response;
+- reliability: queue age, duplicate prevention, authorization denial, notification delivery.
 
-## 5. Go-to-Market
+Semua metric harus menyebut denominator, time window, tenant scope, synthetic status, dan data-quality caveat.
 
-### Fase 1: Design partner
+## 6. Experiments
 
-- Pilih satu kampus dengan sponsor operasional.
-- Jalankan satu semester pada jenis project terbatas.
-- Ukur activation, team formation, contribution validation, dan review turnaround.
-- Dokumentasikan hambatan governance serta integrasi.
+- wawancara student, campus reviewer, platform operator, dan recruiter;
+- dry run roster import dengan format pilot;
+- sandbox academic sync bersama operator kampus;
+- recruiter search dan contact usability test;
+- fairness review terhadap matching, XP, badge, dan leaderboard;
+- DPIA dan privacy notice comprehension test sebelum activation data nyata.
 
-### Fase 2: Institutional proof
+## 7. Evidence Policy
 
-- Publikasikan case study hanya dengan data yang disetujui.
-- Tambahkan institution onboarding dan repeatable validation policy.
-- Uji kampus kedua tanpa custom workflow yang berlebihan.
-
-### Fase 3: Recruiter design partners
-
-- Rekrut perusahaan yang memiliki kebutuhan internship atau graduate hiring.
-- Uji apakah verified contribution memperbaiki screening.
-- Validasi search-to-contact, response rate, dan willingness to pay.
-
-### Fase 4: Scale
-
-- Productize institution integration dan recruiter entitlement.
-- Perluas cross-institution opportunity hanya setelah tenant isolation dan governance matang.
-
-## 6. Key Activities dan Costs
-
-### Key activities
-
-- Product development dan security.
-- Institution onboarding dan policy mapping.
-- Match quality dan fairness evaluation.
-- Verification operations.
-- Recruiter sales dan customer success.
-- Legal, privacy, dan incident readiness.
-
-### Cost drivers
-
-- Application, MySQL, queue, Reverb, storage, dan monitoring.
-- Evidence file retention.
-- Institution integration.
-- Support dan abuse handling.
-- Security review dan DPIA.
-
-## 7. Business Metrics
-
-| Funnel    | Metric                                                                                        |
-| --------- | --------------------------------------------------------------------------------------------- |
-| Campus    | Qualified lead → design partner → active pilot → renewal/expansion                            |
-| Student   | Verified registration → profile complete → match action → active team → verified contribution |
-| Recruiter | Organization verified → search → save → contact → student response → opportunity outcome      |
-| Economics | Revenue per organization, service cost, storage/realtime cost, support load, retention        |
-
-## 8. Experiments
-
-| Hypothesis                                    | Test                                | Evidence minimum                       |
-| --------------------------------------------- | ----------------------------------- | -------------------------------------- |
-| Student membutuhkan discovery di luar circle  | Prototype dan pilot cohort          | Match action dan join rate             |
-| Match explanation meningkatkan trust          | A/B atau moderated usability        | Comprehension dan action rate          |
-| Campus menghargai contribution provenance     | Admin workflow test                 | Review time dan error reduction        |
-| Recruiter membayar verified portfolio search  | Buyer interview dan concierge pilot | Budget owner, urgency, willingness     |
-| Inclusion review dapat dilakukan tanpa stigma | Ethics review dan staff usability   | Correct interpretation dan safe action |
-
-## 9. Business Risks
-
-- Sales cycle kampus dan perusahaan panjang.
-- Integrasi akademik dapat menjadi custom work.
-- Klaim “AI” dapat menurunkan trust bila tidak explainable.
-- Salah tafsir inclusion signal menimbulkan risiko etis dan reputasi.
-- Marketplace cold start mengurangi kualitas recommendation.
-- Recruiter demand tidak boleh mendorong pengumpulan data berlebihan.
-
-## 10. Evidence Policy
-
-- Jangan mengarang customer, revenue, benchmark, conversion, atau testimonial.
-- Statistik proposal harus diverifikasi ke sumber primer sebelum dipublikasikan.
-- Data demo diberi label synthetic.
-- Target 30% diperlakukan sebagai hypothesis, bukan hasil.
-- Case study membutuhkan persetujuan institution dan aturan anonymization.
+Tidak boleh mengarang customer, price, testimonial, pilot result, benchmark, partner, atau impact. Proposal adalah hipotesis historis. Synthetic demonstration data harus diberi label pada UI, export, seed, dan dokumentasi demo.
