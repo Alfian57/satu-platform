@@ -1,0 +1,71 @@
+name: sync SATU Delivery Project
+
+on:
+  issues:
+    types:
+      - opened
+      - edited
+      - reopened
+      - closed
+      - labeled
+      - unlabeled
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - converted_to_draft
+      - closed
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Preview Project changes without writing items or fields'
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: satu-delivery-project-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout workflow helpers
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Reconcile SATU Delivery Project
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          SATU_PROJECT_OWNER: ${{ vars.SATU_PROJECT_OWNER }}
+          SATU_PROJECT_NUMBER: ${{ vars.SATU_PROJECT_NUMBER }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+        with:
+          script: |
+            if (!process.env.PROJECT_TOKEN) {
+              core.setFailed('Repository secret PROJECT_TOKEN belum tersedia.');
+              return;
+            }
+
+            const projectGithub = getOctokit(process.env.PROJECT_TOKEN);
+            const { syncSatuProject } = require('./.github/scripts/sync-satu-project.cjs');
+
+            await syncSatuProject({
+              github: projectGithub,
+              context,
+              core,
+              dryRun: process.env.DRY_RUN === 'true',
+            });

@@ -44,7 +44,7 @@ Label status bersifat mutually exclusive:
 
 ## Automatic Status Sync
 
-Workflow [sync-issue-status.yml](../../.github/workflows/sync-issue-status.yml) melakukan reconciliation pada event issue `opened`, `edited`, `closed`, dan `reopened`. Workflow juga dapat dijalankan manual dengan `workflow_dispatch`.
+Workflow [sync-issue-status.yml](../../.github/workflows/sync-issue-status.yml) melakukan reconciliation pada event issue `opened`, `edited`, `closed`, dan `reopened`, serta Pull Request `opened`, `reopened`, `ready_for_review`, `converted_to_draft`, dan `closed`. Workflow juga dapat dijalankan manual dengan `workflow_dispatch`.
 
 Automation membaca seluruh issue open dan open Pull Request yang menargetkan `main`, lalu mempertahankan label non-status dan mengganti tepat satu status label. `blocked` selalu mengalahkan status Pull Request ketika hard dependency masih open. Setelah seluruh blocker closed, status diturunkan dari Pull Request terkait: ready PR menjadi `needs-review`, draft PR menjadi `in-progress`, dan tanpa open PR menjadi `ready`.
 
@@ -56,6 +56,12 @@ gh workflow run sync-issue-status.yml --ref main -f dry_run=false
 ```
 
 Workflow memakai `issues: write`, `pull-requests: read`, dan `contents: read`. Jika workflow gagal, periksa job summary, perbaiki body dependency yang malformed, lalu jalankan ulang manual. Workflow tidak membuat komentar untuk setiap perubahan label.
+
+## GitHub Project Delivery View
+
+Operational triage tersedia pada [GITHUB_PROJECT.md](./GITHUB_PROJECT.md) melalui Project privat `SATU Delivery`. GitHub Project hanya projection delivery. AI tetap membaca issue body, label status, milestone, acceptance criteria, gate, dan Pull Request sebagai execution source of truth. Field `Delivery Status` direkonsiliasi oleh [`sync-satu-project.yml`](../../.github/workflows/sync-satu-project.yml) dan tidak boleh dipakai untuk mengabaikan `Blocked by`.
+
+Automation Project memakai dedicated repository secret `PROJECT_TOKEN` dengan `Projects: Read and write`, `Metadata: Read-only`, `Issues: Read-only`, dan `Pull requests: Read-only` pada repository SATU. Jangan menyalin token CLI. Gunakan `dry_run=true` sebelum mutation, dan gunakan schedule safety net karena perubahan label oleh workflow tidak selalu menghasilkan event baru.
 
 ## Dependency dan Scope
 
