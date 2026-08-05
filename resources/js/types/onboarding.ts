@@ -24,5 +24,5 @@ export type OnboardingPageProps = {
     canRequest: boolean;
     canRetry: boolean;
     membershipOutcome: OnboardingMembershipStatus | null;
-    submissionIssue: 'session_expired' | null;
+    submissionIssue: 'session_expired' | 'forbidden' | null;
 };

@@ -127,8 +127,8 @@ function FactValue({ fact }: { fact: DashboardDocketFact }) {
 
 function FactRow({ fact }: { fact: DashboardDocketFact }) {
     return (
-        <div className="grid border-b border-border/80 transition-colors hover:bg-muted/15 last:border-b-0 sm:grid-cols-[9.5rem_minmax(0,1fr)]">
-            <dt className="border-b border-border/80 bg-muted/40 px-4 py-2.5 font-label text-label font-semibold uppercase tracking-wider text-muted-foreground sm:border-r sm:border-b-0 sm:px-5 sm:py-3 xl:py-1.5">
+        <div className="grid border-b border-border/80 transition-colors last:border-b-0 hover:bg-muted/15 sm:grid-cols-[9.5rem_minmax(0,1fr)]">
+            <dt className="border-b border-border/80 bg-muted/40 px-4 py-2.5 font-label text-label font-semibold tracking-wider text-muted-foreground uppercase sm:border-r sm:border-b-0 sm:px-5 sm:py-3 xl:py-1.5">
                 {fact.label}
             </dt>
             <dd className="min-w-0 px-4 py-3 text-sm leading-6 font-medium sm:px-5 xl:py-1.5">

@@ -227,7 +227,25 @@ test('permission loss during retry is safe and keeps the local choice', function
     $page = visit(route('onboarding.show'))
         ->assertSelected('institution_id', (string) $institution->id);
 
-    $membership->update(['status' => 'suspended']);
+    $page->script(<<<'JS'
+        () => {
+            const originalSend = XMLHttpRequest.prototype.send;
+
+            XMLHttpRequest.prototype.send = function () {
+                XMLHttpRequest.prototype.send = originalSend;
+                Object.defineProperty(this, 'status', { value: 403 });
+                Object.defineProperty(this, 'responseText', {
+                    value: 'Forbidden',
+                });
+                Object.defineProperty(this, 'getAllResponseHeaders', {
+                    value: () => 'content-type: text/html\r\n',
+                });
+                window.queueMicrotask(() => {
+                    this.dispatchEvent(new Event('load'));
+                });
+            };
+        }
+        JS);
 
     $page->press('Ajukan kembali')
         ->assertSee('Izin afiliasi berubah')
@@ -241,7 +259,7 @@ test('permission loss during retry is safe and keeps the local choice', function
         ->assertNoJavaScriptErrors()
         ->assertNoConsoleLogs();
 
-    expect($membership->refresh()->status->value)->toBe('suspended')
+    expect($membership->refresh()->status->value)->toBe('unverified')
         ->and(AuditLog::query()->count())->toBe(0);
 });
 

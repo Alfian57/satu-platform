@@ -3,11 +3,11 @@
 
 # SATU Project Context
 
-SATU (Sistem Aktivitas Talenta Universitas) is a multi-institution collaboration platform for students, campus operators, and, later, recruiters. The current codebase is still a Laravel React starter; planned capabilities must not be described as already implemented.
+SATU (Sistem Aktivitas Talenta Universitas) is a collaboration and verified-talent platform for students, campus operators, and recruiters. The competition submission is the SATU product itself, not a competition-management system. The current runtime implements only part of the planned product; planned capabilities must not be described as already implemented.
 
 ## AI Entry and Source of Truth
 
-Immediately after this file, read `START_HERE.md`, then `docs/implementation/PROGRESS.md`, then only the active phase file. Do not load every phase.
+Immediately after this file, read `START_HERE.md`, then the selected GitHub issue and only the sources linked by that issue. GitHub issues and milestones are the execution source of truth.
 
 `START_HERE.md` controls work scope, not product truth. Within its referenced sources, use this precedence:
 
@@ -16,26 +16,26 @@ Immediately after this file, read `START_HERE.md`, then `docs/implementation/PRO
 3. `DESIGN.md` for global visual authority.
 4. `docs/ux/` and the matching `.impeccable/surfaces/*.md` brief for UI behavior.
 5. `docs/engineering/` for architecture, data, security, and privacy contracts.
-6. The active file in `docs/implementation/phases/` and `docs/implementation/TEST_STRATEGY.md` for execution and verification.
+6. The selected GitHub issue, `docs/implementation/ROADMAP.md`, and `docs/implementation/TEST_STRATEGY.md` for execution and verification.
 7. `docs/governance/DECISIONS.md` for accepted decisions and open gates.
 8. `docs/reference/proposal_lomba.md` is historical input, not a runtime specification.
 
 When documents conflict, the earlier source wins. Update the owning source instead of silently overriding it in code.
 
-## Active Phase Workflow
+## GitHub Issue Workflow
 
-- Work on exactly `current_phase_file` from `docs/implementation/PROGRESS.md` unless the user explicitly changes scope.
-- Check the phase prerequisites before editing. Do not skip unmet prerequisites by inventing substitute behavior.
-- Read only the phase's `Read Before Work` sources, then follow its deliverables, exclusions, verification, exit criteria, and gate.
-- Do not begin the next phase as cleanup or convenience work.
-- At a human gate, set the state to `awaiting_approval`, present inspectable evidence, and stop.
-- `docs/implementation/PROGRESS.md` is the only phase-status source. Advance it only after all exit criteria pass and any required approval is explicit.
-- Finish with the four-line report contract from `START_HERE.md`; omit file lists and raw logs unless needed to explain a failure.
+- Work on exactly one selected GitHub issue unless the issue explicitly defines a coordinated delivery slice.
+- Check `Blocked by`, gate labels, and acceptance criteria before editing. Do not invent substitute behavior for an unmet prerequisite.
+- Create a separate branch named `<type>/<issue-number>-<slug>` and a pull request that closes the issue.
+- Do not expand into adjacent issues as cleanup or convenience work.
+- At `gate:human`, `gate:external`, or `gate:conditional`, present inspectable evidence and stop until the gate is resolved.
+- Issue state, milestone, labels, linked pull request, and comments are the only task-status source. Documentation describes contracts, not task progress.
 
 ## Product Invariants
 
 - Open registration creates a normal student account only. Privileged roles are assigned through controlled workflows.
-- Campus affiliation is separate from account registration and becomes verified through an approved email domain or campus-admin review.
+- SATU does not use email in the target product. Authentication uses a private username and password. Registration and recovery verify a WhatsApp-capable phone number with OTP.
+- Campus affiliation is separate from account registration. It becomes verified through an exact NIM and verified-phone match against an imported roster, or through campus-admin review.
 - Tenant-owned data is institution-scoped in queries, policies, jobs, caches, storage, exports, and broadcasts.
 - Social Network Analysis measures collaboration opportunity and risk of exclusion. It is not a mental-health diagnosis.
 - Do not analyze message content for sentiment, psychological state, or diagnosis.
@@ -52,7 +52,7 @@ When documents conflict, the earlier source wins. Update the owning source inste
 - Prefer explicit Actions for business operations, Policies for every protected resource, Form Requests for validation/authorization, Jobs for retryable work, and Events for realtime delivery.
 - Use named Laravel routes and Wayfinder from React. Do not hardcode backend URLs.
 - Use Inertia for initial page state and commands. Use private/presence Reverb channels for workspace deltas.
-- Keep external academic, SSO, billing, and notification providers behind contracts.
+- Keep external academic, SSO, entitlement, and notification providers behind contracts. Fonnte is the initial WhatsApp provider behind an application-owned adapter and queue.
 - Preserve append-only history for validation, consent, inclusion review, and sensitive decisions.
 
 ## Database Migrations
@@ -85,9 +85,9 @@ When documents conflict, the earlier source wins. Update the owning source inste
 - Global visual change: update `DESIGN.md`.
 - Route-specific UX change: update its surface brief and relevant UX document.
 - Entity/event/permission/integration change: update the relevant engineering document.
-- Roadmap, phase, progress, or release-gate change: update `docs/implementation/`.
+- Roadmap, issue workflow, or release-gate change: update `docs/implementation/` and the owning GitHub issue or milestone.
 - Governance decision: update `docs/governance/DECISIONS.md` and security/privacy documentation.
-- Phase state or completion: update only `docs/implementation/PROGRESS.md`.
+- Task state or completion: update only the owning GitHub issue, linked pull request, and milestone.
 
 Do not close an `open` decision in `docs/governance/DECISIONS.md` by assumption.
 
@@ -99,7 +99,7 @@ Do not close an `open` decision in `docs/governance/DECISIONS.md` by assumption.
 - Run the narrowest affected test first, then formatting/static/frontend checks warranted by the change.
 - Jangan menjalankan `npm run build` kecuali pengguna memintanya secara eksplisit atau build diperlukan untuk mendiagnosis error Vite. Untuk perubahan biasa, lint, typecheck yang relevan, dan test yang terdampak sudah cukup.
 - Documentation changes must pass Prettier, internal-link review, surface-brief resolution, and `git diff --check`.
-- A phase is not complete until every verification and exit criterion in its active phase file passes.
+- An issue is not complete until every verification and acceptance criterion in its body passes.
 
 </satu-project-context>
 

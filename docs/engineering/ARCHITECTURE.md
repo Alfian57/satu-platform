@@ -2,268 +2,102 @@
 
 ## 1. Status
 
-Dokumen ini mendeskripsikan target architecture. Codebase saat ini masih Laravel React starter: authentication dasar, settings, dan placeholder dashboard. Domain SATU, MySQL production, dan Laravel Reverb belum diimplementasikan.
+Target architecture adalah Laravel 13 modular monolith, Inertia v3 React, MySQL, queue workers, Laravel Reverb, dan provider adapters. Runtime saat ini masih parsial. Issue implementasi wajib memeriksa code sebelum menyatakan komponen tersedia.
 
-## 2. Architecture Goals
-
-- Menyelesaikan core loop student dan campus dalam modular monolith.
-- Menjaga institution boundary pada HTTP, queue, broadcast, storage, dan reporting.
-- Menjadikan matching explainable serta versioned.
-- Menjadikan database source of truth dan realtime sebagai delivery mechanism.
-- Memisahkan portfolio publik dari restricted inclusion data.
-- Menyediakan adapter boundary untuk integrasi tanpa mengunci vendor.
-- Mengikuti struktur Laravel yang ada dan menghindari abstraction prematur.
-
-## 3. System Context
+## 2. System Context
 
 ```mermaid
 flowchart LR
-    Student[Student browser]
-    Campus[Campus admin browser]
-    Recruiter[Recruiter browser]
-    App[Laravel + Inertia SATU]
-    DB[(MySQL)]
-    Queue[Queue workers]
-    Reverb[Laravel Reverb]
-    Storage[Private object storage]
-    Mail[Mail provider]
-    Academic[Academic systems]
-
-    Student --> App
-    Campus --> App
-    Recruiter -. later .-> App
-    App --> DB
-    App --> Queue
-    Queue --> DB
-    App --> Storage
-    App --> Mail
-    App --> Reverb
-    Reverb --> Student
-    Reverb --> Campus
-    Queue -. adapter, later .-> Academic
+    Student --> Web[SATU Web]
+    Campus[Campus Operator] --> Web
+    Platform[Platform Admin] --> Web
+    Recruiter --> Web
+    Web --> App[Laravel Modular Monolith]
+    App --> DB[(MySQL)]
+    App --> Queue[Queue Workers]
+    App --> Reverb[Laravel Reverb]
+    Queue --> Fonnte[Fonnte API]
+    Queue --> Academic[Academic Provider Contract]
+    Recruiter --> Talent[Talent Search Projection]
+    App --> Talent
 ```
 
-## 4. Runtime Containers
+Database adalah source of truth. Reverb hanya mengirim authorized deltas setelah commit. Provider response tidak boleh langsung menjadi domain truth tanpa validation dan persistence.
 
-| Container            | Responsibility                                                       |
-| -------------------- | -------------------------------------------------------------------- |
-| Laravel web          | Session auth, authorization, validation, commands, Inertia responses |
-| Inertia React client | Page rendering, forms, local interaction, realtime event merge       |
-| MySQL                | Canonical transactional state                                        |
-| Queue worker         | Matching calculation, notifications, exports, sync, heavy analytics  |
-| Laravel Reverb       | Private/presence WebSocket delivery                                  |
-| Private storage      | Evidence, exports, and protected files                               |
-| Scheduler            | Expiry, recomputation, retention, and reconciliation                 |
+## 3. Modular Boundaries
 
-Production dapat menjalankan container terpisah untuk web, queue, scheduler, dan Reverb. Local development boleh menjalankannya melalui `composer run dev` setelah dependencies tersedia.
+Gunakan framework directories yang ada. Business capability dipisahkan melalui model, Action, Policy, Form Request, query/projection class, Job, Event, dan Notification yang eksplisit:
 
-## 5. Modular Monolith Boundaries
+- Identity dan Phone Verification
+- Institution dan Roster
+- Profile dan Skills
+- Projects, Matching, dan Teams
+- Workspace
+- Contributions dan Portfolio
+- Gamification
+- Campus Operations dan Inclusion
+- Talent
+- Academic Integration
+- Notification dan Audit
 
-Gunakan struktur Laravel yang ada: controllers, requests, actions, models, policies, jobs, events, notifications, dan enums. Jangan membuat framework internal atau base directory baru tanpa kebutuhan konkret.
+Jangan membuat base architecture folder baru tanpa approval.
 
-| Module              | Owns                                                         |
-| ------------------- | ------------------------------------------------------------ |
-| Identity & Tenancy  | Institution, membership, role, verification                  |
-| Profiles & Skills   | Student profile, taxonomy, availability, visibility          |
-| Projects & Teams    | Project lifecycle, role needs, invitations, membership       |
-| Workspace           | Task, discussion, attachment, presence-facing events         |
-| Contributions       | Submission, evidence, versions, validation                   |
-| Matching            | Score versions, runs, recommendations, feedback              |
-| Inclusion           | Restricted signals, review outcomes, audit context           |
-| Portfolio           | Portfolio entry dan audience visibility                      |
-| Campus Operations   | Review queues, report queries, integration commands          |
-| Talent Portal       | Recruiter organization, entitlement, search, contact request |
-| Platform Operations | Institution provisioning, abuse, system-level audit          |
+## 4. Request dan Page Flow
 
-Cross-module write memakai explicit Action class atau domain operation. Read composition untuk dashboard boleh menggabungkan query, tetapi tidak mengambil ownership entity lain.
+- Laravel named route menerima request.
+- Form Request menangani validation dan request-level authorization.
+- Policy melindungi setiap resource serta tenant boundary.
+- Action menjalankan business transition dalam transaction.
+- Event domain dipublikasikan after commit.
+- Inertia mengirim initial page state dan command result.
+- React memakai Wayfinder, bukan hardcoded backend URL.
 
-## 6. Request dan Page Flow
+## 5. Identity dan Authorization
 
-```mermaid
-sequenceDiagram
-    actor U as User
-    participant R as Named route
-    participant C as Controller
-    participant A as Action
-    participant D as MySQL
-    participant I as Inertia
+Laravel Fortify tetap menjadi frontend-agnostic auth backend, tetapi username field dikustomisasi menjadi private `username`. Registrasi dan recovery adalah application-owned flow berbasis verified phone dan OTP. Fortify email verification/reset flow dinonaktifkan setelah rebaseline selesai.
 
-    U->>R: Wayfinder request
-    R->>C: Route model binding
-    C->>C: Authorize + validate
-    C->>A: Execute operation
-    A->>D: Transaction
-    D-->>A: Persisted state
-    A-->>C: Result
-    C-->>I: Redirect or Inertia page
-    I-->>U: Confirmed UI state
-```
+Phone dinormalisasi ke E.164 memakai `propaganistas/laravel-phone`. SATU menghasilkan OTP, menyimpan hash, expiry, attempt count, consumed state, purpose, serta audit-safe metadata. Fonnte hanya mengirim pesan.
 
-### Rules
+Authorization memakai native Laravel Policies dan Gates. `spatie/laravel-permission` tidak menjadi baseline karena role SATU berasal dari institution/recruiter membership dan active tenant context, bukan global user role. Keputusan ini dapat ditinjau ulang hanya jika permission matrix berkembang di luar relationship-based Policy tanpa mengorbankan tenant isolation.
 
-- Frontend tidak menggunakan hardcoded backend URL.
-- Named imports Wayfinder menjadi default.
-- Form memakai Inertia `<Form>` atau existing project convention.
-- Standalone HTTP hanya untuk interaction yang tidak membutuhkan page visit dan tetap memakai typed route.
-- Deferred props selalu memiliki skeleton/empty treatment.
-- Query parameter search/filter dipertahankan di URL.
+## 6. Tenant Context
 
-## 7. Identity dan Tenant Context
+Active institution ditentukan server-side dari verified membership. Institution scope wajib diterapkan pada query, route binding, Policy, job payload, cache key, storage path, export, notification, broadcast channel, dan observability context. Platform operation harus eksplisit, diaudit, dan tidak menggunakan hidden bypass.
 
-### Authentication
+## 7. Realtime
 
-- Fortify session authentication dengan email/password.
-- Email verification wajib untuk collaboration features.
-- Registration hanya membuat user biasa; role sensitif tidak berasal dari request.
-- SSO menjadi adapter fase lanjut.
-- Login dan recovery tetap rate-limited.
+- Private channel untuk resource-scoped delta.
+- Presence channel hanya untuk active team member yang berwenang.
+- Event payload memakai allowlist, version, resource ID, occurred-at, dan actor display projection bila perlu.
+- Client menerima delta, tetapi reconciliation selalu membaca snapshot database.
+- Duplicate, out-of-order, reconnect, permission loss, dan stale state diuji.
 
-### Tenant model
+## 8. Matching dan Inclusion
 
-- `institution_memberships` menghubungkan user dengan institution dan role.
-- Active request memilih institution context dari route/object dan authorized membership, bukan header bebas.
-- Tenant-owned object membawa `institution_id`.
-- Policy memverifikasi role, membership status, object relation, dan institution match.
-- Queue payload dan broadcast event membawa identifier tenant yang cukup untuk authorization/reload, bukan sensitive snapshot.
+Matching service menerima normalized input, versioned weights, dan menghasilkan component scores serta explanation untuk empat dimensi yang disetujui.
 
-Tidak memakai database-per-tenant. Tidak mengandalkan hidden navigation sebagai authorization.
+Inclusion engine membaca collaboration graph projection, bukan message content. Engine dan UI berada di balik Laravel Pennant. Synthetic dan real activation dipisahkan. Signal diserialisasi hanya melalui restricted projection dan selalu menuju human review.
 
-## 8. Realtime Architecture
+## 9. Gamification
 
-Laravel Reverb dipasang melalui workflow broadcasting Laravel saat workspace mulai diimplementasikan.
+XP ledger append-only memakai unique source key untuk idempotency. Badge evaluator membaca approved versioned rules. Leaderboard projection dibangun per institution dan semester, menyimpan denominator, active-member rule version, cohort suppression, tie method, serta computed-at. Inclusion tidak masuk pipeline.
 
-### Channel contracts
+## 10. Talent Search
 
-| Channel                                   | Type     | Authorized audience     |
-| ----------------------------------------- | -------- | ----------------------- |
-| `projects.{projectId}`                    | Presence | Active project members  |
-| `users.{userId}`                          | Private  | User yang sama          |
-| `institutions.{institutionId}.operations` | Private  | Authorized campus admin |
+Talent memakai recruiter-safe projection terpisah dari domain model dan private portfolio. Laravel Scout database engine menjadi baseline search tanpa external infrastructure. Organization membership, verification, entitlement, candidate visibility, saved item, serta contact request tetap transactionally authorized.
 
-Channel authorization harus memeriksa institution dan membership. Existence object tidak boleh bocor melalui error response.
+## 11. Integrations dan Notifications
 
-### Event contracts
+`WhatsAppGateway` memiliki Fonnte implementation dan fake. Outbox/job menangani delivery, retry, provider message ID, callback, reconciliation, masking, serta idempotency. Gunakan Laravel HTTP Client, Notifications, Queue, dan scheduler. Jangan memakai unofficial Fonnte package.
 
-| Event                   | Minimum payload                                              |
-| ----------------------- | ------------------------------------------------------------ |
-| `TaskUpdated`           | task id, project id, version, changed fields, actor summary  |
-| `MessageCreated`        | message id, project id, author summary, safe content payload |
-| `ContributionSubmitted` | contribution id, project id, status, version                 |
-| `ContributionValidated` | contribution id, status, version, reviewer-safe summary      |
-| `MemberPresenceChanged` | user-safe presence identity                                  |
+`AcademicGateway` memiliki sandbox implementation dan provider implementation di masa depan. Sync job membawa internal idempotency key, mapping version, external reference, status history, retry class, serta reconciliation metadata.
 
-Payload tidak memuat inclusion signal, private audit reason, secret, signed storage credential, atau data tenant lain.
+## 12. Libraries
 
-### Delivery rules
+- Existing: Laravel Fortify, Inertia, Wayfinder, Reverb/Echo, Pest, Tailwind.
+- Approved fit-first: Laravel Pennant, Laravel Scout database engine, `propaganistas/laravel-phone`, `spatie/simple-excel`, `@tanstack/react-table`, Recharts, Cytoscape.js, `@dnd-kit/react`, dan `@axe-core/playwright`.
+- Setiap issue menyebut install command, compatibility, license review, alasan, dan fake/test strategy. Dependency baru tetap memerlukan approval sebagaimana project rule.
 
-1. Authorize dan validate command.
-2. Commit database transaction.
-3. Dispatch queued broadcast after commit.
-4. Client merge berdasarkan object id dan version.
-5. Reconnect memicu partial reload/reconciliation.
+## 13. Operations
 
-Broadcast failure tidak membatalkan transaction utama. Client yang tidak terhubung tetap memperoleh state benar pada refresh.
-
-## 9. Matching Architecture
-
-Matching adalah deterministic, versioned scoring service.
-
-```text
-match_score =
-    weight_skill_fit * skill_fit
-  + weight_project_need * project_need
-  + weight_availability * availability
-  + weight_connectivity_opportunity * connectivity_opportunity
-```
-
-Formula di atas adalah shape, bukan bobot final.
-
-### Contract
-
-- Input snapshot dapat direproduksi atau ditelusuri.
-- Output menyimpan score version, component scores, dan explanation keys.
-- UI hanya menerima alasan yang aman dan relevan.
-- Feedback “not relevant” tidak langsung mengubah model production tanpa review.
-- Recalculation dijalankan melalui queue dan idempotent run.
-- Tidak ada sentiment analysis chat atau mental-health classification.
-
-Future ML harus hidup di belakang contract yang sama dan tidak boleh menghapus explainability, audit, evaluation, atau rollback.
-
-## 10. Data dan Storage
-
-- Production database: MySQL.
-- Local/test SQLite boleh digunakan hanya bila migration dan behavior tetap kompatibel.
-- Evidence menggunakan private disk; download melalui short-lived authorized response.
-- Public portfolio memakai derivative atau explicitly published asset, bukan membuka file private.
-- File validation memeriksa size, extension, MIME, dan ownership.
-- Large export dibuat oleh queue dan memiliki expiring download.
-
-## 11. Queue dan Scheduler
-
-### Queue jobs
-
-- Recompute recommendation.
-- Generate inclusion candidate signal setelah governance gate.
-- Send notification.
-- Generate data export.
-- Sync verified credit melalui integration adapter.
-- Process/scan evidence bila layanan tersedia.
-
-Setiap job mendefinisikan timeout, retry, idempotency, failure reporting, dan tenant context. External integration memakai contract dan fake pada test.
-
-### Scheduled work
-
-- Expire invitation dan contact request.
-- Reconcile stuck integration.
-- Refresh recommendation yang stale.
-- Apply retention policy.
-- Prune expired exports.
-
-Scheduler memakai overlap protection untuk task yang tidak boleh berjalan bersamaan.
-
-## 12. Integration Boundaries
-
-### Academic integration
-
-`AcademicActivityGateway` adalah conceptual contract:
-
-- Submit verified activity dengan idempotency key.
-- Query status bila provider mendukung.
-- Map external reference.
-- Return typed success/retryable/permanent failure.
-
-Endpoint dan credential tidak ditentukan sampai institution pilot dipilih.
-
-### Recruiter billing
-
-Billing provider berada di belakang entitlement contract. Search authorization bergantung pada entitlement internal, bukan callback provider pada setiap request.
-
-## 13. Observability
-
-- Structured log memuat request/correlation id, institution id, actor id, dan operation; sensitive content dikecualikan.
-- Audit log adalah domain record terpisah dari application log.
-- Metrics minimum: request latency/error, queue age/failure, Reverb connections/messages, database slow query, storage failure, matching run duration.
-- Alert untuk cross-tenant authorization anomaly, queue backlog, broadcast failure spike, dan integration failure.
-- Reverb membutuhkan process supervision, allowed origins, TLS termination, dan restart strategy.
-
-## 14. Deployment Stages
-
-| Stage      | Required services                                                        |
-| ---------- | ------------------------------------------------------------------------ |
-| Local      | PHP, SQLite/MySQL, Vite; Reverb/queue saat feature terkait               |
-| CI         | MySQL-compatible test path, queue/broadcast fakes, browser environment   |
-| Demo       | MySQL, queue worker, Reverb, private storage, synthetic data             |
-| Pilot      | Managed backups, monitoring, incident process, DPIA gates, retention     |
-| Production | Horizontal readiness, Redis as required, Reverb scaling, recovery drills |
-
-Provider deployment tetap terbuka. Arsitektur tidak boleh mengklaim high availability sebelum diuji.
-
-## 15. Architecture Acceptance
-
-- Tidak ada tenant-owned query tanpa scope dan policy.
-- Database refresh memulihkan state walaupun realtime gagal.
-- Match output dapat dijelaskan dan ditelusuri ke version.
-- Recruiter projection tidak memuat restricted fields.
-- Sensitive file tidak dapat diakses dengan path tebakan.
-- Queue dan integration command idempotent.
-- Critical operations memiliki audit entry.
+Queue harus memiliki retry class, timeout, backoff, idempotency, dead-letter handling, dan dashboard/runbook. Log memakai request/tenant/job correlation tanpa phone, OTP, token, message body, private evidence, atau inclusion detail. Backup, restore, provider degradation, and incident response diuji sebelum production gate.

@@ -1,148 +1,61 @@
 # Content dan Accessibility SATU
 
-## 1. Voice
+## Voice
 
-SATU berbicara profesional, jelas, dan mendukung tindakan. Copy tidak hiperbolis, tidak menilai karakter pengguna, dan tidak menyembunyikan akibat privacy.
+Gunakan bahasa Indonesia yang jelas, tenang, spesifik, dan berorientasi pemulihan. Kata teknis English boleh dipakai jika menjadi istilah engineering atau product yang lebih tepat.
 
-### Gunakan
+Gunakan: `Perlu ditinjau`, `Belum cocok dengan roster`, `Peluang kolaborasi`, `Kontribusi terverifikasi`, `Data synthetic`.
 
-- “Peluang ini cocok dengan 3 skill di profilmu.”
-- “Afiliasi kampusmu sedang ditinjau.”
-- “Bukti perlu diperbaiki sebelum dapat divalidasi.”
-- “Kamu mengendalikan apakah item ini terlihat oleh recruiter.”
-- “Kami belum memiliki cukup data untuk memberikan rekomendasi.”
+Hindari pada student dan recruiter UI: `rentan`, `terisolasi`, `bermasalah`, diagnosis, hidden score, atau janji dampak yang belum terbukti.
 
-### Hindari
+Jangan gunakan Unicode em dash pada UI atau dokumentasi first-party.
 
-- “Kami mendeteksi kamu kesepian.”
-- “Mahasiswa rentan.”
-- “AI memilih tim terbaik.”
-- “Profilmu buruk/tidak menarik.”
-- “Kesalahan tidak diketahui.”
-- “Berhasil!” tanpa menyebut apa yang berubah.
+## Canonical Terminology
 
-## 2. Canonical Terminology
+| Konsep                 | Istilah UI                                                 |
+| ---------------------- | ---------------------------------------------------------- |
+| Institution membership | Afiliasi kampus                                            |
+| Institution roster     | Roster mahasiswa                                           |
+| Verified phone         | Nomor WhatsApp terverifikasi                               |
+| Contribution review    | Validasi kontribusi                                        |
+| Inclusion signal       | Sinyal peluang kolaborasi, hanya pada restricted campus UI |
+| Recruiter entitlement  | Hak akses Talent Portal                                    |
+| Synthetic data         | Data synthetic                                             |
+| Contact request        | Permintaan kontak                                          |
+| Leaderboard            | Peringkat                                                  |
 
-| Concept                | Label Indonesia        | Identifier               |
-| ---------------------- | ---------------------- | ------------------------ |
-| Project                | Project                | `project`                |
-| Team                   | Tim                    | `team`                   |
-| Skill                  | Skill                  | `skill`                  |
-| Task                   | Tugas                  | `task`                   |
-| Contribution           | Kontribusi             | `contribution`           |
-| Evidence               | Bukti                  | `evidence`               |
-| Validation             | Validasi               | `validation`             |
-| Institution membership | Afiliasi kampus        | `institution_membership` |
-| Match explanation      | Alasan kecocokan       | `match_explanation`      |
-| Inclusion signal       | Sinyal partisipasi     | `inclusion_signal`       |
-| Portfolio visibility   | Visibilitas portofolio | `portfolio_visibility`   |
+## Status Copy
 
-Jangan berganti-ganti antara “proyek” dan “project” di dalam satu surface. Product memilih “Project” sebagai label UI; narasi umum boleh menggunakan “proyek” jika bukan label objek.
+Status selalu berisi keadaan, akibat, dan tindakan berikutnya bila tersedia. Warna tidak boleh menjadi satu-satunya pembeda.
 
-### Aturan Penulisan
+Contoh: `Belum cocok dengan roster. Afiliasi Anda masuk peninjauan kampus. Anda tetap dapat melengkapi profil.`
 
-- Gunakan “Direview oleh” sebagai label pihak yang melakukan review.
-- Jangan gunakan karakter Unicode em dash pada copy produk atau dokumentasi first-party. Gunakan titik, koma, titik dua, atau tanda kurung sesuai hubungan antarkalimat.
-- Hindari mencampur istilah teknis bahasa Inggris ke dalam kalimat pengguna jika padanan Indonesia yang jelas tersedia.
+## Error Formula
 
-## 3. Status Copy
+`Apa yang gagal + apa yang tetap aman + tindakan pemulihan`.
 
-| Identifier         | UI label              | Guidance                                                  |
-| ------------------ | --------------------- | --------------------------------------------------------- |
-| `unverified`       | Belum terverifikasi   | Jelaskan feature yang tetap tersedia                      |
-| `pending`          | Menunggu tinjauan     | Tampilkan siapa/apa yang meninjau dan estimasi bila nyata |
-| `verified`         | Terverifikasi         | Tampilkan provenance                                      |
-| `suspended`        | Akses ditangguhkan    | Tampilkan recovery atau contact path                      |
-| `request_revision` | Perlu diperbaiki      | Sertakan actionable reason                                |
-| `rejected`         | Tidak disetujui       | Bedakan final dan appealable                              |
-| `reconnecting`     | Menghubungkan kembali | Jangan menyatakan data hilang                             |
-| `stale`            | Ada perubahan terbaru | Tawarkan refresh/reconcile                                |
+Jangan mengekspos token, stack trace, provider payload, keberadaan account lain, atau detail authorization.
 
-## 4. Error Message Formula
+## Accessibility Target
 
-Error menjawab:
+- WCAG 2.2 AA.
+- Landmark, heading, label, description, status, dan error semantics yang benar.
+- Semua flow dapat diselesaikan dengan keyboard tanpa time trap.
+- Visible focus, logical focus order, skip link, dan focus restoration.
+- Touch target memadai serta pointer cursor untuk enabled interactive target.
+- Disabled target memakai not-allowed cursor dan alasan yang dapat ditemukan.
+- Contrast, zoom 200%, reflow, screen reader, dan high-content-length diuji.
+- `prefers-reduced-motion` dihormati. Tidak ada essential information yang bergantung pada animation.
+- Live region dipakai hemat untuk OTP status, save result, queue result, dan realtime delta penting.
 
-1. Apa yang tidak berhasil?
-2. Data apa yang tetap aman/tersimpan?
-3. Apa yang dapat dilakukan sekarang?
-4. Apakah dukungan dibutuhkan?
+## Data Visualization
 
-Contoh:
+Graph, chart, dan leaderboard menyediakan text/table equivalent, description, selected state, keyboard navigation yang masuk akal, dan tidak mengandalkan warna. Cohort suppression, denominator, time window, synthetic status, dan update time harus terlihat.
 
-> Bukti belum terkirim karena koneksi terputus. File dan deskripsimu masih ada di halaman ini. Hubungkan kembali lalu pilih “Coba kirim lagi”.
+## Review Checklist
 
-## 5. Accessibility Target
-
-Target product adalah WCAG 2.2 Level AA.
-
-### Perceivable
-
-- Contrast memenuhi target untuk text, icon penting, focus, dan component state.
-- Color tidak menjadi satu-satunya indikator.
-- Chart memiliki summary dan data table.
-- Image evidence memiliki description atau filename yang bermakna.
-- Zoom 200% dan text spacing tidak menghilangkan fungsi.
-
-### Operable
-
-- Semua task dapat diselesaikan dengan keyboard.
-- Focus order mengikuti reading/task order.
-- Sticky header, dialog, dan toast tidak menutup focus.
-- Target interaktif memenuhi minimum yang layak untuk touch.
-- Target klik atau tap yang aktif menggunakan pointer cursor. Target nonaktif menggunakan not-allowed cursor.
-- Drag-and-drop task memiliki button/menu alternative.
-- Motion dapat dikurangi.
-
-### Understandable
-
-- Navigation dan labels konsisten.
-- Form memiliki visible label, instruction, dan error association.
-- Redundant data entry dihindari.
-- Destructive action menjelaskan akibat.
-- Authentication tidak mengandalkan puzzle kognitif.
-
-### Robust
-
-- Semantic HTML menjadi default.
-- Heading hierarchy dan landmark benar.
-- Icon-only control memiliki accessible name.
-- Live region hanya digunakan untuk update penting.
-- Realtime list update tidak mencuri focus.
-
-## 6. Screen Reader dan Realtime
-
-- New message tidak dibacakan seluruhnya secara otomatis saat pengguna bekerja di area lain.
-- Status reconnect boleh memakai polite live region.
-- Validation outcome yang dipicu pengguna diumumkan.
-- Presence changes tidak membanjiri announcements.
-- Ledger insertion mempertahankan focus dan menyediakan “Ada pembaruan” bila update besar.
-
-## 7. Localization Readiness
-
-- Jangan menyusun sentence dari potongan string.
-- Gunakan named placeholders.
-- Date/time memakai locale dan timezone institution/user.
-- Identifier tidak ditampilkan sebagai label mentah.
-- Layout mengakomodasi copy setidaknya 30% lebih panjang.
-- Copy sensitif ditinjau manusia sebelum diterjemahkan.
-
-## 8. Privacy Copy
-
-Sebelum mengubah visibility, jelaskan:
-
-- Data yang akan terlihat.
-- Audience.
-- Kapan perubahan berlaku.
-- Cara membatalkan.
-
-Consent tidak digabung dengan Terms yang tidak terkait. Withdrawal tidak boleh dibuat lebih sulit daripada pemberian consent.
-
-## 9. Review Checklist
-
-- Apakah copy memberi label pada orang, bukan menjelaskan state?
-- Apakah “AI” digunakan untuk menutupi mekanisme?
-- Apakah error memberi recovery?
-- Apakah status memiliki text selain color?
-- Apakah pengguna tahu audience data?
-- Apakah synthetic evidence ditandai?
-- Apakah focus dan announcements tetap terkendali saat realtime update?
+- Bahasa tidak memberi stigma dan tidak mengklaim hasil yang belum terbukti.
+- Primary action serta recovery dapat ditemukan.
+- Empty, loading, error, offline, stale, forbidden, dan destructive state tersedia bila relevan.
+- Screen reader mengumumkan perubahan penting tanpa noise.
+- Phone dan NIM tidak muncul pada copy, screenshot, log, atau projection yang tidak perlu.

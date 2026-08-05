@@ -1,0 +1,103 @@
+name: Task SATU
+description: Task implementasi, UX, quality, documentation, governance, atau infrastructure.
+title: '[Area] '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gunakan bahasa Indonesia untuk product context. Technical term English diperbolehkan. Jangan menghapus section wajib.
+  - type: textarea
+    id: background
+    attributes:
+      label: Background
+      description: Jelaskan problem, current state, actor, dan alasan task diperlukan.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Expected Outcome
+      description: Jelaskan inspectable outcome, bukan daftar aktivitas.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Gunakan checklist yang observable dan testable.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Sebutkan test, lint, typecheck, audit, screenshot, atau review yang harus lulus.
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of Scope
+      description: Nyatakan pekerjaan yang sengaja tidak dilakukan oleh issue ini.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and Handoff
+      description: Pisahkan Blocked by, dapat paralel, dan handoff berikutnya.
+      placeholder: |
+        - Blocked by: #...
+        - Dapat paralel dengan: #...
+        - Handoff: ...
+    validations:
+      required: true
+  - type: textarea
+    id: library
+    attributes:
+      label: Library/Package
+      description: Sebut exact package, install command, reason, compatibility, license review, dan fake/test strategy. Jika tidak perlu, jelaskan framework-native baseline.
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Tautkan owning Markdown documents dan surface brief jika UI.
+      placeholder: |
+        - [PRD](https://github.com/Alfian57/satu-platform/blob/main/docs/product/PRD.md)
+    validations:
+      required: true
+  - type: textarea
+    id: pull_request
+    attributes:
+      label: Pull Request
+      description: Branch, commit, Closes, evidence, dan review requirement.
+      value: |
+        - Branch: `<type>/<issue-number>-<slug>` dari `main` terbaru.
+        - Satu issue, satu branch, satu pull request. Buka sebagai draft.
+        - Gunakan Conventional Commit dan cantumkan `Closes #<issue>`.
+        - Gunakan **Squash and merge** saja setelah required CI lulus dan seluruh conversation selesai.
+        - Contributor non-owner memerlukan minimal satu approval. Repository owner boleh melakukan self-review dan merge sebagai admin tanpa approval reviewer tambahan.
+        - Sertakan test evidence, screenshot UI bila relevan, serta migration/security/rollback note.
+    validations:
+      required: true
+  - type: textarea
+    id: metadata
+    attributes:
+      label: Metadata
+      description: Milestone, legacy phase, owner/support role, priority, size, gate, risk, dan aturan review owner/admin.
+      placeholder: |
+        - Milestone: M...
+        - Legacy phase: N/A
+        - Owner role: ...
+        - Supporting roles: ...
+        - Priority: P...
+        - Size: S/M/L
+        - Gate: none/human/external/conditional
+        - Risk: low/medium/high
+    validations:
+      required: true

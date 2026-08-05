@@ -226,7 +226,9 @@ test('keeps dashboard metadata and evidence affordances semantically honest', fu
 
     expect($rail)
         ->toContain('data-test="dashboard-recommendation-marker"')
-        ->toContain('rounded-full bg-accent text-primary')
+        ->toContain('rounded-full')
+        ->toContain('bg-accent')
+        ->toContain('text-primary')
         ->not->toContain('aria-checked');
 
     expect($notice)

@@ -2,77 +2,81 @@
 
 <!-- impeccable:product-schema 1 -->
 
-## Platform
+## Identitas Produk
 
-web
+SATU adalah Sistem Aktivitas Talenta Universitas. Produk yang diajukan pada perlombaan adalah platform SATU, bukan sistem untuk mengelola perlombaan.
 
-## Users
+SATU membantu mahasiswa menemukan peluang kolaborasi, membentuk tim, bekerja bersama, memperoleh validasi kampus atas kontribusi, membangun portofolio, dan memilih apakah profil profesionalnya dapat ditemukan recruiter. Kampus memperoleh alat operasi untuk memverifikasi afiliasi, meninjau kontribusi, memahami peluang keterlibatan, dan menyinkronkan kredit kegiatan. Recruiter memperoleh Talent Portal yang hanya menampilkan proyeksi data yang diizinkan mahasiswa.
 
-Pengguna utama adalah mahasiswa aktif yang mencari rekan satu tim dan peluang untuk berpartisipasi dalam proyek kolaboratif non-akademik, terutama mahasiswa dengan jaringan sosial terbatas yang berisiko terus terlewat dari kesempatan tersebut.
+## Batas Rilis
 
-Pengguna institusional adalah staf kemahasiswaan dan manajemen perguruan tinggi yang mengawasi partisipasi, memvalidasi aktivitas, serta menindaklanjuti indikator kerentanan sosial. Pengguna eksternal adalah perekrut perusahaan yang mencari kandidat berdasarkan rekam jejak keterampilan dan proyek yang telah divalidasi.
+Rilis perlombaan mencakup seluruh kapabilitas proposal kecuali bagian Bab 4.2 yang dinyatakan sebagai pengembangan lanjutan. Implementasi awal beroperasi pada satu kampus pilot, tetapi seluruh data tenant-owned tetap institution-scoped agar ekspansi lintas institusi tidak memerlukan perubahan model keamanan.
 
-Registrasi terbuka untuk mahasiswa, tetapi afiliasi kampus memiliki status terpisah. Afiliasi baru dianggap terverifikasi setelah alamat email cocok dengan domain institusi yang disetujui atau setelah mendapat persetujuan admin kampus.
+Target rilis meliputi:
 
-## Product Purpose
+- identity berbasis private username, password, dan verifikasi nomor WhatsApp;
+- afiliasi kampus melalui exact match NIM dan verified phone pada roster, dengan manual review sebagai recovery;
+- profil, skill, availability, proyek, explainable matching, pembentukan tim, dan realtime workspace;
+- kontribusi yang divalidasi langsung oleh campus reviewer, portfolio, XP, badge, dan hybrid leaderboard;
+- campus operations dan Social Network Analysis yang production-ready di balik feature flag;
+- Talent Portal dengan internal entitlement, tanpa billing provider atau harga produksi;
+- academic integration melalui adapter, sandbox, mapping, dan operasi sync;
+- public landing dan interactive synthetic demo yang tidak membuat klaim hasil pilot.
 
-SATU (Sistem Aktivitas Talenta Universitas) adalah ekosistem kolaborasi digital yang membantu mahasiswa menemukan tim, mengerjakan proyek bersama, membangun portofolio keterampilan tervalidasi, dan memperoleh pengakuan atas aktivitas non-akademik.
+## Pengguna dan Kewenangan
 
-Produk ini bertujuan memperluas akses terhadap kolaborasi di luar lingkaran pertemanan yang sudah terbentuk, memberi kampus visibilitas lebih dini terhadap pola keterasingan sosial, mengurangi administrasi pencatatan kegiatan, dan menghubungkan rekam jejak mahasiswa dengan peluang karier.
+- Student: registrasi terbuka, mengelola identitas, afiliasi, profil, proyek, tim, kontribusi, portfolio, dan consent.
+- Campus admin/reviewer: diprovisikan melalui workflow terkontrol dan undangan WhatsApp. Tidak dapat diperoleh melalui registrasi terbuka.
+- Recruiter: berada dalam recruiter organization yang diverifikasi platform dan memerlukan internal entitlement aktif.
+- Platform admin: menyetujui institution, mengundang campus admin, memverifikasi recruiter organization, dan menjalankan operasi lintas tenant yang diaudit.
 
-Keberhasilan sosial diukur melalui peningkatan partisipasi lintas program studi dan penurunan jumlah mahasiswa yang terpinggirkan dari proyek kolaboratif. Proposal menetapkan target penurunan tingkat isolasi pengguna sebesar 30% pada akhir kuartal keempat; target ini belum merupakan hasil yang telah tervalidasi.
+Username hanya dipakai untuk login dan tidak tampil pada profil, portfolio, log aktivitas publik, atau Talent Portal. SATU tidak memakai email pada target product flow.
 
-## Positioning
+## Prinsip Produk
 
-SATU memadukan ruang kerja proyek dengan Social Network Analysis dan pencocokan tim berbasis keterampilan. Rekomendasi dirancang untuk memberi prioritas secara senyap kepada mahasiswa dengan konektivitas rendah tanpa mengekspos atau memberi stigma pada status kerentanannya.
+1. Perluas peluang tanpa stigma.
+2. Kontribusi terverifikasi lebih penting daripada popularitas.
+3. Privacy boundary terlihat dan dapat dikendalikan pengguna.
+4. Matching transparan, versioned, dan dapat dijelaskan.
+5. Analitik memberi bahan review manusia, bukan keputusan atau diagnosis otomatis.
+6. Planned, synthetic, sandbox, dan production data harus dibedakan dengan jelas.
 
-Rekam jejak tugas dan kontribusi proyek direncanakan dapat divalidasi oleh institusi serta disinkronkan menjadi kredit kegiatan non-akademik. Portal talenta kemudian memberi perusahaan akses hanya ke portofolio profesional yang diizinkan mahasiswa, bukan ke data analitik sosial atau psikologis.
+## Matching dan Inclusion
 
-Social Network Analysis pada SATU mengukur peluang keterlibatan dan risiko eksklusi kolaboratif. Hasilnya bukan diagnosis kesehatan mental, tidak boleh digunakan untuk memberi label psikologis, dan tidak boleh menghasilkan keputusan merugikan secara otomatis.
+Matching mendukung tepat empat dimensi: `skill_fit`, `project_need`, `availability`, dan `connectivity_opportunity`. Score version, input, bobot, dan alasan utama harus dapat diaudit.
 
-## Operating Context
+Social Network Analysis mengukur opportunity untuk kolaborasi dan risiko eksklusi dari metadata aktivitas yang sah. SATU tidak menganalisis isi pesan untuk sentiment, kondisi psikologis, atau diagnosis. Inclusion signal hanya dapat dilihat reviewer yang berwenang. Signal tidak pernah tampil kepada student, teammate, atau recruiter dan tidak digunakan dalam leaderboard.
 
-Alur mahasiswa dimulai dari autentikasi, penyusunan profil keterampilan, eksplorasi proyek, dan rekomendasi rekan satu tim. Tim bekerja melalui ruang kerja bersama yang mencakup pengelolaan tugas, dokumen bukti kerja, percakapan tekstual, tenggat, dan apresiasi antarrekan. Penyelesaian tanggung jawab menghasilkan poin pengalaman, lencana keterampilan, dan rekam jejak portofolio.
+Engine dan UI inclusion dapat diselesaikan secara production-ready di balik Laravel Pennant. Demonstrasi menggunakan data synthetic. Aktivasi terhadap data nyata memerlukan DPIA, lawful basis, retention, notice, dan human governance yang disetujui.
 
-Staf kampus memantau partisipasi, memvalidasi pencapaian non-akademik, dan menjadi satu-satunya pihak yang berwenang menindaklanjuti indikator kerentanan sosial. Perekrut mencari kandidat melalui filter keterampilan dan riwayat penyelesaian proyek, lalu dapat mengirimkan peluang magang kepada kandidat.
+## Gamification
 
-Peluncuran awal direncanakan sebagai pilot selama satu semester di satu institusi mitra sebelum ekspansi lintas kampus. Model bisnis yang diusulkan adalah B2B2C: mahasiswa tidak dikenai biaya, sementara perusahaan membayar akses berjenjang ke Talent Portal.
+XP hanya berasal dari kontribusi yang telah divalidasi campus reviewer dan disimpan dalam append-only ledger. Badge memiliki taxonomy dan versioned rule.
 
-## Capabilities and Constraints
+Hybrid leaderboard terdiri dari:
 
-- Ruang lingkup awal terbatas pada kegiatan kelompok kolaboratif non-akademik, seperti kompetisi bisnis dan penelitian mahasiswa.
-- Sistem akademik formal dan nilai indeks prestasi tidak menjadi input atau keluaran penilaian produk.
-- Analitik sosial menggunakan metadata graf dari aktivitas kolaborasi di dalam aplikasi. Isi percakapan tidak dianalisis untuk sentimen, kondisi psikologis, atau diagnosis.
-- Pencocokan tim menggunakan `skill_fit`, `project_need`, `availability`, dan `connectivity_opportunity`. Versi skor dan alasan utama harus dapat dijelaskan serta diaudit.
-- Social Network Analysis yang diusulkan menggunakan metrik seperti _degree centrality_ untuk mendeteksi pengguna dengan konektivitas rendah.
-- Gamifikasi mengubah penyelesaian tugas menjadi poin pengalaman, lencana keterampilan, portofolio, dan kredit kegiatan non-akademik: bukan nilai akademik.
-- Akses diatur dengan Role-Based Access Control. Data portofolio harus dipisahkan dari data analitik sosial, dan perekrut tidak boleh mengakses indikator kerentanan atau data kesehatan mental.
-- Mahasiswa mengendalikan visibilitas portofolionya di Talent Portal dan harus menerima penjelasan serta persetujuan tata kelola data ketika mendaftar.
-- Produk production dirancang untuk banyak institusi, tetapi increment pertama menjalankan satu kampus di atas model data yang tetap institution-aware.
-- Mahasiswa dapat menggunakan fitur umum sebelum afiliasinya terverifikasi, tetapi kredit kegiatan dan portofolio terverifikasi membutuhkan afiliasi `verified`.
-- Integrasi sistem akademik, portal perusahaan berbayar, dan eskalasi ke layanan konseling masih merupakan kapabilitas yang direncanakan dan memerlukan validasi teknis, institusional, etis, dan legal.
-- Institusi pilot, aturan validasi kontribusi, sumber kebenaran untuk kredit kegiatan, periode retensi, harga paket perusahaan, dan bentuk integrasi akademik masih menjadi keputusan terbuka.
+- program studi dan tim, aktif secara default;
+- individual, hanya untuk student yang melakukan opt-in;
+- periode per semester;
+- score program studi atau tim berupa rata-rata verified XP per active member;
+- minimum cohort lima anggota untuk publikasi;
+- tie menghasilkan shared rank;
+- inclusion signal dan `connectivity_opportunity` tidak menjadi input score.
 
-## Brand Commitments
+Leaderboard adalah surface pendukung, bukan pusat identitas visual atau nilai manusia.
 
-Nama produk yang ditetapkan dalam proposal adalah **SATU**, kependekan dari **Sistem Aktivitas Talenta Universitas**. Bahasa produk harus profesional, jelas, inklusif, dan menghindari pelabelan mahasiswa sebagai terisolasi, rentan, atau bermasalah di antarmuka yang mereka gunakan maupun di hadapan perekrut.
+## Notification dan Integrasi
 
-## Evidence on Hand
+Notification center di dalam aplikasi adalah sumber notifikasi canonical. WhatsApp digunakan untuk OTP, invitation, deadline atau revision penting, contact request, dan security event sesuai preference serta purpose. Fonnte adalah provider awal melalui backend adapter, queue, outbox, status callback, retry, dan audit. Token tidak boleh masuk browser atau log.
 
-- [`docs/reference/proposal_lomba.md`](docs/reference/proposal_lomba.md) memuat latar belakang masalah, tujuan, ruang lingkup, target pengguna, alur produk, rancangan kapabilitas, model bisnis, risiko privasi, serta target dampak.
-- Proposal menyebut data eksternal dari Active Minds (2024), Higher Education Policy Institute (2023), University of California (2024), dan National Center for Biotechnology Information (2024). Klaim dan angka tersebut perlu diverifikasi terhadap sumber primer sebelum digunakan sebagai bukti publik.
-- Belum ada hasil pilot, data penggunaan, testimoni mahasiswa, pelanggan kampus atau perusahaan yang dikonfirmasi, studi kasus, maupun bukti pencapaian target dampak. Materi produk berikutnya tidak boleh mengarang bukti tersebut.
+Academic integration memakai contract dan sandbox adapter. Koneksi API kampus nyata adalah external gate. Talent Portal memakai internal entitlement. Billing provider, package pricing, dan pembayaran bukan scope rilis.
 
-## Product Principles
+## Truth dan Evidence
 
-1. Perluas kesempatan tanpa memberi stigma: intervensi harus membuka akses kolaborasi tanpa mengungkap status kerentanan mahasiswa.
-2. Kontribusi nyata lebih penting daripada popularitas: pencocokan, pengakuan, dan portofolio bertumpu pada keterampilan serta pekerjaan yang dapat divalidasi.
-3. Privasi menentukan batas produk: portofolio profesional dan analitik sosial harus dipisahkan secara teknis dan berdasarkan kewenangan.
-4. Institusi memvalidasi, mahasiswa tetap memegang kendali: kampus mengesahkan rekam aktivitas, sementara mahasiswa menentukan visibilitas data kariernya.
-5. Dampak harus terukur dan dapat diaudit: keberhasilan dinilai melalui partisipasi, inklusi lintas program studi, efisiensi administrasi, dan hasil karier yang benar-benar tercatat.
+Repository saat ini baru mengimplementasikan sebagian visual authority dan identity/tenancy berbasis email. Rebaseline username, WhatsApp, roster, gamification, Talent Portal, academic integration, dan landing masih planned sampai issue terkait selesai.
 
-## Accessibility & Inclusion
+Tidak ada pelanggan, harga, testimoni, hasil pilot, benchmark dampak, atau penurunan eksklusi yang telah terbukti. Semua demonstration dataset harus diberi label synthetic. Proposal pada `docs/reference/proposal_lomba.md` adalah input historis, bukan runtime specification.
 
-Produk harus dapat digunakan mahasiswa dengan jaringan sosial terbatas tanpa membuat mereka terlihat atau merasa ditandai sebagai kelompok rentan. Rekomendasi dan pesan sistem harus menjaga martabat pengguna, menjelaskan penggunaan data secara mudah dipahami, dan menyediakan kendali privasi yang nyata.
+## Accessibility
 
-Standar aksesibilitas formal, kebutuhan teknologi bantu, bahasa antarmuka, serta proses pengujian dengan pengguna disabilitas belum ditetapkan dan tetap menjadi keputusan terbuka.
+Semua surface menargetkan WCAG 2.2 AA, keyboard operation, visible focus, reduced motion, semantic status, responsive behavior, dan copy Indonesia yang tidak memberi stigma. Istilah seperti rentan, terisolasi, atau diagnosis mental tidak boleh muncul pada UI student atau recruiter.

@@ -26,7 +26,7 @@ test('onboarding uses the SATU enrollment ledger and Wayfinder contract', functi
         ->toContain('data-test="onboarding-error-summary"')
         ->toContain('data-test="membership-outcome-announcement"')
         ->toContain('aria-live="polite"')
-        ->toContain('errorSummary.current?.focus()')
+        ->toContain('summary?.focus()')
         ->toContain("useForm<{ institution_id: number | '' }>(")
         ->toContain("'onboarding-affiliation'")
         ->toContain('onNetworkError:')
@@ -43,7 +43,7 @@ test('onboarding uses the SATU enrollment ledger and Wayfinder contract', functi
         ->toContain('cursor-pointer')
         ->toContain('disabled:cursor-not-allowed')
         ->not->toContain('href="/')
-        ->not->toContain('—');
+        ->not->toContain("\u{2014}");
 
     expect(onboardingUiProjectFile('resources/js/components/ui/alert.tsx'))
         ->toContain('bg-correction-subtle')

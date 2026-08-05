@@ -1,5 +1,5 @@
 ---
-version: 1
+version: 2
 slug: 'route-campus-inclusion'
 primary_target: 'route:/campus/inclusion'
 related_targets: ['route:/campus/reports']
@@ -25,6 +25,7 @@ Mencakup restricted queue, explanation, recent collaboration context, acknowledg
 
 ## States and Ranges
 
+- Feature disabled dan synthetic-demo-only.
 - Insufficient data: tidak membuat signal.
 - New, acknowledged, dismissed, outreach recorded, expired.
 - Data artifact, recently joined, no available project, repeated low opportunity.
@@ -36,4 +37,4 @@ Reviewer melihat “why this appeared” dan uncertainty sebelum action. Outreac
 
 ## Constraints and Open Decisions
 
-DPIA, lawful basis, minimum sample, retention, reviewer role, dan escalation policy harus selesai sebelum data nyata. Recruiter dan student shared props tidak pernah memuat signal.
+DPIA, lawful basis, minimum sample, retention, reviewer role, dan support policy harus selesai sebelum data nyata. Laravel Pennant memisahkan disabled, synthetic, dan approved real activation. Recruiter dan student shared props tidak pernah memuat signal.

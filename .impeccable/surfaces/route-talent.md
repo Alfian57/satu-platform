@@ -1,40 +1,48 @@
 ---
-version: 1
+version: 2
 slug: 'route-talent'
 primary_target: 'route:/talent'
-related_targets: ['route:/talent/candidates/{user}']
+related_targets:
+    [
+        'route:/talent/candidates/{candidate}',
+        'route:/talent/saved',
+        'route:/talent/contacts',
+    ]
 ---
 
-# Talent Portal
+# Talent Portal dan Student Contact Response
 
 ## Job and Audience
 
-Verified recruiter mencari kandidat berdasarkan skill dan verified contribution, lalu meminta kontak dengan persetujuan student. Mode: **Operate**.
+Verified recruiter ingin mencari kandidat dari verified evidence, menyimpan kandidat, dan meminta kontak. Student ingin mengendalikan discoverability dan setiap contact handoff. Mode: **Operate**.
 
 ## Outcome and Proof
 
-Recruiter menemukan kandidat relevan, memahami provenance, menyimpan kandidat, dan mengirim contact request tanpa memperoleh data sensitif.
+Recruiter memahami organization state, entitlement, visibility boundary, provenance, dan contact status. Student dapat accept, decline, atau mencabut visibility tanpa inclusion atau private evidence bocor.
 
 ## Selected Direction
 
-Mewarisi **Buku Besar Kolaborasi** sebagai verified folio index. Search result menampilkan contribution proof dan verification source; candidate detail memberi artifact ruang utama dengan compact provenance ledger.
+Verified folio index yang mewarisi **Buku Besar Kolaborasi**. Result memprioritaskan skill, contribution proof, verification source, dan availability context. Candidate detail memberi artifact ruang utama dengan compact provenance ledger.
 
 ## Scope and Boundaries
 
-Mencakup organization verification, search/filter, candidate detail, saved list, contact request, response status, dan entitlement. Tidak mencakup raw evidence privat, inclusion signal, private messages, alamat langsung, atau hidden scoring.
+Organization verification, internal entitlement, search/filter, candidate detail, saved list, contact request, student response, visibility, expiration, dan revocation. Tidak mencakup billing, raw evidence privat, inclusion signal, private message, phone langsung sebelum acceptance, atau hidden score.
 
 ## States and Ranges
 
-- Organization pending/rejected/verified.
-- Subscription inactive/limited/active.
-- No candidates, no filter results, candidate visibility withdrawn.
-- Contact pending/accepted/declined/expired.
-- Large candidate result paginated.
+- Organization pending, rejected, verified, suspended.
+- Entitlement inactive, scheduled, active, expired, revoked.
+- Empty index, no filter result, large paginated result, visibility withdrawn.
+- Contact pending, accepted, declined, expired, canceled.
 
 ## Interaction and Layout
 
-Filter state dapat dibagikan sesuai entitlement. Verification level dan evidence source terlihat. Contact action menjelaskan bahwa student memilih respons. Withdrawn visibility segera menghilangkan candidate dari search baru.
+Filter URL-addressable dan dapat dibagikan hanya kepada entitled member. Verification dan source terlihat. Save memberikan optimistic feedback dengan rollback. Contact panel menjelaskan data yang akan dibagikan dan bahwa student memilih respons. Withdrawn candidate hilang dari search baru dan detail berubah menjadi unavailable state.
 
-## Constraints and Open Decisions
+## Accessibility
 
-Fase lanjutan. Pricing, entitlement, organization verification, dan data retention harus divalidasi. Tidak ada capability ini yang diklaim tersedia pada increment pertama.
+Result list memiliki table/list semantics, active filters dapat dihapus dengan keyboard, dan status contact diumumkan tanpa modal trap. Dense metadata tetap reflow pada mobile.
+
+## Constraints and Gates
+
+Recruiter verification, entitlement issuance, retention, dan contact policy memerlukan governance approval. Tidak ada price atau customer claim.

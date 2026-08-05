@@ -1,140 +1,102 @@
 # Information Architecture SATU
 
-## 1. Domain Object Hierarchy
+## Object Hierarchy
 
-```mermaid
-flowchart TD
-    Institution --> Membership
-    User --> Membership
-    User --> Profile
-    Profile --> Skill
-    Institution --> Project
-    Project --> ProjectRole
-    Project --> TeamMembership
-    Project --> Workspace
-    Workspace --> Task
-    Workspace --> Message
-    Task --> Contribution
-    Contribution --> Validation
-    Validation --> PortfolioEntry
-    User --> Consent
-    User --> Recommendation
-    Institution --> InclusionSignal
+```text
+Account
+├── Phone verification dan security
+├── Institution membership
+├── Student profile dan skills
+└── Notification preferences
+
+Institution
+├── Roster dan affiliation reviews
+├── Projects dan teams
+├── Contribution reviews
+├── Gamification projections
+├── Inclusion reviews
+└── Academic integrations
+
+Recruiter organization
+├── Verified memberships
+├── Entitlement
+├── Saved candidates
+└── Contact requests
 ```
 
-Navigation mengikuti object dan task, bukan struktur database.
+## Student Navigation
 
-## 2. Student Navigation
+- Beranda
+- Temukan Proyek
+- Proyek Saya
+- Kontribusi
+- Portfolio
+- Peringkat
+- Notifikasi
+- Profil dan Pengaturan
 
-### Primary
+## Campus Navigation
 
-1. **Dashboard**: next action dan status penting.
-2. **Projects**: discovery, recommendation, dan project yang diikuti.
-3. **Workspace**: active project work.
-4. **Contributions**: submission, revision, dan validation.
-5. **Portfolio**: evidence yang dipilih dan visibility.
+- Ringkasan
+- Roster dan Afiliasi
+- Validasi Kontribusi
+- Partisipasi
+- Review Inklusi, hanya jika authorized dan feature aktif
+- Pemetaan Kredit
+- Sinkronisasi
 
-### Secondary
+## Platform Navigation
 
-- Notifications
-- Profile & skills
-- Privacy & consent
-- Account & security
+- Institution
+- Undangan Campus Admin
+- Recruiter Organization
+- Entitlement
+- Provider Operations
+- Audit
 
-Mobile memakai top app bar dan navigation drawer selama aplikasi baru memiliki
-satu primary destination yang benar-benar tersedia. Bottom navigation baru
-ditambahkan setelah sedikitnya dua primary destinations memiliki named route,
-authorization, dan layar yang dapat digunakan. Navigation tidak boleh memuat
-placeholder disabled atau dead link. Destination lain masuk ke menu account,
-bukan dijejalkan ke bottom bar.
+## Recruiter Navigation
 
-## 3. Campus Navigation
+- Cari Talenta
+- Kandidat Tersimpan
+- Permintaan Kontak
+- Organization dan Entitlement
 
-1. **Campus overview**
-2. **Membership verification**
-3. **Project oversight**
-4. **Contribution validation**
-5. **Inclusion review**
-6. **Reports**
-7. **Institution settings**
+## Conceptual Route Map
 
-Campus navigation hanya muncul bagi authorized membership. Switching institution, bila kelak tersedia, harus mengubah context secara eksplisit dan mengosongkan cached tenant data.
+```text
+/
+/register
+/login
+/recover
+/onboarding
+/notifications
+/dashboard
+/projects
+/projects/{project}
+/projects/{project}/workspace
+/contributions
+/portfolio
+/leaderboards
+/campus
+/campus/affiliations
+/campus/contributions
+/campus/inclusion
+/campus/integrations
+/platform
+/talent
+/talent/candidates/{candidate}
+/talent/saved
+/talent/contacts
+```
 
-## 4. Recruiter Navigation: Fase Lanjutan
+Route aktual harus named Laravel routes dan dipakai frontend melalui Wayfinder. Navigation item tersembunyi tidak menggantikan server-side authorization.
 
-1. Talent search
-2. Saved candidates
-3. Contact requests
-4. Organization members
-5. Subscription
+## Composition
 
-Recruiter tidak memiliki navigation path menuju campus operations atau inclusion review.
+- Dashboard: satu next action utama, status strip, dan supporting ledger.
+- Index: filter URL-addressable, result count, table/list yang responsif, empty state yang dapat dipulihkan.
+- Detail: identity, provenance, primary action, history.
+- Queue: dense scan, explicit selection, reasoned command, preserved context.
+- Operations: status, lag, failure, retry, audit.
 
-## 5. Conceptual Route Map
-
-| Route                           | Role         | Purpose                              | Stage             |
-| ------------------------------- | ------------ | ------------------------------------ | ----------------- |
-| `/`                             | Public       | Product landing                      | Later             |
-| `/onboarding`                   | Student      | Affiliation, profile, skill, consent | Increment 1       |
-| `/dashboard`                    | Student      | Next action dan active work          | Increment 1       |
-| `/projects`                     | Student      | Discovery dan recommendation         | Increment 1       |
-| `/projects/create`              | Student      | Create project                       | Increment 1       |
-| `/projects/{project}`           | Student      | Project detail dan team formation    | Increment 1       |
-| `/projects/{project}/workspace` | Team         | Realtime collaboration               | Increment 1       |
-| `/contributions`                | Student      | Submission dan validation status     | Increment 1       |
-| `/portfolio`                    | Student      | Portfolio management                 | Increment 1       |
-| `/campus`                       | Campus admin | Operational overview                 | Increment 1       |
-| `/campus/memberships`           | Campus admin | Membership queue                     | Increment 1       |
-| `/campus/validations`           | Campus admin | Contribution review                  | Increment 1       |
-| `/campus/inclusion`             | Campus admin | Restricted human review              | Increment 1 gated |
-| `/campus/reports`               | Campus admin | Participation reporting              | Pilot hardening   |
-| `/talent`                       | Recruiter    | Talent search                        | Later             |
-| `/talent/candidates/{user}`     | Recruiter    | Redacted portfolio                   | Later             |
-
-Route final harus dibuat sebagai named Laravel routes dan dikonsumsi melalui Wayfinder.
-
-## 6. Page Composition Rules
-
-### Dashboard
-
-- Bukan sitemap.
-- Menampilkan primary next action, active work, deadline, dan status yang memerlukan perhatian.
-- Tidak menduplikasi seluruh module.
-
-### Index
-
-- Menyediakan search/filter/sort yang mempertahankan URL query.
-- Empty state membedakan “belum ada data” dari “filter tidak menemukan hasil”.
-- Data besar memakai pagination atau incremental loading.
-
-### Detail
-
-- Header memuat identity, status, ownership, dan allowed actions.
-- Tab hanya digunakan untuk sub-context stabil; jangan menyembunyikan primary action.
-- Audit/provenance berada dekat evidence yang dijelaskan.
-
-### Queue
-
-- Menampilkan reason for priority, age, owner, dan next action.
-- Bulk action hanya untuk keputusan yang aman dan reversibel.
-- Selection state bertahan secara eksplisit, tidak tersirat.
-
-## 7. Responsive Information Priority
-
-Pada layar sempit:
-
-1. Object identity dan status.
-2. Primary action.
-3. Blocking information.
-4. Current work.
-5. Supporting evidence.
-6. History dan secondary metrics.
-
-Context rail berubah menjadi drawer atau disclosure setelah primary content, bukan diletakkan sebelum task.
-
-## 8. Permission-Aware Navigation
-
-- Navigation item disembunyikan bila role tidak pernah dapat mengaksesnya.
-- Jika akses hilang saat pengguna berada di halaman, tampilkan forbidden state dengan recovery action.
-- Backend policy tetap menjadi authority; hidden navigation bukan authorization.
-- Deep link lintas tenant tidak boleh mengungkap apakah object ada.
+Pada mobile, task dan primary status mendahului metadata. Pada desktop, rail tambahan boleh menampilkan provenance atau queue summary. Tidak ada critical action yang hanya tersedia melalui hover atau drag.

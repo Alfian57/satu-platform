@@ -2,108 +2,45 @@
 
 ## Strategy
 
-SATU dibangun melalui **design-led vertical slices**. Risiko visual diselesaikan lebih awal
-dengan satu reference dashboard, kemudian setiap capability dibangun end-to-end melalui
-domain, authorization, backend, frontend, tests, dan quality gate.
+Delivery memakai ten GitHub milestones. Milestone menyatakan urutan outcome, sedangkan GitHub issues tetap atomic unit. Work dapat paralel jika hard dependency tidak dilanggar.
 
-Roadmap ini hanya menunjukkan milestone. Kontrak pekerjaan berada dalam
-[`phases/`](phases/), status aktif berada di [`PROGRESS.md`](PROGRESS.md), dan entry AI
-berada di [`START_HERE.md`](../../START_HERE.md).
+## Milestones
 
-## Increment 1 Milestones
+| Milestone                                    | Outcome                                                                                             |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| M0 Governance dan Delivery                   | Product truth, issue workflow, repository controls, serta external decisions siap                   |
+| M1 Visual Authority                          | Buku Besar Kolaborasi, app shell, reference dashboard, dan surface direction disetujui              |
+| M2 Identity, WhatsApp, Tenancy, dan Roster   | No-email auth, provisioning, roster verification, tenant policy, dan notification foundation        |
+| M3 Profile, Skill, dan Notification          | Profile/skill/availability lengkap serta notification center operasional                            |
+| M4 Project, Matching, dan Team               | Discovery, explainable matching, project lifecycle, dan atomic team formation                       |
+| M5 Realtime Workspace                        | Task, discussion, evidence, Reverb/Echo, reconnect, dan reconciliation                              |
+| M6 Contribution, Portfolio, dan Gamification | Campus validation, recruiter-safe portfolio foundation, XP, badge, dan hybrid leaderboard           |
+| M7 Campus dan Inclusion                      | Campus operations serta governed SNA engine/UI di balik feature flag                                |
+| M8 Talent, Academic, dan Landing             | Talent Portal, internal entitlement, academic sandbox, dan public interactive landing               |
+| M9 Production Readiness dan UAT              | Reliability, MySQL, performance, accessibility, security, operations, synthetic demo, dan final UAT |
 
-| Milestone | Phase     | Outcome                                                       |
-| --------- | --------- | ------------------------------------------------------------- |
-| M0        | completed | Product, UX, engineering, governance, dan AI context tersedia |
-| M1        | P01–P07   | Reference dashboard dan design authority disetujui            |
-| M2        | P08–P16   | Identity, institution membership, tenancy, audit, onboarding  |
-| M3        | P17–P20   | Student profile, skill, availability, consent, visibility     |
-| M4        | P21–P31   | Project discovery, explainable matching, dan team formation   |
-| M5        | P32–P40   | Database-first realtime workspace                             |
-| M6        | P41–P50   | Contribution validation dan portfolio provenance              |
-| M7        | P51–P59   | Campus operations dan governed inclusion review               |
-| M8        | P60–P69   | Production readiness, recovery, release rehearsal, final UAT  |
+## Delivery Sequence
 
-## Delivery Order Rationale
+```text
+M0 -> M1 -> M2 -> M3 -> M4 -> M5 -> M6 -> M7 -> M8 -> M9
+```
 
-1. **Design risk first:** dashboard menjadi visual quality bar sebelum starter defaults
-   menyebar ke seluruh fitur.
-2. **Identity before collaboration:** tenant, membership, consent, dan audit menjadi boundary
-   untuk semua resource berikutnya.
-3. **Vertical capability order:** profile memasok matching; project/team memasok workspace;
-   workspace memasok contribution; contribution memasok portfolio dan campus review.
-4. **Inclusion after governance:** tidak ada signal dari real data sebelum DPIA, minimum data,
-   retention, reviewer authority, dan fairness process disetujui.
-5. **Production readiness last, not optional:** deployment, backup, recovery, accessibility,
-   security, dan UAT merupakan bagian definisi selesai.
+UX shaping dalam M0/M1 dapat berjalan paralel dengan approved governance work. Talent projection bergantung pada contribution/portfolio. Gamification bergantung pada contribution validation. Inclusion activation dan real academic provider tetap gated walau implementation dapat selesai dengan synthetic/sandbox data.
 
-## Increment 1 Definition
+## Release Definition
 
-Increment 1 mencakup:
-
-- verified institution membership;
-- profile, skill, interest, availability, consent, dan visibility;
-- project discovery, explainable matching, dan team formation;
-- realtime task, discussion, serta evidence workspace;
-- versioned contribution validation dan portfolio;
-- campus membership/contribution queues dan operational dashboard;
-- restricted inclusion review setelah governance gate;
-- tenant isolation, audit, accessibility, privacy, reliability, dan production operations.
-
-Target ini tidak mencakup:
-
-- paid recruiter subscription dan recruiter organization operations;
-- production academic-credit sync atau campus SSO;
-- cross-institution project;
-- automatic-learning/ML matching;
-- native mobile application.
-
-Public-safe portfolio projection boleh tersedia dalam Increment 1, tetapi bukan Talent Portal.
+Competition release mencakup target PRD untuk satu institution tenant. Multi-institution production rollout, billing provider, pricing, real campus API, dan Bab 4.2 proposal tidak menjadi syarat release.
 
 ## Release Gates
 
-| Gate               | Required evidence                                                       |
-| ------------------ | ----------------------------------------------------------------------- |
-| Phase ready        | Prerequisite, `Read Before Work`, dan active pointer benar              |
-| Feature ready      | Acceptance tests, authorization, failure states, docs updated           |
-| UI ready           | Approved brief, responsive/a11y inspection, no console error            |
-| Inclusion ready    | Governance approval, data sufficiency, fairness, restricted access      |
-| Demo ready         | Stable synthetic seed, truthful label, no fabricated evidence           |
-| Production ready   | MySQL, queue/Reverb, storage, monitoring, backup/restore, security      |
-| Increment complete | Full regression, release rehearsal, documented residual risk, final UAT |
+- M0: repository workflow and decision ownership.
+- M1: human approval visual reference.
+- M2: identity threat model, OTP abuse test, roster and invitation recovery.
+- M4: explainable/versioned matching and cross-tenant denial.
+- M5: channel authorization and reconnect recovery.
+- M6: contribution integrity and gamification fairness.
+- M7: DPIA/governance before real inclusion activation.
+- M8: recruiter projection/privacy and sandbox truth.
+- M9: UAT, accessibility, security, backup/restore, provider degradation, and truthful demo.
 
-## Human Gates
-
-AI wajib berhenti untuk persetujuan pada:
-
-- visual direction dashboard;
-- implemented reference dashboard;
-- first surface yang memperkenalkan major interaction pattern;
-- contribution/campus reviewer authority bila belum ditentukan;
-- inclusion governance dan activation;
-- production environment/operations decisions;
-- final user acceptance.
-
-## Production-Vision Backlog
-
-Setelah Increment 1 disetujui, backlog berikut diprioritaskan melalui decision baru, bukan
-dijalankan otomatis:
-
-1. recruiter organization verification dan Talent Portal;
-2. subscription, entitlement, dan billing;
-3. academic adapter serta idempotent activity-credit sync;
-4. institution SSO;
-5. second-institution onboarding dan cross-institution operating model;
-6. horizontal Reverb/queue scaling dan expanded support operations.
-
-## Risks and Responses
-
-| Risk                                  | Response                                                             |
-| ------------------------------------- | -------------------------------------------------------------------- |
-| UI kembali menjadi generic AI output  | Reference comp, approval gate, shared design authority, visual audit |
-| AI menerima scope terlalu besar       | Satu phase atomik per sesi dan explicit “Jangan” boundary            |
-| Backend dan frontend tidak selaras    | Contract-first vertical slices, bukan layer-wide implementation      |
-| Tenant/privacy terlambat              | Identity, policy, audit, dan consent mendahului domain lain          |
-| Reverb menambah fragility             | Database-first state, authorized deltas, reconnect/reconciliation    |
-| Inclusion menimbulkan stigma          | Governance gate, minimum data, safe language, human-only review      |
-| “Selesai” hanya berarti demo berjalan | Production gates, recovery evidence, full tests, dan final UAT       |
+Status setiap milestone dan issue hanya dilihat di GitHub. Dokumen roadmap tidak menyimpan persentase atau current task.
