@@ -34,11 +34,12 @@ Owner label menunjukkan accountable role. GitHub assignee belum dipakai sampai k
 
 ## Branch dan Pull Request
 
-Panduan authoring template ada di [PR_TEMPLATE_GUIDE.md](./PR_TEMPLATE_GUIDE.md). Perbarui guide tersebut bersama `.github/PULL_REQUEST_TEMPLATE.md` jika kontrak evidence atau merge berubah.
+Panduan authoring template ada di [PR_TEMPLATE_GUIDE.md](./PR_TEMPLATE_GUIDE.md), sedangkan format commit ada di [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md). Perbarui guide tersebut bersama `.github/PULL_REQUEST_TEMPLATE.md` jika kontrak evidence atau merge berubah.
 
 - Branch: `<type>/<issue-number>-<slug>`.
 - Satu issue, satu branch, satu pull request.
 - Conventional Commit.
+- Hook `commit-msg` memakai commitlint dan hook `pre-commit` memakai Husky. Detail format ada di [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md).
 - Draft PR sampai acceptance criteria dan verifikasi lengkap.
 - Body mencantumkan `Closes #<issue>`.
 - Gunakan **Squash and merge** saja setelah required CI lulus dan seluruh conversation selesai.

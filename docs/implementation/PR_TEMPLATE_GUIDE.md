@@ -23,6 +23,8 @@ Jangan menghapus atau mengganti urutan section berikut tanpa memperbarui dokumen
 
 Product context ditulis dalam bahasa Indonesia. Technical term tetap menggunakan nama canonical seperti `Pest`, `Policy`, `Wayfinder`, `required CI`, dan **Squash and merge**.
 
+Aturan format commit dan hook lokal dijelaskan pada [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md). Gunakan Conventional Commit untuk setiap commit yang masuk ke Pull Request.
+
 ## Aturan Pengisian
 
 - Satu issue, satu branch, satu Pull Request.
