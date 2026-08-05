@@ -107,7 +107,7 @@ function RecommendationReady({
     return (
         <div className="mt-4 overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm transition-all duration-standard hover:shadow-md">
             <div className="flex items-center gap-3.5 border-b border-border/80 bg-muted/20 px-4 py-3.5">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-primary border border-primary/20 shadow-2xs">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-accent text-primary shadow-2xs">
                     <UsersRound aria-hidden="true" className="size-5" />
                 </span>
                 <div className="min-w-0">
@@ -115,7 +115,10 @@ function RecommendationReady({
                         {recommendation.title}
                     </p>
                     <p className="mt-1 text-sm wrap-anywhere text-muted-foreground">
-                        Peran: <span className="font-semibold text-foreground">{recommendation.role}</span>
+                        Peran:{' '}
+                        <span className="font-semibold text-foreground">
+                            {recommendation.role}
+                        </span>
                     </p>
                 </div>
             </div>
@@ -128,12 +131,17 @@ function RecommendationReady({
                         data-test="dashboard-recommendation-reason"
                     >
                         <span
-                            className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-primary border border-verified/30 shadow-2xs"
+                            className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-verified/30 bg-accent text-primary shadow-2xs"
                             data-test="dashboard-recommendation-marker"
                         >
-                            <Check aria-hidden="true" className="size-3.5 stroke-[2.5]" />
+                            <Check
+                                aria-hidden="true"
+                                className="size-3.5 stroke-[2.5]"
+                            />
                         </span>
-                        <span className="min-w-0 wrap-anywhere text-foreground/90">{reason}</span>
+                        <span className="min-w-0 wrap-anywhere text-foreground/90">
+                            {reason}
+                        </span>
                     </li>
                 ))}
             </ul>
@@ -147,7 +155,10 @@ function RecommendationReady({
                     onClick={() => onDemoAction(recommendation.actionLabel)}
                 >
                     {recommendation.actionLabel}
-                    <ArrowRight aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight
+                        aria-hidden="true"
+                        className="size-4 transition-transform group-hover:translate-x-1"
+                    />
                 </Button>
             </div>
         </div>
@@ -165,7 +176,7 @@ export function DashboardContextRail({
             data-test="dashboard-context-rail"
         >
             <div className="lg:col-span-2 xl:col-span-1">
-                <p className="font-label text-label font-semibold text-muted-foreground uppercase tracking-wider">
+                <p className="font-label text-label font-semibold tracking-wider text-muted-foreground uppercase">
                     Ringkasan kerja
                 </p>
                 <h2 className="mt-1 text-title font-bold">Minggu ini</h2>
@@ -176,14 +187,14 @@ export function DashboardContextRail({
                     Menunggu tinjauan
                 </h3>
                 <div className="mt-3 flex items-center gap-3.5 rounded-xl border border-pending/30 bg-gradient-to-r from-pending-subtle via-pending-subtle/90 to-pending-subtle/40 px-4 py-4 text-pending-subtle-foreground shadow-sm">
-                    <span className="flex p-2 rounded-lg bg-pending/20 text-pending shrink-0 shadow-2xs">
+                    <span className="flex shrink-0 rounded-lg bg-pending/20 p-2 text-pending shadow-2xs">
                         <Clock3
                             aria-hidden="true"
                             className="size-6 stroke-[1.8]"
                         />
                     </span>
                     <p className="min-w-0 text-sm leading-5">
-                        <span className="block font-bold text-base">
+                        <span className="block text-base font-bold">
                             {reviewQueue.count} {reviewQueue.itemLabel}
                         </span>
                         <span className="wrap-anywhere opacity-90">

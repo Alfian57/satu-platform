@@ -137,7 +137,7 @@ function ProjectRegionState({
             role={region.state === 'error' ? 'alert' : undefined}
         >
             <div className="flex min-w-0 items-start gap-3.5">
-                <span className="p-2.5 rounded-lg bg-accent text-primary shrink-0">
+                <span className="shrink-0 rounded-lg bg-accent p-2.5 text-primary">
                     <Icon
                         aria-hidden="true"
                         className={cn(
@@ -160,7 +160,7 @@ function ProjectRegionState({
                     type="button"
                     variant="outline"
                     size="lg"
-                    className="w-full shrink-0 border-primary/40 text-primary hover:bg-primary hover:text-white transition-all sm:w-auto"
+                    className="w-full shrink-0 border-primary/40 text-primary transition-all hover:bg-primary hover:text-white sm:w-auto"
                     onClick={() => onDemoAction(actionLabel)}
                 >
                     {actionLabel}
@@ -176,7 +176,7 @@ function ProjectLoading({ announcement }: { announcement: string }) {
         <div
             aria-busy="true"
             aria-live="polite"
-            className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-sm"
+            className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm"
             data-test="dashboard-projects-loading"
             role="status"
         >
@@ -246,7 +246,7 @@ export function DashboardProjectLedger({ region, onDemoAction }: Props) {
                 <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
                     <div
                         aria-hidden="true"
-                        className="hidden grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem] border-b border-border/80 bg-muted/50 font-label text-[11px] font-semibold uppercase tracking-wider text-muted-foreground md:grid"
+                        className="hidden grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem] border-b border-border/80 bg-muted/50 font-label text-[11px] font-semibold tracking-wider text-muted-foreground uppercase md:grid"
                     >
                         <span />
                         <span className="border-l border-border/80 px-4 py-2.5">

@@ -58,7 +58,9 @@ export default function Dashboard() {
                                 aria-hidden="true"
                                 className="size-4 shrink-0 text-primary"
                             />
-                            <p className="leading-relaxed">{scenario.syntheticLabel}</p>
+                            <p className="leading-relaxed">
+                                {scenario.syntheticLabel}
+                            </p>
                         </div>
                     </header>
 
