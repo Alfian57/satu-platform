@@ -39,7 +39,7 @@ jobs:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
         with:
           script: |
-            const syncIssueStatuses = require('./.github/scripts/sync-issue-status.cjs')
+            const { syncIssueStatuses } = require('./.github/scripts/sync-issue-status.cjs')
 
             await syncIssueStatuses({
               github,

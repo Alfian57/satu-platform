@@ -5,6 +5,7 @@ const {
     parseBlockedBy,
     pullRequestReferencesIssue,
     resolveStatus,
+    syncIssueStatuses,
 } = require('./sync-issue-status.cjs');
 
 function issue(number, state) {
@@ -24,6 +25,10 @@ function resolve({
         pullRequests,
     });
 }
+
+test('exports the workflow entrypoint as a callable named export', () => {
+    assert.equal(typeof syncIssueStatuses, 'function');
+});
 
 test('parses multiple blockers and removes duplicates', () => {
     assert.deepEqual(
