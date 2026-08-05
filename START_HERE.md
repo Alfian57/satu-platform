@@ -4,11 +4,12 @@ Baca file ini segera setelah `AGENTS.md` atau instruksi agent lain pada reposito
 
 ## Mulai
 
-1. Pilih satu GitHub issue yang berstatus `ready` dan tidak memiliki dependency terbuka.
-2. Baca seluruh body issue, termasuk acceptance criteria, out of scope, library, referensi, gate, dan handoff.
-3. Baca hanya dokumentasi yang ditautkan oleh issue tersebut.
-4. Periksa implementasi yang benar-benar tersedia. Planned capability tidak boleh dilaporkan sebagai implemented capability.
-5. Buat branch `<type>/<issue-number>-<slug>` dari `main` terbaru.
+1. Baca [AI Execution Guide](docs/implementation/AI_EXECUTION_GUIDE.md) untuk prosedur operasional agent.
+2. Pilih satu GitHub issue yang berstatus `ready` dan tidak memiliki dependency terbuka.
+3. Baca seluruh body issue, termasuk acceptance criteria, out of scope, library, referensi, gate, dan handoff.
+4. Baca hanya dokumentasi yang ditautkan oleh issue tersebut.
+5. Periksa implementasi yang benar-benar tersedia. Planned capability tidak boleh dilaporkan sebagai implemented capability.
+6. Buat branch `<type>/<issue-number>-<slug>` dari `main` terbaru.
 
 GitHub issues dan milestones adalah sumber kebenaran execution. Dokumen Markdown adalah sumber kebenaran product, UX, engineering, security, dan delivery contract. Jangan membuat file progress atau phase plan baru.
 

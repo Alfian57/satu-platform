@@ -72,6 +72,23 @@ body:
     validations:
       required: true
   - type: textarea
+    id: frontend_loading
+    attributes:
+      label: Frontend Loading Contract
+      description: Wajib untuk issue frontend/fullstack/UX. Gunakan checklist ini atau sesuaikan dengan surface. Tulis N/A jika issue tidak menyentuh frontend.
+      value: |
+        - [ ] Gunakan existing `Skeleton` untuk initial, deferred, refresh, dan pagination loading pada region yang relevan.
+        - [ ] Pertahankan geometry, spacing, focus order, row count realistis, dan hindari layout shift atau horizontal overflow.
+        - [ ] Region loading memiliki `aria-busy="true"` dan satu `role="status"` atau `aria-live="polite"` announcement.
+        - [ ] Content, heading, filter, dan primary action tetap terlihat ketika hanya sebagian region loading.
+        - [ ] Processing action memakai inline progress atau `Spinner`, bukan mengganti seluruh content dengan skeleton.
+        - [ ] Bedakan empty, error, forbidden, stale, partial-data, dan retry dari loading.
+        - [ ] Reduced motion tidak menghilangkan status atau recovery.
+        - [ ] Sertakan browser evidence untuk skeleton dan transition ke state berikutnya.
+        - [ ] Referensi: `docs/ux/LOADING_STATES.md`.
+    validations:
+      required: true
+  - type: textarea
     id: pull_request
     attributes:
       label: Pull Request

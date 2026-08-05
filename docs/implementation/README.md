@@ -19,6 +19,8 @@ Setiap implementation issue wajib memiliki:
 9. Pull Request
 10. Metadata
 
+Issue yang menyentuh frontend juga wajib memiliki `Frontend Loading Contract` atau menulis `N/A` bila tidak relevan. Quality gate frontend memakai section `Frontend Loading Verification`.
+
 Issue UI juga menunjuk surface brief. Issue yang membutuhkan library menyebut exact package, install command, reason, compatibility, license review, dan fake/test strategy. Jika framework-native cukup, jelaskan alasannya.
 
 ## Labels
@@ -28,9 +30,20 @@ Issue UI juga menunjuk surface brief. Issue yang membutuhkan library menyebut ex
 - Owner: `owner:backend`, `owner:frontend`, `owner:fullstack`, `owner:qa`, `owner:devops`, `owner:product-design`, `owner:security-privacy`.
 - Priority: `priority:p0` sampai `priority:p3`.
 - Gate: `gate:human`, `gate:external`, `gate:conditional`.
-- State helpers: `historical`, `superseded`, `blocked`, `ready`.
+- State helpers: `historical`, `superseded`, `blocked`, `ready`, `in-progress`, `needs-review`.
 
 Owner label menunjukkan accountable role. GitHub assignee belum dipakai sampai komposisi developer final.
+
+### Status workflow
+
+- `ready`: issue open dan tidak memiliki hard dependency open.
+- `blocked`: issue memiliki hard dependency open.
+- `in-progress`: pekerjaan branch-only atau open draft Pull Request sedang berjalan.
+- `needs-review`: open Pull Request sudah siap direview atau menunggu gate/review.
+
+Status labels harus mutually exclusive. Gate label tidak otomatis berarti `blocked`.
+
+Workflow [`sync-issue-status.yml`](../../.github/workflows/sync-issue-status.yml) melakukan reconciliation otomatis pada event issue dan menyediakan `workflow_dispatch` dengan `dry_run`. Hard blocker selalu menghasilkan `blocked`; setelah blocker selesai, status diturunkan dari open Pull Request atau menjadi `ready` jika tidak ada Pull Request.
 
 ## Branch dan Pull Request
 
@@ -53,9 +66,12 @@ Panduan authoring template ada di [PR_TEMPLATE_GUIDE.md](./PR_TEMPLATE_GUIDE.md)
 
 `Blocked by` hanya memuat hard dependency. Pekerjaan yang bisa paralel dicatat terpisah. Handoff menyebut consumer berikutnya dan artifact yang diberikan. Issue berlabel gate berhenti pada evidence dan menunggu keputusan eksplisit.
 
+Dependency yang sudah selesai ditulis sebagai `Prerequisite completed: #<issue>`, agar AI tidak menganggap issue masih blocked.
+
 ## Definition of Ready
 
 - Tidak ada hard dependency terbuka.
+- Issue memiliki label `ready` dan tidak memiliki status label aktif lain.
 - Owning docs dan surface brief tersedia.
 - Acceptance criteria dapat diuji.
 - Package decision dan approval diketahui.
@@ -68,6 +84,10 @@ Panduan authoring template ada di [PR_TEMPLATE_GUIDE.md](./PR_TEMPLATE_GUIDE.md)
 - Review conversation selesai.
 - Required check lulus dan review requirement terpenuhi. Contributor non-owner memerlukan minimal satu approval; repository owner dapat memakai self-review admin bypass.
 - Squash merge ke protected `main` menutup issue.
+
+## AI Execution
+
+Prosedur operasional untuk AI agent ada pada [AI_EXECUTION_GUIDE.md](./AI_EXECUTION_GUIDE.md). Guide tersebut menjelaskan source precedence, dependency audit, gate stop, loading contract, verification, handoff, dan merge policy.
 
 ## Historical Mapping
 

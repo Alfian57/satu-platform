@@ -1,0 +1,49 @@
+name: sync issue status
+
+on:
+  issues:
+    types:
+      - opened
+      - edited
+      - closed
+      - reopened
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Preview status changes without writing labels'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: issue-status-sync
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout workflow helpers
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Reconcile issue status labels
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+        with:
+          script: |
+            const syncIssueStatuses = require('./.github/scripts/sync-issue-status.cjs')
+
+            await syncIssueStatuses({
+              github,
+              context,
+              core,
+              dryRun: process.env.DRY_RUN === 'true',
+            })

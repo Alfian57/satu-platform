@@ -3,9 +3,10 @@
 ## Mulai
 
 1. Baca `AGENTS.md` dan `START_HERE.md`.
-2. Buka selected GitHub issue.
-3. Baca hanya owning docs yang ditautkan issue.
-4. Periksa runtime sebelum menyatakan planned capability telah implemented.
+2. Baca [AI Execution Guide](implementation/AI_EXECUTION_GUIDE.md) untuk workflow agent.
+3. Buka selected GitHub issue yang berlabel `ready`.
+4. Baca hanya owning docs yang ditautkan issue.
+5. Periksa runtime sebelum menyatakan planned capability telah implemented.
 
 ## Source of Truth
 
@@ -33,6 +34,8 @@ docs/
 ```
 
 Task status tidak disimpan pada Markdown. Gunakan GitHub issues/milestones. Jangan membuat ulang `PROGRESS.md` atau `implementation/phases/`.
+
+Workflow status menggunakan label `ready`, `blocked`, `in-progress`, dan `needs-review`. Dependency yang sudah selesai ditulis sebagai `Prerequisite completed`, bukan `Blocked by`.
 
 ## Maintenance
 
