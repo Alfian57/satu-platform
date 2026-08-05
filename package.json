@@ -10,6 +10,7 @@
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
+        "test:satu-project": "node .github/scripts/sync-satu-project.test.cjs",
         "test:issue-status": "node .github/scripts/sync-issue-status.test.cjs",
         "types:check": "tsc --noEmit",
         "prepare": "husky"
