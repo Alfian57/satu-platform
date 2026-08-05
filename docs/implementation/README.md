@@ -38,10 +38,12 @@ Owner label menunjukkan accountable role. GitHub assignee belum dipakai sampai k
 
 - `ready`: issue open dan tidak memiliki hard dependency open.
 - `blocked`: issue memiliki hard dependency open.
-- `in-progress`: branch atau Pull Request sudah dibuat.
-- `needs-review`: Pull Request siap direview atau menunggu gate/review.
+- `in-progress`: pekerjaan branch-only atau open draft Pull Request sedang berjalan.
+- `needs-review`: open Pull Request sudah siap direview atau menunggu gate/review.
 
 Status labels harus mutually exclusive. Gate label tidak otomatis berarti `blocked`.
+
+Workflow [`sync-issue-status.yml`](../../.github/workflows/sync-issue-status.yml) melakukan reconciliation otomatis pada event issue dan menyediakan `workflow_dispatch` dengan `dry_run`. Hard blocker selalu menghasilkan `blocked`; setelah blocker selesai, status diturunkan dari open Pull Request atau menjadi `ready` jika tidak ada Pull Request.
 
 ## Branch dan Pull Request
 

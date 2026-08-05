@@ -91,6 +91,18 @@ export default [
         },
     },
     {
+        files: ['.github/scripts/*.cjs'],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+            },
+            sourceType: 'commonjs',
+        },
+        rules: {
+            '@typescript-eslint/no-require-imports': 'off',
+        },
+    },
+    {
         plugins: {
             '@stylistic': stylistic,
         },

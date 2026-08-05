@@ -33,14 +33,29 @@ Issue hanya boleh dipilih jika:
 
 Label status bersifat mutually exclusive:
 
-| Label          | Arti                                                    |
-| -------------- | ------------------------------------------------------- |
-| `ready`        | Issue open tanpa hard dependency open dan siap diambil. |
-| `blocked`      | Issue memiliki minimal satu hard dependency open.       |
-| `in-progress`  | Developer sudah membuat branch atau Pull Request.       |
-| `needs-review` | Pull Request siap direview atau menunggu gate/review.   |
+| Label          | Arti                                                                        |
+| -------------- | --------------------------------------------------------------------------- |
+| `ready`        | Issue open tanpa hard dependency open dan siap diambil.                     |
+| `blocked`      | Issue memiliki minimal satu hard dependency open.                           |
+| `in-progress`  | Ada active draft Pull Request atau status manual pekerjaan sedang berjalan. |
+| `needs-review` | Ada open Pull Request yang sudah siap direview atau menunggu gate/review.   |
 
 `gate:human`, `gate:external`, dan `gate:conditional` menjelaskan approval atau kondisi hasil issue. Gate tidak otomatis membuat issue `blocked` jika issue tersebut sendiri tidak memiliki hard dependency open.
+
+## Automatic Status Sync
+
+Workflow [sync-issue-status.yml](../../.github/workflows/sync-issue-status.yml) melakukan reconciliation pada event issue `opened`, `edited`, `closed`, dan `reopened`. Workflow juga dapat dijalankan manual dengan `workflow_dispatch`.
+
+Automation membaca seluruh issue open dan open Pull Request yang menargetkan `main`, lalu mempertahankan label non-status dan mengganti tepat satu status label. `blocked` selalu mengalahkan status Pull Request ketika hard dependency masih open. Setelah seluruh blocker closed, status diturunkan dari Pull Request terkait: ready PR menjadi `needs-review`, draft PR menjadi `in-progress`, dan tanpa open PR menjadi `ready`.
+
+Gunakan dry run sebelum menulis label ketika melakukan reconciliation manual:
+
+```sh
+gh workflow run sync-issue-status.yml --ref main -f dry_run=true
+gh workflow run sync-issue-status.yml --ref main -f dry_run=false
+```
+
+Workflow memakai `issues: write`, `pull-requests: read`, dan `contents: read`. Jika workflow gagal, periksa job summary, perbaiki body dependency yang malformed, lalu jalankan ulang manual. Workflow tidak membuat komentar untuk setiap perubahan label.
 
 ## Dependency dan Scope
 
@@ -98,7 +113,7 @@ Berhenti dan tampilkan evidence ketika issue memiliki `gate:human`, `gate:extern
 - Buka Pull Request sebagai draft sampai acceptance criteria dan verification lengkap.
 - Body Pull Request wajib mencantumkan `Closes #<issue>`.
 - Sertakan command, hasil test, screenshot/recording UI, migration/security/recovery note, dan handoff.
-- Ubah status issue menjadi `in-progress` saat pekerjaan dimulai dan `needs-review` saat Pull Request siap direview.
+- Ubah status issue menjadi `in-progress` saat pekerjaan branch-only dimulai. Setelah Pull Request dibuat, automation menurunkan `in-progress` atau `needs-review` dari draft state dan review readiness.
 - `main` hanya menerima **Squash and merge** setelah required CI `ci` lulus dan seluruh conversation selesai.
 - Contributor non-owner memerlukan minimal satu approval. Repository owner dapat memakai self-review dan admin merge tanpa approval reviewer tambahan, tetapi tidak boleh melewati required CI atau conversation resolution.
 
