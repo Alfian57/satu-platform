@@ -27,6 +27,7 @@ Accepted decision adalah product atau architecture contract. Open gate hanya dap
 | DEC-017 | GitHub issues/milestones adalah execution truth                                | Phase files dan progress file dipensiunkan setelah migration audit                                                                                                           |
 | DEC-018 | Main memakai protected pull-request workflow dengan owner admin bypass         | Required CI, resolved conversations, no force/delete, dan **Squash and merge**; contributor non-owner memerlukan 1 approval, owner boleh self-review dan merge sebagai admin |
 | DEC-019 | Owner ditandai label role, bukan assignee sementara                            | Assignee ditambahkan setelah komposisi tim final                                                                                                                             |
+| DEC-020 | Consumer boleh development dengan stacked branch setelah contract checkpoint   | Parent diberi label `contract-ready`; consumer memakai `Stacked on: #<issue>` dan base branch parent; merge tetap menunggu seluruh hard dependency closed                    |
 
 ## Approved Library Direction
 

@@ -44,30 +44,33 @@ Field custom yang menjadi contract automation:
 
 Workflow `.github/workflows/sync-satu-project.yml` menjalankan `.github/scripts/sync-satu-project.cjs`.
 
-| Source state                                    | `Delivery Status` |
-| ----------------------------------------------- | ----------------- |
-| Issue closed atau item closed                   | `Done`            |
-| Issue memiliki `Blocked by` yang masih open     | `Blocked`         |
-| Issue memiliki related draft Pull Request       | `In progress`     |
-| Issue memiliki related ready Pull Request       | `In review`       |
-| Issue open tanpa blocker dan tanpa Pull Request | `Ready`           |
-| Open draft Pull Request                         | `In progress`     |
-| Open ready Pull Request                         | `In review`       |
+| Source state                                                       | `Delivery Status` |
+| ------------------------------------------------------------------ | ----------------- |
+| Issue closed atau item closed                                      | `Done`            |
+| Issue memiliki valid stacked Pull Request                          | `In progress`     |
+| Issue memiliki `Blocked by` yang masih open tanpa stacked PR valid | `Blocked`         |
+| Issue memiliki related draft Pull Request                          | `In progress`     |
+| Issue memiliki related ready Pull Request                          | `In review`       |
+| Issue open tanpa blocker dan tanpa Pull Request                    | `Ready`           |
+| Open draft Pull Request                                            | `In progress`     |
+| Open ready Pull Request                                            | `In review`       |
 
-`Blocked` selalu mengalahkan status Pull Request untuk issue consumer. Parsing dependency mengikuti `sync-issue-status.cjs`, sehingga reference `Blocked by` yang malformed akan membuat run gagal dengan pesan yang dapat ditindaklanjuti. Workflow tidak menghapus atau archive item Project.
+`Blocked` dipakai jika issue consumer memiliki open dependency tanpa valid stacked Pull Request. Parsing dependency mengikuti `sync-issue-status.cjs`, sehingga reference `Blocked by` atau `Stacked on` yang malformed akan membuat run gagal dengan pesan yang dapat ditindaklanjuti. Workflow tidak menghapus atau archive item Project.
 
 ## Automation Events
 
 Workflow berjalan pada:
 
 - Issue `opened`, `edited`, `reopened`, `closed`, `labeled`, dan `unlabeled`.
-- Pull Request `opened`, `reopened`, `ready_for_review`, `converted_to_draft`, dan `closed` melalui `pull_request_target`.
+- Pull Request `opened`, `reopened`, `edited`, `synchronize`, `ready_for_review`, `converted_to_draft`, dan `closed` melalui `pull_request_target`.
 - `workflow_dispatch` dengan input `dry_run`.
 - Schedule setiap jam sebagai safety net untuk event yang terlewat.
 
 `pull_request_target` dipakai karena automation menulis ke user-owned Project. Workflow hanya checkout base repository untuk membaca helper script dan tidak menjalankan kode dari branch atau fork Pull Request.
 
 Status label issue workflow menggunakan `GITHUB_TOKEN` dan sekarang merespons event issue serta Pull Request yang sama. Perubahan label oleh workflow tidak selalu memicu event `labeled` baru, sehingga schedule dan manual reconciliation Project tetap diperlukan.
+
+GitHub Assignees adalah source of truth ownership. `Team items` dan `My items` hanya projection workload. AI agent harus menjalankan ownership gate pada [DEPENDENCY_WORKFLOW.md](./DEPENDENCY_WORKFLOW.md) sebelum membuat branch.
 
 ## Credential dan Variables
 

@@ -21,24 +21,31 @@ const OPTIONS = {
     Done: 'option-done',
 };
 
-function issue(number, state = 'open', body = '') {
+function issue(number, state = 'open', body = '', labels = []) {
     return {
         node_id: `I_${number}`,
         number,
         state,
         body,
+        labels: labels.map((name) => ({ name })),
         pull_request: undefined,
     };
 }
 
-function pullRequest(number, state = 'open', draft = false) {
+function pullRequest(
+    number,
+    state = 'open',
+    draft = false,
+    body = '',
+    baseRef = 'main',
+) {
     return {
         node_id: `P_${number}`,
         number,
         state,
         draft,
-        body: '',
-        base: { ref: 'main' },
+        body,
+        base: { ref: baseRef },
     };
 }
 
@@ -186,6 +193,23 @@ test('maps issue and pull request states to Delivery Status', () => {
         }),
         'Blocked',
     );
+    assert.equal(
+        mapIssueDeliveryStatus(issue(12, 'open', '- **Blocked by:** #13'), {
+            allIssuesByNumber: new Map([
+                [13, issue(13, 'open', '', ['contract-ready'])],
+            ]),
+            pullRequests: [
+                pullRequest(
+                    12,
+                    'open',
+                    true,
+                    'Closes #12\n- **Stacked on:** #13',
+                    'feature/13-parent',
+                ),
+            ],
+        }),
+        'In progress',
+    );
     assert.equal(mapIssueDeliveryStatus(issue(10, 'closed'), {}), 'Done');
     assert.equal(
         mapPullRequestDeliveryStatus(pullRequest(20, 'open', true)),
@@ -212,6 +236,26 @@ test('builds records without scheduling closed pull requests for backfill', () =
     assert.equal(records.get('pull:3').status, 'In review');
     assert.equal(records.has('pull:4'), false);
     assert.equal(records.get('issue:2').open, false);
+});
+
+test('includes non-main stacked Pull Requests when resolving issue status', () => {
+    const records = buildProjectStatusRecords({
+        issues: [
+            issue(4, 'open', '', ['contract-ready']),
+            issue(5, 'open', '- **Blocked by:** #4'),
+        ],
+        pullRequests: [
+            pullRequest(
+                5,
+                'open',
+                true,
+                'Closes #5\n- **Stacked on:** #4',
+                'feature/4-parent',
+            ),
+        ],
+    });
+
+    assert.equal(records.get('issue:5').status, 'In progress');
 });
 
 test('rejects a field with missing status options', () => {
