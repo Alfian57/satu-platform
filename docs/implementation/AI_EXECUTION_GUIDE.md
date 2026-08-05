@@ -44,7 +44,7 @@ Label status bersifat mutually exclusive:
 
 ## Automatic Status Sync
 
-Workflow [sync-issue-status.yml](../../.github/workflows/sync-issue-status.yml) melakukan reconciliation pada event issue `opened`, `edited`, `closed`, dan `reopened`. Workflow juga dapat dijalankan manual dengan `workflow_dispatch`.
+Workflow [sync-issue-status.yml](../../.github/workflows/sync-issue-status.yml) melakukan reconciliation pada event issue `opened`, `edited`, `closed`, dan `reopened`, serta Pull Request `opened`, `reopened`, `ready_for_review`, `converted_to_draft`, dan `closed`. Workflow juga dapat dijalankan manual dengan `workflow_dispatch`.
 
 Automation membaca seluruh issue open dan open Pull Request yang menargetkan `main`, lalu mempertahankan label non-status dan mengganti tepat satu status label. `blocked` selalu mengalahkan status Pull Request ketika hard dependency masih open. Setelah seluruh blocker closed, status diturunkan dari Pull Request terkait: ready PR menjadi `needs-review`, draft PR menjadi `in-progress`, dan tanpa open PR menjadi `ready`.
 

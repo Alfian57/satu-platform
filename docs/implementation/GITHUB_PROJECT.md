@@ -67,7 +67,7 @@ Workflow berjalan pada:
 
 `pull_request_target` dipakai karena automation menulis ke user-owned Project. Workflow hanya checkout base repository untuk membaca helper script dan tidak menjalankan kode dari branch atau fork Pull Request.
 
-Status label issue workflow menggunakan `GITHUB_TOKEN` dan perubahan label tidak selalu memicu event `labeled` baru. Schedule dan manual reconciliation karena itu tetap diperlukan.
+Status label issue workflow menggunakan `GITHUB_TOKEN` dan sekarang merespons event issue serta Pull Request yang sama. Perubahan label oleh workflow tidak selalu memicu event `labeled` baru, sehingga schedule dan manual reconciliation Project tetap diperlukan.
 
 ## Credential dan Variables
 

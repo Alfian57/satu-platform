@@ -45,7 +45,7 @@ Owner label menunjukkan accountable role. GitHub assignee belum dipakai sampai k
 
 Status labels harus mutually exclusive. Gate label tidak otomatis berarti `blocked`.
 
-Workflow [`sync-issue-status.yml`](../../.github/workflows/sync-issue-status.yml) melakukan reconciliation otomatis pada event issue dan menyediakan `workflow_dispatch` dengan `dry_run`. Hard blocker selalu menghasilkan `blocked`; setelah blocker selesai, status diturunkan dari open Pull Request atau menjadi `ready` jika tidak ada Pull Request.
+Workflow [`sync-issue-status.yml`](../../.github/workflows/sync-issue-status.yml) melakukan reconciliation otomatis pada event issue dan Pull Request, serta menyediakan `workflow_dispatch` dengan `dry_run`. Hard blocker selalu menghasilkan `blocked`; setelah blocker selesai, status diturunkan dari open Pull Request atau menjadi `ready` jika tidak ada Pull Request.
 
 Workflow [`sync-satu-project.yml`](../../.github/workflows/sync-satu-project.yml) merefleksikan status yang sama ke field `Delivery Status` pada Project. Workflow memakai dedicated `PROJECT_TOKEN`, schedule safety net, dan `dry_run`. Lihat [GITHUB_PROJECT.md](./GITHUB_PROJECT.md) untuk permission, recovery, dan backfill.
 
