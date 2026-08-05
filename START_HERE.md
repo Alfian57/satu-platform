@@ -26,7 +26,9 @@ GitHub issues dan milestones adalah sumber kebenaran execution. Dokumen Markdown
 - Gunakan Conventional Commit dan cantumkan `Closes #<issue>` pada body pull request.
 - Sertakan hasil test, screenshot untuk UI, perubahan data/security, rollback, dan dokumentasi yang relevan.
 - Pull request dibuka sebagai draft sampai acceptance criteria dan verifikasi selesai.
-- `main` hanya menerima squash merge setelah minimal satu approval, seluruh conversation selesai, dan check wajib lulus.
+- `main` hanya menerima **Squash and merge** setelah required CI lulus dan seluruh conversation selesai.
+- Contributor non-owner memerlukan minimal satu approval.
+- Repository owner boleh melakukan self-review dan merge sebagai admin tanpa approval reviewer tambahan, tetapi tetap wajib memenuhi required CI serta conversation resolution.
 
 ## Urutan Sumber Kebenaran
 

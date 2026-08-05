@@ -29,3 +29,9 @@ Closes #
 ## Handoff
 
 <!-- Dependency yang dibuka, follow-up issue, atau gate yang masih menunggu. -->
+
+## Merge Readiness
+
+- [ ] Required CI lulus dan seluruh conversation selesai.
+- [ ] Gunakan **Squash and merge** saja untuk `main`.
+- [ ] Contributor non-owner memiliki minimal satu approval; repository owner mencatat self-review sebelum admin bypass bila diperlukan.

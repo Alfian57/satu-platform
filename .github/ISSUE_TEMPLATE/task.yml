@@ -9,14 +9,14 @@ body:
   - type: textarea
     id: background
     attributes:
-      label: Latar Belakang
+      label: Background
       description: Jelaskan problem, current state, actor, dan alasan task diperlukan.
     validations:
       required: true
   - type: textarea
     id: outcome
     attributes:
-      label: Hasil yang Diharapkan
+      label: Expected Outcome
       description: Jelaskan inspectable outcome, bukan daftar aktivitas.
     validations:
       required: true
@@ -33,21 +33,21 @@ body:
   - type: textarea
     id: verification
     attributes:
-      label: Verifikasi
+      label: Verification
       description: Sebutkan test, lint, typecheck, audit, screenshot, atau review yang harus lulus.
     validations:
       required: true
   - type: textarea
     id: out_of_scope
     attributes:
-      label: Di Luar Scope
+      label: Out of Scope
       description: Nyatakan pekerjaan yang sengaja tidak dilakukan oleh issue ini.
     validations:
       required: true
   - type: textarea
     id: dependencies
     attributes:
-      label: Dependencies dan Handoff
+      label: Dependencies and Handoff
       description: Pisahkan Blocked by, dapat paralel, dan handoff berikutnya.
       placeholder: |
         - Blocked by: #...
@@ -65,7 +65,7 @@ body:
   - type: textarea
     id: references
     attributes:
-      label: Referensi
+      label: References
       description: Tautkan owning Markdown documents dan surface brief jika UI.
       placeholder: |
         - [PRD](https://github.com/Alfian57/satu-platform/blob/main/docs/product/PRD.md)
@@ -80,6 +80,8 @@ body:
         - Branch: `<type>/<issue-number>-<slug>` dari `main` terbaru.
         - Satu issue, satu branch, satu pull request. Buka sebagai draft.
         - Gunakan Conventional Commit dan cantumkan `Closes #<issue>`.
+        - Gunakan **Squash and merge** saja setelah required CI lulus dan seluruh conversation selesai.
+        - Contributor non-owner memerlukan minimal satu approval. Repository owner boleh melakukan self-review dan merge sebagai admin tanpa approval reviewer tambahan.
         - Sertakan test evidence, screenshot UI bila relevan, serta migration/security/rollback note.
     validations:
       required: true
@@ -87,7 +89,7 @@ body:
     id: metadata
     attributes:
       label: Metadata
-      description: Milestone, legacy phase, owner/support role, priority, size, gate, dan risk.
+      description: Milestone, legacy phase, owner/support role, priority, size, gate, risk, dan aturan review owner/admin.
       placeholder: |
         - Milestone: M...
         - Legacy phase: N/A

@@ -8,14 +8,14 @@ GitHub issues menyimpan atomic task, status, dependencies, owner role, gate, acc
 
 Setiap implementation issue wajib memiliki:
 
-1. Latar Belakang
-2. Hasil yang Diharapkan
+1. Background
+2. Expected Outcome
 3. Acceptance Criteria
-4. Verifikasi
-5. Di Luar Scope
-6. Dependencies dan Handoff
+4. Verification
+5. Out of Scope
+6. Dependencies and Handoff
 7. Library/Package
-8. Referensi
+8. References
 9. Pull Request
 10. Metadata
 
@@ -39,6 +39,8 @@ Owner label menunjukkan accountable role. GitHub assignee belum dipakai sampai k
 - Conventional Commit.
 - Draft PR sampai acceptance criteria dan verifikasi lengkap.
 - Body mencantumkan `Closes #<issue>`.
+- Gunakan **Squash and merge** saja setelah required CI lulus dan seluruh conversation selesai.
+- Contributor non-owner memerlukan minimal satu approval. Repository owner boleh melakukan self-review dan merge sebagai admin tanpa approval reviewer tambahan, dengan required CI dan conversation resolution tetap wajib.
 - UI: screenshot mobile/desktop serta state penting.
 - Data/security: migration impact, threat/authorization note, rollback/recovery.
 - Verification: affected Pest tests, lint, typecheck, accessibility/browser checks yang relevan.
@@ -61,7 +63,7 @@ Owner label menunjukkan accountable role. GitHub assignee belum dipakai sampai k
 - Acceptance criteria dan verification lulus.
 - Test dan docs sesuai perubahan.
 - Review conversation selesai.
-- Required check lulus dan minimal satu approval tersedia.
+- Required check lulus dan review requirement terpenuhi. Contributor non-owner memerlukan minimal satu approval; repository owner dapat memakai self-review admin bypass.
 - Squash merge ke protected `main` menutup issue.
 
 ## Historical Mapping

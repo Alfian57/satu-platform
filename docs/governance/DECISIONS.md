@@ -6,27 +6,27 @@ Accepted decision adalah product atau architecture contract. Open gate hanya dap
 
 ## Accepted Decisions
 
-| ID      | Keputusan                                                                      | Dampak                                                                       |
-| ------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| DEC-001 | Produk perlombaan adalah SATU, bukan competition-management system             | Seluruh backlog membangun platform SATU                                      |
-| DEC-002 | Rilis mencakup proposal kecuali Bab 4.2                                        | Talent, gamification, academic sandbox, inclusion, dan landing masuk release |
-| DEC-003 | Satu kampus pilot lebih dahulu                                                 | Model tetap institution-aware, rollout lintas kampus ditunda                 |
-| DEC-004 | Tidak ada email pada target flow                                               | Identity memakai private username, password, dan verified WhatsApp phone     |
-| DEC-005 | Roster exact match memakai NIM dan verified phone                              | Mismatch atau ambiguity masuk manual review                                  |
-| DEC-006 | Platform admin menyetujui institution dan mengundang campus admin via WhatsApp | Privileged role tidak tersedia lewat open registration                       |
-| DEC-007 | Fonnte adalah initial WhatsApp provider melalui backend adapter dan queue      | SATU membuat OTP; tidak memakai unofficial Fonnte package                    |
-| DEC-008 | In-app notification center adalah canonical                                    | WhatsApp hanya untuk approved important purpose                              |
-| DEC-009 | Campus reviewer memvalidasi contribution langsung                              | Team confirmation tidak diperlukan                                           |
-| DEC-010 | Hybrid leaderboard memakai group default dan individual opt-in                 | Average verified XP, semester, cohort minimal 5, shared rank                 |
-| DEC-011 | Inclusion tidak menjadi leaderboard input                                      | Mencegah stigma dan feedback loop yang tidak adil                            |
-| DEC-012 | Inclusion engine/UI production-ready di balik feature flag                     | Synthetic demo diperbolehkan, real activation menunggu governance            |
-| DEC-013 | Talent Portal memakai verified organization dan internal entitlement           | Billing provider serta pricing di luar release                               |
-| DEC-014 | Academic integration baseline adalah contract plus sandbox                     | Real campus API adalah external gate                                         |
-| DEC-015 | Native Laravel Policies/Gates adalah authorization baseline                    | Role berasal dari membership dan tenant context                              |
-| DEC-016 | Gunakan mature library ketika fit dan kompatibel                               | Issue wajib menyebut package atau framework-native decision                  |
-| DEC-017 | GitHub issues/milestones adalah execution truth                                | Phase files dan progress file dipensiunkan setelah migration audit           |
-| DEC-018 | Main memakai protected pull-request workflow                                   | 1 approval, resolved conversations, required CI, no force/delete, squash     |
-| DEC-019 | Owner ditandai label role, bukan assignee sementara                            | Assignee ditambahkan setelah komposisi tim final                             |
+| ID      | Keputusan                                                                      | Dampak                                                                                                                                                                       |
+| ------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DEC-001 | Produk perlombaan adalah SATU, bukan competition-management system             | Seluruh backlog membangun platform SATU                                                                                                                                      |
+| DEC-002 | Rilis mencakup proposal kecuali Bab 4.2                                        | Talent, gamification, academic sandbox, inclusion, dan landing masuk release                                                                                                 |
+| DEC-003 | Satu kampus pilot lebih dahulu                                                 | Model tetap institution-aware, rollout lintas kampus ditunda                                                                                                                 |
+| DEC-004 | Tidak ada email pada target flow                                               | Identity memakai private username, password, dan verified WhatsApp phone                                                                                                     |
+| DEC-005 | Roster exact match memakai NIM dan verified phone                              | Mismatch atau ambiguity masuk manual review                                                                                                                                  |
+| DEC-006 | Platform admin menyetujui institution dan mengundang campus admin via WhatsApp | Privileged role tidak tersedia lewat open registration                                                                                                                       |
+| DEC-007 | Fonnte adalah initial WhatsApp provider melalui backend adapter dan queue      | SATU membuat OTP; tidak memakai unofficial Fonnte package                                                                                                                    |
+| DEC-008 | In-app notification center adalah canonical                                    | WhatsApp hanya untuk approved important purpose                                                                                                                              |
+| DEC-009 | Campus reviewer memvalidasi contribution langsung                              | Team confirmation tidak diperlukan                                                                                                                                           |
+| DEC-010 | Hybrid leaderboard memakai group default dan individual opt-in                 | Average verified XP, semester, cohort minimal 5, shared rank                                                                                                                 |
+| DEC-011 | Inclusion tidak menjadi leaderboard input                                      | Mencegah stigma dan feedback loop yang tidak adil                                                                                                                            |
+| DEC-012 | Inclusion engine/UI production-ready di balik feature flag                     | Synthetic demo diperbolehkan, real activation menunggu governance                                                                                                            |
+| DEC-013 | Talent Portal memakai verified organization dan internal entitlement           | Billing provider serta pricing di luar release                                                                                                                               |
+| DEC-014 | Academic integration baseline adalah contract plus sandbox                     | Real campus API adalah external gate                                                                                                                                         |
+| DEC-015 | Native Laravel Policies/Gates adalah authorization baseline                    | Role berasal dari membership dan tenant context                                                                                                                              |
+| DEC-016 | Gunakan mature library ketika fit dan kompatibel                               | Issue wajib menyebut package atau framework-native decision                                                                                                                  |
+| DEC-017 | GitHub issues/milestones adalah execution truth                                | Phase files dan progress file dipensiunkan setelah migration audit                                                                                                           |
+| DEC-018 | Main memakai protected pull-request workflow dengan owner admin bypass         | Required CI, resolved conversations, no force/delete, dan **Squash and merge**; contributor non-owner memerlukan 1 approval, owner boleh self-review dan merge sebagai admin |
+| DEC-019 | Owner ditandai label role, bukan assignee sementara                            | Assignee ditambahkan setelah komposisi tim final                                                                                                                             |
 
 ## Approved Library Direction
 

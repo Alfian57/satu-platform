@@ -27,16 +27,16 @@ Mencakup handoff setelah phone verification, roster match, manual review recover
 
 - Roster: exact match, pending review, ambiguous, roster unavailable, revision, reject, verified.
 - Profile: empty, partial, valid, duplicate skill, custom skill proposal.
-- Save: idle, processing, saved, network error, stale session.
+- Save: idle, processing, saved, network error, stale session, forbidden after affiliation permission loss.
 - 0 sampai 30 skills dan 0 sampai 5 evidence items per skill.
 
 ## Interaction and Layout
 
 Section index dapat diklik untuk item yang tersedia dan menunjukkan blocker. Data tersimpan per section. Privacy explanation berada dekat toggle. Mobile single column, desktop boleh menampilkan summary rail. Primary action selalu menyebut akibat berikutnya.
 
-## Accessibility
+## Recovery and Accessibility
 
-Status roster tidak bergantung pada warna. Focus dipindah ke section error setelah submit. Pending result memakai status semantics tanpa polling noise. Semua informasi phone dimasking setelah verification.
+Status roster tidak bergantung pada warna. Focus dipindah ke section error setelah submit, termasuk ketika validation gagal berulang kali. Jika permission afiliasi berubah, halaman menampilkan recovery state yang dapat difokuskan dan menjelaskan bahwa request tidak diproses. Pending result memakai status semantics tanpa polling noise. Semua informasi phone dimasking setelah verification.
 
 ## Constraints and Gates
 
