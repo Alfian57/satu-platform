@@ -30,3 +30,10 @@ Filter dapat dipakai keyboard dan tersimpan pada URL. Table semantics menjadi ba
 ## Boundaries
 
 Score kelompok adalah average verified XP per active member per semester, minimum cohort lima. Inclusion dan connectivity bukan input. Individual default off.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+Ranked rows dan explanation drawer memakai skeleton yang mempertahankan period
+filter. Processing opt-in atau withdrawal memakai inline status, bukan full-page
+skeleton.

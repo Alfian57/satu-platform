@@ -40,3 +40,10 @@ Canvas atau SVG memiliki text alternative dan equivalent list/table. Keyboard ti
 ## Constraints and Gates
 
 Semua demonstration record dilabeli `Data synthetic`. CTA dan claim mengikuti capability yang benar-benar tersedia saat release.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+Interactive demo memakai deferred skeleton di bawah critical content dan
+mempertahankan CTA. Reset, filter, dan network error memiliki inline progress
+atau recovery state.

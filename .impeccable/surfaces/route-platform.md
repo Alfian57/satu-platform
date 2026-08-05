@@ -26,3 +26,9 @@ Pending/approved/rejected/suspended institution; invitation queued/sent/failed/e
 ## Boundaries and Accessibility
 
 Tidak ada privileged role melalui open registration. Destructive atau granting action meminta reason dan confirmation. Queue memakai table semantics, keyboard bulk selection, dan focus restoration.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+Decision queue dan operations ledger memakai skeleton per region. Grant, revoke,
+dan invitation command mempertahankan decision context dengan inline processing.

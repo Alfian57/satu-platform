@@ -38,3 +38,10 @@ Reviewer melihat “why this appeared” dan uncertainty sebelum action. Outreac
 ## Constraints and Open Decisions
 
 DPIA, lawful basis, minimum sample, retention, reviewer role, dan support policy harus selesai sebelum data nyata. Laravel Pennant memisahkan disabled, synthetic, dan approved real activation. Recruiter dan student shared props tidak pernah memuat signal.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+Restricted queue memakai skeleton hanya setelah authorization berhasil. Disabled,
+insufficient, forbidden, dan synthetic states harus tampil sebagai state domain,
+bukan disamarkan sebagai loading.

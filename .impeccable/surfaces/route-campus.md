@@ -42,3 +42,9 @@ Queue dapat dipakai keyboard, memiliki saved URL filter, dan membuka docket tanp
 ## Constraints and Open Decisions
 
 Semua query institution-scoped dan policy-authorized. Reviewer identity, reason, timestamp, dan policy version disimpan. Contribution validation authority adalah campus reviewer. Roster format dan review SLA tetap governance gate.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+Queue, aggregate, dan docket memakai dense table/list skeleton. Saved filter,
+selection, position, dan available review action dipertahankan selama refresh.

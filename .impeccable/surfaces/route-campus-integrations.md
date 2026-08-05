@@ -31,3 +31,9 @@ Mapping editor mencegah duplicate active mapping. Retry meminta confirmation dan
 ## Constraints
 
 Sandbox adalah baseline release. Real campus API membutuhkan external gate dan approved secret handling.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+Mapping register, sync receipt, dan failure queue memakai skeleton per region.
+Retry atau sync command mempertahankan receipt dan menampilkan inline progress.

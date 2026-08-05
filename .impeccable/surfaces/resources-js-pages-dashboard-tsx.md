@@ -88,7 +88,8 @@ project ledger. Mobile memakai top app bar dan urutan: identity/status, docket,
 primary action, active work, recommendation, lalu pending history. Ledger row
 berubah menjadi stacked labeled row tanpa horizontal overflow.
 
-Skeleton hanya untuk deferred region dan mempertahankan geometry. Status selalu
+Skeleton mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md), hanya
+untuk deferred region, dan mempertahankan geometry. Status selalu
 memakai text dan shape/icon selain warna. Focus order mengikuti reading order
 dan tidak melompat dari docket ke rail.
 

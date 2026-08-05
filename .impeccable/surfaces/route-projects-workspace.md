@@ -38,3 +38,9 @@ Initial state berasal dari Inertia. Commands memakai Wayfinder; Reverb mengirim 
 ## Constraints and Open Decisions
 
 Private/presence channel harus tenant dan project authorized. Payload minimal dan tidak membawa sensitive data. Reconnect melakukan reconciliation. Reverb topology ditutup sebelum deployment.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+Task, discussion, dan evidence memakai skeleton per panel; content yang sudah
+terlihat tidak diganti ketika delta atau reconciliation sedang diproses.

@@ -37,3 +37,10 @@ Filter state hidup di URL. Match explanation selalu mendahului action. Detail me
 ## Constraints and Open Decisions
 
 Recommendation menyimpan score version. Team capacity transition atomic. Decline copy aman dan actionable. Initial scoring weights tetap provisional sampai evaluation.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+Discovery result dan recommendation memakai list skeleton yang mempertahankan
+filter URL. Empty result, no-match, dan query error memakai action/retry state,
+bukan chart atau card kosong.

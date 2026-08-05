@@ -34,3 +34,10 @@ OTP mendukung paste dan single logical label. Timer tidak diumumkan tiap detik. 
 ## Constraints
 
 Fonnte hanya delivery provider. SATU membuat dan memverifikasi OTP pada backend. Token tidak pernah mencapai browser.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+OTP delivery status mempertahankan form dan recovery action; skeleton hanya
+dipakai untuk deferred delivery/history region. Processing resend atau submit
+memakai inline progress.

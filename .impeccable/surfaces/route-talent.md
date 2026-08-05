@@ -46,3 +46,10 @@ Result list memiliki table/list semantics, active filters dapat dihapus dengan k
 ## Constraints and Gates
 
 Recruiter verification, entitlement issuance, retention, dan contact policy memerlukan governance approval. Tidak ada price atau customer claim.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+Search result, saved list, candidate detail, dan contact history memakai
+geometry-preserving skeleton. Entitlement/visibility denial, withdrawn candidate,
+empty result, dan retry ditampilkan sebagai state yang dapat ditindaklanjuti.

@@ -37,3 +37,10 @@ Submit review menunjukkan audience dan data yang akan tersimpan. Timeline memper
 ## Constraints and Open Decisions
 
 Evidence private by default. Download authorized. Validation authority dan retention adalah open gates kampus. Public portfolio tidak dibuat sampai visibility model diuji.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+Contribution version, evidence list, review timeline, dan portfolio projection
+memakai skeleton per region. Upload/review command mempertahankan evidence yang
+ada dengan inline progress dan retry.
