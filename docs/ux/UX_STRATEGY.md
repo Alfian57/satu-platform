@@ -16,6 +16,10 @@ Application surface memakai mode **Operate**. Public portfolio dapat memakai **E
 6. Loading, offline, reconnect, stale, forbidden, dan recovery adalah normal state.
 7. Competition tetap sehat: verified effort dihargai, cohort kecil dilindungi, dan individual ranking opt-in.
 
+Loading mengikuti kontrak [LOADING_STATES.md](./LOADING_STATES.md). Skeleton
+mempertahankan geometry dan context per region, sedangkan processing command
+memakai inline progress. Full-page placeholder tidak menjadi default.
+
 ## Persona
 
 - Student yang belum memiliki circle proyek.

@@ -32,6 +32,8 @@ Aturan format commit dan hook lokal dijelaskan pada [COMMIT_CONVENTION.md](./COM
 - Gunakan Conventional Commit dan isi `Closes #<issue>`.
 - Buka Pull Request sebagai draft sampai acceptance criteria dan verification lengkap.
 - Nyatakan perubahan yang belum dilakukan sebagai handoff atau out of scope, bukan sebagai implemented capability.
+- Untuk frontend, sertakan screenshot atau recording initial/deferred skeleton,
+  empty state, dan transition recovery yang relevan.
 - Sertakan evidence yang dapat diperiksa. Jangan menulis klaim seperti "sudah diuji" tanpa nama command, suite, atau link CI.
 - Jangan memasukkan password, token, phone, NIM, private evidence, atau provider payload ke body atau screenshot.
 - Jangan gunakan Unicode em dash pada template atau dokumentasi first-party.
@@ -44,7 +46,7 @@ Pilih check sesuai scope Pull Request.
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Laravel/PHP                 | Affected Pest test, `vendor/bin/pint --dirty --format agent`, dan static check yang relevan.                                |
 | React/Inertia               | Affected browser or component flow, `npm run lint:check`, dan `npm run types:check`. Gunakan Wayfinder untuk route backend. |
-| UI/UX                       | Keyboard/focus, responsive state, reduced motion, accessibility, dan screenshot atau recording.                             |
+| UI/UX                       | Keyboard/focus, responsive state, skeleton loading, reduced motion, accessibility, dan screenshot atau recording.           |
 | Documentation/configuration | Prettier pada changed Markdown/YAML, internal-link review, surface-brief resolution, dan `git diff --check`.                |
 | Security/data/provider      | Authorization atau tenant test, sensitive projection review, migration impact, rollback, dan recovery note.                 |
 

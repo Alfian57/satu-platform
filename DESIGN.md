@@ -146,6 +146,15 @@ Motion memperjelas perubahan state: insertion pada ledger, perubahan status, pem
 
 **The Resting Surface Is Flat Rule.** Surface kerja yang diam tidak menggunakan ambient shadow.
 
+## Loading dan Skeleton
+
+Skeleton adalah struktur sementara yang mengikuti geometry surface sebenarnya,
+bukan decorative card atau full-page replacement. Gunakan existing Skeleton
+component, neutral surface token, dan spacing yang sama dengan content final.
+Animation hanya supporting cue dan harus berhenti pada prefers-reduced-motion.
+Region loading mempertahankan heading, primary action, dan content yang sudah
+tersedia. Processing command memakai inline progress, bukan skeleton.
+
 ## Shapes
 
 Corner cenderung kecil dan terkontrol: 2px (`radius-xs`), 4px (`radius-sm`), 6px (`radius-md`), dan 8px (`radius-lg`). Tab, docket, receipt edge, ruled box, dan validation mark memberi karakter tanpa membuat semua elemen menjadi pill. Circle dipakai untuk avatar, presence, atau completion yang memang bersifat unitary.

@@ -41,3 +41,10 @@ Status roster tidak bergantung pada warna. Focus dipindah ke section error setel
 ## Constraints and Gates
 
 Roster format, active-member definition, dan manual-review SLA ditentukan melalui governance issue. Campus admin/recruiter role tidak tersedia melalui registrasi publik.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+Gunakan section-level skeleton tanpa menghapus progress atau next action yang
+sudah tersedia. Save dan affiliation submit mempertahankan content dengan inline
+processing status.

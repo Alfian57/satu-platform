@@ -30,3 +30,9 @@ Auth dan mandatory security notice tidak dapat dimatikan jika diperlukan untuk k
 ## Accessibility
 
 New notifications memakai polite announcement dan tidak mencuri focus. Bulk action memiliki selection summary. Status provider tidak bergantung pada icon atau warna.
+
+## Loading Contract
+
+Loading mengikuti [LOADING_STATES.md](../../docs/ux/LOADING_STATES.md).
+Notification rows memakai skeleton per page atau pagination region. Unread
+filter, bulk action, dan existing rows tetap stabil selama refresh.

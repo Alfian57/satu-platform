@@ -9,6 +9,9 @@ Membuktikan correctness, tenant isolation, privacy projection, idempotency, acce
 - Pest feature tests sebagai default untuk route, Action, Policy, Job, Notification, dan integration boundary.
 - Unit tests untuk score, ranking, normalization, policy version, dan pure calculation.
 - Browser tests untuk critical JavaScript flow, realtime/reconnect, keyboard, accessibility, dan responsive state.
+- Browser tests untuk initial/deferred skeleton, pagination append, refresh,
+  partial data, dan transition loading ke success, empty, error, forbidden, atau
+  stale.
 - Architecture/static tests untuk forbidden dependencies, serialization boundary, dan tenant conventions.
 
 Jalankan narrowest affected tests terlebih dahulu. PHP change diakhiri `vendor/bin/pint --dirty --format agent`. Frontend change menjalankan lint dan typecheck yang relevan. Production build pada CI atau saat pengguna memintanya. Local `npm run build` hanya jika diminta atau diperlukan untuk diagnosis Vite.
@@ -59,6 +62,16 @@ Mapping version, duplicate mapping, sandbox scenarios, idempotent sync, retry/ba
 ### Notification
 
 Canonical in-app record, preference, mandatory security purpose, outbox idempotency, Fonnte fake, callback validation, masked log, failure/retry, and deep-link authorization.
+
+### Frontend Loading Contract
+
+- Skeleton memakai existing Skeleton component dan mempertahankan geometry.
+- Region loading memiliki aria-busy serta satu polite announcement.
+- Processing command tidak mengganti seluruh content dengan skeleton.
+- Reduced motion menonaktifkan animation tanpa menghilangkan status.
+- Empty state tidak merender chart kosong dan menyediakan recovery/next action.
+- Browser evidence mencakup mobile, desktop, dark mode, zoom/reflow, dan no
+  horizontal overflow.
 
 ## 5. Browser Scenarios
 

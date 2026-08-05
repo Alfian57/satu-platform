@@ -47,6 +47,8 @@ Jangan mengekspos token, stack trace, provider payload, keberadaan account lain,
 - Contrast, zoom 200%, reflow, screen reader, dan high-content-length diuji.
 - `prefers-reduced-motion` dihormati. Tidak ada essential information yang bergantung pada animation.
 - Live region dipakai hemat untuk OTP status, save result, queue result, dan realtime delta penting.
+- Loading region memakai `aria-busy="true"` dan satu polite announcement. Decorative skeleton block tidak dibaca satu per satu.
+- Skeleton mempertahankan geometry dan focus order. Empty, error, forbidden, dan stale tidak disamarkan sebagai loading.
 
 ## Data Visualization
 
@@ -58,4 +60,5 @@ Graph, chart, dan leaderboard menyediakan text/table equivalent, description, se
 - Primary action serta recovery dapat ditemukan.
 - Empty, loading, error, offline, stale, forbidden, dan destructive state tersedia bila relevan.
 - Screen reader mengumumkan perubahan penting tanpa noise.
+- Screenshot atau browser evidence mencakup skeleton dan transition ke success/error pada setiap frontend surface.
 - Phone dan NIM tidak muncul pada copy, screenshot, log, atau projection yang tidak perlu.
