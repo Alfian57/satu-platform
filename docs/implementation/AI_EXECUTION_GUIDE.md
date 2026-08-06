@@ -192,6 +192,108 @@ Berhenti dan tampilkan evidence ketika issue memiliki `gate:human`, `gate:extern
 
 4. **Perbaiki double parenthetical:** jika hasil commit memiliki `(#issue) (#pr)`, ikuti prosedur force push pada [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md) untuk memperbaiki message. Jangan mengabaikan inkonsistensi format commit di main.
 
+### CI Check Secara Lokal
+
+Sebelum push atau membuka PR, jalankan CI check secara lokal:
+
+```sh
+composer ci:check
+```
+
+Urutan check yang dijalankan:
+
+| Step | Command                     | Keterangan                                         |
+| ---- | --------------------------- | -------------------------------------------------- |
+| 1    | `npm run lint:check`        | ESLint static analysis untuk JavaScript/TypeScript |
+| 2    | `npm run format:check`      | Prettier formatting check                          |
+| 3    | `npm run types:check`       | TypeScript type checking (`tsc --noEmit`)          |
+| 4    | `npm run test:issue-status` | Unit test untuk workflow `sync-issue-status`       |
+| 5    | `npm run test:satu-project` | Unit test untuk workflow `sync-satu-project`       |
+| 6    | `composer test`             | Pint → PHPStan → Pest (unit, feature, browser)     |
+
+Jika `composer ci:check` gagal, jalankan command yang gagal secara terpisah untuk mendapatkan output yang lebih detail.
+
+### Git Worktree untuk Parallel Execution
+
+Gunakan `git worktree` untuk mengerjakan beberapa issue secara paralel dalam direktori terpisah. Setiap worktree memiliki branch sendiri, terisolasi dari worktree lain.
+
+**Setup worktree:**
+
+```sh
+# Pastikan main sudah up-to-date
+git checkout main && git pull origin main
+
+# Buat worktree untuk setiap issue
+git worktree add ../satu-<issue> main -b <type>/<issue-number>-<slug>
+```
+
+**Verifikasi basis worktree:**
+
+```sh
+# Pastikan worktree berbasis commit main terbaru
+git -C ../satu-<issue> log --oneline -1
+```
+
+Worktree dari main stale (akibat force push yang belum di-pull) menyebabkan branch berbasis commit lama. Selalu verifikasi sebelum mulai bekerja.
+
+**Pembersihan setelah merge:**
+
+```sh
+# 1. Hapus direktori worktree
+rm -rf ../satu-<issue>
+
+# 2. Hapus metadata worktree
+git worktree prune
+
+# 3. Hapus branch lokal
+git branch -D <type>/<issue-number>-<slug>
+```
+
+**Bahaya worktree:**
+
+- Worktree dari main stale menghasilkan branch berbasis commit yang sudah tidak ada di remote.
+- Setelah force push ke main, pull main terlebih dahulu sebelum membuat worktree baru.
+- Jangan membuat worktree saat ada rebase yang tertunda (indikator `rebase-i` di prompt).
+
+### Parallel Issue Execution
+
+**Aturan:**
+
+- Maksimal 3 issue dikerjakan secara paralel.
+- Setiap issue: 1 worktree, 1 branch, 1 draft PR.
+- Issue yang dikerjakan paralel tidak boleh memiliki dependency satu sama lain sesuai `Blocked by` dan `Dapat paralel dengan`.
+- Issue selesai → merge PR → bersihkan worktree → ambil issue baru.
+
+**Koordinasi:**
+
+- Branch PR mengikuti format `<type>/<issue-number>-<slug>` dari `main` terbaru.
+- Setiap subagent bekerja di worktree-nya sendiri. Subagent tidak boleh menyentuh file di worktree lain.
+- Merge dilakukan sequential (satu per satu) untuk menghindari konflik `Base branch was modified`.
+- Setelah merge, update branch PR yang tersisa dengan `gh pr update-branch` sebelum merge.
+
+**Merge sequence:**
+
+```sh
+for pr in <pr1> <pr2> <pr3>; do
+  gh pr ready $pr
+  gh pr merge $pr --squash --admin
+  sleep 2
+done
+```
+
+**Cleanup setelah semua merge:**
+
+```sh
+# Kembali ke main dan pull perubahan terbaru
+git checkout main && git pull origin main
+
+# Hapus semua worktree
+rm -rf ../satu-* && git worktree prune
+
+# Hapus semua branch lokal
+git branch -D feat/<issue1>-<slug> feat/<issue2>-<slug> feat/<issue3>-<slug>
+```
+
 ## Handoff dan Completion
 
 Sebelum menyatakan selesai, pastikan:
