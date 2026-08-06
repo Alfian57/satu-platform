@@ -133,6 +133,50 @@ Berhenti dan tampilkan evidence ketika issue memiliki `gate:human`, `gate:extern
 - `main` hanya menerima **Squash and merge** setelah required CI `ci` lulus dan seluruh conversation selesai.
 - Contributor non-owner memerlukan minimal satu approval. Repository owner dapat memakai self-review dan admin merge tanpa approval reviewer tambahan, tetapi tidak boleh melewati required CI atau conversation resolution.
 
+### Prosedur Squash Merge untuk AI Agent
+
+1. **Format PR title** — gunakan format Conventional Commit TANPA issue number:
+
+    ```text
+    feat(identity): add verified phone challenge
+    ```
+
+    Jangan menyertakan `(#<issue>)` atau `(#<pr>)` pada PR title. Body PR mencantumkan `Closes #<issue>`.
+
+2. **Merge draft PR** — gunakan `gh pr ready <number>` untuk menandai ready, lalu:
+
+    ```sh
+    gh pr merge <number> --squash --admin
+    ```
+
+    Jika merge gagal dengan "Base branch was modified", perbarui branch terlebih dahulu:
+
+    ```sh
+    gh pr update-branch <number> && gh pr merge <number> --squash --admin
+    ```
+
+    Jika review required memblokir merge, gunakan API merge dengan admin bypass:
+
+    ```sh
+    gh api -X PUT "/repos/:owner/:repo/pulls/<number>/merge" -f merge_method="squash"
+    ```
+
+    Jangan pernah `git push` langsung ke `main`. Lihat [Larangan Direct Push ke Main](#larangan-direct-push-ke-main) untuk detail.
+
+3. **Verifikasi hasil squash merge** — setelah merge, commit di main harus berbentuk:
+
+    ```text
+    <type>(<scope>): <description> (#<issue>)
+    ```
+
+    BUKAN:
+
+    ```text
+    <type>(<scope>): <description> (#<issue>) (#<pr>)
+    ```
+
+4. **Perbaiki double parenthetical** — jika hasil commit memiliki `(#issue) (#pr)`, ikuti prosedur force push pada [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md) untuk memperbaiki message. Jangan mengabaikan inkonsistensi format commit di main.
+
 ## Handoff dan Completion
 
 Sebelum menyatakan selesai, pastikan:
@@ -151,3 +195,14 @@ Sebelum menyatakan selesai, pastikan:
 - Jangan menganalisis message content untuk sentiment atau diagnosis.
 - Jangan mengekspos inclusion signal kepada student, teammate, atau recruiter.
 - Jangan menulis secret, token, private phone, NIM, provider payload, atau private evidence pada issue, Pull Request, log, fixture, atau screenshot.
+
+### Larangan Direct Push ke Main
+
+AI agent dilarang melakukan `git push` langsung ke `main` dalam kondisi apa pun. Setiap perubahan pada `main` wajib melalui:
+
+1. GitHub issue yang disetujui dan memiliki label `ready`.
+2. Branch `<type>/<issue-number>-<slug>` dari `main` terbaru.
+3. Draft Pull Request dengan `Closes #<issue>`.
+4. Squash merge setelah review dan required CI.
+
+Commit yang dihasilkan dari direct push ke main harus segera di-revert melalui force push dengan prosedur pada [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md#prosedur-force-push-main-untuk-fix-commit-message), kemudian perubahan diulangi melalui workflow issue → branch → PR.
