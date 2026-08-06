@@ -1,6 +1,7 @@
 name: ci test
 
 on:
+  push:
   pull_request:
   workflow_dispatch:
 
@@ -16,4 +17,4 @@ jobs:
         with:
           persist-credentials: false
       - name: Verify
-        run: echo "CI triggered on PR!"
+        run: echo "CI fired on ${{ github.event_name }}"
