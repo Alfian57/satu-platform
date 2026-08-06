@@ -135,7 +135,7 @@ Berhenti dan tampilkan evidence ketika issue memiliki `gate:human`, `gate:extern
 
 ### Prosedur Squash Merge untuk AI Agent
 
-0. **Verifikasi CI sebelum merge** — AI agent wajib memastikan required check `ci` lulus pada commit terbaru sebelum melakukan merge. Gunakan:
+0. **Verifikasi CI sebelum merge:** AI agent wajib memastikan required check `ci` lulus pada commit terbaru sebelum melakukan merge. Gunakan:
 
     ```sh
     gh pr checks <number>
@@ -150,7 +150,7 @@ Berhenti dan tampilkan evidence ketika issue memiliki `gate:human`, `gate:extern
     Jangan melakukan merge sebelum `ci` menampilkan status `pass`.
     Admin bypass tidak membebaskan dari kewajiban ini. Force push ke main setelah merge tidak menghilangkan kewajiban verifikasi CI.
 
-1. **Format PR title** — gunakan format Conventional Commit TANPA issue number:
+1. **Format PR title:** gunakan format Conventional Commit TANPA issue number:
 
     ```text
     feat(identity): add verified phone challenge
@@ -158,7 +158,7 @@ Berhenti dan tampilkan evidence ketika issue memiliki `gate:human`, `gate:extern
 
     Jangan menyertakan `(#<issue>)` atau `(#<pr>)` pada PR title. Body PR mencantumkan `Closes #<issue>`.
 
-2. **Merge draft PR** — gunakan `gh pr ready <number>` untuk menandai ready, lalu:
+2. **Merge draft PR:** gunakan `gh pr ready <number>` untuk menandai ready, lalu:
 
     ```sh
     gh pr merge <number> --squash --admin
@@ -178,7 +178,7 @@ Berhenti dan tampilkan evidence ketika issue memiliki `gate:human`, `gate:extern
 
     Jangan pernah `git push` langsung ke `main`. Lihat [Larangan Direct Push ke Main](#larangan-direct-push-ke-main) untuk detail.
 
-3. **Verifikasi hasil squash merge** — setelah merge, commit di main harus berbentuk:
+3. **Verifikasi hasil squash merge:** setelah merge, commit di main harus berbentuk:
 
     ```text
     <type>(<scope>): <description> (#<issue>)
@@ -190,7 +190,7 @@ Berhenti dan tampilkan evidence ketika issue memiliki `gate:human`, `gate:extern
     <type>(<scope>): <description> (#<issue>) (#<pr>)
     ```
 
-4. **Perbaiki double parenthetical** — jika hasil commit memiliki `(#issue) (#pr)`, ikuti prosedur force push pada [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md) untuk memperbaiki message. Jangan mengabaikan inkonsistensi format commit di main.
+4. **Perbaiki double parenthetical:** jika hasil commit memiliki `(#issue) (#pr)`, ikuti prosedur force push pada [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md) untuk memperbaiki message. Jangan mengabaikan inkonsistensi format commit di main.
 
 ## Handoff dan Completion
 
