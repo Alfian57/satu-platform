@@ -101,9 +101,9 @@ Format yang menghasilkan double parentheses `(#issue) (#pr)` tidak konsisten den
 4. Gunakan `gh pr merge <number> --squash --admin` atau API merge dengan merge method `squash`. Jangan menggunakan merge commit atau rebase merge pada main.
 
 5. Jika double parenthetical `(#issue) (#pr)` terjadi di main:
-    - Buat branch perbaikan dari commit sebelum double parenthetical.
-    - Cherry-pick commit dengan message yang dikoreksi (tanpa `(#pr-number)`).
-    - Force push ke main setelah branch protection dibuka sementara.
+    - Gunakan `git rebase -i HEAD~<n>` dengan perintah `reword` untuk memperbaiki commit message.
+    - Jangan menggunakan cherry-pick berurutan karena akan memicu hook pre-commit pada setiap cherry-pick, menyebabkan timeout atau kegagalan.
+    - Setelah rebase selesai, force push ke main setelah branch protection dibuka sementara.
     - Restore branch protection segera setelah push berhasil.
 
 ### Prosedur Force Push Main untuk Fix Commit Message
