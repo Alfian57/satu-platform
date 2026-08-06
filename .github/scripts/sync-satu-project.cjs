@@ -177,7 +177,11 @@ function mapPullRequestDeliveryStatus(pullRequest) {
     return pullRequest.draft ? 'In progress' : 'In review';
 }
 
-function buildProjectStatusRecords({ issues, pullRequests }) {
+function buildProjectStatusRecords({
+    issues,
+    pullRequests,
+    malformed = [],
+}) {
     const allIssues = issues.filter((issue) => !issue.pull_request);
     const allIssuesByNumber = new Map(
         allIssues.map((issue) => [issue.number, issue]),
@@ -188,16 +192,25 @@ function buildProjectStatusRecords({ issues, pullRequests }) {
     const records = new Map();
 
     for (const issue of allIssues) {
+        let status;
+
+        try {
+            status = mapIssueDeliveryStatus(issue, {
+                allIssuesByNumber,
+                pullRequests: openPullRequestsForIssues,
+            });
+        } catch (error) {
+            malformed.push({ issue: issue.number, error: error.message });
+            continue;
+        }
+
         records.set(`issue:${issue.number}`, {
             key: `issue:${issue.number}`,
             contentId: issue.node_id,
             number: issue.number,
             type: 'Issue',
             open: normalizeState(issue.state) === 'open',
-            status: mapIssueDeliveryStatus(issue, {
-                allIssuesByNumber,
-                pullRequests: openPullRequestsForIssues,
-            }),
+            status,
         });
     }
 
@@ -391,7 +404,12 @@ async function syncSatuProject({
         ),
     );
     const projectItems = await listProjectItems(github, project.id);
-    const records = buildProjectStatusRecords({ issues, pullRequests });
+    const malformed = [];
+    const records = buildProjectStatusRecords({
+        issues,
+        pullRequests,
+        malformed,
+    });
     const existingByKey = new Map();
     let duplicateExisting = 0;
 
@@ -513,6 +531,7 @@ async function syncSatuProject({
         skipped,
         duplicateExisting,
         changes,
+        malformed,
     };
 
     logInfo(
@@ -521,6 +540,10 @@ async function syncSatuProject({
             changes.length
         } Project change(s) for ${result.project}.`,
     );
+
+    for (const entry of malformed) {
+        logWarning(core, `Issue #${entry.issue} skipped: ${entry.error}`);
+    }
 
     if (core?.summary) {
         core.summary.addHeading(
@@ -537,7 +560,33 @@ async function syncSatuProject({
             ['Skipped', String(skipped)],
             ['Existing duplicates detected', String(duplicateExisting)],
         ]);
+
+        if (malformed.length > 0) {
+            core.summary.addHeading(
+                `Skipped issues with malformed dependency fields (${malformed.length})`,
+                3,
+            );
+            core.summary.addTable([
+                [
+                    { data: 'Issue', header: true },
+                    { data: 'Error', header: true },
+                ],
+                ...malformed.map((entry) => [
+                    `#${entry.issue}`,
+                    entry.error,
+                ]),
+            ]);
+        }
+
         await core.summary.write();
+    }
+
+    if (malformed.length > 0 && core?.setFailed) {
+        core.setFailed(
+            `${malformed.length} issue(s) had malformed dependency fields and were skipped: ${malformed
+                .map((entry) => `#${entry.issue}`)
+                .join(', ')}`,
+        );
     }
 
     return result;

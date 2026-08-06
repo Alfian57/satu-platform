@@ -380,3 +380,35 @@ test('surfaces GitHub API errors with an actionable prefix', async () => {
         /GitHub Project GraphQL request failed: simulated API failure/,
     );
 });
+
+test('buildProjectStatusRecords skips malformed issue and collects it', () => {
+    const malformed = [];
+    const records = buildProjectStatusRecords({
+        issues: [
+            issue(1, 'open', ''),
+            issue(2, 'open', '- **Blocked by:** pending approval'),
+            issue(3, 'open', ''),
+        ],
+        pullRequests: [pullRequest(42)],
+        malformed,
+    });
+
+    assert.equal(records.has('issue:1'), true);
+    assert.equal(records.has('issue:2'), false);
+    assert.equal(records.has('issue:3'), true);
+    assert.equal(malformed.length, 1);
+    assert.equal(malformed[0].issue, 2);
+    assert.match(malformed[0].error, /does not contain an issue reference/);
+});
+
+test('buildProjectStatusRecords does not alter malformed when empty', () => {
+    const malformed = [];
+    const records = buildProjectStatusRecords({
+        issues: [issue(1, 'open', '')],
+        pullRequests: [],
+        malformed,
+    });
+
+    assert.equal(records.has('issue:1'), true);
+    assert.equal(malformed.length, 0);
+});
