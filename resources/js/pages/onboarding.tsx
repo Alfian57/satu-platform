@@ -23,14 +23,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import { dashboard, login } from '@/routes';
-import { store } from '@/routes/institution-memberships';
-import { show as onboarding } from '@/routes/onboarding';
 import type {
     OnboardingMembership,
     OnboardingMembershipStatus,
     OnboardingPageProps,
 } from '@/types';
+import { dashboard, login } from '@/routes';
+import { store } from '@/routes/institution-memberships';
+import { show as onboarding } from '@/routes/onboarding';
 
 const statusCopy: Record<
     OnboardingMembershipStatus,

@@ -9,13 +9,13 @@ import {
     SidebarHeader,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
-import { dashboard } from '@/routes';
-import { show as onboarding } from '@/routes/onboarding';
 import type {
     InstitutionMembershipStatus,
     NavItem,
     ShellContext,
 } from '@/types';
+import { dashboard } from '@/routes';
+import { show as onboarding } from '@/routes/onboarding';
 
 const mainNavItems: NavItem[] = [
     {
