@@ -48,9 +48,10 @@ body:
     id: dependencies
     attributes:
       label: Dependencies and Handoff
-      description: Pisahkan Blocked by, dapat paralel, dan handoff berikutnya.
+      description: Pisahkan hard blocker, contract checkpoint, pekerjaan paralel, dan handoff berikutnya. Parent hanya diberi label contract-ready setelah artifact contract dapat diperiksa.
       placeholder: |
         - Blocked by: #...
+        - Contract checkpoint: N/A atau jelaskan artifact yang tersedia
         - Dapat paralel dengan: #...
         - Handoff: ...
     validations:

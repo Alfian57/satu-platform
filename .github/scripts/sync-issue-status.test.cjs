@@ -2,14 +2,20 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 const {
+    STATUS_LABELS,
     parseBlockedBy,
+    parseStackedOn,
     pullRequestReferencesIssue,
     resolveStatus,
     syncIssueStatuses,
 } = require('./sync-issue-status.cjs');
 
-function issue(number, state) {
-    return { number, state };
+function issue(number, state, labels = []) {
+    return {
+        number,
+        state,
+        labels: labels.map((name) => ({ name })),
+    };
 }
 
 function resolve({
@@ -28,6 +34,7 @@ function resolve({
 
 test('exports the workflow entrypoint as a callable named export', () => {
     assert.equal(typeof syncIssueStatuses, 'function');
+    assert.equal(STATUS_LABELS.includes('stacked'), true);
 });
 
 test('parses multiple blockers and removes duplicates', () => {
@@ -50,6 +57,18 @@ test('rejects a malformed blocker field', () => {
     assert.throws(
         () => parseBlockedBy('- **Blocked by:** pending approval'),
         /does not contain an issue reference/,
+    );
+});
+
+test('parses a single stacked parent issue', () => {
+    assert.equal(parseStackedOn('- **Stacked on:** #21'), 21);
+    assert.equal(parseStackedOn('- **Stacked on:** N/A'), null);
+});
+
+test('rejects multiple stacked parent issues', () => {
+    assert.throws(
+        () => parseStackedOn('- **Stacked on:** #21, #22'),
+        /exactly one issue reference/,
     );
 });
 
@@ -100,6 +119,57 @@ test('blocked takes precedence over an active PR', () => {
             body: '- **Blocked by:** #21',
             dependencies: [[21, issue(21, 'open')]],
             pullRequests: [{ body: 'Closes #10', draft: false }],
+        }).status,
+        'blocked',
+    );
+});
+
+test('returns stacked for a valid contract-ready parent PR', () => {
+    assert.deepEqual(
+        resolve({
+            body: '- **Blocked by:** #21',
+            dependencies: [[21, issue(21, 'open', ['contract-ready'])]],
+            pullRequests: [
+                {
+                    body: 'Closes #10\n- **Stacked on:** #21',
+                    draft: true,
+                    base: { ref: 'feature/21-parent' },
+                },
+            ],
+        }),
+        { status: 'stacked', blockerNumbers: [21], openBlockers: [21] },
+    );
+});
+
+test('keeps a stacked candidate blocked without contract-ready parent', () => {
+    assert.equal(
+        resolve({
+            body: '- **Blocked by:** #21',
+            dependencies: [[21, issue(21, 'open')]],
+            pullRequests: [
+                {
+                    body: 'Closes #10\n- **Stacked on:** #21',
+                    draft: true,
+                    base: { ref: 'feature/21-parent' },
+                },
+            ],
+        }).status,
+        'blocked',
+    );
+});
+
+test('keeps a stacked candidate blocked when its base is main', () => {
+    assert.equal(
+        resolve({
+            body: '- **Blocked by:** #21',
+            dependencies: [[21, issue(21, 'open', ['contract-ready'])]],
+            pullRequests: [
+                {
+                    body: 'Closes #10\n- **Stacked on:** #21',
+                    draft: true,
+                    base: { ref: 'main' },
+                },
+            ],
         }).status,
         'blocked',
     );
