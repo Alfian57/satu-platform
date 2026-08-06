@@ -135,6 +135,21 @@ Berhenti dan tampilkan evidence ketika issue memiliki `gate:human`, `gate:extern
 
 ### Prosedur Squash Merge untuk AI Agent
 
+0. **Verifikasi CI sebelum merge** — AI agent wajib memastikan required check `ci` lulus pada commit terbaru sebelum melakukan merge. Gunakan:
+
+    ```sh
+    gh pr checks <number>
+    ```
+
+    Jika `ci` gagal, perbaiki penyebabnya sebelum merge. Jika `ci` belum berjalan (no status setelah beberapa menit), trigger ulang secara manual:
+
+    ```sh
+    gh workflow run tests.yml --ref <branch>
+    ```
+
+    Jangan melakukan merge sebelum `ci` menampilkan status `pass`.
+    Admin bypass tidak membebaskan dari kewajiban ini. Force push ke main setelah merge tidak menghilangkan kewajiban verifikasi CI.
+
 1. **Format PR title** — gunakan format Conventional Commit TANPA issue number:
 
     ```text
@@ -195,6 +210,10 @@ Sebelum menyatakan selesai, pastikan:
 - Jangan menganalisis message content untuk sentiment atau diagnosis.
 - Jangan mengekspos inclusion signal kepada student, teammate, atau recruiter.
 - Jangan menulis secret, token, private phone, NIM, provider payload, atau private evidence pada issue, Pull Request, log, fixture, atau screenshot.
+
+### Larangan Merge Tanpa CI
+
+AI agent dilarang melakukan merge ke `main` sebelum required check `ci` lulus. Gunakan `gh pr checks <number>` untuk memverifikasi. Admin bypass tidak membebaskan dari kewajiban ini. Jika `ci` gagal, perbaiki penyebabnya. Jika `ci` belum berjalan, trigger manual dengan `gh workflow run tests.yml --ref <branch>`.
 
 ### Larangan Direct Push ke Main
 
