@@ -47,6 +47,35 @@ Accepted decision adalah product atau architecture contract. Open gate hanya dap
 
 Installasi dependency baru tetap mengikuti approval project dan compatibility/license review pada issue.
 
+## Talent Entitlement and Recruiter Verification
+
+### Accepted Decisions
+
+| ID      | Keputusan                                                                | Dampak                                                                                                                                                                                                                                                               |
+| ------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DEC-021 | Recruiter organization diverifikasi oleh platform admin                 | Recruiter tidak dapat dibuat melalui open registration. Invitation atau application ke recruiter organization memerlukan evidence organisasi dan disetujui oleh platform admin. Recruiter organization adalah tenant-scoped yang terpisah dari institution.          |
+| DEC-022 | Talent Portal access hanya dengan active entitlement                   | Entitlement diterbitkan platform admin per recruiter organization. Tidak ada bayaran, price, atau billing pada rilis kompetisi. Tanpa entitlement active, seluruh search, saved-candidate mutation, dan contact request ditolak.                                     |
+| DEC-023 | Recruiter-safe projection adalah hard boundary                          | Recruiter hanya menerima field yang di-allowlist: display name, program studi, skill, proficiency, portfolio entry yang visible, dan badge. Username, NIM, phone, private evidence, discussion, raw audit, matching input, inclusion signal, dan leaderboard dilarang. |
+| DEC-024 | Contact request memerlukan student consent untuk handoff nomor WhatsApp | Recruiter mengirim contact request tanpa melihat nomor WhatsApp. Student accept menjadi explicit consented handoff; student decline atau cabut visibility menghentikan proyeksi. Visibility withdrawal tidak menghapus data yang sudah di-share sesuai retention.     |
+| DEC-025 | Recruiter membership memiliki lifecycle audit                           | Setiap perubahan status membership (active, suspended, revoked), entitlement issuance, entitlement expiration, contact handoff, dan visibility withdrawal harus diaudit. Audit log mengacu pada SECURITY_PRIVACY.md section 11.                                       |
+| DEC-026 | Cross-organization membership dilarang                                  | Satu user tidak boleh memiliki membership di lebih dari satu recruiter organization secara bersamaan. Skenario pindah organisasi memerlukan proses revoke dan re-verification yang diaudit.                                                                          |
+| DEC-027 | Student mengontrol visibility per portfolio entry                      | Student dapat mengaktifkan, menonaktifkan, atau mencabut visibility per entry. Recruiter discoverability diatur melalui consent eksplisit. Default visibility adalah off (tidak dibagikan ke recruiter).                                                              |
+| DEC-028 | Entitlement expiration menolak aksi baru tanpa menghapus data historis  | Saat entitlement expired, search, saved-candidate mutation, dan contact request baru ditolak. Data historis yang sudah ada (saved candidate, contact request yang sudah dikirim) dipertahankan sesuai retention matrix.                                               |
+
+### Open
+
+| ID          | Keputusan yang dibutuhkan                                                                                         | Owner                   | Batas                                                              |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------ |
+| GATE-004    | Recruiter verification, entitlement issuance, contact, dan retention policy                                       | Product + legal/privacy | Sebelum recruiter pilot                                            |
+| GATE-004-A  | Dokumen atau evidence apa yang wajib diserahkan recruiter organization untuk verifikasi (NPWP/SIUP/Akta/profil)?  | Product + legal/privacy | Sebelum verifikasi recruiter organization production               |
+| GATE-004-B  | Siapa yang berwenang menyetujui atau menolak recruiter organization (platform admin tunggal atau multi-reviewer)? | Product                 | Sebelum verifikasi recruiter organization production               |
+| GATE-004-C  | Apakah entitlement memiliki tier (misal basic/pro) atau satu tier universal untuk rilis kompetisi?                | Product                 | Sebelum implementasi entitlement                                   |
+| GATE-004-D  | Berapa durasi default entitlement dan apakah ada renewal process?                                                | Product                 | Sebelum implementasi entitlement                                   |
+| GATE-004-E  | Kondisi apa yang memicu revoke otomatis vs manual review untuk membership recruiter?                              | Product + legal/privacy | Sebelum implementasi recruiter membership lifecycle                |
+| GATE-004-F  | Berapa retention period untuk data contact dan saved candidate setelah visibility withdrawal atau membership revoke? | Legal/privacy           | Sebelum recruiter pilot                                            |
+| GATE-004-G  | Apakah recruiter organization bisa di-suspend atau di-revoke oleh platform admin, dan apa dampaknya?              | Product + legal/privacy | Sebelum recruiter pilot                                            |
+| GATE-004-H  | Bagaimana proses pindah recruiter organization (revoke + re-verify), dan apakah ada cooldown period?              | Product                 | Sebelum implementasi recruiter membership cross-organization flow  |
+
 ## Open Gates
 
 | ID       | Keputusan yang dibutuhkan                                                       | Owner                             | Batas                            |
