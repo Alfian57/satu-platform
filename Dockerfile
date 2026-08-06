@@ -1,5 +1,5 @@
 # Stage 1: PHP Dependencies
-FROM php:8.3-fpm AS vendor
+FROM php:8.5-fpm AS vendor
 WORKDIR /var/www/html
 
 # Install system dependencies
@@ -35,7 +35,7 @@ COPY --from=vendor /var/www/html/vendor ./vendor
 RUN npm run build
 
 # Stage 3: Production Runtime
-FROM php:8.3-fpm
+FROM php:8.5-fpm
 WORKDIR /var/www/html
 
 # Install system dependencies
