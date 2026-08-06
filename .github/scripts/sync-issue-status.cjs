@@ -196,14 +196,26 @@ async function syncIssueStatuses({ github, context, core, dryRun = false }) {
         (issue) => issue.state === 'open',
     );
     const changes = [];
+    const malformed = [];
 
     for (const issue of openIssues) {
-        const resolution = resolveStatus({
-            issueNumber: issue.number,
-            body: issue.body ?? '',
-            allIssuesByNumber,
-            pullRequests: openPullRequests,
-        });
+        let resolution;
+
+        try {
+            resolution = resolveStatus({
+                issueNumber: issue.number,
+                body: issue.body ?? '',
+                allIssuesByNumber,
+                pullRequests: openPullRequests,
+            });
+        } catch (error) {
+            malformed.push({
+                issue: issue.number,
+                error: error.message,
+            });
+            continue;
+        }
+
         const existingLabels = issue.labels.map((label) => label.name);
         const currentStatuses = existingLabels.filter((label) =>
             STATUS_LABELS.includes(label),
@@ -260,7 +272,39 @@ async function syncIssueStatuses({ github, context, core, dryRun = false }) {
                     'none',
             ]),
         ]);
+
+        if (malformed.length > 0) {
+            core.summary.addHeading(
+                `Skipped issues with malformed dependency fields (${malformed.length})`,
+                3,
+            );
+            core.summary.addTable([
+                [
+                    { data: 'Issue', header: true },
+                    { data: 'Error', header: true },
+                ],
+                ...malformed.map((entry) => [
+                    `#${entry.issue}`,
+                    entry.error,
+                ]),
+            ]);
+        }
+
         await core.summary.write();
+    }
+
+    for (const entry of malformed) {
+        core.warning(
+            `Issue #${entry.issue} skipped: ${entry.error}`,
+        );
+    }
+
+    if (malformed.length > 0) {
+        core.setFailed(
+            `${malformed.length} issue(s) had malformed dependency fields and were skipped: ${malformed
+                .map((entry) => `#${entry.issue}`)
+                .join(', ')}`,
+        );
     }
 
     return changes;

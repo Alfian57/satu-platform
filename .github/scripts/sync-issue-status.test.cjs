@@ -196,3 +196,105 @@ test('matches all supported closing verbs', () => {
         );
     }
 });
+
+test('syncIssueStatuses skips malformed blocker and continues syncing valid issues', async () => {
+    const synced = [];
+    const warnings = [];
+    const infos = [];
+    let failedMessage = null;
+
+    const github = {
+        paginate: async (method, params) => {
+            const response = await method(params);
+
+            return response.data;
+        },
+        rest: {
+            issues: {
+                listForRepo: async (params) => {
+                    assert.ok(params);
+
+                    return {
+                        data: [
+                            { number: 1, state: 'open', labels: [{ name: 'bug' }], body: '' },
+                            {
+                                number: 2,
+                                state: 'open',
+                                labels: [],
+                                body: '- **Blocked by:** pending approval',
+                            },
+                            { number: 3, state: 'open', labels: [{ name: 'ready' }], body: '' },
+                        ],
+                    };
+                },
+                setLabels: async ({ issue_number, labels }) => {
+                    synced.push({ number: issue_number, labels });
+                },
+            },
+            pulls: {
+                list: async () => ({ data: [] }),
+            },
+        },
+    };
+    const context = { repo: { owner: 'test', repo: 'test' } };
+    const core = {
+        info: (msg) => infos.push(msg),
+        warning: (msg) => warnings.push(msg),
+        setFailed: (msg) => (failedMessage = msg),
+        summary: null,
+    };
+
+    await syncIssueStatuses({ github, context, core });
+
+    assert.equal(synced.length, 1);
+    assert.equal(synced[0].number, 1);
+    assert.deepEqual(synced[0].labels, ['bug', 'ready']);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0], /Issue #2 skipped/);
+    assert.notEqual(failedMessage, null);
+    assert.match(failedMessage, /#2/);
+});
+
+test('syncIssueStatuses does not fail on empty or fully valid issues', async () => {
+    const synced = [];
+    let failedMessage = undefined;
+
+    const github = {
+        paginate: async (method, params) => {
+            const response = await method(params);
+
+            return response.data;
+        },
+        rest: {
+            issues: {
+                listForRepo: async (params) => {
+                    assert.ok(params);
+
+                    return {
+                        data: [
+                            { number: 1, state: 'open', labels: [], body: '' },
+                        ],
+                    };
+                },
+                setLabels: async ({ issue_number, labels }) => {
+                    synced.push({ number: issue_number, labels });
+                },
+            },
+            pulls: {
+                list: async () => ({ data: [] }),
+            },
+        },
+    };
+    const context = { repo: { owner: 'test', repo: 'test' } };
+    const core = {
+        info: () => {},
+        warning: () => {},
+        setFailed: (msg) => (failedMessage = msg),
+        summary: null,
+    };
+
+    await syncIssueStatuses({ github, context, core });
+
+    assert.equal(synced.length, 1);
+    assert.equal(failedMessage, undefined);
+});
