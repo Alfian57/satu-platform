@@ -142,6 +142,7 @@ function mapIssueStatus(status) {
     const statusMap = {
         ready: 'Ready',
         blocked: 'Blocked',
+        stacked: 'In progress',
         'in-progress': 'In progress',
         'needs-review': 'In review',
     };
@@ -182,9 +183,7 @@ function buildProjectStatusRecords({ issues, pullRequests }) {
         allIssues.map((issue) => [issue.number, issue]),
     );
     const openPullRequestsForIssues = pullRequests.filter(
-        (pullRequest) =>
-            normalizeState(pullRequest.state) === 'open' &&
-            (pullRequest.base?.ref ?? 'main') === 'main',
+        (pullRequest) => normalizeState(pullRequest.state) === 'open',
     );
     const records = new Map();
 

@@ -14,6 +14,7 @@ Jangan menghapus atau mengganti urutan section berikut tanpa memperbarui dokumen
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
 | `Ringkasan`                    | Outcome, alasan perubahan, dan batasan yang terlihat reviewer.                                                    |
 | `Issue`                        | `Closes #<issue>` untuk satu issue yang dikerjakan.                                                               |
+| `Dependency Stack`             | `Stacked on`, contract checkpoint, dan bukti ownership issue bila PR tidak langsung menargetkan `main`.           |
 | `Perubahan`                    | Daftar perubahan nyata pada code, konfigurasi, data, atau dokumentasi.                                            |
 | `Verifikasi`                   | Test dan check yang dijalankan beserta hasilnya.                                                                  |
 | `UI Evidence`                  | Screenshot atau rekaman mobile/desktop dan state penting. Tulis `N/A` bila non-UI.                                |
@@ -28,8 +29,10 @@ Aturan format commit dan hook lokal dijelaskan pada [COMMIT_CONVENTION.md](./COM
 ## Aturan Pengisian
 
 - Satu issue, satu branch, satu Pull Request.
-- Gunakan branch `<type>/<issue-number>-<slug>` dari `main` terbaru.
+- Gunakan branch `<type>/<issue-number>-<slug>` dari `main` terbaru, atau dari branch parent contract-ready untuk stacked PR.
 - Gunakan Conventional Commit dan isi `Closes #<issue>`.
+- Untuk stacked PR, isi `Stacked on: #<parent>` dan gunakan base branch parent. Setelah parent merge, rebase ke `main`, ubah base PR, dan kosongkan field tersebut.
+- Pastikan ownership gate sudah lulus: akun `gh api user --jq .login` sama dengan assignee issue, atau issue belum memiliki assignee.
 - Buka Pull Request sebagai draft sampai acceptance criteria dan verification lengkap.
 - Nyatakan perubahan yang belum dilakukan sebagai handoff atau out of scope, bukan sebagai implemented capability.
 - Untuk frontend, sertakan screenshot atau recording initial/deferred skeleton,

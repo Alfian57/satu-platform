@@ -8,6 +8,12 @@
 
 Closes #
 
+## Dependency Stack
+
+- **Stacked on:** N/A
+- **Contract checkpoint:** N/A
+- **Ownership gate:** `gh auth status` dan assignee issue sudah sesuai.
+
 ## Perubahan
 
 -
