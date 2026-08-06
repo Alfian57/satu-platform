@@ -2,7 +2,7 @@
 
 ## Strategy
 
-Delivery memakai ten GitHub milestones. Milestone menyatakan urutan outcome, sedangkan GitHub issues tetap atomic unit. Work dapat paralel jika hard dependency tidak dilanggar.
+Delivery memakai ten GitHub milestones. Milestone menyatakan urutan outcome, sedangkan GitHub issues tetap atomic unit. Work dapat paralel jika hard dependency tidak dilanggar atau consumer memakai stacked workflow setelah contract checkpoint upstream tersedia. Detailnya ada pada [DEPENDENCY_WORKFLOW.md](./DEPENDENCY_WORKFLOW.md).
 
 ## Milestones
 
@@ -25,7 +25,7 @@ Delivery memakai ten GitHub milestones. Milestone menyatakan urutan outcome, sed
 M0 -> M1 -> M2 -> M3 -> M4 -> M5 -> M6 -> M7 -> M8 -> M9
 ```
 
-UX shaping dalam M0/M1 dapat berjalan paralel dengan approved governance work. Talent projection bergantung pada contribution/portfolio. Gamification bergantung pada contribution validation. Inclusion activation dan real academic provider tetap gated walau implementation dapat selesai dengan synthetic/sandbox data.
+UX shaping dalam M0/M1 dapat berjalan paralel dengan approved governance work. Talent projection bergantung pada contribution/portfolio. Gamification bergantung pada contribution validation. Inclusion activation dan real academic provider tetap gated walau implementation dapat selesai dengan synthetic/sandbox data. Stacked branch hanya mempercepat development dan review, bukan merge atau release gate.
 
 ## Release Definition
 

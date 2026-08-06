@@ -1,4 +1,10 @@
-const STATUS_LABELS = ['ready', 'blocked', 'in-progress', 'needs-review'];
+const STATUS_LABELS = [
+    'ready',
+    'blocked',
+    'stacked',
+    'in-progress',
+    'needs-review',
+];
 
 function parseBlockedBy(body = '') {
     const match = body.match(/^\s*-\s*\*\*Blocked by:\*\*\s*(.+)$/im);
@@ -40,10 +46,82 @@ function pullRequestReferencesIssue(pullRequest, issueNumber) {
     );
 }
 
-function pullRequestStatus(issueNumber, pullRequests) {
+function parseStackedOn(body = '') {
+    const match = body.match(/^\s*-\s*(?:\*\*)?Stacked on:(?:\*\*)?\s*(.+)$/im);
+
+    if (!match) {
+        return null;
+    }
+
+    const value = match[1].trim();
+
+    if (/^(none|n\/a|tidak ada)\.?$/i.test(value)) {
+        return null;
+    }
+
+    const issueNumbers = [...value.matchAll(/#(\d+)/g)].map((result) =>
+        Number(result[1]),
+    );
+
+    if (issueNumbers.length !== 1) {
+        throw new Error(
+            `Stacked on field must contain exactly one issue reference: ${value}`,
+        );
+    }
+
+    return issueNumbers[0];
+}
+
+function hasIssueLabel(issue, labelName) {
+    return (issue?.labels ?? []).some(
+        (label) => (label?.name ?? label) === labelName,
+    );
+}
+
+function pullRequestIsStackedForIssue(
+    pullRequest,
+    blockerNumbers,
+    allIssuesByNumber,
+) {
+    if ((pullRequest.base?.ref ?? 'main') === 'main') {
+        return false;
+    }
+
+    const parentNumber = parseStackedOn(pullRequest.body ?? '');
+
+    if (!parentNumber || !blockerNumbers.includes(parentNumber)) {
+        return false;
+    }
+
+    const parentIssue = allIssuesByNumber.get(parentNumber);
+
+    return (
+        parentIssue?.state === 'open' &&
+        hasIssueLabel(parentIssue, 'contract-ready')
+    );
+}
+
+function pullRequestStatus(
+    issueNumber,
+    pullRequests,
+    { blockerNumbers = [], allIssuesByNumber = new Map() } = {},
+) {
     const relatedPullRequests = pullRequests.filter((pullRequest) =>
         pullRequestReferencesIssue(pullRequest, issueNumber),
     );
+
+    if (
+        blockerNumbers.length > 0 &&
+        relatedPullRequests.some((pullRequest) =>
+            pullRequestIsStackedForIssue(
+                pullRequest,
+                blockerNumbers,
+                allIssuesByNumber,
+            ),
+        )
+    ) {
+        return 'stacked';
+    }
 
     if (relatedPullRequests.some((pullRequest) => !pullRequest.draft)) {
         return 'needs-review';
@@ -70,16 +148,26 @@ function resolveStatus({ issueNumber, body, allIssuesByNumber, pullRequests }) {
         return dependency.state === 'open';
     });
 
+    const pullRequestStatusValue = pullRequestStatus(
+        issueNumber,
+        pullRequests,
+        {
+            blockerNumbers,
+            allIssuesByNumber,
+        },
+    );
+
     if (openBlockers.length > 0) {
         return {
-            status: 'blocked',
+            status:
+                pullRequestStatusValue === 'stacked' ? 'stacked' : 'blocked',
             blockerNumbers,
             openBlockers,
         };
     }
 
     return {
-        status: pullRequestStatus(issueNumber, pullRequests) ?? 'ready',
+        status: pullRequestStatusValue ?? 'ready',
         blockerNumbers,
         openBlockers,
     };
@@ -97,7 +185,6 @@ async function syncIssueStatuses({ github, context, core, dryRun = false }) {
         owner,
         repo,
         state: 'open',
-        base: 'main',
         per_page: 100,
     });
     const allIssuesByNumber = new Map(
@@ -182,7 +269,10 @@ async function syncIssueStatuses({ github, context, core, dryRun = false }) {
 module.exports = {
     STATUS_LABELS,
     parseBlockedBy,
+    parseStackedOn,
+    hasIssueLabel,
     pullRequestReferencesIssue,
+    pullRequestIsStackedForIssue,
     pullRequestStatus,
     resolveStatus,
     syncIssueStatuses,
