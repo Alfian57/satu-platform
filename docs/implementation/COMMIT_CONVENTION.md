@@ -66,6 +66,57 @@ Scope bersifat optional. Gunakan area yang jelas seperti `identity`, `onboarding
 - Required CI tetap menjadi verifikasi final. Hook lokal tidak menggantikan test, review, atau branch protection.
 - Jika hook sengaja dilewati untuk diagnosis, jangan gunakan hasil tersebut sebagai evidence dan jelaskan alasannya pada Pull Request.
 
+## Squash Merge Message Convention
+
+GitHub squash merge menghasilkan commit message otomatis dari PR title, body `Closes #<issue>`, dan nomor PR:
+
+```text
+<PR title> (#<issue-number>) (#<PR-number>)
+```
+
+Contoh hasil yang **salah**:
+
+```text
+feat(ux): shape WhatsApp auth, onboarding, and notifications (#78) (#128)
+```
+
+Format yang menghasilkan double parentheses `(#issue) (#pr)` tidak konsisten dengan commit convention SATU yang hanya menggunakan satu reference issue.
+
+### Aturan
+
+1. **PR title** wajib mengikuti format Conventional Commit TANPA menyertakan issue number di subject:
+
+    ```text
+    feat(ux): shape WhatsApp auth, onboarding, and notifications
+    ```
+
+2. **Body PR** wajib mencantumkan `Closes #<issue>`.
+
+3. **Commit hasil squash merge di main** hanya memuat satu reference:
+
+    ```text
+    feat(ux): shape WhatsApp auth, onboarding, and notifications (#78)
+    ```
+
+4. Gunakan `gh pr merge <number> --squash --admin` atau API merge dengan merge method `squash`. Jangan menggunakan merge commit atau rebase merge pada main.
+
+5. Jika double parenthetical `(#issue) (#pr)` terjadi di main:
+    - Buat branch perbaikan dari commit sebelum double parenthetical.
+    - Cherry-pick commit dengan message yang dikoreksi (tanpa `(#pr-number)`).
+    - Force push ke main setelah branch protection dibuka sementara.
+    - Restore branch protection segera setelah push berhasil.
+
+### Prosedur Force Push Main untuk Fix Commit Message
+
+Force push ke main hanya diizinkan untuk memperbaiki commit message squash merge, bukan untuk perubahan kode atau revert. Ikuti prosedur berikut:
+
+1. Baca branch protection: `gh api /repos/:owner/:repo/branches/main/protection`
+2. Set `allow_force_pushes: true` menggunakan `PUT` endpoint yang sama dengan seluruh konfigurasi eksisting.
+3. Perbaiki commit message, lalu `git push --force-with-lease origin main`.
+4. Segera restore `allow_force_pushes: false` melalui `PUT` endpoint yang sama.
+
+Jangan membiarkan `allow_force_pushes: true` lebih dari beberapa detik. Setiap force push ke main harus dicatat sebagai komentar issue dan dilaporkan di Pull Request terkait.
+
 ## Mengubah Policy
 
 Jika type, format, hook, atau check berubah, perbarui file berikut dalam Pull Request yang sama:
