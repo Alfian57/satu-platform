@@ -32,20 +32,22 @@ Issue UI juga menunjuk surface brief. Issue yang membutuhkan library menyebut ex
 - Owner: `owner:backend`, `owner:frontend`, `owner:fullstack`, `owner:qa`, `owner:devops`, `owner:product-design`, `owner:security-privacy`.
 - Priority: `priority:p0` sampai `priority:p3`.
 - Gate: `gate:human`, `gate:external`, `gate:conditional`.
-- State helpers: `historical`, `superseded`, `blocked`, `ready`, `in-progress`, `needs-review`.
+- Contract marker: `contract-ready`.
+- State helpers: `historical`, `superseded`, `blocked`, `stacked`, `ready`, `in-progress`, `needs-review`.
 
-Owner label menunjukkan accountable role. GitHub assignee belum dipakai sampai komposisi developer final.
+Owner label menunjukkan accountable role. GitHub Assignee menunjukkan developer yang boleh mengerjakan issue. Assignment issue adalah source of truth pada GitHub, bukan salinan Markdown.
 
 ### Status workflow
 
 - `ready`: issue open dan tidak memiliki hard dependency open.
 - `blocked`: issue memiliki hard dependency open.
+- `stacked`: issue memiliki hard dependency open, parent contract-ready, dan valid stacked Pull Request pada branch parent.
 - `in-progress`: pekerjaan branch-only atau open draft Pull Request sedang berjalan.
 - `needs-review`: open Pull Request sudah siap direview atau menunggu gate/review.
 
-Status labels harus mutually exclusive. Gate label tidak otomatis berarti `blocked`.
+Status labels harus mutually exclusive. Label `contract-ready` adalah marker contract, bukan status. Gate label tidak otomatis berarti `blocked`.
 
-Workflow [`sync-issue-status.yml`](../../.github/workflows/sync-issue-status.yml) melakukan reconciliation otomatis pada event issue dan Pull Request, serta menyediakan `workflow_dispatch` dengan `dry_run`. Hard blocker selalu menghasilkan `blocked`; setelah blocker selesai, status diturunkan dari open Pull Request atau menjadi `ready` jika tidak ada Pull Request.
+Workflow [`sync-issue-status.yml`](../../.github/workflows/sync-issue-status.yml) melakukan reconciliation otomatis pada event issue dan Pull Request, serta menyediakan `workflow_dispatch` dengan `dry_run`. Hard blocker tanpa valid stacked Pull Request menghasilkan `blocked`; consumer dengan contract-ready parent dan metadata stack yang valid menghasilkan `stacked`. Setelah seluruh blocker selesai, status diturunkan dari open Pull Request atau menjadi `ready` jika tidak ada Pull Request.
 
 Workflow [`sync-satu-project.yml`](../../.github/workflows/sync-satu-project.yml) merefleksikan status yang sama ke field `Delivery Status` pada Project. Workflow memakai dedicated `PROJECT_TOKEN`, schedule safety net, dan `dry_run`. Lihat [GITHUB_PROJECT.md](./GITHUB_PROJECT.md) untuk permission, recovery, dan backfill.
 
@@ -53,7 +55,7 @@ Workflow [`sync-satu-project.yml`](../../.github/workflows/sync-satu-project.yml
 
 Panduan authoring template ada di [PR_TEMPLATE_GUIDE.md](./PR_TEMPLATE_GUIDE.md), sedangkan format commit ada di [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md). Perbarui guide tersebut bersama `.github/PULL_REQUEST_TEMPLATE.md` jika kontrak evidence atau merge berubah.
 
-- Branch: `<type>/<issue-number>-<slug>`.
+- Branch: `<type>/<issue-number>-<slug>`; issue `stacked` dibuat dari branch parent contract-ready.
 - Satu issue, satu branch, satu pull request.
 - Conventional Commit.
 - Hook `commit-msg` memakai commitlint dan hook `pre-commit` memakai Husky. Detail format ada di [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md).
@@ -66,16 +68,18 @@ Panduan authoring template ada di [PR_TEMPLATE_GUIDE.md](./PR_TEMPLATE_GUIDE.md)
 - Verification: affected Pest tests, lint, typecheck, accessibility/browser checks yang relevan.
 - Jangan menjalankan local production build kecuali diperlukan untuk diagnosis atau diminta pengguna. CI tetap menjalankan required build/check.
 
+Ownership gate dan prosedur stacked branch ada pada [DEPENDENCY_WORKFLOW.md](./DEPENDENCY_WORKFLOW.md). AI agent wajib mencocokkan login GitHub CLI aktif dengan assignee issue sebelum membuat branch.
+
 ## Dependency dan Handoff
 
-`Blocked by` hanya memuat hard dependency. Pekerjaan yang bisa paralel dicatat terpisah. Handoff menyebut consumer berikutnya dan artifact yang diberikan. Issue berlabel gate berhenti pada evidence dan menunggu keputusan eksplisit.
+`Blocked by` hanya memuat hard dependency. Pekerjaan yang bisa paralel dicatat terpisah. Consumer boleh memakai stacked workflow setelah parent diberi label `contract-ready`, tetapi merge tetap menunggu seluruh blocker closed. Handoff menyebut consumer berikutnya dan artifact yang diberikan. Issue berlabel gate berhenti pada evidence dan menunggu keputusan eksplisit.
 
 Dependency yang sudah selesai ditulis sebagai `Prerequisite completed: #<issue>`, agar AI tidak menganggap issue masih blocked.
 
 ## Definition of Ready
 
-- Tidak ada hard dependency terbuka.
-- Issue memiliki label `ready` dan tidak memiliki status label aktif lain.
+- Tidak ada hard dependency terbuka, atau issue memiliki valid stacked Pull Request sesuai [DEPENDENCY_WORKFLOW.md](./DEPENDENCY_WORKFLOW.md).
+- Issue memiliki label `ready` atau `stacked` dan tidak memiliki status label aktif lain.
 - Owning docs dan surface brief tersedia.
 - Acceptance criteria dapat diuji.
 - Package decision dan approval diketahui.
