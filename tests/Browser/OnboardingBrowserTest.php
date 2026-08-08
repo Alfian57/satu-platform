@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\InstitutionStatus;
+use App\Models\AuditLog;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\User;
@@ -123,6 +124,7 @@ test('rapid submission is blocked in the client and idempotent on the server', f
         ->assertNoConsoleLogs();
 
     expect(InstitutionMembership::query()->whereBelongsTo($user)->count())->toBe(1)
+        ->and(AuditLog::query()->where('operation', 'institution_membership.requested')->count())
         ->toBe(1);
 });
 
@@ -236,6 +238,7 @@ test('permission loss during retry is safe and keeps the local choice', function
         ->assertNoConsoleLogs();
 
     expect($membership->refresh()->status->value)->toBe('unverified')
+        ->and(AuditLog::query()->count())->toBe(0);
 });
 
 test('suspended affiliation hides the request action and provides a safe destination', function () {
@@ -363,7 +366,7 @@ test('long multilingual institution names remain readable at mobile width and 20
     int $zoom,
 ) {
     $user = User::factory()->create();
-    $longName = str_repeat('UniversitasTanpaPemisah', 6).'ÃƒÂ¦Ã‚ÂÃ‚Â±ÃƒÂ¤Ã‚ÂºÃ‚Â¬ÃƒÂ°Ã…Â¸Ã…Â¡Ã¢â€šÂ¬Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â±ÃƒËœÃ‚Â­ÃƒËœÃ‚Â¨ÃƒËœÃ‚Â§';
+    $longName = str_repeat('UniversitasTanpaPemisah', 6).'Ã¦ÂÂ±Ã¤ÂºÂ¬Ã°Å¸Å¡â‚¬Ã™â€¦Ã˜Â±Ã˜Â­Ã˜Â¨Ã˜Â§';
     $institution = Institution::factory()->active()->create([
         'name' => $longName,
     ]);
