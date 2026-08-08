@@ -18,7 +18,7 @@ final class ProcessIntegrationSync
     ) {}
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function handle(IntegrationSync $sync, array $payload): void
     {

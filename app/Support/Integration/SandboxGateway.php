@@ -3,6 +3,7 @@
 namespace App\Support\Integration;
 
 use App\Models\IntegrationConnection;
+use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
@@ -37,7 +38,7 @@ class SandboxGateway implements AcademicGateway
     }
 
     /**
-     * @return callable|\GuzzleHttp\Promise\PromiseInterface
+     * @return callable|PromiseInterface
      */
     private function getFakeResponse(string $trigger)
     {
