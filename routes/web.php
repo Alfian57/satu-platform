@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\Platform\RecruiterEvidenceProjectionController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -16,7 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:institution-membership-request')
         ->name('institution-memberships.store');
 
-    Route::get('platform/recruiter-organizations/{organization}/evidence/{filename}', [\App\Http\Controllers\Platform\RecruiterEvidenceProjectionController::class, 'show'])
+    Route::get('platform/recruiter-organizations/{organization}/evidence/{filename}', [RecruiterEvidenceProjectionController::class, 'show'])
         ->name('platform.recruiter-organizations.evidence.show');
 });
 

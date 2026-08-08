@@ -6,6 +6,7 @@ use App\Models\RecruiterVerificationReview;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -158,20 +159,20 @@ test('organization member cannot view reviews for another organization', functio
 });
 
 it('projects evidence only to authorized platform admins', function () {
-    $organization = \App\Models\RecruiterOrganization::factory()->create();
-    $admin = \App\Models\User::factory()->create();
+    $organization = RecruiterOrganization::factory()->create();
+    $admin = User::factory()->create();
     $admin->setAttribute('is_platform_admin', true);
-    $stranger = \App\Models\User::factory()->create();
+    $stranger = User::factory()->create();
     $stranger->setAttribute('is_platform_admin', false);
-    
+
     $path = "recruiter-evidence/{$organization->id}/test-evidence.pdf";
-    \Illuminate\Support\Facades\Storage::disk('local')->put($path, 'dummy content');
-    
+    Storage::disk('local')->put($path, 'dummy content');
+
     // Stranger gets forbidden
     $this->actingAs($stranger)
         ->get(route('platform.recruiter-organizations.evidence.show', ['organization' => $organization->id, 'filename' => 'test-evidence.pdf']))
         ->assertForbidden();
-        
+
     // Admin gets the file
     $this->actingAs($admin)
         ->get(route('platform.recruiter-organizations.evidence.show', ['organization' => $organization->id, 'filename' => 'test-evidence.pdf']))
