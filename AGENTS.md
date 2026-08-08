@@ -46,6 +46,7 @@ Saat berperan sebagai project manager yang mereview pull request di remote repos
 3. **Draft PR**: Issue biasanya meminta PR dibuka sebagai draft. Jika PR langsung open, tanyakan apakah sudah siap review penuh.
 4. **UI screenshot**: PR dengan perubahan UI wajib menyertakan screenshot mobile/desktop dan state penting di body.
 5. **Gate dan prerequisite**: Jika issue memiliki `gate:conditional` atau prerequisite, tanyakan statusnya di komentar.
+6. **Preview komentar**: Sebelum mengirim komentar ke PR, tampilkan dulu preview komentar tersebut di chat untuk dikonfirmasi oleh user.
 
 ### Gaya Bahasa Komentar
 - Gunakan **Bahasa Indonesia kasual** dan natural.
