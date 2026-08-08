@@ -33,7 +33,7 @@ permissions:
 
 concurrency:
   group: issue-status-sync
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   sync:

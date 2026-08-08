@@ -249,6 +249,41 @@ async function syncIssueStatuses({ github, context, core, dryRun = false }) {
         }
     }
 
+    const closedIssues = [...allIssuesByNumber.values()].filter(
+        (issue) => issue.state !== 'open',
+    );
+
+    for (const issue of closedIssues) {
+        const existingLabels = issue.labels.map((label) => label.name);
+        const statusLabels = existingLabels.filter((label) =>
+            STATUS_LABELS.includes(label),
+        );
+
+        if (statusLabels.length === 0) {
+            continue;
+        }
+
+        const nextLabels = existingLabels.filter(
+            (label) => !STATUS_LABELS.includes(label),
+        );
+
+        changes.push({
+            issue: issue.number,
+            from: statusLabels,
+            to: 'none',
+            blockers: [],
+        });
+
+        if (!dryRun) {
+            await github.rest.issues.setLabels({
+                owner,
+                repo,
+                issue_number: issue.number,
+                labels: nextLabels,
+            });
+        }
+    }
+
     core.info(
         `${dryRun ? 'Dry run found' : 'Synchronized'} ${changes.length} issue status change(s).`,
     );
