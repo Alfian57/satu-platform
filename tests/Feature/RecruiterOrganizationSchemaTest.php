@@ -156,3 +156,22 @@ test('organization member cannot view reviews for another organization', functio
 
     expect($membership->user->can('view', $review))->toBeFalse();
 });
+
+it('projects evidence only to authorized platform admins', function () {
+    $organization = \App\Models\RecruiterOrganization::factory()->create();
+    $admin = \App\Models\User::factory()->create(['is_platform_admin' => true]);
+    $stranger = \App\Models\User::factory()->create(['is_platform_admin' => false]);
+    
+    $path = "recruiter-evidence/{$organization->id}/test-evidence.pdf";
+    \Illuminate\Support\Facades\Storage::disk('local')->put($path, 'dummy content');
+    
+    // Stranger gets forbidden
+    $this->actingAs($stranger)
+        ->get(route('platform.recruiter-organizations.evidence.show', ['organization' => $organization->id, 'filename' => 'test-evidence.pdf']))
+        ->assertForbidden();
+        
+    // Admin gets the file
+    $this->actingAs($admin)
+        ->get(route('platform.recruiter-organizations.evidence.show', ['organization' => $organization->id, 'filename' => 'test-evidence.pdf']))
+        ->assertOk();
+});

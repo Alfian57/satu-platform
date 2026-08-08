@@ -15,6 +15,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('institution-memberships', [InstitutionMembershipController::class, 'store'])
         ->middleware('throttle:institution-membership-request')
         ->name('institution-memberships.store');
+
+    Route::get('platform/recruiter-organizations/{organization}/evidence/{filename}', [\App\Http\Controllers\Platform\RecruiterEvidenceProjectionController::class, 'show'])
+        ->name('platform.recruiter-organizations.evidence.show');
 });
 
 require __DIR__.'/settings.php';

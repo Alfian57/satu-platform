@@ -42,4 +42,13 @@ final class RecruiterOrganizationPolicy
         // For now, assume a Gate or a property determines platform admin status.
         return $user->getAttribute('is_platform_admin') === true;
     }
+
+    /**
+     * Determine whether the user can view sensitive evidence.
+     * (Platform Admins only)
+     */
+    public function viewEvidence(User $user, RecruiterOrganization $organization): bool
+    {
+        return $this->review($user, $organization);
+    }
 }
