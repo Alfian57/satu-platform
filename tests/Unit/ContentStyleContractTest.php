@@ -39,7 +39,7 @@ function contentStyleProjectFiles(): array
     ] as $directory) {
         $path = $projectRoot.DIRECTORY_SEPARATOR.$directory;
 
-        if (! is_dir($path)) {
+        if (!is_dir($path)) {
             continue;
         }
 

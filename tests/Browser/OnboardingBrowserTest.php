@@ -367,7 +367,7 @@ test('long multilingual institution names remain readable at mobile width and 20
     int $zoom,
 ) {
     $user = User::factory()->create();
-    $longName = str_repeat('UniversitasTanpaPemisah', 6).'æ±äº¬ðŸš€Ù…Ø±Ø­Ø¨Ø§';
+    $longName = str_repeat('UniversitasTanpaPemisah', 6).'Ã¦ÂÂ±Ã¤ÂºÂ¬Ã°Å¸Å¡â‚¬Ã™â€¦Ã˜Â±Ã˜Â­Ã˜Â¨Ã˜Â§';
     $institution = Institution::factory()->active()->create([
         'name' => $longName,
     ]);
