@@ -91,7 +91,6 @@ Langkah consumer:
 
 6. Kerjakan dan review consumer secara paralel.
 7. Jangan mengubah base ke `main` atau merge sebelum semua issue pada `Blocked by` closed.
-8. Jangan mengkonversi ke **Ready for review** atau meminta review sebelum parent merge dan seluruh AC terpenuhi.
 
 Stack dibatasi maksimal tiga branch aktif termasuk root. Jika dependency lebih dalam, buat contract slice yang lebih kecil atau tunggu parent merge agar review dan rebase tetap dapat diperiksa.
 
