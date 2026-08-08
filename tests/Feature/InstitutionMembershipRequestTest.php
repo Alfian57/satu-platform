@@ -11,6 +11,7 @@ use App\Models\InstitutionMembership;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 
 test('a student requesting affiliation to an active institution gets a pending membership', function () {
