@@ -27,27 +27,6 @@ test('student can submit an affiliation request from the onboarding ledger', fun
         ->assertNoAccessibilityIssues();
 });
 
-test('an approved email domain verifies affiliation immediately', function () {
-    $user = User::factory()->create(['email' => 'student@kampus.ac.id']);
-    $institution = Institution::factory()->active()->create([
-        'name' => 'Universitas Domain Disetujui',
-    ]);
-    InstitutionDomain::factory()->verified()->for($institution)->create([
-        'domain' => 'kampus.ac.id',
-    ]);
-    $this->actingAs($user);
-
-    visit(route('onboarding.show'))
-        ->select('institution_id', (string) $institution->id)
-        ->press('Kirim permintaan')
-        ->assertSee('Afiliasi kampusmu terverifikasi')
-        ->assertSee('Afiliasi kampus berhasil diverifikasi.')
-        ->assertDataAttribute('@onboarding-root', 'membership-state', 'verified')
-        ->assertNoJavaScriptErrors()
-        ->assertNoConsoleLogs()
-        ->assertNoAccessibilityIssues();
-});
-
 test('pending affiliation is read only and explains the verification boundary', function () {
     $user = User::factory()->create();
     $institution = Institution::factory()->active()->create();
@@ -388,7 +367,7 @@ test('long multilingual institution names remain readable at mobile width and 20
     int $zoom,
 ) {
     $user = User::factory()->create();
-    $longName = str_repeat('UniversitasTanpaPemisah', 6).'東京🚀مرحبا';
+    $longName = str_repeat('UniversitasTanpaPemisah', 6).'æ±äº¬ðŸš€Ù…Ø±Ø­Ø¨Ø§';
     $institution = Institution::factory()->active()->create([
         'name' => $longName,
     ]);
@@ -430,3 +409,5 @@ test('empty institution state offers a safe next action', function () {
         ->assertNoConsoleLogs()
         ->assertNoAccessibilityIssues();
 });
+
+

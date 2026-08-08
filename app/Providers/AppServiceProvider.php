@@ -58,9 +58,10 @@ class AppServiceProvider extends ServiceProvider
                 return Limit::perMinute(5)->by(implode(':', [
                     'user',
                     $user?->getAuthIdentifier() ?? $request->ip(),
-                    hash('sha256', (string) $user?->email),
+                    hash('sha256', (string) $user?$user?->username),
                 ]));
             },
         );
     }
 }
+

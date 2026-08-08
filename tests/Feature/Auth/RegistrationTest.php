@@ -1,8 +1,6 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\VerifyEmail;
-use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
@@ -16,73 +14,65 @@ test('registration screen can be rendered', function () {
 });
 
 test('new users can register', function () {
-    Notification::fake();
-
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
-        'email' => 'test@example.com',
+        'username' => 'testuser',
         'password' => 'password',
         'password_confirmation' => 'password',
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('verification.notice', absolute: false));
+    $response->assertRedirect(route('dashboard', absolute: false));
 
-    $user = User::query()->where('email', 'test@example.com')->firstOrFail();
+    $user = User::query()->where('username', 'testuser')->firstOrFail();
 
-    expect($user->email_verified_at)->toBeNull()
+    expect($user->name)->toBe('Test User')
         ->and($user->institutionMemberships)->toBeEmpty();
-
-    Notification::assertSentTo($user, VerifyEmail::class);
 });
 
 test('registration ignores privileged role and membership fields', function () {
-    Notification::fake();
-
     $this->post(route('register.store'), [
         'name' => 'Student Without Affiliation',
-        'email' => 'student@example.com',
+        'username' => 'student_no_affil',
         'password' => 'password',
         'password_confirmation' => 'password',
         'role' => 'campus_admin',
         'institution_id' => 999,
         'membership_status' => 'verified',
         'verification_method' => 'approved_domain',
-    ])->assertRedirect(route('verification.notice', absolute: false));
+    ])->assertRedirect(route('dashboard', absolute: false));
 
-    $user = User::query()->where('email', 'student@example.com')->firstOrFail();
+    $user = User::query()->where('username', 'student_no_affil')->firstOrFail();
 
     expect($user->institutionMemberships)->toBeEmpty()
         ->and($user->getAttribute('role'))->toBeNull();
 });
 
-test('registration always redirects to the internal verification notice', function () {
-    Notification::fake();
-
+test('registration always redirects to the internal dashboard', function () {
     $response = $this->withSession([
         'url.intended' => 'https://malicious.example/steal-session',
     ])->post(route('register.store'), [
         'name' => 'Safe Redirect User',
-        'email' => 'safe-redirect@example.com',
+        'username' => 'safe_redirect',
         'password' => 'password',
         'password_confirmation' => 'password',
     ]);
 
-    $response->assertRedirect(route('verification.notice', absolute: false));
+    $response->assertRedirect(route('dashboard', absolute: false));
 });
 
-test('registration rejects duplicate email addresses', function () {
-    User::factory()->create(['email' => 'existing@example.com']);
+test('registration rejects duplicate usernames', function () {
+    User::factory()->create(['username' => 'existing']);
 
     $response = $this->from(route('register'))->post(route('register.store'), [
         'name' => 'Duplicate User',
-        'email' => 'existing@example.com',
+        'username' => 'existing',
         'password' => 'password',
         'password_confirmation' => 'password',
     ]);
 
     $response->assertRedirect(route('register', absolute: false))
-        ->assertSessionHasErrors('email');
+        ->assertSessionHasErrors('username');
 
-    expect(User::query()->where('email', 'existing@example.com')->count())->toBe(1);
+    expect(User::query()->where('username', 'existing')->count())->toBe(1);
 });

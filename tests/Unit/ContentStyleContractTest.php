@@ -137,7 +137,7 @@ test('dashboard auth and settings use the approved copy contract', function () {
 
     expect($surfaceCopy)
         ->toContain('Masuk ke akunmu')
-        ->toContain('Alamat email')
+        ->toContain('Nama pengguna')
         ->toContain('Pengaturan profil')
         ->toContain('Pengaturan keamanan')
         ->toContain('Pengaturan tampilan')
@@ -177,3 +177,4 @@ test('keeps AI context authoritative, concise, and aligned with documentation', 
         ->toContain('## Asset Gambar')
         ->toContain('AI agent boleh membuat gambar sendiri');
 });
+
