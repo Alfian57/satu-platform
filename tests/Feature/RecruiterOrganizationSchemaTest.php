@@ -6,7 +6,6 @@ use App\Models\RecruiterVerificationReview;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -103,16 +102,7 @@ test('organization recruiter cannot update the organization', function () {
     expect($user->can('update', $org))->toBeFalse();
 });
 
-test('platform admin can review organization', function () {
-    $admin = clone User::factory()->create();
-    $admin->setAttribute('is_platform_admin', true); // stubbing the platform admin logic
-
-    $org = RecruiterOrganization::factory()->create();
-
-    expect($admin->can('review', $org))->toBeTrue();
-});
-
-test('regular user cannot review organization', function () {
+test('organization review is denied for all users until platform-admin mechanism exists', function () {
     $user = User::factory()->create();
     $org = RecruiterOrganization::factory()->create();
 
@@ -135,13 +125,11 @@ test('organization owner cannot create memberships in pending organization', fun
     expect($user->can('create', [RecruiterMembership::class, $org->id]))->toBeFalse();
 });
 
-test('platform admin can view all reviews', function () {
-    $admin = clone User::factory()->create();
-    $admin->setAttribute('is_platform_admin', true);
+test('cross-tenant review viewing is denied until platform-admin mechanism exists', function () {
+    $membership = RecruiterMembership::factory()->create();
+    $review = RecruiterVerificationReview::factory()->create(); // different org
 
-    $review = RecruiterVerificationReview::factory()->create();
-
-    expect($admin->can('view', $review))->toBeTrue();
+    expect($membership->user->can('view', $review))->toBeFalse();
 });
 
 test('organization member can view reviews for their own organization', function () {
@@ -156,25 +144,4 @@ test('organization member cannot view reviews for another organization', functio
     $review = RecruiterVerificationReview::factory()->create(); // different org
 
     expect($membership->user->can('view', $review))->toBeFalse();
-});
-
-it('projects evidence only to authorized platform admins', function () {
-    $organization = RecruiterOrganization::factory()->create();
-    $admin = User::factory()->create();
-    $admin->setAttribute('is_platform_admin', true);
-    $stranger = User::factory()->create();
-    $stranger->setAttribute('is_platform_admin', false);
-
-    $path = "recruiter-evidence/{$organization->id}/test-evidence.pdf";
-    Storage::disk('local')->put($path, 'dummy content');
-
-    // Stranger gets forbidden
-    $this->actingAs($stranger)
-        ->get(route('platform.recruiter-organizations.evidence.show', ['organization' => $organization->id, 'filename' => 'test-evidence.pdf']))
-        ->assertForbidden();
-
-    // Admin gets the file
-    $this->actingAs($admin)
-        ->get(route('platform.recruiter-organizations.evidence.show', ['organization' => $organization->id, 'filename' => 'test-evidence.pdf']))
-        ->assertOk();
 });

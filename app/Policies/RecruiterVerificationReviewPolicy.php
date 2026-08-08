@@ -9,15 +9,13 @@ final class RecruiterVerificationReviewPolicy
 {
     /**
      * Determine whether the user can view the review.
+     *
+     * Organisasi anggota dapat melihat review milik organisasinya sendiri.
+     * Review lintas organisasi dan jalur platform-admin dibatasi sampai
+     * mekanisme platform-admin nyata terpenuhi (gate:conditional).
      */
     public function view(User $user, RecruiterVerificationReview $review): bool
     {
-        // Platform Admins can view all reviews.
-        if ($user->getAttribute('is_platform_admin') === true) {
-            return true;
-        }
-
-        // Organization members can view their own organization's reviews.
         return $review->organization->memberships()
             ->where('user_id', $user->getKey())
             ->exists();
