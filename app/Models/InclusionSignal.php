@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Database\Factories\InclusionSignalFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InclusionSignal extends Model
 {
+    /** @use HasFactory<InclusionSignalFactory> */
     use HasFactory;
 
     protected $guarded = [];
@@ -17,22 +21,34 @@ class InclusionSignal extends Model
         'data_sufficiency_met' => 'boolean',
     ];
 
-    public function institution()
+    /**
+     * @return BelongsTo<Institution, $this>
+     */
+    public function institution(): BelongsTo
     {
         return $this->belongsTo(Institution::class);
     }
 
-    public function subject()
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function subject(): BelongsTo
     {
         return $this->belongsTo(User::class, 'subject_id');
     }
 
-    public function version()
+    /**
+     * @return BelongsTo<InclusionSignalVersion, $this>
+     */
+    public function version(): BelongsTo
     {
         return $this->belongsTo(InclusionSignalVersion::class, 'version_id');
     }
 
-    public function reviews()
+    /**
+     * @return HasMany<InclusionReview, $this>
+     */
+    public function reviews(): HasMany
     {
         return $this->hasMany(InclusionReview::class);
     }
