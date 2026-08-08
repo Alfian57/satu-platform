@@ -373,7 +373,6 @@ function MembershipFacts({
 }
 
 export default function Onboarding({
-    account,
     institutions,
     membership,
     canRequest,
