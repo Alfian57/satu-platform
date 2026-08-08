@@ -1,4 +1,0 @@
-#!/usr/bin/env sh
-
-echo "🚀 [CI Auto-Trigger] Triggering GitHub Actions tests.yml runner..."
-gh workflow run tests.yml --repo Alfian57/satu-platform || true
