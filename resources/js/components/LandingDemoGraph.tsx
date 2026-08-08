@@ -1,5 +1,11 @@
 import cytoscape from 'cytoscape';
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, {
+    useEffect,
+    useRef,
+    useState,
+    useMemo,
+    useCallback,
+} from 'react';
 
 // "Data synthetic" dummy data for the graph
 const SYNTHETIC_DATA = {
@@ -7,26 +13,26 @@ const SYNTHETIC_DATA = {
         {
             data: {
                 id: 'opp1',
-                label: 'Opportunity: Hackathon',
+                label: 'Hackathon',
                 type: 'opportunity',
             },
         },
-        { data: { id: 'user1', label: 'Student: Budi', type: 'student' } },
-        { data: { id: 'user2', label: 'Student: Siti', type: 'student' } },
-        { data: { id: 'team1', label: 'Team: Alpha', type: 'team' } },
-        { data: { id: 'work1', label: 'Work: Frontend UI', type: 'work' } },
-        { data: { id: 'work2', label: 'Work: Backend API', type: 'work' } },
+        { data: { id: 'user1', label: 'Budi', type: 'student' } },
+        { data: { id: 'user2', label: 'Siti', type: 'student' } },
+        { data: { id: 'team1', label: 'Team Alpha', type: 'team' } },
+        { data: { id: 'work1', label: 'Frontend UI', type: 'work' } },
+        { data: { id: 'work2', label: 'Backend API', type: 'work' } },
         {
             data: {
                 id: 'val1',
-                label: 'Validation: Verified',
+                label: 'Terverifikasi',
                 type: 'validation',
             },
         },
         {
             data: {
                 id: 'port1',
-                label: 'Portfolio: Budi UI/UX',
+                label: 'Portofolio Budi',
                 type: 'portfolio',
             },
         },
@@ -45,11 +51,34 @@ const SYNTHETIC_DATA = {
     ],
 };
 
+const TYPE_LABELS: Record<string, string> = {
+    all: 'Semua Tipe',
+    opportunity: 'Opportunity',
+    student: 'Student',
+    team: 'Team',
+    work: 'Work',
+    validation: 'Validation',
+    portfolio: 'Portfolio',
+};
+
+// Use CSS custom properties for theme-aware graph colors
+function getComputedToken(name: string): string {
+    if (typeof document === 'undefined') {
+        return '#526077';
+    }
+
+    return getComputedStyle(document.documentElement)
+        .getPropertyValue(name)
+        .trim();
+}
+
 export default function LandingDemoGraph() {
     const containerRef = useRef<HTMLDivElement>(null);
     const cyRef = useRef<cytoscape.Core | null>(null);
     const [selectedType, setSelectedType] = useState<string>('all');
     const [activeNode, setActiveNode] = useState<string | null>(null);
+    const hasErrorRef = useRef(false);
+    const [hasError, setHasError] = useState(false);
 
     // Reduced motion check
     const prefersReducedMotion = useMemo(() => {
@@ -60,10 +89,17 @@ export default function LandingDemoGraph() {
         return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }, []);
 
-    useEffect(() => {
+    const initGraph = useCallback(() => {
         if (!containerRef.current) {
             return;
         }
+
+        // Read theme tokens at render time
+        const primaryColor = getComputedToken('--primary') || '#1746B0';
+        const foreground = getComputedToken('--foreground') || '#111827';
+        const mutedFg = getComputedToken('--muted-foreground') || '#526077';
+        const borderColor = getComputedToken('--border') || '#C7D0DF';
+        const ringColor = getComputedToken('--ring') || '#1E5BD7';
 
         cyRef.current = cytoscape({
             container: containerRef.current,
@@ -72,10 +108,11 @@ export default function LandingDemoGraph() {
                 {
                     selector: 'node',
                     style: {
-                        'background-color': '#f53003',
+                        'background-color': primaryColor,
                         label: 'data(label)',
-                        color: '#1b1b18',
-                        'font-family': 'Familjen Grotesk, sans-serif',
+                        color: foreground,
+                        'font-family':
+                            'Familjen Grotesk, system-ui, sans-serif',
                         'font-size': '12px',
                         'text-valign': 'bottom',
                         'text-halign': 'center',
@@ -84,39 +121,51 @@ export default function LandingDemoGraph() {
                 },
                 {
                     selector: 'node[type="opportunity"]',
-                    style: { 'background-color': '#0ea5e9' },
+                    style: { 'background-color': '#0e7490' },
                 },
                 {
                     selector: 'node[type="student"]',
-                    style: { 'background-color': '#8b5cf6' },
+                    style: { 'background-color': primaryColor },
                 },
                 {
                     selector: 'node[type="team"]',
-                    style: { 'background-color': '#10b981' },
+                    style: {
+                        'background-color':
+                            getComputedToken('--verified') || '#16734A',
+                    },
                 },
                 {
                     selector: 'node[type="work"]',
-                    style: { 'background-color': '#f59e0b' },
+                    style: {
+                        'background-color':
+                            getComputedToken('--pending') || '#8A5100',
+                    },
                 },
                 {
                     selector: 'node[type="validation"]',
-                    style: { 'background-color': '#3b82f6' },
+                    style: {
+                        'background-color':
+                            getComputedToken('--verified') || '#16734A',
+                    },
                 },
                 {
                     selector: 'node[type="portfolio"]',
-                    style: { 'background-color': '#f43f5e' },
+                    style: {
+                        'background-color':
+                            getComputedToken('--correction') || '#B42318',
+                    },
                 },
                 {
                     selector: 'edge',
                     style: {
                         width: 2,
-                        'line-color': '#e5e7eb',
-                        'target-arrow-color': '#e5e7eb',
+                        'line-color': borderColor,
+                        'target-arrow-color': borderColor,
                         'target-arrow-shape': 'triangle',
                         'curve-style': 'bezier',
                         label: 'data(label)',
                         'font-size': '10px',
-                        color: '#6b7280',
+                        color: mutedFg,
                         'text-rotation': 'autorotate',
                         'text-margin-y': -8,
                     },
@@ -128,16 +177,16 @@ export default function LandingDemoGraph() {
                 {
                     selector: '.highlighted',
                     style: {
-                        'background-color': '#f53003',
+                        'background-color': ringColor,
                         'border-width': 4,
-                        'border-color': '#fca5a5',
+                        'border-color': primaryColor,
                     },
                 },
                 {
                     selector: 'edge.highlighted',
                     style: {
-                        'line-color': '#f53003',
-                        'target-arrow-color': '#f53003',
+                        'line-color': primaryColor,
+                        'target-arrow-color': primaryColor,
                         width: 3,
                     },
                 },
@@ -174,11 +223,25 @@ export default function LandingDemoGraph() {
                 cy.elements().removeClass('highlighted');
             }
         });
+    }, [prefersReducedMotion]);
+
+    useEffect(() => {
+        if (!containerRef.current) {
+            return;
+        }
+
+        try {
+            initGraph();
+        } catch {
+            hasErrorRef.current = true;
+            // Wrap in timeout to avoid synchronous setState in effect warning
+            setTimeout(() => setHasError(true), 0);
+        }
 
         return () => {
-            cy.destroy();
+            cyRef.current?.destroy();
         };
-    }, [prefersReducedMotion]);
+    }, [initGraph]);
 
     // Handle filter
     useEffect(() => {
@@ -217,20 +280,47 @@ export default function LandingDemoGraph() {
         }
     };
 
+    const handleRetry = () => {
+        setHasError(false);
+        cyRef.current?.destroy();
+        cyRef.current = null;
+        initGraph();
+    };
+
     const displayNodes = SYNTHETIC_DATA.nodes.filter(
         (n) => selectedType === 'all' || n.data.type === selectedType,
     );
 
+    // Error state with retry
+    if (hasError) {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-border bg-card p-12 text-center">
+                <p className="text-sm font-medium text-foreground">
+                    Demo graf tidak dapat dimuat.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                    Data Anda tetap aman. Coba muat ulang demo.
+                </p>
+                <button
+                    onClick={handleRetry}
+                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                >
+                    Coba Lagi
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col gap-6 lg:flex-row">
-            <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#161615]">
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-200 p-4 dark:border-neutral-800">
+            <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-4">
                     <div>
-                        <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                            Collaboration Graph Demo
+                        <h3 className="text-sm font-semibold text-foreground">
+                            Graf Kolaborasi
                         </h3>
-                        <p className="mt-1 flex items-center gap-2 text-xs text-neutral-500">
-                            <span className="inline-block h-2 w-2 rounded-full bg-amber-500"></span>
+                        <p className="mt-1 flex items-center gap-2 font-label text-label tracking-[0.02em] text-muted-foreground">
+                            <span className="inline-block h-2 w-2 rounded-full bg-pending" />
                             Data synthetic
                         </p>
                     </div>
@@ -239,21 +329,21 @@ export default function LandingDemoGraph() {
                         <select
                             value={selectedType}
                             onChange={(e) => setSelectedType(e.target.value)}
-                            aria-label="Filter collaboration type"
-                            className="rounded-md border-neutral-300 bg-white py-1.5 pr-8 pl-3 text-xs focus:border-primary focus:ring-primary dark:border-neutral-700 dark:bg-neutral-900"
+                            aria-label="Filter tipe kolaborasi"
+                            className="rounded-md border border-input bg-card py-1.5 pr-8 pl-3 text-xs text-foreground focus:border-primary focus:ring-primary"
                         >
-                            <option value="all">Semua Tipe</option>
-                            <option value="opportunity">Opportunity</option>
-                            <option value="student">Student</option>
-                            <option value="team">Team</option>
-                            <option value="work">Work</option>
-                            <option value="validation">Validation</option>
-                            <option value="portfolio">Portfolio</option>
+                            {Object.entries(TYPE_LABELS).map(
+                                ([value, label]) => (
+                                    <option key={value} value={value}>
+                                        {label}
+                                    </option>
+                                ),
+                            )}
                         </select>
                         <button
                             onClick={resetGraph}
-                            className="rounded-md bg-neutral-100 px-3 py-1.5 text-xs text-neutral-700 transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                            aria-label="Reset graph"
+                            className="rounded-md bg-secondary px-3 py-1.5 text-xs text-secondary-foreground transition-colors hover:bg-accent"
+                            aria-label="Reset graf"
                         >
                             Reset
                         </button>
@@ -263,47 +353,47 @@ export default function LandingDemoGraph() {
                 {/* Graph Canvas Region */}
                 <div
                     ref={containerRef}
-                    className="h-[300px] w-full bg-slate-50 lg:h-[400px] dark:bg-neutral-900/50"
+                    className="h-[300px] w-full bg-muted lg:h-[400px]"
                     aria-hidden="true"
                 />
             </div>
 
             {/* Context Table (Equivalent Alternative) */}
-            <div className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm lg:w-[320px] dark:border-neutral-800 dark:bg-[#161615]">
-                <div className="border-b border-neutral-200 p-4 dark:border-neutral-800">
-                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+            <div className="flex w-full shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-card lg:w-[320px]">
+                <div className="border-b border-border p-4">
+                    <h3 className="text-sm font-semibold text-foreground">
                         Ledger
                     </h3>
-                    <p className="mt-1 text-xs text-neutral-500">
+                    <p className="mt-1 font-label text-label tracking-[0.02em] text-muted-foreground">
                         Tabel riwayat kolaborasi (Data synthetic)
                     </p>
                 </div>
                 <div className="max-h-[300px] flex-1 overflow-y-auto p-0 lg:max-h-[400px]">
-                    <table className="w-full text-left text-xs text-neutral-600 dark:text-neutral-400">
-                        <thead className="sticky top-0 bg-neutral-50 dark:bg-neutral-900/80">
+                    <table className="w-full text-left text-xs text-muted-foreground">
+                        <thead className="sticky top-0 bg-muted">
                             <tr>
                                 <th
                                     scope="col"
-                                    className="px-4 py-2 font-medium"
+                                    className="px-4 py-2 font-medium text-foreground"
                                 >
                                     Node
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-2 font-medium"
+                                    className="px-4 py-2 font-medium text-foreground"
                                 >
                                     Tipe
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                        <tbody className="divide-y divide-border">
                             {displayNodes.map((node) => (
                                 <tr
                                     key={node.data.id}
-                                    className={`transition-colors ${activeNode === node.data.id ? 'bg-primary/10 dark:bg-primary/20' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'}`}
+                                    className={`transition-colors ${activeNode === node.data.id ? 'bg-primary/10' : 'hover:bg-muted'}`}
                                 >
-                                    <td className="px-4 py-2.5 font-medium text-neutral-900 dark:text-neutral-200">
-                                        {node.data.label.split(': ')[1]}
+                                    <td className="px-4 py-2.5 font-medium text-foreground">
+                                        {node.data.label}
                                     </td>
                                     <td className="px-4 py-2.5 capitalize">
                                         {node.data.type}
@@ -314,7 +404,7 @@ export default function LandingDemoGraph() {
                                 <tr>
                                     <td
                                         colSpan={2}
-                                        className="px-4 py-8 text-center text-neutral-500"
+                                        className="px-4 py-8 text-center text-muted-foreground"
                                     >
                                         Tidak ada data.
                                     </td>
