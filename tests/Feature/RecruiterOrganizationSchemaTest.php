@@ -159,8 +159,10 @@ test('organization member cannot view reviews for another organization', functio
 
 it('projects evidence only to authorized platform admins', function () {
     $organization = \App\Models\RecruiterOrganization::factory()->create();
-    $admin = \App\Models\User::factory()->create(['is_platform_admin' => true]);
-    $stranger = \App\Models\User::factory()->create(['is_platform_admin' => false]);
+    $admin = \App\Models\User::factory()->create();
+    $admin->setAttribute('is_platform_admin', true);
+    $stranger = \App\Models\User::factory()->create();
+    $stranger->setAttribute('is_platform_admin', false);
     
     $path = "recruiter-evidence/{$organization->id}/test-evidence.pdf";
     \Illuminate\Support\Facades\Storage::disk('local')->put($path, 'dummy content');
