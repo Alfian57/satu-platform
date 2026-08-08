@@ -177,4 +177,3 @@ test('keeps AI context authoritative, concise, and aligned with documentation', 
         ->toContain('## Asset Gambar')
         ->toContain('AI agent boleh membuat gambar sendiri');
 });
-

@@ -69,4 +69,3 @@ final class InstitutionMembershipReviewQueue
             ->orderBy('id');
     }
 }
-

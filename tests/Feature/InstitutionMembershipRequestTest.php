@@ -103,7 +103,7 @@ test('creating a membership under a duplicate race falls back to the existing re
 
     /** @var array<int, InstitutionMembership> $results */
     $results = [];
-    DB::transaction(function () use ($user, $institution, $concurrent, &$results) {
+    DB::transaction(function () use ($user, $institution, &$results) {
         $first = InstitutionMembership::factory()
             ->unverified()
             ->for($user)

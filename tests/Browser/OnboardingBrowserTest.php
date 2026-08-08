@@ -408,4 +408,3 @@ test('empty institution state offers a safe next action', function () {
         ->assertNoConsoleLogs()
         ->assertNoAccessibilityIssues();
 });
-
