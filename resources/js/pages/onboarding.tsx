@@ -347,7 +347,7 @@ function MembershipFacts({
                     Username
                 </dt>
                 <dd className="min-w-0 text-sm font-medium break-all">
-                    {account.username}
+                    {username}
                 </dd>
             </div>
             <div className="grid gap-1 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-5">
@@ -593,7 +593,7 @@ export default function Onboarding({
 
                                 <div className="px-5 sm:px-6">
                                     <MembershipFacts
-                                        username={account.username}
+                                        username={username}
                                         membership={membership}
                                     />
                                 </div>
