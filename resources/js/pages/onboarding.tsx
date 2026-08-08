@@ -373,6 +373,7 @@ function MembershipFacts({
 }
 
 export default function Onboarding({
+    account,
     institutions,
     membership,
     canRequest,
@@ -592,7 +593,7 @@ export default function Onboarding({
 
                                 <div className="px-5 sm:px-6">
                                     <MembershipFacts
-                                        username={username}
+                                        username={account.username}
                                         membership={membership}
                                     />
                                 </div>
