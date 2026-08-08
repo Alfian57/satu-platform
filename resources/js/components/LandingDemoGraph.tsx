@@ -54,16 +54,16 @@ export default function LandingDemoGraph() {
     // Reduced motion check
     const prefersReducedMotion = useMemo(() => {
         if (typeof window === 'undefined') {
-return false;
-}
+            return false;
+        }
 
         return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }, []);
 
     useEffect(() => {
         if (!containerRef.current) {
-return;
-}
+            return;
+        }
 
         cyRef.current = cytoscape({
             container: containerRef.current,
@@ -183,8 +183,8 @@ return;
     // Handle filter
     useEffect(() => {
         if (!cyRef.current) {
-return;
-}
+            return;
+        }
 
         const cy = cyRef.current;
 
