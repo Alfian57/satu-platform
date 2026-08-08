@@ -36,7 +36,7 @@ the approved composition pixel-for-pixel. No conceptual redesign is required.
 The deterministic detector returned zero findings. Browser evidence passed all
 eight dashboard states, serious accessibility scanning, keyboard activation,
 dark mode, recovery copy, mobile reading order, and overflow checks at
-320Ã—800, 768Ã—1024, 1366Ã—768, and 1672Ã—941.
+320Ã---800, 768Ã---1024, 1366Ã---768, and 1672Ã---941.
 
 ## Overall Impression
 

@@ -12,10 +12,10 @@ P07 approval pack untuk dashboard mahasiswa. Seluruh gambar memakai user fixture
 
 | Evidence                              | State        | Theme | Viewport | Capture   |
 | ------------------------------------- | ------------ | ----- | -------- | --------- |
-| `revision-light-1366x768.png`         | revision     | light | 1366Ã—768 | viewport  |
-| `revision-light-320x800-full.png`     | revision     | light | 320Ã—800  | full page |
-| `revision-dark-1366x768.png`          | revision     | dark  | 1366Ã—768 | viewport  |
-| `long-content-light-320x800-full.png` | long-content | light | 320Ã—800  | full page |
+| `revision-light-1366x768.png`         | revision     | light | 1366Ã---768 | viewport  |
+| `revision-light-320x800-full.png`     | revision     | light | 320Ã---800  | full page |
+| `revision-dark-1366x768.png`          | revision     | dark  | 1366Ã---768 | viewport  |
+| `long-content-light-320x800-full.png` | long-content | light | 320Ã---800  | full page |
 
 ## Review status
 
@@ -30,7 +30,7 @@ P07 approval pack untuk dashboard mahasiswa. Seluruh gambar memakai user fixture
 - Critique snapshot:
   `.impeccable/critique/2026-07-23T15-28-48Z__resources-js-pages-dashboard-tsx.md`.
 
-Residual P2: primary action masih berada di bawah initial `320Ã—800` viewport.
+Residual P2: primary action masih berada di bawah initial `320Ã---800` viewport.
 Status, task title, deadline, dan continuation tetap terbaca; memindahkan action
 lebih awal akan merusak urutan evidence sebelum action yang sudah disetujui.
 

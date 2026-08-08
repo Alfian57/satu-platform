@@ -133,7 +133,7 @@ Acceptance reflow yang dikunci:
 - 640â€“1279px: status kembali menjadi side margin, ledger memakai kolom saat
   ruang cukup, dan supporting region dapat menjadi dua kolom sebelum rail
   kembali ke bentuk desktop;
-- mulai 1280px: working column dan context rail berdampingan; pada 1366Ã—768
+- mulai 1280px: working column dan context rail berdampingan; pada 1366Ã---768
   primary CTA, dua row project, dan satu alasan rekomendasi berada di viewport
   pertama;
 - seluruh range memakai wrapping tanpa silent truncation atau document-level
@@ -141,7 +141,7 @@ Acceptance reflow yang dikunci:
   text + icon, dark mode, serta reduced-motion fallback.
 
 Chromium browser regression menjalankan seluruh state, overflow pada
-320Ã—800/768Ã—1024/1366Ã—768/1672Ã—941, urutan visual mobile, keyboard activation,
+320Ã---800/768Ã---1024/1366Ã---768/1672Ã---941, urutan visual mobile, keyboard activation,
 dark mode, serious accessibility issues, dan recovery copy. P07 tetap memiliki
 human gate untuk kritik, polish, screenshot approval, dan pembaruan design
 authority.
