@@ -158,7 +158,10 @@ Berhenti dan tampilkan evidence ketika issue memiliki `gate:human`, `gate:extern
 
     Jangan menyertakan `(#<issue>)` atau `(#<pr>)` pada PR title. Body PR mencantumkan `Closes #<issue>`.
 
-2. **Merge draft PR:** gunakan `gh pr ready <number>` untuk menandai ready, lalu:
+2. **Merge draft PR:** sebelum menandai ready, pastikan:
+   - Semua acceptance criteria terpenuhi.
+   - Parent dependency (jika stacked) sudah merge ke `main`.
+   - Gunakan `gh pr ready <number>` untuk menandai ready, lalu:
 
     ```sh
     gh pr merge <number> --squash --admin
