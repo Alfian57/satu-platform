@@ -66,7 +66,7 @@ test('pending and verified requests are idempotent without duplicate audit recor
     $result = app(RequestInstitutionMembership::class)->handle($verifiedUser, $institution);
 
     expect($result->is($verified))->toBeTrue()
-        ->and(AuditLog::query()->whereBelongsTo($pendingUser)->count())->toBe(1);
+        ->and(AuditLog::query()->where('actor_id', $pendingUser->getKey())->count())->toBe(1);
 });
 
 test('a suspended membership cannot be re-requested', function () {
