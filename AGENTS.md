@@ -31,6 +31,13 @@ When documents conflict, the earlier source wins. Update the owning source inste
 - Do not expand into adjacent issues as cleanup or convenience work.
 - At `gate:human`, `gate:external`, or `gate:conditional`, present inspectable evidence and stop until the gate is resolved.
 - Issue state, milestone, labels, linked pull request, and comments are the only task-status source. Documentation describes contracts, not task progress.
+- Saat seluruh pekerjaan selesai dan PR siap direview:
+  1. Konversi PR dari draft ke **Ready for review**.
+  2. Komentar di PR dengan tag `@Alfian57` yang menyatakan PR siap direview.
+  3. Pastikan CI hijau, label `needs-review` terpasang, dan body PR lengkap (evidence, screenshot jika UI).
+- Setelah menyelesaikan revisi yang diminta reviewer:
+  1. Tag `@Alfian57` di komentar PR bahwa revisi sudah selesai.
+  2. Pastikan CI tetap hijau setelah perubahan terbaru.
 
 ## PR Review Workflow
 
