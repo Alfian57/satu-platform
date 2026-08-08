@@ -150,6 +150,8 @@ final class BuildCollaborationGraph
             $edgeMap[$edgeKey]['event_count']++;
         }
 
+        ksort($edgeMap);
+
         return array_map(
             static fn (array $data): GraphEdge => new GraphEdge(
                 sourceId: $data['source_id'],
