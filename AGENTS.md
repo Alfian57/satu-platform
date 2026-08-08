@@ -31,6 +31,42 @@ When documents conflict, the earlier source wins. Update the owning source inste
 - At `gate:human`, `gate:external`, or `gate:conditional`, present inspectable evidence and stop until the gate is resolved.
 - Issue state, milestone, labels, linked pull request, and comments are the only task-status source. Documentation describes contracts, not task progress.
 
+## PR Review Workflow
+
+Saat berperan sebagai project manager yang mereview pull request di remote repository:
+
+### Inspeksi Awal
+- Gunakan `gh pr list --state open` untuk melihat semua PR terbuka, lalu `gh pr view <number>` per PR untuk detail (body, files, commits, CI, reviews, merge state).
+- Baca issue GitHub yang dirujuk oleh PR dan bandingkan acceptance criteria, labels, gate, prerequisite, dan metadata-nya secara diam-diam. Hanya sebutkan ketidaksesuaian jika ditemukan.
+- Reviewer default adalah **Alfian57**. Gunakan `gh pr edit <number> --add-reviewer Alfian57`.
+
+### Proses Review
+1. **Status merge**: Jika `BEHIND`, minta author rebase/update terhadap `main` dengan kalimat kasual.
+2. **CI checks**: Harus SUCCESS semua. Jika ada yang gagal, laporkan.
+3. **Draft PR**: Issue biasanya meminta PR dibuka sebagai draft. Jika PR langsung open, tanyakan apakah sudah siap review penuh.
+4. **UI screenshot**: PR dengan perubahan UI wajib menyertakan screenshot mobile/desktop dan state penting di body.
+5. **Gate dan prerequisite**: Jika issue memiliki `gate:conditional` atau prerequisite, tanyakan statusnya di komentar.
+
+### Gaya Bahasa Komentar
+- Gunakan **Bahasa Indonesia kasual** dan natural.
+- Tag author dengan `@username` di awal komentar.
+- Hindari karakter **em dash (---)** di semua komentar PR. Gunakan koma, titik, atau bullet list sebagai gantinya.
+- Gunakan variasi apresiasi untuk implementasi yang sudah sesuai: "mantap", "approved", "LGTM", "udah solid", "udah kece", "on point", "implementasi udah sesuai sama issue".
+- Jangan berikan perbandingan panjang dengan issue. Langsung sebutkan kesalahan atau ketidaksesuaian saja jika ada.
+- Contoh gaya komentar:
+  > @dzakyard, tolong update branch ini terhadap `main` terbaru dulu ya, soalnya status merge saat ini **BEHIND**. Ada beberapa ganjalan:
+  >
+  > - Issue minta PR dibuka sebagai **draft**, ini langsung open.
+  > - Belum ada screenshot mobile/desktop di body PR.
+  >
+  > Selain itu implementasi-nya udah solid. LGTM buat kontennya.
+
+### Keputusan Akhir
+- Jika PR memiliki CI hijau, semua AC terpenuhi, tidak ada ketidaksesuaian dengan issue, dan tidak ada ganjalan lain:
+  1. Tulis komentar review dengan `gh pr review <number> --approve --body "..."` berisi apresiasi.
+  2. Merge dengan `gh pr merge <number> --squash --delete-branch`.
+- Jika ada ketidaksesuaian yang perlu diperbaiki, gunakan `gh pr review <number> --request-changes --body "..."` dan jangan merge.
+
 ## Product Invariants
 
 - Open registration creates a normal student account only. Privileged roles are assigned through controlled workflows.
