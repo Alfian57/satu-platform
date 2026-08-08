@@ -217,9 +217,9 @@ Perubahan yang tidak diizinkan tanpa governance gate baru:
 
 ## 7. References
 
-- [PRODUCT.md](../../PRODUCT.md) — Produk truth dan batas rilis.
-- [PRD.md](../product/PRD.md) — Functional requirements FR-06.
-- [DATA_MODEL.md](../engineering/DATA_MODEL.md) — Schema gamification.
-- [SECURITY_PRIVACY.md](../engineering/SECURITY_PRIVACY.md) — Gamification integrity dan anti-abuse.
-- [DECISIONS.md](./DECISIONS.md) — Accepted decisions dan open gates.
-- [route-leaderboards.md](../../.impeccable/surfaces/route-leaderboards.md) — Surface brief leaderboard.
+- [PRODUCT.md](../../PRODUCT.md) -- Produk truth dan batas rilis.
+- [PRD.md](../product/PRD.md) -- Functional requirements FR-06.
+- [DATA_MODEL.md](../engineering/DATA_MODEL.md) -- Schema gamification.
+- [SECURITY_PRIVACY.md](../engineering/SECURITY_PRIVACY.md) -- Gamification integrity dan anti-abuse.
+- [DECISIONS.md](./DECISIONS.md) -- Accepted decisions dan open gates.
+- [route-leaderboards.md](../../.impeccable/surfaces/route-leaderboards.md) -- Surface brief leaderboard.
