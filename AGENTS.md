@@ -27,6 +27,7 @@ When documents conflict, the earlier source wins. Update the owning source inste
 - Work on exactly one selected GitHub issue unless the issue explicitly defines a coordinated delivery slice.
 - Check `Blocked by`, gate labels, and acceptance criteria before editing. Do not invent substitute behavior for an unmet prerequisite.
 - Create a separate branch named `<type>/<issue-number>-<slug>` and a pull request that closes the issue.
+- Buat pull request hanya setelah seluruh pekerjaan pada issue selesai dan siap direview. Jika ingin membuka PR lebih awal untuk visibility, gunakan status **draft**.
 - Do not expand into adjacent issues as cleanup or convenience work.
 - At `gate:human`, `gate:external`, or `gate:conditional`, present inspectable evidence and stop until the gate is resolved.
 - Issue state, milestone, labels, linked pull request, and comments are the only task-status source. Documentation describes contracts, not task progress.
@@ -43,7 +44,7 @@ Saat berperan sebagai project manager yang mereview pull request di remote repos
 ### Proses Review
 1. **Status merge**: Jika `BEHIND`, minta author rebase/update terhadap `main` dengan kalimat kasual.
 2. **CI checks**: Harus SUCCESS semua. Jika ada yang gagal, laporkan.
-3. **Draft PR**: Issue biasanya meminta PR dibuka sebagai draft. Jika PR langsung open, tanyakan apakah sudah siap review penuh.
+3. **Draft PR**: Issue biasanya meminta PR dibuka sebagai draft. Jika PR langsung open atau masih berlabel `in-progress`, tanyakan apakah pekerjaan sudah benar-benar selesai dan siap review penuh.
 4. **UI screenshot**: PR dengan perubahan UI wajib menyertakan screenshot mobile/desktop dan state penting di body.
 5. **Gate dan prerequisite**: Jika issue memiliki `gate:conditional` atau prerequisite, tanyakan statusnya di komentar.
 6. **Preview komentar**: Sebelum mengirim komentar ke PR, tampilkan dulu preview komentar tersebut di chat untuk dikonfirmasi oleh user.
@@ -51,7 +52,7 @@ Saat berperan sebagai project manager yang mereview pull request di remote repos
 ### Gaya Bahasa Komentar
 - Gunakan **Bahasa Indonesia kasual** dan natural.
 - Tag author dengan `@username` di awal komentar.
-- Hindari karakter **em dash (---)** di semua komentar PR. Gunakan koma, titik, atau bullet list sebagai gantinya.
+- Hindari karakter **em dash (Unicode U+2014, —)** di semua komentar PR. Gunakan koma, titik, atau bullet list sebagai gantinya.
 - Gunakan variasi apresiasi untuk implementasi yang sudah sesuai: "mantap", "approved", "LGTM", "udah solid", "udah kece", "on point", "implementasi udah sesuai sama issue".
 - Jangan berikan perbandingan panjang dengan issue. Langsung sebutkan kesalahan atau ketidaksesuaian saja jika ada.
 - Contoh gaya komentar:
