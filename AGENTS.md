@@ -52,7 +52,7 @@ Saat berperan sebagai project manager yang mereview pull request di remote repos
 ### Gaya Bahasa Komentar
 - Gunakan **Bahasa Indonesia kasual** dan natural.
 - Tag author dengan `@username` di awal komentar.
-- Hindari karakter **em dash (Unicode U+2014, —)** di semua komentar PR. Gunakan koma, titik, atau bullet list sebagai gantinya.
+- Hindari karakter **em dash (Unicode U+2014, -)** di semua komentar PR. Gunakan koma, titik, atau bullet list sebagai gantinya.
 - Gunakan variasi apresiasi untuk implementasi yang sudah sesuai: "mantap", "approved", "LGTM", "udah solid", "udah kece", "on point", "implementasi udah sesuai sama issue".
 - Jangan berikan perbandingan panjang dengan issue. Langsung sebutkan kesalahan atau ketidaksesuaian saja jika ada.
 - Contoh gaya komentar:
