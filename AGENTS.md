@@ -27,7 +27,7 @@ When documents conflict, the earlier source wins. Update the owning source inste
 - Work on exactly one selected GitHub issue unless the issue explicitly defines a coordinated delivery slice.
 - Check `Blocked by`, gate labels, and acceptance criteria before editing. Do not invent substitute behavior for an unmet prerequisite.
 - Create a separate branch named `<type>/<issue-number>-<slug>` and a pull request that closes the issue.
-- Buat pull request hanya setelah seluruh pekerjaan pada issue selesai dan siap direview. Jika ingin membuka PR lebih awal untuk visibility, gunakan status **draft**.
+- Untuk issue independen, buat pull request setelah seluruh pekerjaan selesai. Untuk issue stacked atau early visibility, buka sebagai **draft** lebih awal. Review hanya diminta setelah seluruh AC terpenuhi dan PR dikonversi ke **Ready for review**.
 - Do not expand into adjacent issues as cleanup or convenience work.
 - At `gate:human`, `gate:external`, or `gate:conditional`, present inspectable evidence and stop until the gate is resolved.
 - Issue state, milestone, labels, linked pull request, and comments are the only task-status source. Documentation describes contracts, not task progress.
