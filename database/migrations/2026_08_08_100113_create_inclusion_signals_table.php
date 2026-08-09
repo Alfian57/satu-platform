@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -39,33 +40,34 @@ return new class extends Migration
 
     private function installAppendOnlyTriggers(): void
     {
-        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
-            \Illuminate\Support\Facades\DB::unprepared(
+        if (DB::getDriverName() === 'sqlite') {
+            DB::unprepared(
                 "CREATE TRIGGER inclusion_signals_prevent_update
                 BEFORE UPDATE ON inclusion_signals
                 BEGIN
                     SELECT RAISE(ABORT, 'inclusion_signals are append-only');
                 END"
             );
-            \Illuminate\Support\Facades\DB::unprepared(
+            DB::unprepared(
                 "CREATE TRIGGER inclusion_signals_prevent_delete
                 BEFORE DELETE ON inclusion_signals
                 BEGIN
                     SELECT RAISE(ABORT, 'inclusion_signals are append-only');
                 END"
             );
+
             return;
         }
 
-        if (\Illuminate\Support\Facades\DB::getDriverName() === 'mysql') {
-            \Illuminate\Support\Facades\DB::unprepared(
+        if (DB::getDriverName() === 'mysql') {
+            DB::unprepared(
                 "CREATE TRIGGER inclusion_signals_prevent_update
                 BEFORE UPDATE ON inclusion_signals
                 FOR EACH ROW
                 SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'inclusion_signals are append-only'"
             );
-            \Illuminate\Support\Facades\DB::unprepared(
+            DB::unprepared(
                 "CREATE TRIGGER inclusion_signals_prevent_delete
                 BEFORE DELETE ON inclusion_signals
                 FOR EACH ROW
@@ -77,9 +79,9 @@ return new class extends Migration
 
     private function dropAppendOnlyTriggers(): void
     {
-        if (in_array(\Illuminate\Support\Facades\DB::getDriverName(), ['sqlite', 'mysql'], true)) {
-            \Illuminate\Support\Facades\DB::unprepared('DROP TRIGGER IF EXISTS inclusion_signals_prevent_update');
-            \Illuminate\Support\Facades\DB::unprepared('DROP TRIGGER IF EXISTS inclusion_signals_prevent_delete');
+        if (in_array(DB::getDriverName(), ['sqlite', 'mysql'], true)) {
+            DB::unprepared('DROP TRIGGER IF EXISTS inclusion_signals_prevent_update');
+            DB::unprepared('DROP TRIGGER IF EXISTS inclusion_signals_prevent_delete');
         }
     }
 };

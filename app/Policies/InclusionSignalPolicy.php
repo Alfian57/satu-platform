@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\InstitutionMembershipRole;
+use App\Enums\InstitutionMembershipStatus;
 use App\Models\InclusionSignal;
 use App\Models\InstitutionMembership;
 use App\Models\User;
@@ -23,7 +24,7 @@ class InclusionSignalPolicy
             ->where('institution_id', $inclusionSignal->institution_id)
             ->first();
 
-        if (! $membership || $membership->status !== \App\Enums\InstitutionMembershipStatus::Verified) {
+        if (! $membership || $membership->status !== InstitutionMembershipStatus::Verified) {
             return false;
         }
 
