@@ -27,9 +27,55 @@ When documents conflict, the earlier source wins. Update the owning source inste
 - Work on exactly one selected GitHub issue unless the issue explicitly defines a coordinated delivery slice.
 - Check `Blocked by`, gate labels, and acceptance criteria before editing. Do not invent substitute behavior for an unmet prerequisite.
 - Create a separate branch named `<type>/<issue-number>-<slug>` and a pull request that closes the issue.
+- Untuk issue independen, buat pull request setelah seluruh pekerjaan selesai. Untuk issue stacked atau early visibility, buka sebagai **draft** lebih awal. Review hanya diminta setelah seluruh AC terpenuhi dan PR dikonversi ke **Ready for review**.
 - Do not expand into adjacent issues as cleanup or convenience work.
 - At `gate:human`, `gate:external`, or `gate:conditional`, present inspectable evidence and stop until the gate is resolved.
 - Issue state, milestone, labels, linked pull request, and comments are the only task-status source. Documentation describes contracts, not task progress.
+- Saat seluruh pekerjaan selesai dan PR siap direview:
+  1. Konversi PR dari draft ke **Ready for review**.
+  2. Komentar di PR dengan tag `@Alfian57` yang menyatakan PR siap direview.
+  3. Pastikan CI hijau, label `needs-review` terpasang, dan body PR lengkap (evidence, screenshot jika UI).
+- Setelah menyelesaikan revisi yang diminta reviewer:
+  1. Tag `@Alfian57` di komentar PR bahwa revisi sudah selesai.
+  2. Pastikan CI tetap hijau setelah perubahan terbaru.
+
+## PR Review Workflow
+
+Saat berperan sebagai project manager yang mereview pull request di remote repository:
+
+### Inspeksi Awal
+- Gunakan `gh pr list --state open` untuk melihat semua PR terbuka, lalu `gh pr view <number>` per PR untuk detail (body, files, commits, CI, reviews, merge state).
+- Baca issue GitHub yang dirujuk oleh PR dan bandingkan acceptance criteria, labels, gate, prerequisite, dan metadata-nya secara diam-diam. Hanya sebutkan ketidaksesuaian jika ditemukan.
+- Reviewer default adalah **Alfian57**. Gunakan `gh pr edit <number> --add-reviewer Alfian57`.
+
+### Proses Review
+1. **Status merge**: Jika `BEHIND`, minta author rebase/update terhadap `main` dengan kalimat kasual. Jangan pernah meng-update branch milik contributor lain terhadap `main` (tanpa rebase/merge/push ke branch mereka). Bantuan yang boleh diberikan hanya pada label dan status PR, misalnya menambahkan atau menghapus label seperti `needs-review`, atau mengubah draft/ready state.
+2. **CI checks**: Harus SUCCESS semua. Jika ada yang gagal, laporkan.
+3. **Draft PR**: Issue biasanya meminta PR dibuka sebagai draft. Jika PR langsung open atau masih berlabel `in-progress`, tanyakan apakah pekerjaan sudah benar-benar selesai dan siap review penuh.
+4. **UI screenshot**: PR dengan perubahan UI wajib menyertakan screenshot mobile/desktop dan state penting di body.
+5. **Gate dan prerequisite**: Jika issue memiliki `gate:conditional` atau prerequisite, tanyakan statusnya di komentar.
+6. **Preview komentar**: Sebelum mengirim komentar ke PR, tampilkan dulu preview komentar tersebut di chat untuk dikonfirmasi oleh user.
+
+### Gaya Bahasa Komentar
+- Gunakan **Bahasa Indonesia kasual** dan natural.
+- Tag author dengan `@username` di awal komentar.
+- Hindari karakter **em dash (Unicode U+2014)** di semua komentar PR. Gunakan koma, titik, atau bullet list sebagai gantinya.
+- Gunakan variasi apresiasi untuk implementasi yang sudah sesuai: "mantap", "approved", "LGTM", "udah solid", "on point", "implementasi udah sesuai sama issue".
+- Jangan gunakan kata "ganjalan" atau "kece" di komentar PR. Pakai alternatif seperti "hal yang perlu dirapikan", "poin", "catatan", dan apresiasi netral seperti "udah solid".
+- Jangan berikan perbandingan panjang dengan issue. Langsung sebutkan kesalahan atau ketidaksesuaian saja jika ada.
+- Contoh gaya komentar:
+  > @dzakyard, tolong update branch ini terhadap `main` terbaru dulu ya, soalnya status merge saat ini **BEHIND**. Ada beberapa hal yang perlu dirapikan:
+  >
+  > - Issue minta PR dibuka sebagai **draft**, ini langsung open.
+  > - Belum ada screenshot mobile/desktop di body PR.
+  >
+  > Selain itu implementasi-nya udah solid. LGTM buat kontennya.
+
+### Keputusan Akhir
+- Jika PR memiliki CI hijau, semua AC terpenuhi, tidak ada ketidaksesuaian dengan issue, dan tidak ada hal lain yang perlu diperbaiki:
+  1. Tulis komentar review dengan `gh pr review <number> --approve --body "..."` berisi apresiasi.
+  2. Merge dengan `gh pr merge <number> --squash --delete-branch`.
+- Jika ada ketidaksesuaian yang perlu diperbaiki, gunakan `gh pr review <number> --request-changes --body "..."` dan jangan merge.
 
 ## Product Invariants
 
