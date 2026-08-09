@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\RecruiterMembershipRole;
+use App\Enums\RecruiterMembershipStatus;
 use App\Enums\RecruiterOrganizationStatus;
 use App\Models\RecruiterMembership;
 use App\Models\RecruiterOrganization;
@@ -33,6 +34,7 @@ final class RecruiterMembershipPolicy
 
         return $org->memberships()
             ->where('user_id', $user->getKey())
+            ->where('status', RecruiterMembershipStatus::Active)
             ->whereIn('role', [RecruiterMembershipRole::Owner, RecruiterMembershipRole::Admin])
             ->exists();
     }
@@ -47,9 +49,14 @@ final class RecruiterMembershipPolicy
         }
 
         // Only Owner/Admin can update memberships, but they cannot demote the owner.
+        if ($membership->role === RecruiterMembershipRole::Owner) {
+            return false;
+        }
+
         // Additional business logic may restrict this further.
         return $membership->organization->memberships()
             ->where('user_id', $user->getKey())
+            ->where('status', RecruiterMembershipStatus::Active)
             ->whereIn('role', [RecruiterMembershipRole::Owner, RecruiterMembershipRole::Admin])
             ->exists();
     }
@@ -63,8 +70,13 @@ final class RecruiterMembershipPolicy
             return false;
         }
 
+        if ($membership->role === RecruiterMembershipRole::Owner) {
+            return false;
+        }
+
         return $membership->organization->memberships()
             ->where('user_id', $user->getKey())
+            ->where('status', RecruiterMembershipStatus::Active)
             ->whereIn('role', [RecruiterMembershipRole::Owner, RecruiterMembershipRole::Admin])
             ->exists();
     }

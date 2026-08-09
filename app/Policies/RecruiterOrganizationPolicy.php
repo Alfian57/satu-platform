@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\RecruiterMembershipRole;
+use App\Enums\RecruiterMembershipStatus;
 use App\Enums\RecruiterOrganizationStatus;
 use App\Models\RecruiterOrganization;
 use App\Models\User;
@@ -29,6 +30,7 @@ final class RecruiterOrganizationPolicy
 
         return $organization->memberships()
             ->where('user_id', $user->getKey())
+            ->where('status', RecruiterMembershipStatus::Active)
             ->whereIn('role', [RecruiterMembershipRole::Owner, RecruiterMembershipRole::Admin])
             ->exists();
     }

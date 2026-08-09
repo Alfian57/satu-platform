@@ -145,3 +145,45 @@ test('organization member cannot view reviews for another organization', functio
 
     expect($membership->user->can('view', $review))->toBeFalse();
 });
+
+test('organization cannot be updated if its status is suspended', function () {
+    $org = RecruiterOrganization::factory()->suspended()->create();
+    $membership = RecruiterMembership::factory()->owner()->create(['recruiter_organization_id' => $org->id]);
+    $user = $membership->user;
+
+    expect($user->can('update', $org))->toBeFalse();
+});
+
+test('organization cannot be updated if its status is rejected', function () {
+    $org = RecruiterOrganization::factory()->rejected()->create();
+    $membership = RecruiterMembership::factory()->owner()->create(['recruiter_organization_id' => $org->id]);
+    $user = $membership->user;
+
+    expect($user->can('update', $org))->toBeFalse();
+});
+
+test('suspended member cannot update the organization', function () {
+    $org = RecruiterOrganization::factory()->verified()->create();
+    $membership = RecruiterMembership::factory()->owner()->suspended()->create(['recruiter_organization_id' => $org->id]);
+    $user = $membership->user;
+
+    expect($user->can('update', $org))->toBeFalse();
+});
+
+test('membership owner cannot be demoted or updated', function () {
+    $org = RecruiterOrganization::factory()->verified()->create();
+    $ownerMembership = RecruiterMembership::factory()->owner()->create(['recruiter_organization_id' => $org->id]);
+    $adminMembership = RecruiterMembership::factory()->admin()->create(['recruiter_organization_id' => $org->id]);
+
+    expect($ownerMembership->user->can('update', $ownerMembership))->toBeFalse();
+    expect($adminMembership->user->can('update', $ownerMembership))->toBeFalse();
+});
+
+test('membership owner cannot be deleted', function () {
+    $org = RecruiterOrganization::factory()->verified()->create();
+    $ownerMembership = RecruiterMembership::factory()->owner()->create(['recruiter_organization_id' => $org->id]);
+    $adminMembership = RecruiterMembership::factory()->admin()->create(['recruiter_organization_id' => $org->id]);
+
+    expect($ownerMembership->user->can('delete', $ownerMembership))->toBeFalse();
+    expect($adminMembership->user->can('delete', $ownerMembership))->toBeFalse();
+});
