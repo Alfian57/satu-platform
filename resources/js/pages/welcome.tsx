@@ -11,7 +11,7 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="SATU - Sistem Aktivitas Talenta Universitas" />
+            <Head title="Sistem Aktivitas Talenta Universitas" />
             <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
                 {/* Header Navbar */}
                 <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
@@ -228,10 +228,9 @@ export default function Welcome() {
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
                                         Kelola afiliasi kampus melalui
-                                        verifikasi NIM. Tinjau sinyal peluang
-                                        kolaborasi secara konfidensial untuk
-                                        memastikan akses kolaborasi merata di
-                                        seluruh kampus.
+                                        verifikasi NIM dan tinjauan reviewer
+                                        resmi untuk memastikan akses kolaborasi
+                                        yang merata di seluruh kampus.
                                     </p>
                                 </div>
                                 <div className="flex flex-col gap-2 bg-card p-6">
@@ -240,10 +239,9 @@ export default function Welcome() {
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
                                         Akses proyeksi portofolio terverifikasi
-                                        yang dengan eksplisit diizinkan oleh
-                                        mahasiswa. Data diagnostik dan sinyal
-                                        internal kampus dibatasi ketat demi
-                                        privasi.
+                                        yang secara eksplisit diizinkan oleh
+                                        mahasiswa. Data privat dan diskusi
+                                        internal dibatasi ketat demi privasi.
                                     </p>
                                 </div>
                                 <div className="flex flex-col gap-2 bg-card p-6">
