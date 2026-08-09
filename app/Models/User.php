@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * @property int $id
@@ -28,6 +29,16 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    /**
+     * Normalize username to lowercase and trim on assignment.
+     */
+    protected function setUsernameAttribute(?string $value): void
+    {
+        $this->attributes['username'] = $value !== null
+            ? trim(Str::lower($value))
+            : null;
+    }
 
     /**
      * @return HasMany<InstitutionMembership, $this>

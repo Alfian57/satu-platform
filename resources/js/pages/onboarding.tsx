@@ -587,7 +587,7 @@ export default function Onboarding({
                                         {canRetry
                                             ? 'Permintaan sebelumnya belum dapat diverifikasi. Periksa pilihan kampus, lalu kirim ulang permintaanmu.'
                                             : (status?.description ??
-                                              'Pilih institusi yang benar. Sistem akan memeriksa kecocokan email secara otomatis atau meneruskan permintaan untuk ditinjau admin kampus.')}
+                                              'Pilih institusi yang benar. Permintaanmu akan diteruskan untuk ditinjau oleh admin kampus.')}
                                     </p>
                                 </div>
 
