@@ -23,7 +23,6 @@ use LogicException;
 #[Fillable(['recruiter_entitlement_id', 'actor_id', 'event', 'reason'])]
 class RecruiterEntitlementLog extends Model
 {
-
     public const UPDATED_AT = null;
 
     /**

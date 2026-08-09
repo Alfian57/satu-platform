@@ -37,7 +37,6 @@ use Illuminate\Support\Carbon;
 ])]
 class RecruiterEntitlement extends Model
 {
-
     /**
      * @return BelongsTo<RecruiterOrganization, $this>
      */
