@@ -49,7 +49,7 @@ Saat berperan sebagai project manager yang mereview pull request di remote repos
 - Reviewer default adalah **Alfian57**. Gunakan `gh pr edit <number> --add-reviewer Alfian57`.
 
 ### Proses Review
-1. **Status merge**: Jika `BEHIND`, minta author rebase/update terhadap `main` dengan kalimat kasual.
+1. **Status merge**: Jika `BEHIND`, minta author rebase/update terhadap `main` dengan kalimat kasual. Jangan pernah meng-update branch milik contributor lain terhadap `main` (tanpa rebase/merge/push ke branch mereka). Bantuan yang boleh diberikan hanya pada label dan status PR, misalnya menambahkan atau menghapus label seperti `needs-review`, atau mengubah draft/ready state.
 2. **CI checks**: Harus SUCCESS semua. Jika ada yang gagal, laporkan.
 3. **Draft PR**: Issue biasanya meminta PR dibuka sebagai draft. Jika PR langsung open atau masih berlabel `in-progress`, tanyakan apakah pekerjaan sudah benar-benar selesai dan siap review penuh.
 4. **UI screenshot**: PR dengan perubahan UI wajib menyertakan screenshot mobile/desktop dan state penting di body.
@@ -60,10 +60,11 @@ Saat berperan sebagai project manager yang mereview pull request di remote repos
 - Gunakan **Bahasa Indonesia kasual** dan natural.
 - Tag author dengan `@username` di awal komentar.
 - Hindari karakter **em dash (Unicode U+2014)** di semua komentar PR. Gunakan koma, titik, atau bullet list sebagai gantinya.
-- Gunakan variasi apresiasi untuk implementasi yang sudah sesuai: "mantap", "approved", "LGTM", "udah solid", "udah kece", "on point", "implementasi udah sesuai sama issue".
+- Gunakan variasi apresiasi untuk implementasi yang sudah sesuai: "mantap", "approved", "LGTM", "udah solid", "on point", "implementasi udah sesuai sama issue".
+- Jangan gunakan kata "ganjalan" atau "kece" di komentar PR. Pakai alternatif seperti "hal yang perlu dirapikan", "poin", "catatan", dan apresiasi netral seperti "udah solid".
 - Jangan berikan perbandingan panjang dengan issue. Langsung sebutkan kesalahan atau ketidaksesuaian saja jika ada.
 - Contoh gaya komentar:
-  > @dzakyard, tolong update branch ini terhadap `main` terbaru dulu ya, soalnya status merge saat ini **BEHIND**. Ada beberapa ganjalan:
+  > @dzakyard, tolong update branch ini terhadap `main` terbaru dulu ya, soalnya status merge saat ini **BEHIND**. Ada beberapa hal yang perlu dirapikan:
   >
   > - Issue minta PR dibuka sebagai **draft**, ini langsung open.
   > - Belum ada screenshot mobile/desktop di body PR.
@@ -71,7 +72,7 @@ Saat berperan sebagai project manager yang mereview pull request di remote repos
   > Selain itu implementasi-nya udah solid. LGTM buat kontennya.
 
 ### Keputusan Akhir
-- Jika PR memiliki CI hijau, semua AC terpenuhi, tidak ada ketidaksesuaian dengan issue, dan tidak ada ganjalan lain:
+- Jika PR memiliki CI hijau, semua AC terpenuhi, tidak ada ketidaksesuaian dengan issue, dan tidak ada hal lain yang perlu diperbaiki:
   1. Tulis komentar review dengan `gh pr review <number> --approve --body "..."` berisi apresiasi.
   2. Merge dengan `gh pr merge <number> --squash --delete-branch`.
 - Jika ada ketidaksesuaian yang perlu diperbaiki, gunakan `gh pr review <number> --request-changes --body "..."` dan jangan merge.
