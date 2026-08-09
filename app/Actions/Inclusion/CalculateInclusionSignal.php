@@ -64,19 +64,15 @@ class CalculateInclusionSignal
         }
 
         return DB::transaction(function () use ($institution, $subject, $version, $period, $dataSufficiencyMet, $isRestrictedCandidate, $evidenceSummary) {
-            return InclusionSignal::updateOrCreate(
-                [
-                    'institution_id' => $institution->id,
-                    'subject_id' => $subject->id,
-                    'version_id' => $version->id,
-                    'period' => $period,
-                ],
-                [
-                    'data_sufficiency_met' => $dataSufficiencyMet,
-                    'restricted_feature_state' => $isRestrictedCandidate,
-                    'evidence_summary' => $evidenceSummary,
-                ]
-            );
+            return InclusionSignal::create([
+                'institution_id' => $institution->id,
+                'subject_id' => $subject->id,
+                'version_id' => $version->id,
+                'period' => $period,
+                'data_sufficiency_met' => $dataSufficiencyMet,
+                'restricted_feature_state' => $isRestrictedCandidate,
+                'evidence_summary' => $evidenceSummary,
+            ]);
         });
     }
 }

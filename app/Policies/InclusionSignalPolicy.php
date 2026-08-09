@@ -23,7 +23,7 @@ class InclusionSignalPolicy
             ->where('institution_id', $inclusionSignal->institution_id)
             ->first();
 
-        if (! $membership) {
+        if (! $membership || $membership->status !== \App\Enums\InstitutionMembershipStatus::Verified) {
             return false;
         }
 
