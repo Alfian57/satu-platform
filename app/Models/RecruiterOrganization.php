@@ -52,6 +52,14 @@ class RecruiterOrganization extends Model
     }
 
     /**
+     * @return HasMany<RecruiterVerificationReview, $this>
+     */
+    public function reviews(): HasMany
+    {
+        return $this->verificationReviews();
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
