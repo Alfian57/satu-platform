@@ -35,7 +35,7 @@ class InclusionSignalSerializer
             'subject_id' => $signal->subject_id,
             'subject_name' => $signal->subject?->name,
             'version_id' => $signal->version_id,
-            'version_name' => $signal->version?->name,
+            'version' => $signal->version?->version,
             'period' => $signal->period,
             'restricted_feature_state' => (bool) $signal->restricted_feature_state,
             'data_sufficiency_met' => (bool) $signal->data_sufficiency_met,
