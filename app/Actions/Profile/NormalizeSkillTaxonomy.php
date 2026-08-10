@@ -12,7 +12,7 @@ final class NormalizeSkillTaxonomy
     /**
      * Normalize a collection or array of raw skill strings against canonical skill taxonomy.
      *
-     * @param array<int, string> $rawSkills
+     * @param  array<int, string>  $rawSkills
      * @return array<int, string>
      */
     public function execute(array $rawSkills, string $defaultCategory = 'general'): array
