@@ -3,7 +3,9 @@
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\RecruiterContactRequestController;
 use App\Http\Controllers\SavedCandidatesController;
+use App\Http\Controllers\StudentContactRequestController;
 use App\Http\Controllers\TalentSearchController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,8 +24,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('recruiter/talent/search', [TalentSearchController::class, 'index'])
         ->name('recruiter.talent.search');
 
-    Route::get('recruiter/talent/saved', [SavedCandidatesController::class, 'index'])
-        ->name('recruiter.talent.saved');
+    Route::get('recruiter/talent/contact-requests', [RecruiterContactRequestController::class, 'index'])
+        ->name('recruiter.talent.contact-requests.index');
 
     Route::get('recruiter/talent/candidates/{id}', [TalentSearchController::class, 'show'])
         ->name('recruiter.talent.candidates.show');
@@ -46,8 +48,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('recruiter/talent/candidates/{id}/save', [SavedCandidatesController::class, 'store'])
         ->name('recruiter.talent.candidates.save');
 
-    Route::delete('recruiter/talent/candidates/{id}/save', [SavedCandidatesController::class, 'destroy'])
-        ->name('recruiter.talent.candidates.unsave');
+    Route::post('recruiter/talent/candidates/{id}/contact', [RecruiterContactRequestController::class, 'store'])
+        ->name('recruiter.talent.candidates.contact');
+
+    Route::delete('recruiter/talent/contact-requests/{id}', [RecruiterContactRequestController::class, 'cancel'])
+        ->name('recruiter.talent.contact-requests.cancel');
+
+    Route::get('student/contact-requests', [StudentContactRequestController::class, 'index'])
+        ->name('student.contact-requests.index');
+
+    Route::post('student/contact-requests/{id}/accept', [StudentContactRequestController::class, 'accept'])
+        ->name('student.contact-requests.accept');
+
+    Route::post('student/contact-requests/{id}/decline', [StudentContactRequestController::class, 'decline'])
+        ->name('student.contact-requests.decline');
 });
 
-require __DIR__.'/settings.php';
