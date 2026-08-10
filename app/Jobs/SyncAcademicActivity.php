@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Actions\Integration\ProcessIntegrationSync;
+use App\Actions\Integration\RecordIntegrationSyncMetric;
 use App\Enums\IntegrationSyncStatus;
 use App\Exceptions\SyncRetryableException;
 use App\Models\IntegrationSync;
@@ -56,6 +57,8 @@ class SyncAcademicActivity implements ShouldBeUniqueUntilProcessing, ShouldQueue
         if ($errorClass !== null && $errorClass->retryable()) {
             throw new SyncRetryableException($errorClass, 'Sync classified as retryable.');
         }
+
+        (new RecordIntegrationSyncMetric)->record($sync);
     }
 
     public function failed(?\Throwable $e = null): void
@@ -71,5 +74,7 @@ class SyncAcademicActivity implements ShouldBeUniqueUntilProcessing, ShouldQueue
             : 'Dead-letter after exhausted retries.';
 
         (new ProcessIntegrationSync(app(AcademicGateway::class)))->markDead($sync, $reason);
+
+        (new RecordIntegrationSyncMetric)->record($sync);
     }
 }
