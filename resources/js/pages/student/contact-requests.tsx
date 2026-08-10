@@ -1,7 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import {
     CheckCircle2,
-    Clock,
     Lock,
     Mail,
     Shield,

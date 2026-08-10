@@ -27,6 +27,10 @@ use InvalidArgumentException;
 
 uses(RefreshDatabase::class);
 
+beforeEach(function () {
+    Notification::fake();
+});
+
 it('allows entitled recruiter to send purpose-bound contact request and dispatches notification', function () {
     Notification::fake();
 

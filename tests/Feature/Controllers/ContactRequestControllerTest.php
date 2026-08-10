@@ -67,6 +67,7 @@ it('renders recruiter contact requests index page', function () {
 });
 
 it('allows recruiter to store contact request via POST endpoint', function () {
+    Notification::fake();
     $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
     $recruiter = User::factory()->create();
     $studentUser = User::factory()->create();
