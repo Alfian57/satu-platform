@@ -64,3 +64,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('student.contact-requests.decline');
 });
 
+require __DIR__.'/settings.php';
