@@ -19,7 +19,6 @@ use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use InvalidArgumentException;
 
 uses(RefreshDatabase::class);
 

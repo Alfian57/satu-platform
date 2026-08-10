@@ -22,7 +22,6 @@ use App\Support\RecruiterSafeCandidateSerializer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
-use InvalidArgumentException;
 
 uses(RefreshDatabase::class);
 
