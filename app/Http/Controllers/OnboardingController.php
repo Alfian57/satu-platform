@@ -46,8 +46,7 @@ class OnboardingController extends Controller
 
         return Inertia::render('onboarding', [
             'account' => [
-                'email' => $user->email,
-                'emailVerified' => $user->hasVerifiedEmail(),
+                'username' => $user->username,
             ],
             'institutions' => Institution::query()
                 ->where('status', InstitutionStatus::Active)
