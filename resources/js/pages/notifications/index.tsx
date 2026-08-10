@@ -24,21 +24,29 @@ interface Props {
     unreadCount: number;
 }
 
-export default function NotificationIndex({ notifications, unreadCount }: Props) {
+export default function NotificationIndex({
+    notifications,
+    unreadCount,
+}: Props) {
     return (
         <>
             <Head title="Notifikasi" />
             <div className="p-6">
-                <h1 className="text-2xl font-semibold mb-4">Notifikasi</h1>
-                <p className="text-sm text-muted-foreground mb-4">
+                <h1 className="mb-4 text-2xl font-semibold">Notifikasi</h1>
+                <p className="mb-4 text-sm text-muted-foreground">
                     {unreadCount} belum dibaca
                 </p>
                 {notifications.data.length === 0 ? (
-                    <p className="text-muted-foreground">Belum ada notifikasi.</p>
+                    <p className="text-muted-foreground">
+                        Belum ada notifikasi.
+                    </p>
                 ) : (
                     <ul className="space-y-3">
                         {notifications.data.map((n) => (
-                            <li key={n.id} className="rounded border p-4 text-sm">
+                            <li
+                                key={n.id}
+                                className="rounded border p-4 text-sm"
+                            >
                                 <p>{n.message}</p>
                                 <span className="text-xs text-muted-foreground">
                                     {n.read_at ? 'Dibaca' : 'Belum dibaca'}
