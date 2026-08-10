@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Support\Integration\AcademicGateway;
+use App\Support\Integration\SandboxGateway;
 use App\Support\Notification\FonnteGateway;
 use App\Support\Notification\WhatsAppGateway;
 use Carbon\CarbonImmutable;
@@ -23,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(WhatsAppGateway::class, function () {
             return new FonnteGateway(config('services.fonnte.token', ''));
         });
+
+        $this->app->bind(AcademicGateway::class, SandboxGateway::class);
     }
 
     /**

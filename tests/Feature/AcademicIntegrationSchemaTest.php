@@ -98,7 +98,7 @@ test('sandbox gateway simulates validation error', function () {
         ->and($sync->events->last()->payload_snapshot)->toBeArray();
 });
 
-test('sandbox gateway simulates duplicate conflict', function () {
+test('sandbox gateway simulates duplicate conflict as reconciled', function () {
     $sync = IntegrationSync::factory()->create();
     $gateway = new SandboxGateway;
     $action = new ProcessIntegrationSync($gateway);
@@ -106,10 +106,11 @@ test('sandbox gateway simulates duplicate conflict', function () {
     $action->handle($sync, ['simulate' => 'duplicate']);
 
     $sync->refresh();
-    expect($sync->status)->toBe(IntegrationSyncStatus::Conflict);
+    expect($sync->status)->toBe(IntegrationSyncStatus::Reconciled)
+        ->and($sync->events->last()->reason)->toContain('already exists');
 });
 
-test('sandbox gateway simulates degraded server error', function () {
+test('sandbox gateway simulates degraded server error as retryable transient', function () {
     $sync = IntegrationSync::factory()->create();
     $gateway = new SandboxGateway;
     $action = new ProcessIntegrationSync($gateway);
@@ -117,10 +118,10 @@ test('sandbox gateway simulates degraded server error', function () {
     $action->handle($sync, ['simulate' => 'degraded']);
 
     $sync->refresh();
-    expect($sync->status)->toBe(IntegrationSyncStatus::Failed);
+    expect($sync->status)->toBe(IntegrationSyncStatus::Retrying);
 });
 
-test('sync action enforces maximum retry attempts', function () {
+test('sync action records a classified attempt without capping attempts', function () {
     $sync = IntegrationSync::factory()->create(['attempts' => 3]);
     $gateway = new SandboxGateway;
     $action = new ProcessIntegrationSync($gateway);
@@ -128,8 +129,8 @@ test('sync action enforces maximum retry attempts', function () {
     $action->handle($sync, ['simulate' => 'success']);
 
     $sync->refresh();
-    expect($sync->status)->toBe(IntegrationSyncStatus::Dead)
-        ->and($sync->attempts)->toBe(3); // Does not increment past 3
+    expect($sync->status)->toBe(IntegrationSyncStatus::Succeeded)
+        ->and($sync->attempts)->toBe(4); // Retry capping is owned by the queue job.
 });
 
 /*
