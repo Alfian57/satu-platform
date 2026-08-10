@@ -66,26 +66,31 @@ export default function SavedCandidates({
         <AppLayout>
             <Head title="Saved Candidates - SATU Platform" />
 
-            <div className="min-h-screen mx-auto max-w-7xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
+            <div className="mx-auto min-h-screen max-w-7xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
                 {/* Header & Navigation */}
                 <div className="flex flex-col gap-4 border-b border-slate-800 pb-6 md:flex-row md:items-center md:justify-between">
                     <div>
                         <button
-                            onClick={() => router.get('/recruiter/talent/search')}
-                            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 transition-colors hover:text-slate-200 mb-2"
+                            onClick={() =>
+                                router.get('/recruiter/talent/search')
+                            }
+                            className="mb-2 inline-flex items-center gap-2 text-xs font-semibold text-slate-400 transition-colors hover:text-slate-200"
                         >
-                            <ArrowLeft className="h-4 w-4" /> Back to Talent Search
+                            <ArrowLeft className="h-4 w-4" /> Back to Talent
+                            Search
                         </button>
                         <div className="flex items-center gap-3">
                             <h1 className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-3xl font-extrabold tracking-tight text-transparent">
                                 Saved Candidates
                             </h1>
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-800/50 bg-blue-950 px-3 py-1 text-xs font-semibold text-blue-300">
-                                <Bookmark className="h-3.5 w-3.5 text-blue-400" /> Private Org List
+                                <Bookmark className="h-3.5 w-3.5 text-blue-400" />{' '}
+                                Private Org List
                             </span>
                         </div>
                         <p className="mt-1 text-sm text-slate-400">
-                            Private saved candidate workspace for your recruiter organization.
+                            Private saved candidate workspace for your recruiter
+                            organization.
                         </p>
                     </div>
 
@@ -105,11 +110,12 @@ export default function SavedCandidates({
                     className="space-y-4"
                 >
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+                        <h2 className="text-sm font-semibold tracking-wider text-slate-400 uppercase">
                             Saved Candidates ({savedList.length})
                         </h2>
                         <span role="status" className="text-xs text-slate-500">
-                            Page {candidates.current_page} of {candidates.last_page}
+                            Page {candidates.current_page} of{' '}
+                            {candidates.last_page}
                         </span>
                     </div>
 
@@ -137,11 +143,15 @@ export default function SavedCandidates({
                                     No Saved Candidates
                                 </h3>
                                 <p className="mx-auto max-w-md text-sm text-slate-500">
-                                    You have not saved any candidates yet. Browse Talent Search to bookmark candidates for your organization.
+                                    You have not saved any candidates yet.
+                                    Browse Talent Search to bookmark candidates
+                                    for your organization.
                                 </p>
                             </div>
                             <button
-                                onClick={() => router.get('/recruiter/talent/search')}
+                                onClick={() =>
+                                    router.get('/recruiter/talent/search')
+                                }
                                 className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold transition-colors hover:bg-slate-700"
                             >
                                 Search Candidates
@@ -161,12 +171,15 @@ export default function SavedCandidates({
                                         <div className="max-w-2xl space-y-2">
                                             <div className="flex flex-wrap items-center gap-3">
                                                 <h3 className="text-lg font-bold text-slate-100 transition-colors group-hover:text-blue-300">
-                                                    {candidate.headline || 'Verified Student Candidate'}
+                                                    {candidate.headline ||
+                                                        'Verified Student Candidate'}
                                                 </h3>
                                                 {candidate.institution_name && (
                                                     <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-2.5 py-0.5 text-xs text-slate-300">
                                                         <CheckCircle className="h-3 w-3 text-emerald-400" />
-                                                        {candidate.institution_name}
+                                                        {
+                                                            candidate.institution_name
+                                                        }
                                                     </span>
                                                 )}
                                             </div>
@@ -178,23 +191,27 @@ export default function SavedCandidates({
                                             )}
 
                                             <div className="flex flex-wrap items-center gap-2 pt-1">
-                                                {candidate.skills.map((skill) => (
-                                                    <span
-                                                        key={skill}
-                                                        className="rounded-md border border-blue-900 bg-blue-950/80 px-2.5 py-1 text-xs font-medium text-blue-300"
-                                                    >
-                                                        {skill}
-                                                    </span>
-                                                ))}
-                                                {candidate.badges.map((badge) => (
-                                                    <span
-                                                        key={badge}
-                                                        className="inline-flex items-center gap-1 rounded-md border border-amber-900 bg-amber-950/80 px-2.5 py-1 text-xs font-medium text-amber-300"
-                                                    >
-                                                        <Award className="h-3 w-3 text-amber-400" />
-                                                        {badge}
-                                                    </span>
-                                                ))}
+                                                {candidate.skills.map(
+                                                    (skill) => (
+                                                        <span
+                                                            key={skill}
+                                                            className="rounded-md border border-blue-900 bg-blue-950/80 px-2.5 py-1 text-xs font-medium text-blue-300"
+                                                        >
+                                                            {skill}
+                                                        </span>
+                                                    ),
+                                                )}
+                                                {candidate.badges.map(
+                                                    (badge) => (
+                                                        <span
+                                                            key={badge}
+                                                            className="inline-flex items-center gap-1 rounded-md border border-amber-900 bg-amber-950/80 px-2.5 py-1 text-xs font-medium text-amber-300"
+                                                        >
+                                                            <Award className="h-3 w-3 text-amber-400" />
+                                                            {badge}
+                                                        </span>
+                                                    ),
+                                                )}
                                             </div>
                                         </div>
 
@@ -202,20 +219,24 @@ export default function SavedCandidates({
                                             <button
                                                 onClick={() =>
                                                     router.get(
-                                                        `/recruiter/talent/candidates/${candidate.id}`
+                                                        `/recruiter/talent/candidates/${candidate.id}`,
                                                     )
                                                 }
                                                 className="inline-flex items-center gap-2 rounded-xl bg-slate-700/80 px-4 py-2.5 text-xs font-semibold text-slate-100 transition-all hover:bg-blue-600 hover:text-white"
                                             >
-                                                View Profile <ChevronRight className="h-4 w-4" />
+                                                View Profile{' '}
+                                                <ChevronRight className="h-4 w-4" />
                                             </button>
 
                                             <button
-                                                onClick={() => handleUnsave(candidate.id)}
+                                                onClick={() =>
+                                                    handleUnsave(candidate.id)
+                                                }
                                                 className="inline-flex items-center gap-1.5 rounded-xl border border-rose-900/60 bg-rose-950/40 px-3.5 py-2.5 text-xs font-semibold text-rose-300 transition-colors hover:bg-rose-900 hover:text-white"
                                                 title="Remove candidate from saved list"
                                             >
-                                                <Trash2 className="h-4 w-4" /> Remove
+                                                <Trash2 className="h-4 w-4" />{' '}
+                                                Remove
                                             </button>
                                         </div>
                                     </div>
