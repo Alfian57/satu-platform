@@ -3,7 +3,6 @@
 use App\Enums\InstitutionStatus;
 use App\Models\AuditLog;
 use App\Models\Institution;
-use App\Models\InstitutionDomain;
 use App\Models\InstitutionMembership;
 use App\Models\User;
 
@@ -22,27 +21,6 @@ test('student can submit an affiliation request from the onboarding ledger', fun
         ->assertSee('Permintaan afiliasi berhasil dikirim dan menunggu tinjauan.')
         ->assertPresent('@membership-outcome-announcement')
         ->assertDataAttribute('@onboarding-root', 'membership-state', 'pending')
-        ->assertNoJavaScriptErrors()
-        ->assertNoConsoleLogs()
-        ->assertNoAccessibilityIssues();
-});
-
-test('an approved email domain verifies affiliation immediately', function () {
-    $user = User::factory()->create(['email' => 'student@kampus.ac.id']);
-    $institution = Institution::factory()->active()->create([
-        'name' => 'Universitas Domain Disetujui',
-    ]);
-    InstitutionDomain::factory()->verified()->for($institution)->create([
-        'domain' => 'kampus.ac.id',
-    ]);
-    $this->actingAs($user);
-
-    visit(route('onboarding.show'))
-        ->select('institution_id', (string) $institution->id)
-        ->press('Kirim permintaan')
-        ->assertSee('Afiliasi kampusmu terverifikasi')
-        ->assertSee('Afiliasi kampus berhasil diverifikasi.')
-        ->assertDataAttribute('@onboarding-root', 'membership-state', 'verified')
         ->assertNoJavaScriptErrors()
         ->assertNoConsoleLogs()
         ->assertNoAccessibilityIssues();
@@ -388,7 +366,7 @@ test('long multilingual institution names remain readable at mobile width and 20
     int $zoom,
 ) {
     $user = User::factory()->create();
-    $longName = str_repeat('UniversitasTanpaPemisah', 6).'東京🚀مرحبا';
+    $longName = str_repeat('UniversitasTanpaPemisah', 6).'ÃƒÂ¦Ã‚ÂÃ‚Â±ÃƒÂ¤Ã‚ÂºÃ‚Â¬ÃƒÂ°Ã…Â¸Ã…Â¡Ã¢â€šÂ¬Ãƒâ„¢Ã¢â‚¬Â¦ÃƒËœÃ‚Â±ÃƒËœÃ‚Â­ÃƒËœÃ‚Â¨ÃƒËœÃ‚Â§';
     $institution = Institution::factory()->active()->create([
         'name' => $longName,
     ]);

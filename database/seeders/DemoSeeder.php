@@ -80,7 +80,7 @@ class DemoSeeder extends Seeder
         // Create Campus Admin
         $admin = User::factory()->create([
             'name' => 'Admin '.$name,
-            'email' => 'admin@'.$domainStr,
+            'username' => 'admin_'.strtolower(str_replace(' ', '_', $name)),
         ]);
 
         InstitutionMembership::factory()->create([
@@ -96,7 +96,7 @@ class DemoSeeder extends Seeder
         for ($i = 1; $i <= $userCount; $i++) {
             $student = User::factory()->create([
                 'name' => $faker->name(),
-                'email' => "student{$i}@".$domainStr,
+                'username' => $faker->unique()->userName(),
             ]);
 
             InstitutionMembership::factory()->create([
