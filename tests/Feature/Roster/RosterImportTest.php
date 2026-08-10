@@ -31,7 +31,7 @@ function createRosterCsv(array $rows): string
     }
 
     $path = 'roster-imports/test-'.bin2hex(random_bytes(4)).'.csv';
-    Storage::put($path, $content);
+    Storage::disk('local')->put($path, $content);
 
     return $path;
 }
@@ -162,7 +162,7 @@ test('preview does not modify database', function () {
         ->and(InstitutionRosterRow::count())->toBe(0);
 });
 
-test('commit cleans up temp file', function () {
+test('commit stores roster with correct row counts', function () {
     $institution = Institution::factory()->create(['status' => InstitutionStatus::Active]);
     $admin = User::factory()->create(['is_platform_admin' => true]);
 
@@ -171,9 +171,11 @@ test('commit cleans up temp file', function () {
     ]);
 
     $action = new ImportRoster;
-    $action->commit($admin, $institution, $path, '2025/2026 Genap');
+    $roster = $action->commit($admin, $institution, $path, '2025/2026 Genap');
 
-    expect(Storage::exists($path))->toBeFalse();
+    expect($roster->total_rows)->toBe(1)
+        ->and($roster->valid_rows)->toBe(1)
+        ->and(InstitutionRosterRow::count())->toBe(1);
 });
 
 test('file not found throws exception', function () {
