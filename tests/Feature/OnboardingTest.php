@@ -7,15 +7,9 @@ use App\Models\InstitutionMembership;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
-test('onboarding requires verified authentication', function () {
+test('onboarding requires authentication', function () {
     $this->get(route('onboarding.show'))
         ->assertRedirect(route('login'));
-
-    $user = User::factory()->unverified()->create();
-
-    $this->actingAs($user)
-        ->get(route('onboarding.show'))
-        ->assertRedirect(route('verification.notice', absolute: false));
 });
 
 test('onboarding exposes active institutions in deterministic order without domain data', function () {
@@ -38,8 +32,7 @@ test('onboarding exposes active institutions in deterministic order without doma
             fn (Assert $page) => $page
                 ->component('onboarding')
                 ->where('account', [
-                    'email' => $user->email,
-                    'emailVerified' => true,
+                    'username' => $user->username,
                 ])
                 ->where('institutions', [
                     ['id' => $first->id, 'name' => 'Akademi Alfa'],
@@ -130,7 +123,7 @@ test('a verified membership remains the onboarding authority over a newer pendin
         ->verifiedByApprovedDomain()
         ->for($user)
         ->for($verifiedInstitution)
-        ->create(['requested_at' => now()->subDay()]);
+        ->create(['requested_at' => now()->subDays(2)]);
     InstitutionMembership::factory()
         ->pending()
         ->for($user)
@@ -144,15 +137,68 @@ test('a verified membership remains the onboarding authority over a newer pendin
             fn (Assert $page) => $page
                 ->where('membership.institutionId', $verifiedInstitution->id)
                 ->where('membership.status', 'verified')
-                ->where('canRequest', false),
+                ->where('canRequest', false)
+                ->where('canRetry', false),
         );
 });
 
-test('only memberships at active institutions can become the onboarding authority', function () {
+test('a pending membership from a newer request can be overridden by a verified membership', function () {
     $user = User::factory()->create();
-    $inactiveInstitution = Institution::factory()->active()->create([
-        'name' => 'Universitas Lama',
-    ]);
+    $pendingInstitution = Institution::factory()->active()->create();
+    $verifiedInstitution = Institution::factory()->active()->create();
+
+    InstitutionMembership::factory()
+        ->pending()
+        ->for($user)
+        ->for($pendingInstitution)
+        ->create(['requested_at' => now()]);
+    InstitutionMembership::factory()
+        ->verifiedByApprovedDomain()
+        ->for($user)
+        ->for($verifiedInstitution)
+        ->create(['requested_at' => now()->subDays(2)]);
+
+    $this->actingAs($user)
+        ->get(route('onboarding.show'))
+        ->assertSuccessful()
+        ->assertInertia(
+            fn (Assert $page) => $page
+                ->where('membership.institutionId', $verifiedInstitution->id)
+                ->where('membership.status', 'verified')
+                ->where('canRequest', false)
+                ->where('canRetry', false),
+        );
+});
+
+test('onboarding projects the most recent pending membership when no verified exists', function () {
+    $user = User::factory()->create();
+    $olderInstitution = Institution::factory()->active()->create();
+    $newerInstitution = Institution::factory()->active()->create();
+
+    InstitutionMembership::factory()
+        ->pending()
+        ->for($user)
+        ->for($olderInstitution)
+        ->create(['requested_at' => now()->subDays(2)]);
+    InstitutionMembership::factory()
+        ->pending()
+        ->for($user)
+        ->for($newerInstitution)
+        ->create(['requested_at' => now()]);
+
+    $this->actingAs($user)
+        ->get(route('onboarding.show'))
+        ->assertSuccessful()
+        ->assertInertia(
+            fn (Assert $page) => $page
+                ->where('membership.institutionId', $newerInstitution->id)
+                ->where('membership.status', 'pending'),
+        );
+});
+
+test('an inactive verified membership is not the onboarding authority', function () {
+    $user = User::factory()->create();
+    $inactiveInstitution = Institution::factory()->active()->create();
     $activeInstitution = Institution::factory()->active()->create([
         'name' => 'Universitas Aktif',
     ]);

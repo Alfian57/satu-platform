@@ -249,8 +249,8 @@ function ProgressRail({
                     />
                     <ProgressRow
                         complete
-                        label="Email"
-                        detail="Alamat sudah diverifikasi"
+                        label="Username"
+                        detail="Username sudah ditetapkan"
                     />
                     <ProgressRow
                         complete={affiliationVerified}
@@ -334,20 +334,20 @@ function ProgressRow({
 }
 
 function MembershipFacts({
-    email,
+    username,
     membership,
 }: {
-    email: string;
+    username: string;
     membership: OnboardingMembership | null;
 }) {
     return (
         <dl className="divide-y divide-border border-y border-border">
             <div className="grid gap-1 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-5">
                 <dt className="font-label text-label text-muted-foreground">
-                    Email akun
+                    Username
                 </dt>
                 <dd className="min-w-0 text-sm font-medium break-all">
-                    {email}
+                    {username}
                 </dd>
             </div>
             <div className="grid gap-1 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-5">
@@ -587,13 +587,13 @@ export default function Onboarding({
                                         {canRetry
                                             ? 'Permintaan sebelumnya belum dapat diverifikasi. Periksa pilihan kampus, lalu kirim ulang permintaanmu.'
                                             : (status?.description ??
-                                              'Pilih institusi yang benar. Sistem akan memeriksa kecocokan email secara otomatis atau meneruskan permintaan untuk ditinjau admin kampus.')}
+                                              'Pilih institusi yang benar. Permintaanmu akan diteruskan untuk ditinjau oleh admin kampus.')}
                                     </p>
                                 </div>
 
                                 <div className="px-5 sm:px-6">
                                     <MembershipFacts
-                                        email={account.email}
+                                        username={account.username}
                                         membership={membership}
                                     />
                                 </div>
