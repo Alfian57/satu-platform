@@ -42,12 +42,13 @@ final class AcceptInvitation
                 'accepted_by' => $user->id,
             ]);
 
-            InstitutionMembership::query()->create([
+            $membership = new InstitutionMembership;
+            $membership->forceFill([
                 'institution_id' => $matchedInvitation->institution_id,
                 'user_id' => $user->id,
                 'role' => InstitutionMembershipRole::CampusAdmin,
                 'status' => InstitutionMembershipStatus::Verified,
-            ]);
+            ])->save();
         });
     }
 }
