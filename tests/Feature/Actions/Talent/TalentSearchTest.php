@@ -158,7 +158,7 @@ it('enforces strict negative serialization guaranteeing no sensitive data leaks'
     $institution = Institution::factory()->active()->create();
     $student = User::factory()->create([
         'name' => 'John Student',
-        'email' => 'john.student@privacy-leak.test',
+        'username' => 'johnstudent',
     ]);
 
     $projection = TalentCandidateProjection::factory()->create([
