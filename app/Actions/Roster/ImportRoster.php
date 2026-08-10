@@ -41,7 +41,7 @@ final class ImportRoster
         return $result;
     }
 
-    private function process(Institution $institution, string $filePath, string $semester, bool $commit, ?User $actor = null): InstitutionRoster|array
+    private function process(Institution $institution, string $filePath, string $semester, bool $commit, ?User $actor = null): mixed
     {
         $path = Storage::disk('local')->path($filePath);
 
