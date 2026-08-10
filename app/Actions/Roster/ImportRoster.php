@@ -17,7 +17,7 @@ use RuntimeException;
 final class ImportRoster
 {
     /**
-     * @return array{semester: string, checksum: string, total_rows: int, valid_rows: int, error_rows: int, errors: list<array{row: int, errors: array<string, mixed>, data: array<string, mixed>}>, preview: list<array<string, mixed>>}
+     * @return array<string, mixed>
      */
     public function preview(Institution $institution, string $filePath, string $semester): array
     {
@@ -30,6 +30,7 @@ final class ImportRoster
     }
 
     /**
+     * @param  array<string, mixed>  $parameters
      * @return array<string, mixed>|InstitutionRoster
      */
     private function process(Institution $institution, string $filePath, string $semester, bool $commit, ?User $actor = null): InstitutionRoster|array
@@ -104,7 +105,7 @@ final class ImportRoster
     }
 
     /**
-     * @return list<array{nim: string, nama: string, program_studi: string, angkatan: string, semester: string, phone: string, status_aktif: string}>
+     * @return list<array<string, mixed>>
      */
     private function readRows(string $path): array
     {
@@ -143,8 +144,8 @@ final class ImportRoster
     }
 
     /**
-     * @param  array{nim: string, nama: string, program_studi: string, angkatan: string, semester: string, phone: string, status_aktif: string}  $row
-     * @return array{nim: string, nama: string, program_studi: string, angkatan: string, semester: string, phone: string, is_active: bool}
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
      */
     private function normalizeRow(array $row): array
     {
@@ -176,7 +177,7 @@ final class ImportRoster
     }
 
     /**
-     * @param  array{nim: string, nama: string, program_studi: string, angkatan: string, semester: string, phone: string, is_active: bool}  $row
+     * @param  array<string, mixed>  $row
      * @return array<string, array<int, string>>
      */
     private function validateRow(array $row): array

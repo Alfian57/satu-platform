@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $error_rows
  * @property string $status
  * @property int|null $imported_by
+ *
+ * @method static \Database\Factories\InstitutionRosterFactory factory($count = null, $state = [])
  */
 class InstitutionRoster extends Model
 {
