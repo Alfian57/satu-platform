@@ -1,7 +1,7 @@
-import React, { useState, useTransition } from 'react';
 import { Head, router } from '@inertiajs/react';
+import { AlertTriangle, Award, Briefcase, CheckCircle, ChevronRight, Filter, Search, Shield, UserCheck, X } from 'lucide-react';
+import React, { useState, useTransition } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { Search, Filter, Shield, Briefcase, Award, CheckCircle, AlertTriangle, ChevronRight, X, UserCheck } from 'lucide-react';
 
 interface Candidate {
   id: number;
@@ -73,10 +73,13 @@ export default function TalentSearch({ candidates, filters, entitlement, institu
 
   const addSkill = (skill: string) => {
     const trimmed = skill.trim();
+
     if (trimmed && !selectedSkills.includes(trimmed)) {
       const updated = [...selectedSkills, trimmed];
+
       setSelectedSkills(updated);
     }
+
     setSkillInput('');
   };
 

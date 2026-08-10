@@ -1,7 +1,7 @@
+import { Head } from '@inertiajs/react';
+import { ArrowLeft, Award, CheckCircle, Lock, Send, Shield } from 'lucide-react';
 import React from 'react';
-import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { ArrowLeft, Shield, CheckCircle, Award, Lock, Send, AlertCircle } from 'lucide-react';
 
 interface Candidate {
   id: number;
