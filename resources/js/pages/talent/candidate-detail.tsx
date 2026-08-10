@@ -1,5 +1,12 @@
 import { Head } from '@inertiajs/react';
-import { ArrowLeft, Award, CheckCircle, Lock, Send, Shield } from 'lucide-react';
+import {
+    ArrowLeft,
+    Award,
+    CheckCircle,
+    Lock,
+    Send,
+    Shield,
+} from 'lucide-react';
 import React from 'react';
 import AppLayout from '@/layouts/app-layout';
 
@@ -30,7 +37,7 @@ export default function CandidateDetail({
                 title={`${candidate.headline || 'Candidate Profile'} - SATU Platform`}
             />
 
-            <div className="mx-auto max-w-5xl space-y-8 bg-slate-900 p-6 text-slate-100 min-h-screen md:p-10">
+            <div className="mx-auto min-h-screen max-w-5xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
                 {/* Navigation */}
                 <button
                     onClick={() => window.history.back()}
@@ -59,7 +66,7 @@ export default function CandidateDetail({
                                 >
                                     {candidate.availability_status.replace(
                                         /_/g,
-                                        ' '
+                                        ' ',
                                     )}
                                 </span>
                             </div>
@@ -78,7 +85,7 @@ export default function CandidateDetail({
                                         <span className="text-xs text-slate-500">
                                             (Verified{' '}
                                             {new Date(
-                                                candidate.verified_at
+                                                candidate.verified_at,
                                             ).toLocaleDateString()}
                                             )
                                         </span>
@@ -90,7 +97,7 @@ export default function CandidateDetail({
                         <div className="shrink-0">
                             <button
                                 disabled
-                                className="inline-flex cursor-not-allowed items-center gap-2 rounded-2xl bg-blue-600/50 px-6 py-3 text-xs font-semibold text-slate-300 shadow-lg opacity-80"
+                                className="inline-flex cursor-not-allowed items-center gap-2 rounded-2xl bg-blue-600/50 px-6 py-3 text-xs font-semibold text-slate-300 opacity-80 shadow-lg"
                                 title="Contact request requires active contact entitlement"
                             >
                                 <Send className="h-4 w-4" /> Send Contact
@@ -103,7 +110,7 @@ export default function CandidateDetail({
                     <div className="flex items-start gap-4 rounded-2xl border border-slate-700/80 bg-slate-900/80 p-5">
                         <Lock className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" />
                         <div className="space-y-1">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-blue-400">
+                            <h4 className="text-xs font-bold tracking-wider text-blue-400 uppercase">
                                 Recruiter Privacy Boundary
                             </h4>
                             <p className="text-xs leading-relaxed text-slate-300">
@@ -115,7 +122,7 @@ export default function CandidateDetail({
                     {/* Biography */}
                     {candidate.bio && (
                         <div className="space-y-2">
-                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
                                 About Candidate
                             </h3>
                             <p className="rounded-2xl border border-slate-700/40 bg-slate-900/40 p-5 text-sm leading-relaxed text-slate-200">
@@ -127,7 +134,7 @@ export default function CandidateDetail({
                     {/* Skills */}
                     {candidate.skills.length > 0 && (
                         <div className="space-y-3">
-                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
                                 Verified Skills
                             </h3>
                             <div className="flex flex-wrap gap-2">
@@ -146,7 +153,7 @@ export default function CandidateDetail({
                     {/* Badges */}
                     {candidate.badges.length > 0 && (
                         <div className="space-y-3">
-                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
                                 Academic & Project Badges
                             </h3>
                             <div className="flex flex-wrap gap-2">
@@ -166,7 +173,7 @@ export default function CandidateDetail({
                     {/* Verified Contributions */}
                     {candidate.contributions.length > 0 && (
                         <div className="space-y-3">
-                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
                                 Verified Contributions
                             </h3>
                             <ul className="space-y-2">
