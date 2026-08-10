@@ -128,6 +128,7 @@ final class ImportRoster
                 foreach ($sheet->getRowIterator() as $row) {
                     if ($isFirstRow) {
                         $isFirstRow = false;
+
                         continue;
                     }                    $cells = $row->toArray();
                     if (empty(array_filter($cells))) {
