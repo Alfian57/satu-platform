@@ -3,20 +3,16 @@
 namespace App\Actions\InstitutionMemberships;
 
 use App\Actions\Audit\AuditRecorder;
-use App\Enums\InstitutionDomainStatus;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionMembershipVerificationMethod;
 use App\Enums\InstitutionStatus;
 use App\Events\InstitutionMembershipRequested;
-use App\Events\InstitutionMembershipVerified;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 final class RequestInstitutionMembership
 {
@@ -27,10 +23,6 @@ final class RequestInstitutionMembership
 
     public function handle(User $user, Institution $institution): InstitutionMembership
     {
-        if (! $user->hasVerifiedEmail()) {
-            throw new AuthorizationException('Email verification is required before requesting affiliation.');
-        }
-
         return DB::transaction(function () use ($user, $institution): InstitutionMembership {
             $lockedUser = User::query()
                 ->lockForUpdate()
@@ -69,15 +61,11 @@ final class RequestInstitutionMembership
             }
 
             $beforeStatus = $membership->status;
-            $domainApproved = $this->hasApprovedEmailDomain($lockedUser, $lockedInstitution);
-            $targetStatus = $domainApproved
-                ? InstitutionMembershipStatus::Verified
-                : InstitutionMembershipStatus::Pending;
+            $targetStatus = InstitutionMembershipStatus::Pending;
 
             $membership = $this->transition->handle(
                 $membership,
                 $targetStatus,
-                $domainApproved ? InstitutionMembershipVerificationMethod::ApprovedDomain : null,
             );
 
             $this->audit->record(
@@ -101,27 +89,6 @@ final class RequestInstitutionMembership
                 $lockedInstitution->getKey(),
                 $membership->status,
             );
-
-            if ($domainApproved) {
-                $this->audit->record(
-                    operation: 'institution_membership.verified_by_domain',
-                    auditable: $membership,
-                    actor: $lockedUser,
-                    institution: $lockedInstitution,
-                    before: ['status' => $beforeStatus->value],
-                    after: [
-                        'status' => $membership->status->value,
-                        'verification_method' => InstitutionMembershipVerificationMethod::ApprovedDomain->value,
-                    ],
-                );
-
-                InstitutionMembershipVerified::dispatch(
-                    $membership->getKey(),
-                    $lockedUser->getKey(),
-                    $lockedInstitution->getKey(),
-                    $membership->status,
-                );
-            }
 
             return $membership;
         }, attempts: 3);
@@ -150,37 +117,5 @@ final class RequestInstitutionMembership
 
             throw $exception;
         }
-    }
-
-    private function hasApprovedEmailDomain(User $user, Institution $institution): bool
-    {
-        $email = Str::lower($user->email);
-
-        if (
-            substr_count($email, '@') !== 1
-            || preg_match('/[\s[:cntrl:]]/', $email) === 1
-            || filter_var($email, FILTER_VALIDATE_EMAIL) === false
-        ) {
-            return false;
-        }
-
-        [, $domain] = explode('@', $email, 2);
-
-        if (Str::endsWith($domain, '.')) {
-            $domain = Str::substr($domain, 0, -1);
-        }
-
-        if (
-            $domain === ''
-            || Str::endsWith($domain, '.')
-            || filter_var($domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) === false
-        ) {
-            return false;
-        }
-
-        return $institution->domains()
-            ->where('status', InstitutionDomainStatus::Verified)
-            ->where('domain', $domain)
-            ->exists();
     }
 }
