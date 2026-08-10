@@ -10,6 +10,7 @@ use App\Support\Notification\FonnteGateway;
 use App\Support\Notification\WhatsAppGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 uses(RefreshDatabase::class);
 
@@ -286,13 +287,20 @@ test('FonnteGateway does not expose token in config', function () {
     expect($property->isPrivate())->toBeTrue();
 });
 
-test('outbox payload does not store plain OTP in primary column', function () {
+test('outbox model does not have plain OTP column', function () {
     $outbox = MessageOutbox::factory()->otp()->create();
 
-    $array = $outbox->toArray();
+    $columns = Schema::getColumnListing('message_outboxes');
 
-    expect($array['payload'])->toBeString()
-        ->and($array['payload'])->not->toContain('123456');
+    expect($columns)->not->toContain('otp', 'otp_code', 'plain_otp', 'secret');
+});
+
+test('delivery error_message is sanitized', function () {
+    $delivery = MessageDelivery::factory()->failed()->create([
+        'error_message' => 'Failed to send to +6281234567890: timeout',
+    ]);
+
+    expect($delivery->error_message)->not->toContain('+6281234567890');
 });
 
 /*

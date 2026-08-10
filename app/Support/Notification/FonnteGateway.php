@@ -67,7 +67,7 @@ final class FonnteGateway implements WhatsAppGateway
 
         } catch (RequestException $e) {
             Log::error('Fonnte request failed', [
-                'status' => $e->response?->status(),
+                'status' => $e->response !== null ? $e->response->status() : null,
                 'error' => $e->getMessage(),
             ]);
 
