@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\Academic\ActivateCreditMapping;
 use App\Actions\Academic\CreateCreditMapping;
 use App\Actions\Academic\RetireCreditMapping;
+use App\Enums\InstitutionMembershipStatus;
 use App\Models\AcademicCreditMapping;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
@@ -25,7 +26,7 @@ class AcademicCreditMappingController extends Controller
     ) {}
 
     /**
-     * Display credit mapping rulesets for campus operator's institution.
+     * Display a listing of institutional credit mappings.
      */
     public function index(Request $request): Response
     {
@@ -35,7 +36,7 @@ class AcademicCreditMappingController extends Controller
         /** @var InstitutionMembership|null $membership */
         $membership = InstitutionMembership::query()
             ->where('user_id', $user->id)
-            ->where('status', 'active')
+            ->where('status', InstitutionMembershipStatus::Verified)
             ->first();
 
         $institution = $membership?->institution;
@@ -49,8 +50,8 @@ class AcademicCreditMappingController extends Controller
 
         /** @var Institution $activeInst */
         $activeInst = $institution ?? Institution::query()->firstOrCreate(
-            ['name' => 'Default Campus Institution', 'code' => 'CAMPUS-01'],
-            ['status' => 'active']
+            ['name' => 'Default Campus Institution', 'slug' => 'default-campus-institution'],
+            ['code' => 'CAMPUS-01', 'status' => 'active']
         );
 
         $mappings = AcademicCreditMapping::query()

@@ -7,7 +7,6 @@ namespace Database\Factories;
 use App\Enums\CreditMappingStatus;
 use App\Models\AcademicCreditMapping;
 use App\Models\Institution;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 

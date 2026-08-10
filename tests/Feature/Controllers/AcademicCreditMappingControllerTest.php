@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\CreditMappingStatus;
+use App\Enums\InstitutionMembershipStatus;
 use App\Models\AcademicCreditMapping;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
@@ -19,7 +20,7 @@ it('renders credit mappings index page for campus operator', function () {
     InstitutionMembership::factory()->create([
         'institution_id' => $institution->id,
         'user_id' => $operator->id,
-        'status' => 'active',
+        'status' => InstitutionMembershipStatus::Verified,
     ]);
 
     AcademicCreditMapping::factory()->create([

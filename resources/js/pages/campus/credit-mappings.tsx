@@ -1,9 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import {
-    AcademicCap,
     Award,
     CheckCircle2,
-    Clock,
     Plus,
     Shield,
     XCircle,
