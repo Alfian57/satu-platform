@@ -1,13 +1,15 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     Award,
+    Bookmark,
+    BookmarkCheck,
     CheckCircle,
     Lock,
     Send,
     Shield,
 } from 'lucide-react';
-import React from 'react';
+import React, { useState, useTransition } from 'react';
 import AppLayout from '@/layouts/app-layout';
 
 interface Candidate {
@@ -24,27 +26,69 @@ interface Candidate {
 
 interface CandidateDetailProps {
     candidate: Candidate;
+    isSaved?: boolean;
     contactConsequenceNotice: string;
 }
 
 export default function CandidateDetail({
     candidate,
+    isSaved = false,
     contactConsequenceNotice,
 }: CandidateDetailProps) {
+    const [saved, setSaved] = useState<boolean>(isSaved);
+    const [isPending, startTransition] = useTransition();
+
+    const toggleSave = () => {
+        const nextState = !saved;
+        setSaved(nextState); // Optimistic UI update
+
+        startTransition(() => {
+            if (nextState) {
+                router.post(
+                    `/recruiter/talent/candidates/${candidate.id}/save`,
+                    {},
+                    {
+                        preserveState: true,
+                        preserveScroll: true,
+                        onError: () => setSaved(!nextState), // Rollback on error
+                    }
+                );
+            } else {
+                router.delete(
+                    `/recruiter/talent/candidates/${candidate.id}/save`,
+                    {
+                        preserveState: true,
+                        preserveScroll: true,
+                        onError: () => setSaved(!nextState), // Rollback on error
+                    }
+                );
+            }
+        });
+    };
+
     return (
         <AppLayout>
             <Head
                 title={`${candidate.headline || 'Candidate Profile'} - SATU Platform`}
             />
 
-            <div className="mx-auto min-h-screen max-w-5xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
+            <div className="min-h-screen mx-auto max-w-5xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
                 {/* Navigation */}
-                <button
-                    onClick={() => window.history.back()}
-                    className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 transition-colors hover:text-slate-200"
-                >
-                    <ArrowLeft className="h-4 w-4" /> Back to Talent Search
-                </button>
+                <div className="flex items-center justify-between">
+                    <button
+                        onClick={() => window.history.back()}
+                        className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 transition-colors hover:text-slate-200"
+                    >
+                        <ArrowLeft className="h-4 w-4" /> Back to Talent Search
+                    </button>
+
+                    <button
+                        onClick={() => router.get('/recruiter/talent/saved')}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-1.5 text-xs font-semibold text-slate-300 transition-colors hover:bg-slate-700"
+                    >
+                        <Bookmark className="h-4 w-4 text-blue-400" /> View Saved List
+                    </button>
+                </div>
 
                 {/* Profile Card */}
                 <div className="space-y-8 rounded-3xl border border-slate-700/60 bg-slate-800/60 p-8 shadow-2xl">
@@ -66,7 +110,7 @@ export default function CandidateDetail({
                                 >
                                     {candidate.availability_status.replace(
                                         /_/g,
-                                        ' ',
+                                        ' '
                                     )}
                                 </span>
                             </div>
@@ -85,7 +129,7 @@ export default function CandidateDetail({
                                         <span className="text-xs text-slate-500">
                                             (Verified{' '}
                                             {new Date(
-                                                candidate.verified_at,
+                                                candidate.verified_at
                                             ).toLocaleDateString()}
                                             )
                                         </span>
@@ -94,14 +138,33 @@ export default function CandidateDetail({
                             )}
                         </div>
 
-                        <div className="shrink-0">
+                        <div className="flex items-center gap-3 shrink-0">
+                            <button
+                                onClick={toggleSave}
+                                disabled={isPending}
+                                className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-xs font-semibold shadow-lg transition-all ${
+                                    saved
+                                        ? 'border border-blue-800 bg-blue-950 text-blue-300 hover:bg-blue-900'
+                                        : 'border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800'
+                                }`}
+                            >
+                                {saved ? (
+                                    <>
+                                        <BookmarkCheck className="h-4 w-4 text-blue-400" /> Candidate Saved
+                                    </>
+                                ) : (
+                                    <>
+                                        <Bookmark className="h-4 w-4 text-slate-400" /> Save Candidate
+                                    </>
+                                )}
+                            </button>
+
                             <button
                                 disabled
                                 className="inline-flex cursor-not-allowed items-center gap-2 rounded-2xl bg-blue-600/50 px-6 py-3 text-xs font-semibold text-slate-300 opacity-80 shadow-lg"
                                 title="Contact request requires active contact entitlement"
                             >
-                                <Send className="h-4 w-4" /> Send Contact
-                                Request
+                                <Send className="h-4 w-4" /> Send Contact Request
                             </button>
                         </div>
                     </div>
@@ -110,7 +173,7 @@ export default function CandidateDetail({
                     <div className="flex items-start gap-4 rounded-2xl border border-slate-700/80 bg-slate-900/80 p-5">
                         <Lock className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" />
                         <div className="space-y-1">
-                            <h4 className="text-xs font-bold tracking-wider text-blue-400 uppercase">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-blue-400">
                                 Recruiter Privacy Boundary
                             </h4>
                             <p className="text-xs leading-relaxed text-slate-300">
@@ -122,7 +185,7 @@ export default function CandidateDetail({
                     {/* Biography */}
                     {candidate.bio && (
                         <div className="space-y-2">
-                            <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                                 About Candidate
                             </h3>
                             <p className="rounded-2xl border border-slate-700/40 bg-slate-900/40 p-5 text-sm leading-relaxed text-slate-200">
@@ -134,7 +197,7 @@ export default function CandidateDetail({
                     {/* Skills */}
                     {candidate.skills.length > 0 && (
                         <div className="space-y-3">
-                            <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                                 Verified Skills
                             </h3>
                             <div className="flex flex-wrap gap-2">
@@ -153,7 +216,7 @@ export default function CandidateDetail({
                     {/* Badges */}
                     {candidate.badges.length > 0 && (
                         <div className="space-y-3">
-                            <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                                 Academic & Project Badges
                             </h3>
                             <div className="flex flex-wrap gap-2">
@@ -173,7 +236,7 @@ export default function CandidateDetail({
                     {/* Verified Contributions */}
                     {candidate.contributions.length > 0 && (
                         <div className="space-y-3">
-                            <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                                 Verified Contributions
                             </h3>
                             <ul className="space-y-2">

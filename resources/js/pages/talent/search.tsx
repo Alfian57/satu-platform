@@ -2,6 +2,8 @@ import { Head, router } from '@inertiajs/react';
 import {
     AlertTriangle,
     Award,
+    Bookmark,
+    BookmarkCheck,
     Briefcase,
     CheckCircle,
     ChevronRight,
@@ -52,6 +54,7 @@ interface TalentSearchProps {
         expires_at: string | null;
     };
     institutions: Institution[];
+    savedCandidateIds?: number[];
 }
 
 export default function TalentSearch({
@@ -59,18 +62,20 @@ export default function TalentSearch({
     filters,
     entitlement,
     institutions,
+    savedCandidateIds = [],
 }: TalentSearchProps) {
     const [searchQuery, setSearchQuery] = useState(filters.query || '');
     const [selectedAvailability, setSelectedAvailability] = useState(
-        filters.availability || '',
+        filters.availability || ''
     );
     const [selectedInstitution, setSelectedInstitution] = useState(
-        filters.institution_id || '',
+        filters.institution_id || ''
     );
     const [skillInput, setSkillInput] = useState('');
     const [selectedSkills, setSelectedSkills] = useState<string[]>(
-        filters.skills || [],
+        filters.skills || []
     );
+    const [savedIds, setSavedIds] = useState<number[]>(savedCandidateIds);
     const [isPending, startTransition] = useTransition();
 
     const handleFilterSubmit = (e: React.FormEvent) => {
@@ -91,7 +96,7 @@ export default function TalentSearch({
                     availability: selectedAvailability || undefined,
                     institution_id: selectedInstitution || undefined,
                 },
-                { preserveState: true, replace: true },
+                { preserveState: true, replace: true }
             );
         });
     };
@@ -121,15 +126,50 @@ export default function TalentSearch({
         router.get(
             '/recruiter/talent/search',
             {},
-            { preserveState: true, replace: true },
+            { preserveState: true, replace: true }
         );
+    };
+
+    const toggleSaveCandidate = (candidateId: number) => {
+        const isSaved = savedIds.includes(candidateId);
+        const previous = [...savedIds];
+
+        // Optimistic UI update
+        if (isSaved) {
+            setSavedIds((prev) => prev.filter((id) => id !== candidateId));
+        } else {
+            setSavedIds((prev) => [...prev, candidateId]);
+        }
+
+        startTransition(() => {
+            if (isSaved) {
+                router.delete(
+                    `/recruiter/talent/candidates/${candidateId}/save`,
+                    {
+                        preserveState: true,
+                        preserveScroll: true,
+                        onError: () => setSavedIds(previous), // Rollback
+                    }
+                );
+            } else {
+                router.post(
+                    `/recruiter/talent/candidates/${candidateId}/save`,
+                    {},
+                    {
+                        preserveState: true,
+                        preserveScroll: true,
+                        onError: () => setSavedIds(previous), // Rollback
+                    }
+                );
+            }
+        });
     };
 
     return (
         <AppLayout>
             <Head title="Talent Search - SATU Platform" />
 
-            <div className="mx-auto min-h-screen max-w-7xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
+            <div className="min-h-screen mx-auto max-w-7xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
                 {/* Header */}
                 <div className="flex flex-col gap-4 border-b border-slate-800 pb-6 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -148,21 +188,21 @@ export default function TalentSearch({
                         </p>
                     </div>
 
-                    {entitlement.has_entitlement && (
-                        <div className="flex items-center gap-2 rounded-xl border border-slate-700/60 bg-slate-800/80 px-4 py-2 text-xs font-medium text-slate-300">
-                            <UserCheck className="h-4 w-4 text-blue-400" />
-                            <span>Entitlement Active</span>
-                            {entitlement.expires_at && (
-                                <span className="text-slate-500">
-                                    (Expires{' '}
-                                    {new Date(
-                                        entitlement.expires_at,
-                                    ).toLocaleDateString()}
-                                    )
-                                </span>
-                            )}
-                        </div>
-                    )}
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => router.get('/recruiter/talent/saved')}
+                            className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-700"
+                        >
+                            <Bookmark className="h-4 w-4 text-blue-400" /> Saved List ({savedIds.length})
+                        </button>
+
+                        {entitlement.has_entitlement && (
+                            <div className="flex items-center gap-2 rounded-xl border border-slate-700/60 bg-slate-800/80 px-4 py-2 text-xs font-medium text-slate-300">
+                                <UserCheck className="h-4 w-4 text-blue-400" />
+                                <span>Entitlement Active</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Entitlement Alert Banner if Entitlement is Missing or Expired */}
@@ -196,13 +236,13 @@ export default function TalentSearch({
                     <div className="flex flex-col gap-4 md:flex-row">
                         {/* Search Input */}
                         <div className="relative flex-1">
-                            <Search className="absolute top-3.5 left-4 h-5 w-5 text-slate-400" />
+                            <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search candidates by headline or bio..."
-                                className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 pr-4 pl-11 text-sm text-slate-100 placeholder-slate-500 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 pl-11 pr-4 text-sm text-slate-100 placeholder-slate-500 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 aria-label="Search candidates by headline or bio"
                             />
                         </div>
@@ -213,7 +253,7 @@ export default function TalentSearch({
                             onChange={(e) =>
                                 setSelectedAvailability(e.target.value)
                             }
-                            className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             aria-label="Filter by availability status"
                         >
                             <option value="">All Availability</option>
@@ -230,7 +270,7 @@ export default function TalentSearch({
                             onChange={(e) =>
                                 setSelectedInstitution(e.target.value)
                             }
-                            className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             aria-label="Filter by campus institution"
                         >
                             <option value="">All Institutions</option>
@@ -244,7 +284,7 @@ export default function TalentSearch({
 
                     {/* Skill Pills Filter */}
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                             Skill Filters
                         </label>
                         <div className="flex flex-wrap items-center gap-2">
@@ -279,7 +319,7 @@ export default function TalentSearch({
                                         }
                                     }}
                                     placeholder="Add skill (press Enter)..."
-                                    className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                    className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 />
                                 {skillInput && (
                                     <button
@@ -305,7 +345,9 @@ export default function TalentSearch({
                         </button>
                         <button
                             type="submit"
-                            disabled={isPending || !entitlement.has_entitlement}
+                            disabled={
+                                isPending || !entitlement.has_entitlement
+                            }
                             className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-blue-500/20 transition-all hover:from-blue-500 hover:to-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <Filter className="h-4 w-4" /> Apply Filters
@@ -321,7 +363,7 @@ export default function TalentSearch({
                     className="space-y-4"
                 >
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold tracking-wider text-slate-400 uppercase">
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
                             Verified Candidates ({candidates.total})
                         </h2>
                         <span role="status" className="text-xs text-slate-500">
@@ -359,8 +401,8 @@ export default function TalentSearch({
                                 </h3>
                                 <p className="mx-auto max-w-md text-sm text-slate-500">
                                     No verified candidate projections match your
-                                    selected filters. Try broadening your search
-                                    or resetting filters.
+                                    selected filters. Try broadening your
+                                    search or resetting filters.
                                 </p>
                             </div>
                             <button
@@ -375,89 +417,109 @@ export default function TalentSearch({
                     {/* Results Table / List View */}
                     {!isPending && candidates.data.length > 0 && (
                         <div className="space-y-4">
-                            {candidates.data.map((candidate) => (
-                                <div
-                                    key={candidate.id}
-                                    className="group rounded-2xl border border-slate-700/60 bg-slate-800/60 p-6 shadow-md transition-all duration-200 hover:border-blue-500/50 hover:bg-slate-800/90"
-                                >
-                                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                                        <div className="max-w-2xl space-y-2">
-                                            <div className="flex flex-wrap items-center gap-3">
-                                                <h3 className="text-lg font-bold text-slate-100 transition-colors group-hover:text-blue-300">
-                                                    {candidate.headline ||
-                                                        'Verified Student Candidate'}
-                                                </h3>
-                                                {candidate.institution_name && (
-                                                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-2.5 py-0.5 text-xs text-slate-300">
-                                                        <CheckCircle className="h-3 w-3 text-emerald-400" />
-                                                        {
-                                                            candidate.institution_name
-                                                        }
-                                                    </span>
-                                                )}
-                                                <span
-                                                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
-                                                        candidate.availability_status ===
-                                                        'available'
-                                                            ? 'border border-emerald-800 bg-emerald-950 text-emerald-400'
-                                                            : 'border border-slate-700 bg-slate-900 text-slate-400'
-                                                    }`}
-                                                >
-                                                    {candidate.availability_status.replace(
-                                                        /_/g,
-                                                        ' ',
+                            {candidates.data.map((candidate) => {
+                                const isSaved = savedIds.includes(candidate.id);
+
+                                return (
+                                    <div
+                                        key={candidate.id}
+                                        className="group rounded-2xl border border-slate-700/60 bg-slate-800/60 p-6 shadow-md transition-all duration-200 hover:border-blue-500/50 hover:bg-slate-800/90"
+                                    >
+                                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                            <div className="max-w-2xl space-y-2">
+                                                <div className="flex flex-wrap items-center gap-3">
+                                                    <h3 className="text-lg font-bold text-slate-100 transition-colors group-hover:text-blue-300">
+                                                        {candidate.headline ||
+                                                            'Verified Student Candidate'}
+                                                    </h3>
+                                                    {candidate.institution_name && (
+                                                        <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-2.5 py-0.5 text-xs text-slate-300">
+                                                            <CheckCircle className="h-3 w-3 text-emerald-400" />
+                                                            {
+                                                                candidate.institution_name
+                                                            }
+                                                        </span>
                                                     )}
-                                                </span>
+                                                    <span
+                                                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
+                                                            candidate.availability_status ===
+                                                            'available'
+                                                                ? 'border border-emerald-800 bg-emerald-950 text-emerald-400'
+                                                                : 'border border-slate-700 bg-slate-900 text-slate-400'
+                                                        }`}
+                                                    >
+                                                        {candidate.availability_status.replace(
+                                                            /_/g,
+                                                            ' '
+                                                        )}
+                                                    </span>
+                                                </div>
+
+                                                {candidate.bio && (
+                                                    <p className="line-clamp-2 text-sm text-slate-300/80">
+                                                        {candidate.bio}
+                                                    </p>
+                                                )}
+
+                                                {/* Skills & Badges */}
+                                                <div className="flex flex-wrap items-center gap-2 pt-1">
+                                                    {candidate.skills.map(
+                                                        (skill) => (
+                                                            <span
+                                                                key={skill}
+                                                                className="rounded-md border border-blue-900 bg-blue-950/80 px-2.5 py-1 text-xs font-medium text-blue-300"
+                                                            >
+                                                                {skill}
+                                                            </span>
+                                                        )
+                                                    )}
+                                                    {candidate.badges.map(
+                                                        (badge) => (
+                                                            <span
+                                                                key={badge}
+                                                                className="inline-flex items-center gap-1 rounded-md border border-amber-900 bg-amber-950/80 px-2.5 py-1 text-xs font-medium text-amber-300"
+                                                            >
+                                                                <Award className="h-3 w-3 text-amber-400" />
+                                                                {badge}
+                                                            </span>
+                                                        )
+                                                    )}
+                                                </div>
                                             </div>
 
-                                            {candidate.bio && (
-                                                <p className="line-clamp-2 text-sm text-slate-300/80">
-                                                    {candidate.bio}
-                                                </p>
-                                            )}
+                                            <div className="flex shrink-0 items-center gap-2">
+                                                <button
+                                                    onClick={() => toggleSaveCandidate(candidate.id)}
+                                                    className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-all ${
+                                                        isSaved
+                                                            ? 'border-blue-800 bg-blue-950 text-blue-300 hover:bg-blue-900'
+                                                            : 'border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                                                    }`}
+                                                    title={isSaved ? 'Unsave candidate' : 'Save candidate'}
+                                                >
+                                                    {isSaved ? (
+                                                        <BookmarkCheck className="h-4 w-4 text-blue-400" />
+                                                    ) : (
+                                                        <Bookmark className="h-4 w-4" />
+                                                    )}
+                                                </button>
 
-                                            {/* Skills & Badges */}
-                                            <div className="flex flex-wrap items-center gap-2 pt-1">
-                                                {candidate.skills.map(
-                                                    (skill) => (
-                                                        <span
-                                                            key={skill}
-                                                            className="rounded-md border border-blue-900 bg-blue-950/80 px-2.5 py-1 text-xs font-medium text-blue-300"
-                                                        >
-                                                            {skill}
-                                                        </span>
-                                                    ),
-                                                )}
-                                                {candidate.badges.map(
-                                                    (badge) => (
-                                                        <span
-                                                            key={badge}
-                                                            className="inline-flex items-center gap-1 rounded-md border border-amber-900 bg-amber-950/80 px-2.5 py-1 text-xs font-medium text-amber-300"
-                                                        >
-                                                            <Award className="h-3 w-3 text-amber-400" />
-                                                            {badge}
-                                                        </span>
-                                                    ),
-                                                )}
+                                                <button
+                                                    onClick={() =>
+                                                        router.get(
+                                                            `/recruiter/talent/candidates/${candidate.id}`
+                                                        )
+                                                    }
+                                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-700/80 px-5 py-2.5 text-xs font-semibold text-slate-100 transition-all hover:bg-blue-600 hover:text-white md:w-auto group-hover:shadow-lg group-hover:shadow-blue-500/20"
+                                                >
+                                                    View Profile{' '}
+                                                    <ChevronRight className="h-4 w-4" />
+                                                </button>
                                             </div>
-                                        </div>
-
-                                        <div className="flex shrink-0 items-center">
-                                            <button
-                                                onClick={() =>
-                                                    router.get(
-                                                        `/recruiter/talent/candidates/${candidate.id}`,
-                                                    )
-                                                }
-                                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-700/80 px-5 py-2.5 text-xs font-semibold text-slate-100 transition-all group-hover:shadow-lg group-hover:shadow-blue-500/20 hover:bg-blue-600 hover:text-white md:w-auto"
-                                            >
-                                                View Profile{' '}
-                                                <ChevronRight className="h-4 w-4" />
-                                            </button>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
 
