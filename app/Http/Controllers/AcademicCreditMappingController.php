@@ -99,7 +99,7 @@ class AcademicCreditMappingController extends Controller
         /** @var InstitutionMembership|null $membership */
         $membership = InstitutionMembership::query()
             ->where('user_id', $user->id)
-            ->where('status', 'active')
+            ->where('status', InstitutionMembershipStatus::Verified)
             ->first();
 
         $institution = $membership?->institution;
@@ -110,8 +110,8 @@ class AcademicCreditMappingController extends Controller
 
         /** @var Institution $activeInst */
         $activeInst = $institution ?? Institution::query()->firstOrCreate(
-            ['name' => 'Default Campus Institution', 'code' => 'CAMPUS-01'],
-            ['status' => 'active']
+            ['name' => 'Default Campus Institution', 'slug' => 'default-campus-institution'],
+            ['code' => 'CAMPUS-01', 'status' => 'active']
         );
 
         try {
