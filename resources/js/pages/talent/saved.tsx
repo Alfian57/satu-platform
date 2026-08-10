@@ -6,7 +6,6 @@ import {
     BookmarkX,
     CheckCircle,
     ChevronRight,
-    Shield,
     Trash2,
     UserCheck,
 } from 'lucide-react';
