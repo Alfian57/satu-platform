@@ -95,8 +95,6 @@ test('dashboard auth and settings use the approved copy contract', function () {
         [
             'resources/js/pages/auth/login.tsx',
             'resources/js/pages/auth/register.tsx',
-            'resources/js/pages/auth/forgot-password.tsx',
-            'resources/js/pages/auth/reset-password.tsx',
             'resources/js/pages/auth/confirm-password.tsx',
             'resources/js/pages/settings/profile.tsx',
             'resources/js/pages/settings/security.tsx',
@@ -137,7 +135,7 @@ test('dashboard auth and settings use the approved copy contract', function () {
 
     expect($surfaceCopy)
         ->toContain('Masuk ke akunmu')
-        ->toContain('Alamat email')
+        ->toContain('Nama pengguna')
         ->toContain('Pengaturan profil')
         ->toContain('Pengaturan keamanan')
         ->toContain('Pengaturan tampilan')
