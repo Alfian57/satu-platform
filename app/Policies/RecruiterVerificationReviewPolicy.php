@@ -16,6 +16,10 @@ final class RecruiterVerificationReviewPolicy
      */
     public function view(User $user, RecruiterVerificationReview $review): bool
     {
+        if ($user->is_platform_admin) {
+            return true;
+        }
+
         return $review->organization->memberships()
             ->where('user_id', $user->getKey())
             ->exists();
