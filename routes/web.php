@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AcademicCreditMappingController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
@@ -72,6 +73,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('student/contact-requests/{id}/decline', [StudentContactRequestController::class, 'decline'])
         ->name('student.contact-requests.decline');
+
+    Route::get('campus/credit-mappings', [AcademicCreditMappingController::class, 'index'])
+        ->name('campus.credit-mappings.index');
+
+    Route::post('campus/credit-mappings', [AcademicCreditMappingController::class, 'store'])
+        ->name('campus.credit-mappings.store');
+
+    Route::post('campus/credit-mappings/{id}/activate', [AcademicCreditMappingController::class, 'activate'])
+        ->name('campus.credit-mappings.activate');
+
+    Route::post('campus/credit-mappings/{id}/retire', [AcademicCreditMappingController::class, 'retire'])
+        ->name('campus.credit-mappings.retire');
 });
 
 require __DIR__.'/settings.php';
+
