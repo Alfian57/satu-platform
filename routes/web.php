@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\InstitutionMembershipController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\SavedCandidatesController;
 use App\Http\Controllers\TalentSearchController;
@@ -26,6 +27,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('recruiter/talent/candidates/{id}', [TalentSearchController::class, 'show'])
         ->name('recruiter.talent.candidates.show');
+
+    Route::get('notifications', [NotificationController::class, 'index'])
+        ->name('notifications.index');
+
+    Route::post('notifications/{id}/read', [NotificationController::class, 'markRead'])
+        ->name('notifications.mark-read');
+
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])
+        ->name('notifications.mark-all-read');
+
+    Route::get('notifications/{id}/navigate', [NotificationController::class, 'navigate'])
+        ->name('notifications.navigate');
+
+    Route::post('notification-preferences', [NotificationController::class, 'updatePreference'])
+        ->name('notification-preferences.update');
 
     Route::post('recruiter/talent/candidates/{id}/save', [SavedCandidatesController::class, 'store'])
         ->name('recruiter.talent.candidates.save');
