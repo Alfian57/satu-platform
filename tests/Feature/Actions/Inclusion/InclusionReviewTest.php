@@ -192,7 +192,7 @@ it('serializes inclusion signals safely without leaking private or unallowlisted
     $institution = Institution::factory()->active()->create();
     $subject = User::factory()->create([
         'name' => 'Budi Pertiwi',
-        'email' => 'budi@example.com',
+        'username' => 'budipertiwi',
     ]);
 
     $signal = InclusionSignal::factory()->create([

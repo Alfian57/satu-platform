@@ -1,6 +1,5 @@
-export type OnboardingAccount = {
-    email: string;
-    emailVerified: boolean;
+﻿export type OnboardingAccount = {
+    username: string;
 };
 
 export type OnboardingInstitution = {

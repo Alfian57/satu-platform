@@ -62,7 +62,7 @@ final class InstitutionMembershipReviewQueue
             ->where('role', InstitutionMembershipRole::Student)
             ->where('status', InstitutionMembershipStatus::Pending)
             ->with([
-                'user:id,name,email',
+                'user:id,name',
             ])
             ->orderByRaw('requested_at IS NULL')
             ->orderBy('requested_at')
