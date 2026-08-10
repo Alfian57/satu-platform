@@ -21,18 +21,26 @@ final class ImportRoster
      */
     public function preview(Institution $institution, string $filePath, string $semester): array
     {
-        return $this->process($institution, $filePath, $semester, commit: false);
+        $result = $this->process($institution, $filePath, $semester, commit: false);
+
+        if ($result instanceof InstitutionRoster) {
+            throw new RuntimeException('Unexpected roster from preview.');
+        }
+
+        return $result;
     }
 
     public function commit(User $actor, Institution $institution, string $filePath, string $semester): InstitutionRoster
     {
-        return $this->process($institution, $filePath, $semester, commit: true, actor: $actor);
+        $result = $this->process($institution, $filePath, $semester, commit: true, actor: $actor);
+
+        if (! $result instanceof InstitutionRoster) {
+            throw new RuntimeException('Expected roster from commit.');
+        }
+
+        return $result;
     }
 
-    /**
-     * @param  array<string, mixed>  $parameters
-     * @return array<string, mixed>|InstitutionRoster
-     */
     private function process(Institution $institution, string $filePath, string $semester, bool $commit, ?User $actor = null): InstitutionRoster|array
     {
         $path = Storage::disk('local')->path($filePath);
