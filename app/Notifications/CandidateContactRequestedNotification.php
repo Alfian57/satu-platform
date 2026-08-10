@@ -7,7 +7,6 @@ namespace App\Notifications;
 use App\Models\RecruiterContactRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class CandidateContactRequestedNotification extends Notification implements ShouldQueue
