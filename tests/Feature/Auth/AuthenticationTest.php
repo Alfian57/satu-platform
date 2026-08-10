@@ -75,3 +75,15 @@ test('users are rate limited', function () {
 
     $response->assertTooManyRequests();
 });
+
+test('users can authenticate with mixed-case username', function () {
+    $user = User::factory()->create(['username' => 'testuser']);
+
+    $response = $this->post(route('login.store'), [
+        'username' => 'TestUSER',
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertRedirect(route('dashboard', absolute: false));
+});

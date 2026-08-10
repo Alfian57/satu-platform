@@ -76,3 +76,35 @@ test('registration rejects duplicate usernames', function () {
 
     expect(User::query()->where('username', 'existing')->count())->toBe(1);
 });
+
+test('registration normalizes mixed-case and whitespace in username', function () {
+    $response = $this->post(route('register.store'), [
+        'name' => 'Normalized User',
+        'username' => '  TestUSER  ',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertRedirect(route('dashboard', absolute: false));
+
+    $user = User::query()->where('username', 'testuser')->firstOrFail();
+
+    expect($user->username)->toBe('testuser');
+});
+
+test('registration rejects duplicate username regardless of case', function () {
+    User::factory()->create(['username' => 'existing']);
+
+    $response = $this->from(route('register'))->post(route('register.store'), [
+        'name' => 'Duplicate Cased',
+        'username' => 'EXISTING',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $response->assertRedirect(route('register', absolute: false))
+        ->assertSessionHasErrors('username');
+
+    expect(User::query()->where('username', 'existing')->count())->toBe(1);
+});
