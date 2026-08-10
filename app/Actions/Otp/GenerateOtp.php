@@ -26,6 +26,9 @@ final class GenerateOtp
 
     private const MAX_REQUESTS_PER_HOUR = 2;
 
+    /**
+     * @param  array<string, mixed>|null  $requestContext
+     */
     public function handle(
         OtpPurpose $purpose,
         string $target,
