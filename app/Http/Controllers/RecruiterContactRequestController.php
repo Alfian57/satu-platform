@@ -7,7 +7,6 @@ namespace App\Http\Controllers;
 use App\Actions\Recruiter\VerifyRecruiterEntitlement;
 use App\Actions\Talent\CancelContactRequest;
 use App\Actions\Talent\SendContactRequest;
-use App\Enums\ContactRequestStatus;
 use App\Enums\RecruiterEntitlementScope;
 use App\Models\RecruiterContactRequest;
 use App\Models\RecruiterMembership;
