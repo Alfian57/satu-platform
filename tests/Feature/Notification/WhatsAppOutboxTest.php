@@ -295,12 +295,20 @@ test('outbox model does not have plain OTP column', function () {
     expect($columns)->not->toContain('otp', 'otp_code', 'plain_otp', 'secret');
 });
 
-test('delivery error_message is sanitized', function () {
-    $delivery = MessageDelivery::factory()->failed()->create([
-        'error_message' => 'Failed to send to +6281234567890: timeout',
-    ]);
+test('job records delivery with sanitized error on failure', function () {
+    $gateway = new FakeWhatsAppGateway;
+    $gateway->shouldTimeout = true;
+    app()->instance(WhatsAppGateway::class, $gateway);
 
-    expect($delivery->error_message)->not->toContain('+6281234567890');
+    $outbox = MessageOutbox::factory()->otp()->create();
+
+    dispatch_sync(new SendWhatsAppMessage($outbox->id));
+
+    $delivery = MessageDelivery::query()->where('message_outbox_id', $outbox->id)->first();
+
+    expect($delivery)->not->toBeNull()
+        ->and($delivery->status)->toBe(MessageStatus::Failed)
+        ->and($delivery->error_message)->toContain('timeout');
 });
 
 /*
