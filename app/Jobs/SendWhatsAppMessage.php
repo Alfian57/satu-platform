@@ -1,0 +1,109 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Enums\MessageStatus;
+use App\Models\MessageDelivery;
+use App\Models\MessageOutbox;
+use App\Support\Notification\WhatsAppGateway;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Carbon;
+
+class SendWhatsAppMessage implements ShouldQueue
+{
+    use Queueable;
+
+    public int $tries = 3;
+
+    /**
+     * @var array<int>
+     */
+    public array $backoff = [60, 300, 900];
+
+    public function __construct(
+        private readonly int $outboxId,
+    ) {}
+
+    public function handle(WhatsAppGateway $gateway): void
+    {
+        $outbox = MessageOutbox::query()->findOrFail($this->outboxId);
+
+        if ($outbox->status !== MessageStatus::Pending) {
+            return;
+        }
+
+        $outbox->update(['status' => MessageStatus::Processing]);
+
+        $outbox->recordAttempt();
+
+        $result = $gateway->send([
+            'target' => $outbox->recipient,
+            'message' => $this->buildMessage($outbox),
+        ]);
+
+        $this->recordDelivery($outbox, $result);
+
+        if ($result['success']) {
+            $outbox->recordSent($result['provider_message_id'] ?? '');
+        } else {
+            $this->scheduleRetryOrFail($outbox, $result['error'] ?? 'Unknown error');
+        }
+    }
+
+    private function buildMessage(MessageOutbox $outbox): string
+    {
+        if ($outbox->payload !== null) {
+            $data = json_decode($outbox->payload, true);
+
+            if (is_array($data) && isset($data['message'])) {
+                return $data['message'];
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @param  array{success: bool, provider_message_id?: string, error?: string}  $result
+     */
+    private function recordDelivery(MessageOutbox $outbox, array $result): void
+    {
+        MessageDelivery::query()->create([
+            'message_outbox_id' => $outbox->id,
+            'provider' => 'fonnte',
+            'external_id' => $result['provider_message_id'] ?? null,
+            'status' => $result['success'] ? MessageStatus::Sent : MessageStatus::Failed,
+            'error_message' => $this->sanitizeError($result['error'] ?? null),
+            'status_history' => [[
+                'status' => $result['success'] ? 'sent' : 'failed',
+                'timestamp' => Carbon::now()->toIso8601String(),
+            ]],
+        ]);
+    }
+
+    private function scheduleRetryOrFail(MessageOutbox $outbox, string $error): void
+    {
+        if ($outbox->attempts < $outbox->max_attempts) {
+            $backoff = $this->backoff[min($outbox->attempts - 1, count($this->backoff) - 1)];
+
+            $outbox->update([
+                'status' => MessageStatus::Pending,
+                'next_attempt_at' => Carbon::now()->addSeconds($backoff),
+            ]);
+        } else {
+            $outbox->update(['status' => MessageStatus::Failed]);
+        }
+    }
+
+    private function sanitizeError(?string $error): ?string
+    {
+        if ($error === null) {
+            return null;
+        }
+
+        $redacted = preg_replace('/\d{10,14}/', '[PHONE]', $error);
+
+        return mb_substr((string) $redacted, 0, 500);
+    }
+}
