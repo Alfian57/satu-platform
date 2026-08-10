@@ -16,8 +16,9 @@ use RuntimeException;
 
 final class ImportRoster
 {
-    private array $preview = [];
-
+    /**
+     * @return array{semester: string, checksum: string, total_rows: int, valid_rows: int, error_rows: int, errors: list<array{row: int, errors: array<string, mixed>, data: array<string, mixed>}>, preview: list<array<string, mixed>>}
+     */
     public function preview(Institution $institution, string $filePath, string $semester): array
     {
         return $this->process($institution, $filePath, $semester, commit: false);
@@ -28,6 +29,9 @@ final class ImportRoster
         return $this->process($institution, $filePath, $semester, commit: true, actor: $actor);
     }
 
+    /**
+     * @return array<string, mixed>|InstitutionRoster
+     */
     private function process(Institution $institution, string $filePath, string $semester, bool $commit, ?User $actor = null): InstitutionRoster|array
     {
         $path = Storage::disk('local')->path($filePath);
@@ -99,6 +103,9 @@ final class ImportRoster
         });
     }
 
+    /**
+     * @return list<array{nim: string, nama: string, program_studi: string, angkatan: string, semester: string, phone: string, status_aktif: string}>
+     */
     private function readRows(string $path): array
     {
         $rows = [];
@@ -135,6 +142,10 @@ final class ImportRoster
         return $rows;
     }
 
+    /**
+     * @param  array{nim: string, nama: string, program_studi: string, angkatan: string, semester: string, phone: string, status_aktif: string}  $row
+     * @return array{nim: string, nama: string, program_studi: string, angkatan: string, semester: string, phone: string, is_active: bool}
+     */
     private function normalizeRow(array $row): array
     {
         return [
@@ -164,6 +175,10 @@ final class ImportRoster
         return $normalized;
     }
 
+    /**
+     * @param  array{nim: string, nama: string, program_studi: string, angkatan: string, semester: string, phone: string, is_active: bool}  $row
+     * @return array<string, array<int, string>>
+     */
     private function validateRow(array $row): array
     {
         $validator = Validator::make($row, [
