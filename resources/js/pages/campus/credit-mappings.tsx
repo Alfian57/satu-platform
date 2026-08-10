@@ -1,11 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import {
-    Award,
-    CheckCircle2,
-    Plus,
-    Shield,
-    XCircle,
-} from 'lucide-react';
+import { Award, CheckCircle2, Plus, Shield, XCircle } from 'lucide-react';
 import React, { useState, useTransition } from 'react';
 import AppLayout from '@/layouts/app-layout';
 
@@ -52,26 +46,34 @@ export default function CampusCreditMappings({
                 {
                     preserveState: true,
                     onSuccess: () => setReason(''),
-                }
+                },
             );
         });
     };
 
     const handleActivate = (id: number) => {
         startTransition(() => {
-            router.post(`/campus/credit-mappings/${id}/activate`, {}, {
-                preserveState: true,
-                preserveScroll: true,
-            });
+            router.post(
+                `/campus/credit-mappings/${id}/activate`,
+                {},
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                },
+            );
         });
     };
 
     const handleRetire = (id: number) => {
         startTransition(() => {
-            router.post(`/campus/credit-mappings/${id}/retire`, {}, {
-                preserveState: true,
-                preserveScroll: true,
-            });
+            router.post(
+                `/campus/credit-mappings/${id}/retire`,
+                {},
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                },
+            );
         });
     };
 
@@ -79,7 +81,7 @@ export default function CampusCreditMappings({
         <AppLayout>
             <Head title="Academic Credit Mappings - SATU Platform" />
 
-            <div className="min-h-screen mx-auto max-w-7xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
+            <div className="mx-auto min-h-screen max-w-7xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
                 {/* Header */}
                 <div className="flex flex-col gap-4 border-b border-slate-800 pb-6 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -88,11 +90,13 @@ export default function CampusCreditMappings({
                                 Academic Credit Mapping Engine
                             </h1>
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-800/50 bg-blue-950 px-3 py-1 text-xs font-semibold text-blue-300">
-                                <Shield className="h-3.5 w-3.5 text-blue-400" /> Versioned Policy Rules
+                                <Shield className="h-3.5 w-3.5 text-blue-400" />{' '}
+                                Versioned Policy Rules
                             </span>
                         </div>
                         <p className="mt-1 text-sm text-slate-400">
-                            Configure versioned activity-to-credit mapping rulesets for{' '}
+                            Configure versioned activity-to-credit mapping
+                            rulesets for{' '}
                             <strong className="text-slate-200">
                                 {institution?.name || 'Campus Institution'}
                             </strong>
@@ -106,29 +110,39 @@ export default function CampusCreditMappings({
                     onSubmit={handleCreateDraft}
                     className="space-y-4 rounded-2xl border border-slate-700/60 bg-slate-800/50 p-6 shadow-xl"
                 >
-                    <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+                    <h2 className="text-sm font-semibold tracking-wider text-slate-300 uppercase">
                         Create Draft Credit Mapping Rule
                     </h2>
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="space-y-1">
-                            <label className="text-xs text-slate-400 font-medium">
+                            <label className="text-xs font-medium text-slate-400">
                                 Activity Type
                             </label>
                             <select
                                 value={activityType}
-                                onChange={(e) => setActivityType(e.target.value)}
+                                onChange={(e) =>
+                                    setActivityType(e.target.value)
+                                }
                                 className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             >
-                                <option value="project">Verified Project</option>
-                                <option value="competition">Competition / Hackathon</option>
-                                <option value="research">Academic Research</option>
-                                <option value="organization">Student Organization Leadership</option>
+                                <option value="project">
+                                    Verified Project
+                                </option>
+                                <option value="competition">
+                                    Competition / Hackathon
+                                </option>
+                                <option value="research">
+                                    Academic Research
+                                </option>
+                                <option value="organization">
+                                    Student Organization Leadership
+                                </option>
                             </select>
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-xs text-slate-400 font-medium">
+                            <label className="text-xs font-medium text-slate-400">
                                 Credit Amount (SKS)
                             </label>
                             <input
@@ -137,14 +151,16 @@ export default function CampusCreditMappings({
                                 min="0.5"
                                 max="24"
                                 value={creditAmount}
-                                onChange={(e) => setCreditAmount(e.target.value)}
+                                onChange={(e) =>
+                                    setCreditAmount(e.target.value)
+                                }
                                 className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 required
                             />
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-xs text-slate-400 font-medium">
+                            <label className="text-xs font-medium text-slate-400">
                                 Policy Reason / Notes
                             </label>
                             <input
@@ -175,7 +191,7 @@ export default function CampusCreditMappings({
                     aria-live="polite"
                     className="space-y-4"
                 >
-                    <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+                    <h2 className="text-sm font-semibold tracking-wider text-slate-400 uppercase">
                         Configured Mapping Rulesets ({mappings.length})
                     </h2>
 
@@ -187,7 +203,9 @@ export default function CampusCreditMappings({
                                     No Credit Mappings Configured
                                 </h3>
                                 <p className="mx-auto max-w-md text-sm text-slate-500">
-                                    Create a draft credit mapping ruleset above to start allocating academic credits to verified activities.
+                                    Create a draft credit mapping ruleset above
+                                    to start allocating academic credits to
+                                    verified activities.
                                 </p>
                             </div>
                         </div>
@@ -201,21 +219,26 @@ export default function CampusCreditMappings({
                                     className="rounded-2xl border border-slate-700/60 bg-slate-800/60 p-6 shadow-md"
                                 >
                                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                                        <div className="space-y-2 max-w-2xl">
-                                            <div className="flex items-center gap-3 flex-wrap">
+                                        <div className="max-w-2xl space-y-2">
+                                            <div className="flex flex-wrap items-center gap-3">
                                                 <h3 className="text-base font-bold text-slate-100 capitalize">
-                                                    {map.activity_type.replace(/_/g, ' ')}
+                                                    {map.activity_type.replace(
+                                                        /_/g,
+                                                        ' ',
+                                                    )}
                                                 </h3>
                                                 <span className="rounded-lg border border-blue-900 bg-blue-950 px-2.5 py-0.5 text-xs font-semibold text-blue-300">
-                                                    {map.credit_amount} SKS / Credits
+                                                    {map.credit_amount} SKS /
+                                                    Credits
                                                 </span>
                                                 <span
                                                     className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
                                                         map.status === 'active'
                                                             ? 'border border-emerald-800 bg-emerald-950 text-emerald-400'
-                                                            : map.status === 'draft'
-                                                            ? 'border border-amber-800 bg-amber-950 text-amber-300'
-                                                            : 'border border-slate-700 bg-slate-900 text-slate-400'
+                                                            : map.status ===
+                                                                'draft'
+                                                              ? 'border border-amber-800 bg-amber-950 text-amber-300'
+                                                              : 'border border-slate-700 bg-slate-900 text-slate-400'
                                                     }`}
                                                 >
                                                     {map.status}
@@ -223,42 +246,53 @@ export default function CampusCreditMappings({
                                             </div>
 
                                             {map.reason && (
-                                                <p className="text-xs text-slate-300 bg-slate-900/40 p-3 rounded-xl border border-slate-700/40">
+                                                <p className="rounded-xl border border-slate-700/40 bg-slate-900/40 p-3 text-xs text-slate-300">
                                                     Note: {map.reason}
                                                 </p>
                                             )}
 
-                                            <div className="flex items-center gap-4 text-xs text-slate-500 pt-1">
+                                            <div className="flex items-center gap-4 pt-1 text-xs text-slate-500">
                                                 {map.effective_from && (
                                                     <span>
                                                         Effective From:{' '}
-                                                        {new Date(map.effective_from).toLocaleDateString()}
+                                                        {new Date(
+                                                            map.effective_from,
+                                                        ).toLocaleDateString()}
                                                     </span>
                                                 )}
                                                 {map.approver_name && (
-                                                    <span>Approver: {map.approver_name}</span>
+                                                    <span>
+                                                        Approver:{' '}
+                                                        {map.approver_name}
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2 shrink-0">
+                                        <div className="flex shrink-0 items-center gap-2">
                                             {map.status === 'draft' && (
                                                 <button
-                                                    onClick={() => handleActivate(map.id)}
+                                                    onClick={() =>
+                                                        handleActivate(map.id)
+                                                    }
                                                     disabled={isPending}
                                                     className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
                                                 >
-                                                    <CheckCircle2 className="h-4 w-4" /> Activate Policy
+                                                    <CheckCircle2 className="h-4 w-4" />{' '}
+                                                    Activate Policy
                                                 </button>
                                             )}
 
                                             {map.status === 'active' && (
                                                 <button
-                                                    onClick={() => handleRetire(map.id)}
+                                                    onClick={() =>
+                                                        handleRetire(map.id)
+                                                    }
                                                     disabled={isPending}
                                                     className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 transition-colors hover:bg-slate-700 disabled:opacity-50"
                                                 >
-                                                    <XCircle className="h-4 w-4" /> Retire Policy
+                                                    <XCircle className="h-4 w-4" />{' '}
+                                                    Retire Policy
                                                 </button>
                                             )}
                                         </div>

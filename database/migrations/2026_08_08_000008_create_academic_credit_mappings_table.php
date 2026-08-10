@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('institution_id')->constrained('institutions')->cascadeOnDelete();
             $table->string('activity_type');
-            $table->unsignedDecimal('credit_amount', 5, 2);
+            $table->decimal('credit_amount', 5, 2)->unsigned();
             $table->string('status')->default('draft');
             $table->timestamp('effective_from')->nullable();
             $table->timestamp('effective_to')->nullable();
