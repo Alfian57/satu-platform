@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\OtpChallengeStatus;
 use App\Enums\OtpPurpose;
+use Database\Factories\OtpChallengeFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +29,7 @@ use Illuminate\Support\Carbon;
  */
 class OtpChallenge extends Model
 {
-    /** @use HasFactory<\Database\Factories\OtpChallengeFactory> */
+    /** @use HasFactory<OtpChallengeFactory> */
     use HasFactory;
 
     protected $guarded = [];

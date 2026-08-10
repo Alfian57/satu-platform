@@ -21,7 +21,9 @@ use RuntimeException;
 final class GenerateOtp
 {
     private const OTP_LENGTH = 6;
+
     private const OTP_EXPIRY_MINUTES = 5;
+
     private const MAX_REQUESTS_PER_HOUR = 2;
 
     public function handle(
