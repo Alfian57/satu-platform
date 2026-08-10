@@ -3,6 +3,7 @@
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\RosterImportController;
 use App\Http\Controllers\SavedCandidatesController;
 use App\Http\Controllers\TalentSearchController;
 use Illuminate\Support\Facades\Route;
@@ -48,6 +49,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::delete('recruiter/talent/candidates/{id}/save', [SavedCandidatesController::class, 'destroy'])
         ->name('recruiter.talent.candidates.unsave');
+
+    Route::get('campus/{institution}/roster', [RosterImportController::class, 'show'])
+        ->name('campus.roster.show');
+
+    Route::post('campus/{institution}/roster/preview', [RosterImportController::class, 'preview'])
+        ->name('campus.roster.preview');
+
+    Route::post('campus/{institution}/roster', [RosterImportController::class, 'store'])
+        ->name('campus.roster.store');
 });
 
 require __DIR__.'/settings.php';

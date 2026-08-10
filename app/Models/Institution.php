@@ -53,6 +53,14 @@ class Institution extends Model
     }
 
     /**
+     * @return HasMany<InstitutionRoster, $this>
+     */
+    public function rosters(): HasMany
+    {
+        return $this->hasMany(InstitutionRoster::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
