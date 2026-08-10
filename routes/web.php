@@ -12,6 +12,19 @@ use Illuminate\Support\Facades\Route;
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::prefix('recruiter/talent')->name('recruiter.talent.')->group(function () {
+        // Index page for saved candidates
+        Route::get('saved', [SavedCandidatesController::class, 'index'])
+            ->name('saved');
+
+        // Save candidate
+        Route::post('candidates/{id}/save', [SavedCandidatesController::class, 'store'])
+            ->name('candidates.save');
+
+        // Unsave candidate
+        Route::delete('candidates/{id}/unsave', [SavedCandidatesController::class, 'destroy'])
+            ->name('candidates.unsave');
+    });
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
 
     Route::get('onboarding', [OnboardingController::class, 'show'])
@@ -44,9 +57,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('notification-preferences', [NotificationController::class, 'updatePreference'])
         ->name('notification-preferences.update');
-
-    Route::post('recruiter/talent/candidates/{id}/save', [SavedCandidatesController::class, 'store'])
-        ->name('recruiter.talent.candidates.save');
 
     Route::post('recruiter/talent/candidates/{id}/contact', [RecruiterContactRequestController::class, 'store'])
         ->name('recruiter.talent.candidates.contact');
