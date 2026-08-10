@@ -52,6 +52,14 @@ class RecruiterOrganization extends Model
     }
 
     /**
+     * @return HasMany<RecruiterEntitlement, $this>
+     */
+    public function entitlements(): HasMany
+    {
+        return $this->hasMany(RecruiterEntitlement::class);
+    }
+
+    /**
      * @return HasMany<RecruiterVerificationReview, $this>
      */
     public function reviews(): HasMany
