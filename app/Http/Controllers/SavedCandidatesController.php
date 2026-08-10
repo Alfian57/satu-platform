@@ -11,7 +11,6 @@ use App\Actions\Talent\UnsaveCandidate;
 use App\Enums\RecruiterEntitlementScope;
 use App\Models\RecruiterMembership;
 use App\Models\RecruiterOrganization;
-use App\Models\RecruiterSavedCandidate;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
