@@ -122,10 +122,14 @@ final class ImportRoster
         try {
             $reader = new CsvReader;
             $reader->open($path);
+            $isFirstRow = true;
 
             foreach ($reader->getSheetIterator() as $sheet) {
                 foreach ($sheet->getRowIterator() as $row) {
-                    $cells = $row->toArray();
+                    if ($isFirstRow) {
+                        $isFirstRow = false;
+                        continue;
+                    }                    $cells = $row->toArray();
                     if (empty(array_filter($cells))) {
                         continue;
                     }
