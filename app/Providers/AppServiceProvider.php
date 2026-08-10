@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Support\Notification\FonnteGateway;
+use App\Support\Notification\WhatsAppGateway;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -18,7 +20,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(WhatsAppGateway::class, function () {
+            return new FonnteGateway(config('services.fonnte.token', ''));
+        });
     }
 
     /**
