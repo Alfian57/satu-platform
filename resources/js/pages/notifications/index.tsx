@@ -24,7 +24,7 @@ interface Props {
     unreadCount: number;
 }
 
-export default function NotificationIndex({ notifications, filter, unreadCount }: Props) {
+export default function NotificationIndex({ notifications, unreadCount }: Props) {
     return (
         <>
             <Head title="Notifikasi" />
