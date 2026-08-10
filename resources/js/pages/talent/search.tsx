@@ -66,14 +66,14 @@ export default function TalentSearch({
 }: TalentSearchProps) {
     const [searchQuery, setSearchQuery] = useState(filters.query || '');
     const [selectedAvailability, setSelectedAvailability] = useState(
-        filters.availability || ''
+        filters.availability || '',
     );
     const [selectedInstitution, setSelectedInstitution] = useState(
-        filters.institution_id || ''
+        filters.institution_id || '',
     );
     const [skillInput, setSkillInput] = useState('');
     const [selectedSkills, setSelectedSkills] = useState<string[]>(
-        filters.skills || []
+        filters.skills || [],
     );
     const [savedIds, setSavedIds] = useState<number[]>(savedCandidateIds);
     const [isPending, startTransition] = useTransition();
@@ -96,7 +96,7 @@ export default function TalentSearch({
                     availability: selectedAvailability || undefined,
                     institution_id: selectedInstitution || undefined,
                 },
-                { preserveState: true, replace: true }
+                { preserveState: true, replace: true },
             );
         });
     };
@@ -126,7 +126,7 @@ export default function TalentSearch({
         router.get(
             '/recruiter/talent/search',
             {},
-            { preserveState: true, replace: true }
+            { preserveState: true, replace: true },
         );
     };
 
@@ -149,7 +149,7 @@ export default function TalentSearch({
                         preserveState: true,
                         preserveScroll: true,
                         onError: () => setSavedIds(previous), // Rollback
-                    }
+                    },
                 );
             } else {
                 router.post(
@@ -159,7 +159,7 @@ export default function TalentSearch({
                         preserveState: true,
                         preserveScroll: true,
                         onError: () => setSavedIds(previous), // Rollback
-                    }
+                    },
                 );
             }
         });
@@ -169,7 +169,7 @@ export default function TalentSearch({
         <AppLayout>
             <Head title="Talent Search - SATU Platform" />
 
-            <div className="min-h-screen mx-auto max-w-7xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
+            <div className="mx-auto min-h-screen max-w-7xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
                 {/* Header */}
                 <div className="flex flex-col gap-4 border-b border-slate-800 pb-6 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -190,10 +190,13 @@ export default function TalentSearch({
 
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => router.get('/recruiter/talent/saved')}
+                            onClick={() =>
+                                router.get('/recruiter/talent/saved')
+                            }
                             className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-700"
                         >
-                            <Bookmark className="h-4 w-4 text-blue-400" /> Saved List ({savedIds.length})
+                            <Bookmark className="h-4 w-4 text-blue-400" /> Saved
+                            List ({savedIds.length})
                         </button>
 
                         {entitlement.has_entitlement && (
@@ -236,13 +239,13 @@ export default function TalentSearch({
                     <div className="flex flex-col gap-4 md:flex-row">
                         {/* Search Input */}
                         <div className="relative flex-1">
-                            <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
+                            <Search className="absolute top-3.5 left-4 h-5 w-5 text-slate-400" />
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search candidates by headline or bio..."
-                                className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 pl-11 pr-4 text-sm text-slate-100 placeholder-slate-500 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 pr-4 pl-11 text-sm text-slate-100 placeholder-slate-500 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 aria-label="Search candidates by headline or bio"
                             />
                         </div>
@@ -253,7 +256,7 @@ export default function TalentSearch({
                             onChange={(e) =>
                                 setSelectedAvailability(e.target.value)
                             }
-                            className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             aria-label="Filter by availability status"
                         >
                             <option value="">All Availability</option>
@@ -270,7 +273,7 @@ export default function TalentSearch({
                             onChange={(e) =>
                                 setSelectedInstitution(e.target.value)
                             }
-                            className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             aria-label="Filter by campus institution"
                         >
                             <option value="">All Institutions</option>
@@ -284,7 +287,7 @@ export default function TalentSearch({
 
                     {/* Skill Pills Filter */}
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        <label className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
                             Skill Filters
                         </label>
                         <div className="flex flex-wrap items-center gap-2">
@@ -319,7 +322,7 @@ export default function TalentSearch({
                                         }
                                     }}
                                     placeholder="Add skill (press Enter)..."
-                                    className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                                 />
                                 {skillInput && (
                                     <button
@@ -345,9 +348,7 @@ export default function TalentSearch({
                         </button>
                         <button
                             type="submit"
-                            disabled={
-                                isPending || !entitlement.has_entitlement
-                            }
+                            disabled={isPending || !entitlement.has_entitlement}
                             className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-blue-500/20 transition-all hover:from-blue-500 hover:to-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <Filter className="h-4 w-4" /> Apply Filters
@@ -363,7 +364,7 @@ export default function TalentSearch({
                     className="space-y-4"
                 >
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+                        <h2 className="text-sm font-semibold tracking-wider text-slate-400 uppercase">
                             Verified Candidates ({candidates.total})
                         </h2>
                         <span role="status" className="text-xs text-slate-500">
@@ -401,8 +402,8 @@ export default function TalentSearch({
                                 </h3>
                                 <p className="mx-auto max-w-md text-sm text-slate-500">
                                     No verified candidate projections match your
-                                    selected filters. Try broadening your
-                                    search or resetting filters.
+                                    selected filters. Try broadening your search
+                                    or resetting filters.
                                 </p>
                             </div>
                             <button
@@ -450,7 +451,7 @@ export default function TalentSearch({
                                                     >
                                                         {candidate.availability_status.replace(
                                                             /_/g,
-                                                            ' '
+                                                            ' ',
                                                         )}
                                                     </span>
                                                 </div>
@@ -471,7 +472,7 @@ export default function TalentSearch({
                                                             >
                                                                 {skill}
                                                             </span>
-                                                        )
+                                                        ),
                                                     )}
                                                     {candidate.badges.map(
                                                         (badge) => (
@@ -482,20 +483,28 @@ export default function TalentSearch({
                                                                 <Award className="h-3 w-3 text-amber-400" />
                                                                 {badge}
                                                             </span>
-                                                        )
+                                                        ),
                                                     )}
                                                 </div>
                                             </div>
 
                                             <div className="flex shrink-0 items-center gap-2">
                                                 <button
-                                                    onClick={() => toggleSaveCandidate(candidate.id)}
+                                                    onClick={() =>
+                                                        toggleSaveCandidate(
+                                                            candidate.id,
+                                                        )
+                                                    }
                                                     className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-all ${
                                                         isSaved
                                                             ? 'border-blue-800 bg-blue-950 text-blue-300 hover:bg-blue-900'
                                                             : 'border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                                                     }`}
-                                                    title={isSaved ? 'Unsave candidate' : 'Save candidate'}
+                                                    title={
+                                                        isSaved
+                                                            ? 'Unsave candidate'
+                                                            : 'Save candidate'
+                                                    }
                                                 >
                                                     {isSaved ? (
                                                         <BookmarkCheck className="h-4 w-4 text-blue-400" />
@@ -507,10 +516,10 @@ export default function TalentSearch({
                                                 <button
                                                     onClick={() =>
                                                         router.get(
-                                                            `/recruiter/talent/candidates/${candidate.id}`
+                                                            `/recruiter/talent/candidates/${candidate.id}`,
                                                         )
                                                     }
-                                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-700/80 px-5 py-2.5 text-xs font-semibold text-slate-100 transition-all hover:bg-blue-600 hover:text-white md:w-auto group-hover:shadow-lg group-hover:shadow-blue-500/20"
+                                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-700/80 px-5 py-2.5 text-xs font-semibold text-slate-100 transition-all group-hover:shadow-lg group-hover:shadow-blue-500/20 hover:bg-blue-600 hover:text-white md:w-auto"
                                                 >
                                                     View Profile{' '}
                                                     <ChevronRight className="h-4 w-4" />
