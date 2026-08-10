@@ -5,29 +5,30 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\Recruiter\VerifyRecruiterEntitlement;
-use App\Actions\Talent\SearchTalentCandidates;
+use App\Actions\Talent\FetchSavedCandidates;
+use App\Actions\Talent\SaveCandidate;
+use App\Actions\Talent\UnsaveCandidate;
 use App\Enums\RecruiterEntitlementScope;
-use App\Models\Institution;
 use App\Models\RecruiterMembership;
 use App\Models\RecruiterOrganization;
-use App\Models\RecruiterSavedCandidate;
-use App\Models\TalentCandidateProjection;
-use App\Support\RecruiterSafeCandidateSerializer;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use InvalidArgumentException;
 
-class TalentSearchController extends Controller
+class SavedCandidatesController extends Controller
 {
     public function __construct(
-        private readonly SearchTalentCandidates $searchAction,
+        private readonly SaveCandidate $saveAction,
+        private readonly UnsaveCandidate $unsaveAction,
+        private readonly FetchSavedCandidates $fetchAction,
         private readonly VerifyRecruiterEntitlement $verifyEntitlement,
-        private readonly RecruiterSafeCandidateSerializer $serializer,
     ) {}
 
     /**
-     * Display URL-addressable talent search.
+     * Display list of saved candidate projections for the recruiter's active organization.
      */
     public function index(Request $request): Response
     {
@@ -43,7 +44,7 @@ class TalentSearchController extends Controller
         $organization = $membership?->organization;
 
         if ($organization === null && ! $user->is_platform_admin) {
-            return Inertia::render('talent/search', [
+            return Inertia::render('talent/saved', [
                 'candidates' => [
                     'data' => [],
                     'total' => 0,
@@ -51,13 +52,10 @@ class TalentSearchController extends Controller
                     'last_page' => 1,
                     'per_page' => 25,
                 ],
-                'filters' => [],
                 'entitlement' => [
                     'has_entitlement' => false,
                     'status' => 'no_organization',
                 ],
-                'institutions' => [],
-                'savedCandidateIds' => [],
             ]);
         }
 
@@ -72,15 +70,6 @@ class TalentSearchController extends Controller
             RecruiterEntitlementScope::CandidateSearch
         );
 
-        $query = $request->query('query');
-        $skills = $request->query('skills');
-        $badges = $request->query('badges');
-        $availability = $request->query('availability');
-        $institutionId = $request->query('institution_id');
-
-        $skillsArray = is_array($skills) ? $skills : ($skills !== null && $skills !== '' ? explode(',', (string) $skills) : null);
-        $badgesArray = is_array($badges) ? $badges : ($badges !== null && $badges !== '' ? explode(',', (string) $badges) : null);
-
         $candidatesData = [
             'data' => [],
             'total' => 0,
@@ -91,14 +80,9 @@ class TalentSearchController extends Controller
 
         if ($hasEntitlement) {
             try {
-                $paginator = $this->searchAction->execute(
+                $paginator = $this->fetchAction->execute(
                     recruiter: $user,
                     organization: $activeOrg,
-                    query: is_string($query) ? $query : null,
-                    skills: $skillsArray,
-                    badges: $badgesArray,
-                    availabilityStatus: is_string($availability) ? $availability : null,
-                    institutionId: is_numeric($institutionId) ? (int) $institutionId : null,
                     perPage: 25,
                     page: is_numeric($request->query('page')) ? (int) $request->query('page') : 1,
                 );
@@ -115,53 +99,26 @@ class TalentSearchController extends Controller
             }
         }
 
-        $savedCandidateIds = RecruiterSavedCandidate::query()
-            ->where('recruiter_organization_id', $activeOrg->id)
-            ->where('user_id', $user->id)
-            ->pluck('talent_candidate_projection_id')
-            ->all();
-
         $activeEntitlement = $activeOrg->entitlements()
             ->where('status', 'active')
             ->first();
 
-        $institutions = Institution::query()
-            ->select(['id', 'name'])
-            ->orderBy('name')
-            ->get();
-
-        return Inertia::render('talent/search', [
+        return Inertia::render('talent/saved', [
             'candidates' => $candidatesData,
-            'filters' => [
-                'query' => $query ?? '',
-                'skills' => $skillsArray ?? [],
-                'badges' => $badgesArray ?? [],
-                'availability' => $availability ?? '',
-                'institution_id' => $institutionId ?? '',
-            ],
             'entitlement' => [
                 'has_entitlement' => $hasEntitlement,
                 'status' => $hasEntitlement ? 'active' : ($activeEntitlement ? 'expired' : 'missing'),
-                'expires_at' => $activeEntitlement?->ends_at?->toIso8601String(),
             ],
-            'institutions' => $institutions,
-            'savedCandidateIds' => $savedCandidateIds,
         ]);
     }
 
     /**
-     * Display candidate profile detail with provenance and contact consequence notice.
+     * Save a candidate projection for the recruiter's active organization.
      */
-    public function show(Request $request, int $id): Response
+    public function store(Request $request, int $id): RedirectResponse
     {
         $user = $request->user();
         assert($user !== null);
-
-        $projection = TalentCandidateProjection::query()
-            ->with('institution')
-            ->where('id', $id)
-            ->where('is_visible', true)
-            ->firstOrFail();
 
         /** @var RecruiterMembership|null $membership */
         $membership = RecruiterMembership::query()
@@ -181,27 +138,57 @@ class TalentSearchController extends Controller
             ['status' => 'verified']
         );
 
-        $hasEntitlement = $this->verifyEntitlement->check(
-            $activeOrg,
-            RecruiterEntitlementScope::CandidateSearch
-        );
-
-        if (! $hasEntitlement) {
-            abort(403, 'Recruiter organization does not hold an active candidate search entitlement.');
+        try {
+            $this->saveAction->execute(
+                recruiter: $user,
+                organization: $activeOrg,
+                candidateProjectionId: $id,
+            );
+        } catch (AuthorizationException $e) {
+            abort(403, $e->getMessage());
+        } catch (InvalidArgumentException $e) {
+            abort(404, $e->getMessage());
         }
 
-        $isSaved = RecruiterSavedCandidate::query()
-            ->where('recruiter_organization_id', $activeOrg->id)
+        return back()->with('success', 'Candidate saved successfully.');
+    }
+
+    /**
+     * Unsave a candidate projection for the recruiter's active organization.
+     */
+    public function destroy(Request $request, int $id): RedirectResponse
+    {
+        $user = $request->user();
+        assert($user !== null);
+
+        /** @var RecruiterMembership|null $membership */
+        $membership = RecruiterMembership::query()
             ->where('user_id', $user->id)
-            ->where('talent_candidate_projection_id', $projection->id)
-            ->exists();
+            ->where('status', 'active')
+            ->first();
 
-        $serializedCandidate = $this->serializer->toArray($projection);
+        $organization = $membership?->organization;
 
-        return Inertia::render('talent/candidate-detail', [
-            'candidate' => $serializedCandidate,
-            'isSaved' => $isSaved,
-            'contactConsequenceNotice' => 'Nomor telepon dan kontak langsung hanya terbuka setelah kandidat menyetujui permintaan kontak.',
-        ]);
+        if ($organization === null && ! $user->is_platform_admin) {
+            abort(403, 'You are not an active member of a recruiter organization.');
+        }
+
+        /** @var RecruiterOrganization $activeOrg */
+        $activeOrg = $organization ?? RecruiterOrganization::query()->firstOrCreate(
+            ['name' => 'Platform Admin Org'],
+            ['status' => 'verified']
+        );
+
+        try {
+            $this->unsaveAction->execute(
+                recruiter: $user,
+                organization: $activeOrg,
+                candidateProjectionId: $id,
+            );
+        } catch (AuthorizationException $e) {
+            abort(403, $e->getMessage());
+        }
+
+        return back()->with('success', 'Candidate unsaved successfully.');
     }
 }
