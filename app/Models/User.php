@@ -17,13 +17,14 @@ use Illuminate\Support\Str;
  * @property string $name
  * @property string $username
  * @property string $password
+ * @property bool $is_platform_admin
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'username', 'password'])]
+#[Fillable(['name', 'username', 'password', 'is_platform_admin'])]
 #[Hidden(['password', 'username', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
@@ -73,6 +74,7 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'is_platform_admin' => 'boolean',
         ];
     }
 }
