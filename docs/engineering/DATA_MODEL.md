@@ -113,7 +113,7 @@ Projection tidak memuat username, phone sebelum consent handoff, NIM, inclusion,
 - `credit_mappings` dan immutable mapping versions.
 - `integration_syncs`: source, mapping version, idempotency key, payload digest, status, external reference, attempt timestamps.
 - `integration_sync_events`: append-only status/retry/reconcile history.
-- `integration_sync_metrics`: institution-scoped aggregate health per connection (total syncs, succeeded, reconciled, dead-letter, retry volume, queue age).
+- `integration_sync_metrics`: institution-scoped aggregate health per connection (total syncs, succeeded, reconciled, dead-letter, retry volume, queue age). Alert threshold dievaluasi lewat scheduled command `integration:alert-sync-anomalies`.
 
 ## 11. Consent dan Audit
 
