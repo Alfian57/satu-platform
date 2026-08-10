@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Enums\RecruiterVerificationConclusion;
 use Database\Factories\RecruiterVerificationReviewFactory;
-use Illuminate\Database\Eloquent\Attributes\Guarded;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,7 +21,7 @@ use LogicException;
  * @property string|null $reason
  * @property Carbon $created_at
  */
-#[Guarded(['*'])]
+#[Fillable(['recruiter_organization_id', 'reviewer_id', 'conclusion', 'reason'])]
 class RecruiterVerificationReview extends Model
 {
     /** @use HasFactory<RecruiterVerificationReviewFactory> */

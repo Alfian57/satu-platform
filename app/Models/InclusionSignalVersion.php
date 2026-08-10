@@ -8,6 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string $version
+ * @property array<string, mixed> $metrics
+ * @property array<string, mixed> $rules
+ * @property string $governance_status
+ * @property int|null $author_id
+ * @property string|null $notes
+ */
 class InclusionSignalVersion extends Model
 {
     /** @use HasFactory<InclusionSignalVersionFactory> */

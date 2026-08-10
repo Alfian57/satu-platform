@@ -44,6 +44,6 @@ final class RecruiterOrganizationPolicy
      */
     public function review(User $user, RecruiterOrganization $organization): bool
     {
-        return false;
+        return (bool) $user->is_platform_admin;
     }
 }
