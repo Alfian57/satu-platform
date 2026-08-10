@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+﻿import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -45,17 +45,17 @@ export default function Register({ passwordRules }: Props) {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Alamat email</Label>
+                                <Label htmlFor="username">Nama pengguna</Label>
                                 <Input
-                                    id="email"
-                                    type="email"
+                                    id="username"
+                                    type="text"
                                     required
                                     tabIndex={2}
-                                    autoComplete="email"
-                                    name="email"
-                                    placeholder="email@example.com"
+                                    autoComplete="username"
+                                    name="username"
+                                    placeholder="nama_pengguna"
                                 />
-                                <InputError message={errors.email} />
+                                <InputError message={errors.username} />
                             </div>
 
                             <div className="grid gap-2">

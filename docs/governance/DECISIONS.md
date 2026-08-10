@@ -35,6 +35,7 @@ Accepted decision adalah product atau architecture contract. Open gate hanya dap
 | DEC-025 | Manual review affiliation memiliki SLA 3 hari kerja                                | Campus reviewer menindaklanjuti affiliation queue dalam 3 hari kerja; eskalasi ke platform admin setelah 5 hari kerja tanpa tindakan                                         |
 | DEC-026 | Roster import bersifat immutable setelah committed                                 | Setiap import menyimpan checksum, source filename, timestamp, dan batch identity; correction atau penambahan masuk sebagai batch baru, bukan modifikasi in-place             |
 | DEC-027 | Tenant isolation mencakup seluruh layer                                            | Institution-scoped queries, Policies, jobs, cache keys, storage paths, exports, dan Reverb channels; platform admin memakai explicit audited cross-tenant scope              |
+| DEC-028 | XP, badge, dan leaderboard policy versioned dalam dokumen terpisah                  | Seluruh aturan gamification dikonsolidasi di `docs/governance/gamification-policy.md` dengan semantic versioning, audit owner, dan approval gate                              |
 
 ## Approved Library Direction
 
@@ -92,6 +93,7 @@ Installasi dependency baru tetap mengikuti approval project dan compatibility/li
 | GATE-003 | Academic credit mapping dan real pilot API contract                                                                                | Product + institution engineering | Sebelum real provider connection |
 | GATE-004 | Recruiter verification, entitlement issuance, contact, dan retention policy                                                        | Product + legal/privacy           | Sebelum recruiter pilot          |
 | GATE-005 | Final visual reference dan competition UAT                                                                                         | Product owner                     | Sebelum release                  |
+| GATE-011 | Approval gamification policy v1.0.0 (XP source, badge taxonomy, leaderboard rules, anti-abuse, dan governance)                      | Product-design                    | Sebelum GM02 (XP ledger)         |
 
 ## Pilot Institution and Roster Contract
 
@@ -251,6 +253,22 @@ Sandbox adapter harus mendemonstrasikan:
 | GATE-008 | API base URL, auth mechanism, dan rate limit kampus produksi  | Institution engineering           | Sebelum production provider build   |
 | GATE-009 | Endpoint contract final (field mapping, error codes, format)  | Institution engineering + product | Sebelum production provider build   |
 | GATE-010 | Approval workflow kredit kampus (auto-accept vs manual)       | Institution academic office       | Sebelum mapping go-live             |
+
+## Gamification Policy
+
+Kebijakan lengkap XP, badge, dan hybrid leaderboard didokumentasikan dalam dokumen versioned terpisah: [gamification-policy.md](./gamification-policy.md). Dokumen ini memiliki semantic versioning (`MAJOR.MINOR.PATCH`), audit owner `product-design`, dan approval melalui GATE-011.
+
+### Accepted
+
+| ID       | Keputusan                                                         | Dampak                                                                                                         |
+| -------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| DEC-028   | XP, badge, dan leaderboard policy dikonsolidasi dalam satu dokumen versioned | Seluruh aturan gamification dikonsolidasi di `docs/governance/gamification-policy.md` dengan semantic versioning, audit owner, dan approval gate |
+
+### Open
+
+| ID       | Keputusan yang dibutuhkan                                         | Owner          | Batas                    |
+| -------- | ----------------------------------------------------------------- | -------------- | ------------------------ |
+| GATE-011 | Approval gamification policy v1.0.0                                | Product-design | Sebelum GM02 (XP ledger) |
 
 ## Change Rules
 

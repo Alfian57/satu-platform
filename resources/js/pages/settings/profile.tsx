@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+﻿import { Form, Head, usePage } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
@@ -26,7 +26,7 @@ export default function Profile() {
                 <Heading
                     variant="small"
                     title="Profil"
-                    description="Perbarui nama dan alamat emailmu"
+                    description="Perbarui nama dan nama penggunamu"
                 />
 
                 <Form
@@ -58,22 +58,22 @@ export default function Profile() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Alamat email</Label>
+                                <Label htmlFor="username">Nama pengguna</Label>
 
                                 <Input
-                                    id="email"
-                                    type="email"
+                                    id="username"
+                                    type="text"
                                     className="mt-1 block w-full"
-                                    defaultValue={auth.user.email}
-                                    name="email"
+                                    defaultValue={auth.user.username}
+                                    name="username"
                                     required
                                     autoComplete="username"
-                                    placeholder="Alamat email"
+                                    placeholder="Nama pengguna"
                                 />
 
                                 <InputError
                                     className="mt-2"
-                                    message={errors.email}
+                                    message={errors.username}
                                 />
                             </div>
 

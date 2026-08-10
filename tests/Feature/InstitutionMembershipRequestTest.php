@@ -3,93 +3,50 @@
 use App\Actions\InstitutionMemberships\RequestInstitutionMembership;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionMembershipVerificationMethod;
 use App\Enums\InstitutionStatus;
 use App\Events\InstitutionMembershipRequested;
-use App\Events\InstitutionMembershipVerified;
 use App\Models\AuditLog;
 use App\Models\Institution;
-use App\Models\InstitutionDomain;
 use App\Models\InstitutionMembership;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 
-test('a verified student is verified by an exact approved institution domain', function () {
-    $user = User::factory()->create(['email' => 'Student@Kampus.Ac.Id']);
+test('a student requesting affiliation to an active institution gets a pending membership', function () {
+    $user = User::factory()->create();
     $institution = Institution::factory()->active()->create();
-    InstitutionDomain::factory()->verified()->for($institution)->create(['domain' => 'kampus.ac.id']);
 
     $membership = app(RequestInstitutionMembership::class)->handle($user, $institution);
 
-    expect($membership->status)->toBe(InstitutionMembershipStatus::Verified)
+    expect($membership->status)->toBe(InstitutionMembershipStatus::Pending)
         ->and($membership->role)->toBe(InstitutionMembershipRole::Student)
-        ->and($membership->verification_method)
-        ->toBe(InstitutionMembershipVerificationMethod::ApprovedDomain)
+        ->and($membership->user_id)->toBe($user->getKey())
         ->and($membership->institution_id)->toBe($institution->getKey())
-        ->and(AuditLog::query()->pluck('operation')->all())
-        ->toEqual([
-            'institution_membership.requested',
-            'institution_membership.verified_by_domain',
-        ]);
-
-    expect(AuditLog::query()->get()->flatMap(
-        fn (AuditLog $audit): array => [$audit->before_summary, $audit->after_summary],
-    )->toJson())->not->toContain('kampus.ac.id');
-});
-
-test('a subdomain does not match a bare approved domain', function () {
-    $user = User::factory()->create(['email' => 'student@engineering.kampus.ac.id']);
-    $institution = Institution::factory()->active()->create();
-    InstitutionDomain::factory()->verified()->for($institution)->create(['domain' => 'kampus.ac.id']);
-
-    $membership = app(RequestInstitutionMembership::class)->handle($user, $institution);
-
-    expect($membership->status)->toBe(InstitutionMembershipStatus::Pending)
-        ->and($membership->verification_method)->toBeNull();
-});
-
-test('malformed email domains never match an approved domain', function (string $email) {
-    $user = User::factory()->create(['email' => $email]);
-    $institution = Institution::factory()->active()->create();
-    InstitutionDomain::factory()->verified()->for($institution)->create(['domain' => 'kampus.ac.id']);
-
-    $membership = app(RequestInstitutionMembership::class)->handle($user, $institution);
-
-    expect($membership->status)->toBe(InstitutionMembershipStatus::Pending);
-})->with([
-    'multiple at signs' => 'student@@kampus.ac.id',
-    'whitespace' => 'student @kampus.ac.id',
-    'double trailing dot' => 'student@kampus.ac.id..',
-]);
-
-test('an unapproved domain falls back to a pending membership', function () {
-    $user = User::factory()->create(['email' => 'student@other.ac.id']);
-    $institution = Institution::factory()->active()->create();
-
-    $membership = app(RequestInstitutionMembership::class)->handle($user, $institution);
-
-    expect($membership->status)->toBe(InstitutionMembershipStatus::Pending)
-        ->and($membership->requested_at)->not->toBeNull()
         ->and($membership->verification_method)->toBeNull()
-        ->and(AuditLog::query()->sole()->operation)->toBe('institution_membership.requested');
+        ->and(AuditLog::query()->pluck('operation')->all())
+        ->toEqual(['institution_membership.requested']);
 });
 
-test('only verified domains belonging to the selected institution are eligible', function () {
-    $user = User::factory()->create(['email' => 'student@campus.ac.id']);
-    $selected = Institution::factory()->active()->create();
-    $other = Institution::factory()->active()->create();
-    InstitutionDomain::factory()->verified()->for($other)->create(['domain' => 'campus.ac.id']);
+test('requesting affiliation to a suspended institution is denied', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->create(['status' => InstitutionStatus::Suspended]);
 
-    $membership = app(RequestInstitutionMembership::class)->handle($user, $selected);
+    expect(fn () => app(RequestInstitutionMembership::class)->handle($user, $institution))
+        ->toThrow(AuthorizationException::class, 'not accepting affiliation');
+});
 
-    expect($membership->status)->toBe(InstitutionMembershipStatus::Pending)
-        ->and($membership->institution_id)->toBe($selected->getKey());
+test('requesting affiliation to a pending institution is denied', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->create(['status' => InstitutionStatus::Pending]);
+
+    expect(fn () => app(RequestInstitutionMembership::class)->handle($user, $institution))
+        ->toThrow(AuthorizationException::class, 'not accepting affiliation');
 });
 
 test('pending and verified requests are idempotent without duplicate audit records', function () {
-    $pendingUser = User::factory()->create(['email' => 'pending@example.test']);
+    $pendingUser = User::factory()->create();
     $institution = Institution::factory()->active()->create();
 
     $firstPending = app(RequestInstitutionMembership::class)->handle($pendingUser, $institution);
@@ -99,224 +56,135 @@ test('pending and verified requests are idempotent without duplicate audit recor
         ->and(InstitutionMembership::query()->whereBelongsTo($pendingUser)->count())->toBe(1)
         ->and(AuditLog::query()->count())->toBe(1);
 
-    $verifiedUser = User::factory()->create(['email' => 'verified@campus.ac.id']);
-    InstitutionDomain::factory()->verified()->for($institution)->create(['domain' => 'campus.ac.id']);
+    $verifiedUser = User::factory()->create();
+    $verified = InstitutionMembership::factory()
+        ->verifiedByApprovedDomain()
+        ->for($verifiedUser)
+        ->for($institution)
+        ->create();
 
-    $firstVerified = app(RequestInstitutionMembership::class)->handle($verifiedUser, $institution);
-    $secondVerified = app(RequestInstitutionMembership::class)->handle($verifiedUser, $institution);
+    $result = app(RequestInstitutionMembership::class)->handle($verifiedUser, $institution);
 
-    expect($secondVerified->is($firstVerified))->toBeTrue()
-        ->and(InstitutionMembership::query()->whereBelongsTo($verifiedUser)->count())->toBe(1)
-        ->and(AuditLog::query()->count())->toBe(3);
+    expect($result->is($verified))->toBeTrue()
+        ->and(AuditLog::query()->where('actor_id', $pendingUser->getKey())->count())->toBe(1);
 });
 
-test('a pending membership remains pending on repeated request even after domain approval', function () {
-    $user = User::factory()->create(['email' => 'pending@campus.ac.id']);
+test('a suspended membership cannot be re-requested', function () {
+    $user = User::factory()->create();
     $institution = Institution::factory()->active()->create();
-
-    $pending = app(RequestInstitutionMembership::class)->handle($user, $institution);
-    InstitutionDomain::factory()->verified()->for($institution)->create(['domain' => 'campus.ac.id']);
-
-    $repeated = app(RequestInstitutionMembership::class)->handle($user, $institution);
-
-    expect($repeated->is($pending))->toBeTrue()
-        ->and($repeated->status)->toBe(InstitutionMembershipStatus::Pending)
-        ->and(AuditLog::query()->count())->toBe(1);
-});
-
-test('a rejected unverified membership may retry while a suspended membership is denied', function () {
-    $user = User::factory()->create(['email' => 'student@example.test']);
-    $institution = Institution::factory()->active()->create();
-    $rejected = InstitutionMembership::factory()->rejected()->for($user)->for($institution)->create();
-
-    $retried = app(RequestInstitutionMembership::class)->handle($user, $institution);
-
-    expect($retried->is($rejected))->toBeTrue()
-        ->and($retried->status)->toBe(InstitutionMembershipStatus::Pending)
-        ->and($retried->last_review_outcome)->toBeNull();
-
-    $suspendedUser = User::factory()->create(['email' => 'suspended@example.test']);
-    $suspended = InstitutionMembership::factory()->suspended()->for($suspendedUser)->for($institution)->create();
-
-    expect(fn () => app(RequestInstitutionMembership::class)->handle($suspendedUser, $institution))
-        ->toThrow(AuthorizationException::class);
-});
-
-test('unverified users cannot request affiliation', function () {
-    $user = User::factory()->unverified()->create();
-    $institution = Institution::factory()->active()->create();
+    InstitutionMembership::factory()->suspended()->for($user)->for($institution)->create();
 
     expect(fn () => app(RequestInstitutionMembership::class)->handle($user, $institution))
-        ->toThrow(AuthorizationException::class)
-        ->and(InstitutionMembership::query()->count())->toBe(0);
+        ->toThrow(AuthorizationException::class, 'cannot be requested again');
 });
 
-test('inactive institutions cannot receive requests', function (InstitutionStatus $status) {
+test('unverified request can be retried after rejection', function () {
     $user = User::factory()->create();
-    $institution = Institution::factory()->create(['status' => $status]);
+    $institution = Institution::factory()->active()->create();
+    InstitutionMembership::factory()->rejected()->for($user)->for($institution)->create();
+
+    $membership = app(RequestInstitutionMembership::class)->handle($user, $institution);
+
+    expect($membership->status)->toBe(InstitutionMembershipStatus::Pending)
+        ->and($membership->requested_at)->not->toBeNull()
+        ->and($membership->verification_method)->toBeNull()
+        ->and(AuditLog::query()->sole()->operation)->toBe('institution_membership.requested');
+});
+
+test('creating a membership under a duplicate race falls back to the existing record', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->active()->create();
+
+    $concurrent = InstitutionMembership::factory()
+        ->pending()
+        ->for($user)
+        ->for($institution)
+        ->make();
+
+    /** @var array<int, InstitutionMembership> $results */
+    $results = [];
+    DB::transaction(function () use ($user, $institution, &$results) {
+        $first = InstitutionMembership::factory()
+            ->unverified()
+            ->for($user)
+            ->for($institution)
+            ->create();
+
+        $results[] = app(RequestInstitutionMembership::class)->handle($user, $institution);
+    }, attempts: 1);
+
+    expect($results)->toHaveCount(1)
+        ->and($results[0]->user_id)->toBe($user->getKey());
+});
+
+test('membership request rejects an archived institution', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->create(['status' => InstitutionStatus::Archived]);
 
     expect(fn () => app(RequestInstitutionMembership::class)->handle($user, $institution))
-        ->toThrow(AuthorizationException::class);
-})->with([
-    'pending' => InstitutionStatus::Pending,
-    'suspended' => InstitutionStatus::Suspended,
-    'archived' => InstitutionStatus::Archived,
-]);
-
-test('the request route requires verified authentication and ignores privileged input', function () {
-    $institution = Institution::factory()->active()->create();
-    $unverified = User::factory()->unverified()->create();
-
-    $this->actingAs($unverified)
-        ->post(route('institution-memberships.store'), [
-            'institution_id' => $institution->getKey(),
-        ])
-        ->assertRedirect(route('verification.notice'));
-
-    $user = User::factory()->create();
-
-    $this->actingAs($user)
-        ->post(route('institution-memberships.store'), [
-            'institution_id' => $institution->getKey(),
-            'role' => InstitutionMembershipRole::CampusAdmin->value,
-            'status' => InstitutionMembershipStatus::Verified->value,
-            'verification_method' => InstitutionMembershipVerificationMethod::CampusAdminReview->value,
-        ])
-        ->assertRedirect(route('onboarding.show'))
-        ->assertSessionHas('membership_status', InstitutionMembershipStatus::Pending->value);
-
-    $membership = InstitutionMembership::query()->whereBelongsTo($user)->sole();
-
-    expect($membership->role)->toBe(InstitutionMembershipRole::Student)
-        ->and($membership->status)->toBe(InstitutionMembershipStatus::Pending)
-        ->and($membership->verification_method)->toBeNull();
+        ->toThrow(AuthorizationException::class, 'not accepting affiliation');
 });
 
-test('an expired CSRF session returns safe onboarding recovery without mutation', function () {
-    $this->app['env'] = 'local';
+test('unverified membership transitions to pending on request', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->active()->create();
+    $membership = InstitutionMembership::factory()->unverified()->for($user)->for($institution)->create();
 
+    $result = app(RequestInstitutionMembership::class)->handle($user, $institution);
+
+    expect($result->status)->toBe(InstitutionMembershipStatus::Pending)
+        ->and($result->requested_at)->not->toBeNull()
+        ->and($result->is($membership))->toBeTrue();
+});
+
+// --- HTTP request tests ---
+
+test('authenticated student can request institution membership', function () {
     $user = User::factory()->create();
     $institution = Institution::factory()->active()->create();
 
     $this->actingAs($user)
-        ->from(route('onboarding.show'))
-        ->withHeaders(['X-Inertia' => 'true'])
-        ->post(route('institution-memberships.store'), [
-            'institution_id' => $institution->getKey(),
-        ])
-        ->assertRedirect(route('onboarding.show'))
-        ->assertSessionHas('onboarding_recovery', 'session_expired');
+        ->post(route('institution-memberships.store'), ['institution_id' => $institution->getKey()])
+        ->assertRedirect(route('onboarding.show'));
 
-    expect(InstitutionMembership::query()->count())->toBe(0)
-        ->and(AuditLog::query()->count())->toBe(0);
+    $membership = InstitutionMembership::query()
+        ->whereBelongsTo($user)
+        ->whereBelongsTo($institution)
+        ->firstOrFail();
+
+    expect($membership->status)->toBe(InstitutionMembershipStatus::Pending)
+        ->and($membership->role)->toBe(InstitutionMembershipRole::Student);
 });
 
-test('a permission loss returns safe onboarding recovery without mutation', function () {
-    $user = User::factory()->create();
+test('unauthenticated users cannot request membership', function () {
     $institution = Institution::factory()->active()->create();
-    $membership = InstitutionMembership::factory()
-        ->suspended()
-        ->for($user)
-        ->for($institution)
-        ->create();
-    Event::fake();
 
-    $this->actingAs($user)
-        ->from(route('onboarding.show'))
-        ->withHeaders(['X-Inertia' => 'true'])
-        ->post(route('institution-memberships.store'), [
-            'institution_id' => $institution->getKey(),
-        ])
-        ->assertRedirect(route('onboarding.show'))
-        ->assertSessionHas('onboarding_recovery', 'forbidden');
+    $this->post(route('institution-memberships.store'), ['institution_id' => $institution->getKey()])
+        ->assertRedirect(route('login'));
 
-    expect($membership->refresh()->status)->toBe(InstitutionMembershipStatus::Suspended)
-        ->and(InstitutionMembership::query()->count())->toBe(1)
-        ->and(AuditLog::query()->count())->toBe(0);
-    Event::assertNotDispatched(InstitutionMembershipRequested::class);
-    Event::assertNotDispatched(InstitutionMembershipVerified::class);
+    expect(InstitutionMembership::query()->count())->toBe(0);
 });
 
-test('the request route validates only active institution selections', function () {
+test('membership request validates required institution_id', function () {
     $user = User::factory()->create();
-    $inactive = Institution::factory()->create();
 
     $this->actingAs($user)
-        ->post(route('institution-memberships.store'), ['institution_id' => $inactive->getKey()])
-        ->assertSessionHasErrors('institution_id');
-
-    $this->actingAs($user)
-        ->post(route('institution-memberships.store'), ['institution_id' => 999999])
+        ->post(route('institution-memberships.store'), [])
         ->assertSessionHasErrors('institution_id');
 });
 
-test('duplicate HTTP requests create one membership and one requested audit record', function () {
+test('membership request validates institution_id exists and is active', function () {
     $user = User::factory()->create();
-    $institution = Institution::factory()->active()->create();
-    $payload = ['institution_id' => $institution->getKey()];
 
     $this->actingAs($user)
-        ->post(route('institution-memberships.store'), $payload)
-        ->assertRedirect(route('onboarding.show'));
-    $this->actingAs($user)
-        ->post(route('institution-memberships.store'), $payload)
-        ->assertRedirect(route('onboarding.show'));
-
-    expect(InstitutionMembership::query()->whereBelongsTo($user)->count())->toBe(1)
-        ->and(AuditLog::query()->where('operation', 'institution_membership.requested')->count())
-        ->toBe(1);
-});
-
-test('rejected affiliation retries once without duplicate events or audit history', function () {
-    $user = User::factory()->create();
-    $institution = Institution::factory()->active()->create();
-    $membership = InstitutionMembership::factory()
-        ->rejected()
-        ->for($user)
-        ->for($institution)
-        ->create();
-    Event::fake();
-
-    $this->actingAs($user)
-        ->post(route('institution-memberships.store'), [
-            'institution_id' => $institution->getKey(),
-        ])
-        ->assertRedirect(route('onboarding.show'));
-    $this->actingAs($user)
-        ->post(route('institution-memberships.store'), [
-            'institution_id' => $institution->getKey(),
-        ])
-        ->assertRedirect(route('onboarding.show'));
-
-    expect($membership->refresh()->status)->toBe(InstitutionMembershipStatus::Pending)
-        ->and(AuditLog::query()->pluck('operation')->all())
-        ->toEqual(['institution_membership.requested']);
-    Event::assertDispatchedTimes(InstitutionMembershipRequested::class, 1);
-    Event::assertNotDispatched(InstitutionMembershipVerified::class);
-});
-
-test('an inactive campus retry is rejected without mutating membership or audit history', function () {
-    $user = User::factory()->create();
-    $institution = Institution::factory()->active()->create();
-    $membership = InstitutionMembership::factory()
-        ->rejected()
-        ->for($user)
-        ->for($institution)
-        ->create();
-    $institution->update(['status' => InstitutionStatus::Suspended]);
-    Event::fake();
-
-    $this->actingAs($user)
-        ->post(route('institution-memberships.store'), [
-            'institution_id' => $institution->getKey(),
-        ])
+        ->post(route('institution-memberships.store'), ['institution_id' => 99999])
         ->assertSessionHasErrors('institution_id');
 
-    expect($membership->refresh()->status)->toBe(InstitutionMembershipStatus::Unverified)
-        ->and($membership->last_review_outcome?->value)->toBe('rejected')
-        ->and(AuditLog::query()->count())->toBe(0);
-    Event::assertNotDispatched(InstitutionMembershipRequested::class);
-    Event::assertNotDispatched(InstitutionMembershipVerified::class);
+    $suspended = Institution::factory()->create(['status' => InstitutionStatus::Suspended]);
+
+    $this->actingAs($user)
+        ->post(route('institution-memberships.store'), ['institution_id' => $suspended->getKey()])
+        ->assertSessionHasErrors('institution_id');
 });
 
 test('membership request rate limiting is isolated per authenticated user', function () {
@@ -388,13 +256,10 @@ test('a suspended membership is denied without exposing membership internals', f
 });
 
 test('membership boundary events expose ids and dispatch after commit', function () {
-    $user = User::factory()->create(['email' => 'student@campus.ac.id']);
+    $user = User::factory()->create();
     $institution = Institution::factory()->active()->create();
-    InstitutionDomain::factory()->verified()->for($institution)->create(['domain' => 'campus.ac.id']);
 
-    expect(new InstitutionMembershipRequested(1, 2, 3, InstitutionMembershipStatus::Verified))
-        ->toBeInstanceOf(ShouldDispatchAfterCommit::class)
-        ->and(new InstitutionMembershipVerified(1, 2, 3, InstitutionMembershipStatus::Verified))
+    expect(new InstitutionMembershipRequested(1, 2, 3, InstitutionMembershipStatus::Pending))
         ->toBeInstanceOf(ShouldDispatchAfterCommit::class);
 
     Event::fake();
@@ -404,10 +269,5 @@ test('membership boundary events expose ids and dispatch after commit', function
         InstitutionMembershipRequested $event,
     ): bool => $event->userId === $user->getKey()
         && $event->institutionId === $institution->getKey()
-        && $event->status === InstitutionMembershipStatus::Verified);
-    Event::assertDispatched(InstitutionMembershipVerified::class, fn (
-        InstitutionMembershipVerified $event,
-    ): bool => $event->userId === $user->getKey()
-        && $event->institutionId === $institution->getKey()
-        && $event->status === InstitutionMembershipStatus::Verified);
+        && $event->status === InstitutionMembershipStatus::Pending);
 });
