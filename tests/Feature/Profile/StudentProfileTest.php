@@ -9,6 +9,7 @@ use App\Models\ProfileSkill;
 use App\Models\SkillTaxonomy;
 use App\Models\StudentProfile;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
 function verifiedStudentForProfileTests(): array
 {
@@ -58,7 +59,8 @@ test('verified student can create a tenant-scoped profile with taxonomy and avai
         ->assertJsonPath('data.skills.0.taxonomy_id', $skill->getKey())
         ->assertJsonPath('data.skills.0.proficiency', 'advanced')
         ->assertJsonPath('data.interests.0.taxonomy_id', $interest->getKey())
-        ->assertJsonPath('data.availability_windows.0.starts_at', '09:00:00');
+        ->assertJsonPath('data.availability_windows.0.starts_at', '09:00:00')
+        ->assertJsonStructure(['data' => ['updated_at']]);
 
     $profile = StudentProfile::query()->whereBelongsTo($student, 'user')->sole();
 
@@ -196,6 +198,77 @@ test('profile availability rejects overlapping windows without deleting existing
 
     expect($profile->availabilityWindows()->count())->toBe(1)
         ->and($profile->availabilityWindows()->first()->starts_at)->toBe('09:00:00');
+});
+
+test('profile updates reject values outside realistic ranges without changing existing data', function () {
+    [$student, $institution] = verifiedStudentForProfileTests();
+    $profile = StudentProfile::factory()->for($student)->for($institution)->create([
+        'bio' => 'Bio yang tetap valid.',
+        'study_year' => 3,
+    ]);
+
+    $this->actingAs($student)
+        ->patchJson(route('student-profiles.update', $profile), [
+            'bio' => str_repeat('x', 2001),
+            'study_year' => 0,
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['bio', 'study_year']);
+
+    expect($profile->refresh()->bio)->toBe('Bio yang tetap valid.')
+        ->and($profile->study_year)->toBe(3);
+});
+
+test('stale profile writes are rejected without changing profile, consent, or audit history', function () {
+    [$student, $institution] = verifiedStudentForProfileTests();
+    $profile = StudentProfile::factory()->for($student)->for($institution)->create();
+    $profile->availabilityWindows()->create([
+        'day_of_week' => 1,
+        'starts_at' => '09:00:00',
+        'ends_at' => '10:00:00',
+        'timezone' => 'Asia/Jakarta',
+    ]);
+    $expectedUpdatedAt = $profile->updated_at->toIso8601String();
+    $nextUpdatedAt = $profile->updated_at->copy()->addSecond();
+
+    Carbon::setTestNow($nextUpdatedAt);
+    $profile->forceFill(['bio' => 'Perubahan dari sesi lain.'])->save();
+    Carbon::setTestNow();
+
+    $auditCount = AuditLog::query()->count();
+
+    $this->actingAs($student)
+        ->patchJson(route('student-profiles.update', $profile), [
+            'bio' => 'Draft lama yang tidak boleh menimpa data terbaru.',
+            'expected_updated_at' => $expectedUpdatedAt,
+        ])
+        ->assertConflict();
+
+    $this->actingAs($student)
+        ->patchJson(route('student-profiles.visibility.update', $profile), [
+            'recruiter_discoverable' => true,
+            'expected_updated_at' => $expectedUpdatedAt,
+        ])
+        ->assertConflict();
+
+    $this->actingAs($student)
+        ->putJson(route('student-profiles.availability.update', $profile), [
+            'timezone' => 'Asia/Jakarta',
+            'windows' => [[
+                'day_of_week' => 2,
+                'starts_at' => '13:00',
+                'ends_at' => '15:00',
+            ]],
+            'expected_updated_at' => $expectedUpdatedAt,
+        ])
+        ->assertConflict();
+
+    expect($profile->refresh()->bio)->toBe('Perubahan dari sesi lain.')
+        ->and($profile->recruiter_discoverable)->toBeFalse()
+        ->and($profile->availabilityWindows()->count())->toBe(1)
+        ->and($profile->availabilityWindows()->first()->day_of_week)->toBe(1)
+        ->and(app(ConsentRecorder::class)->current($student, 'recruiter.discoverability'))->toBeNull()
+        ->and(AuditLog::query()->count())->toBe($auditCount);
 });
 
 test('profile policy denies another tenant and an unverified student', function () {

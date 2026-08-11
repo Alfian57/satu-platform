@@ -19,6 +19,7 @@ final class ReplaceStudentProfileAvailability
 {
     public function __construct(
         private readonly AuditRecorder $audit,
+        private readonly EnsureStudentProfileIsFresh $ensureFresh,
     ) {}
 
     /**
@@ -35,6 +36,7 @@ final class ReplaceStudentProfileAvailability
                 ->lockForUpdate()
                 ->whereKey($studentProfile->getKey())
                 ->firstOrFail();
+            $this->ensureFresh->handle($profile, $data['expected_updated_at'] ?? null);
             $fallbackTimezone = $data['timezone']
                 ?? $profile->institution()->value('timezone')
                 ?? 'UTC';

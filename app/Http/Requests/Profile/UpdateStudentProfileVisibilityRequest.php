@@ -32,6 +32,7 @@ class UpdateStudentProfileVisibilityRequest extends FormRequest
                 Rule::enum(PortfolioVisibility::class),
             ],
             'recruiter_discoverable' => ['sometimes', 'boolean'],
+            'expected_updated_at' => ['sometimes', 'nullable', 'date'],
         ];
     }
 

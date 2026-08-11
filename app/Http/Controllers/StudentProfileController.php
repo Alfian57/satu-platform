@@ -89,6 +89,7 @@ class StudentProfileController extends Controller
 
         return [
             'id' => $profile->getKey(),
+            'updated_at' => $profile->updated_at->toIso8601String(),
             'bio' => $profile->bio,
             'study_program' => $profile->study_program,
             'study_year' => $profile->study_year,

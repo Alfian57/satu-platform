@@ -7,6 +7,7 @@ use App\Models\InstitutionMembership;
 use App\Models\PhoneNumber;
 use App\Models\StudentProfile;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
 test('student can submit an affiliation request from the onboarding ledger', function () {
     $user = User::factory()->create();
@@ -58,6 +59,167 @@ test('verified student can save a minimum profile from the onboarding ledger', f
 
     expect(StudentProfile::query()->whereBelongsTo($user, 'user')->whereBelongsTo($institution, 'institution')->exists())
         ->toBeTrue();
+});
+
+test('student can resume a profile, update its basics, and save visibility choices', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->active()->create();
+    InstitutionMembership::factory()
+        ->verifiedByApprovedDomain()
+        ->for($user)
+        ->for($institution)
+        ->create();
+    $profile = StudentProfile::factory()->for($user)->for($institution)->create([
+        'bio' => 'Bio sebelum dilanjutkan.',
+        'study_program' => 'Informatika',
+        'study_year' => 2,
+    ]);
+    $this->actingAs($user);
+
+    visit(route('onboarding.show'))
+        ->wait(0.3)
+        ->assertValue('#profile-bio', 'Bio sebelum dilanjutkan.')
+        ->assertValue('#study-program', 'Informatika')
+        ->assertSelected('#study-year', '2')
+        ->fill('#profile-bio', 'Bio yang diperbarui dari sesi onboarding.')
+        ->press('Simpan profil inti')
+        ->wait(0.3)
+        ->assertSee('Perubahan bagian ini sudah tersimpan.')
+        ->radio('portfolio_visibility', 'recruiter')
+        ->check('#recruiter-discoverable')
+        ->press('Simpan visibilitas')
+        ->wait(0.3)
+        ->assertSee('Perubahan bagian ini sudah tersimpan.')
+        ->assertRadioSelected('portfolio_visibility', 'recruiter')
+        ->assertChecked('#recruiter-discoverable')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+
+    expect($profile->refresh()->bio)->toBe(
+        'Bio yang diperbarui dari sesi onboarding.',
+    )
+        ->and($profile->portfolio_visibility->value)->toBe('recruiter')
+        ->and($profile->recruiter_discoverable)->toBeTrue();
+});
+
+test('stale profile drafts stay visible and recover by loading the latest data', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->active()->create();
+    InstitutionMembership::factory()
+        ->verifiedByApprovedDomain()
+        ->for($user)
+        ->for($institution)
+        ->create();
+    $profile = StudentProfile::factory()->for($user)->for($institution)->create([
+        'bio' => 'Bio versi pertama.',
+        'study_program' => 'Informatika',
+        'study_year' => 2,
+    ]);
+    $this->actingAs($user);
+
+    $page = visit(route('onboarding.show'))
+        ->wait(0.3)
+        ->fill('#profile-bio', 'Draft lokal yang belum disimpan.');
+
+    Carbon::setTestNow($profile->updated_at->copy()->addSecond());
+    $profile->forceFill(['bio' => 'Bio terbaru dari sesi lain.'])->save();
+    Carbon::setTestNow();
+
+    $page->press('Simpan profil inti')
+        ->assertSee('Data profil berubah')
+        ->assertValue('#profile-bio', 'Draft lokal yang belum disimpan.')
+        ->wait(0.1)
+        ->assertScript(
+            'document.activeElement?.matches(\'[data-test="profile-action-recovery-focus"]\')',
+            true,
+        )
+        ->press('Muat data terbaru')
+        ->wait(0.4)
+        ->assertValue('#profile-bio', 'Bio terbaru dari sesi lain.')
+        ->assertDontSee('Data profil berubah')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
+test('profile network failure preserves the draft and offers a focused retry', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->active()->create();
+    InstitutionMembership::factory()
+        ->verifiedByApprovedDomain()
+        ->for($user)
+        ->for($institution)
+        ->create();
+    $profile = StudentProfile::factory()->for($user)->for($institution)->create([
+        'bio' => 'Bio awal.',
+        'study_program' => 'Informatika',
+        'study_year' => 2,
+    ]);
+    $this->actingAs($user);
+
+    $page = visit(route('onboarding.show'))
+        ->wait(0.3)
+        ->fill('#profile-bio', 'Draft saat koneksi terputus.');
+
+    $page->script(<<<'JS'
+        () => {
+            const originalSend = XMLHttpRequest.prototype.send;
+
+            XMLHttpRequest.prototype.send = function () {
+                XMLHttpRequest.prototype.send = originalSend;
+                window.queueMicrotask(() => {
+                    this.dispatchEvent(new ProgressEvent('error'));
+                });
+            };
+        }
+        JS);
+
+    $page->press('Simpan profil inti')
+        ->assertSee('Perubahan belum tersimpan')
+        ->assertValue('#profile-bio', 'Draft saat koneksi terputus.')
+        ->wait(0.1)
+        ->assertScript(
+            'document.activeElement?.matches(\'[data-test="profile-action-recovery-focus"]\')',
+            true,
+        )
+        ->press('Coba simpan lagi')
+        ->wait(0.3)
+        ->assertSee('Perubahan bagian ini sudah tersimpan.')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs();
+
+    expect($profile->refresh()->bio)->toBe('Draft saat koneksi terputus.');
+});
+
+test('profile validation errors return focus to an accessible error summary', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->active()->create();
+    InstitutionMembership::factory()
+        ->verifiedByApprovedDomain()
+        ->for($user)
+        ->for($institution)
+        ->create();
+    StudentProfile::factory()->for($user)->for($institution)->create([
+        'bio' => 'Bio awal.',
+        'study_program' => 'Informatika',
+        'study_year' => 2,
+    ]);
+    $this->actingAs($user);
+
+    visit(route('onboarding.show'))
+        ->wait(0.3)
+        ->fill('#study-program', str_repeat('Program studi ', 22))
+        ->press('Simpan profil inti')
+        ->assertPresent('@profile-error-summary')
+        ->wait(0.1)
+        ->assertScript(
+            "document.activeElement?.matches('[data-test=\"profile-error-summary\"]')",
+            true,
+        )
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
 });
 
 test('profile onboarding remains readable at supported viewports', function (

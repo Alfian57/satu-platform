@@ -26,6 +26,9 @@ class UpdateStudentProfileRequest extends FormRequest
      */
     public function rules(): array
     {
-        return $this->studentProfileRules();
+        return [
+            ...$this->studentProfileRules(),
+            'expected_updated_at' => ['sometimes', 'nullable', 'date'],
+        ];
     }
 }
