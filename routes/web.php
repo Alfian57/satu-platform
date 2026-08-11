@@ -1,16 +1,33 @@
 <?php
 
+use App\Http\Controllers\AcademicCreditMappingController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\RecruiterContactRequestController;
 use App\Http\Controllers\RosterImportController;
 use App\Http\Controllers\SavedCandidatesController;
+use App\Http\Controllers\SkillTaxonomyController;
+use App\Http\Controllers\StudentContactRequestController;
 use App\Http\Controllers\TalentSearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::prefix('recruiter/talent')->name('recruiter.talent.')->group(function () {
+        // Index page for saved candidates
+        Route::get('saved', [SavedCandidatesController::class, 'index'])
+            ->name('saved');
+
+        // Save candidate
+        Route::post('candidates/{id}/save', [SavedCandidatesController::class, 'store'])
+            ->name('candidates.save');
+
+        // Unsave candidate
+        Route::delete('candidates/{id}/unsave', [SavedCandidatesController::class, 'destroy'])
+            ->name('candidates.unsave');
+    });
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
 
     Route::get('onboarding', [OnboardingController::class, 'show'])
@@ -23,8 +40,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('recruiter/talent/search', [TalentSearchController::class, 'index'])
         ->name('recruiter.talent.search');
 
-    Route::get('recruiter/talent/saved', [SavedCandidatesController::class, 'index'])
-        ->name('recruiter.talent.saved');
+    Route::get('recruiter/talent/contact-requests', [RecruiterContactRequestController::class, 'index'])
+        ->name('recruiter.talent.contact-requests.index');
 
     Route::get('recruiter/talent/candidates/{id}', [TalentSearchController::class, 'show'])
         ->name('recruiter.talent.candidates.show');
@@ -44,11 +61,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('notification-preferences', [NotificationController::class, 'updatePreference'])
         ->name('notification-preferences.update');
 
-    Route::post('recruiter/talent/candidates/{id}/save', [SavedCandidatesController::class, 'store'])
-        ->name('recruiter.talent.candidates.save');
+    Route::post('recruiter/talent/candidates/{id}/contact', [RecruiterContactRequestController::class, 'store'])
+        ->name('recruiter.talent.candidates.contact');
 
-    Route::delete('recruiter/talent/candidates/{id}/save', [SavedCandidatesController::class, 'destroy'])
-        ->name('recruiter.talent.candidates.unsave');
+    Route::delete('recruiter/talent/contact-requests/{id}', [RecruiterContactRequestController::class, 'cancel'])
+        ->name('recruiter.talent.contact-requests.cancel');
+
+    Route::get('student/contact-requests', [StudentContactRequestController::class, 'index'])
+        ->name('student.contact-requests.index');
+
+    Route::post('student/contact-requests/{id}/accept', [StudentContactRequestController::class, 'accept'])
+        ->name('student.contact-requests.accept');
+
+    Route::post('student/contact-requests/{id}/decline', [StudentContactRequestController::class, 'decline'])
+        ->name('student.contact-requests.decline');
+
+    Route::get('campus/credit-mappings', [AcademicCreditMappingController::class, 'index'])
+        ->name('campus.credit-mappings.index');
+
+    Route::post('campus/credit-mappings', [AcademicCreditMappingController::class, 'store'])
+        ->name('campus.credit-mappings.store');
+
+    Route::post('campus/credit-mappings/{id}/activate', [AcademicCreditMappingController::class, 'activate'])
+        ->name('campus.credit-mappings.activate');
+
+    Route::post('campus/credit-mappings/{id}/retire', [AcademicCreditMappingController::class, 'retire'])
+        ->name('campus.credit-mappings.retire');
 
     Route::get('campus/{institution}/roster', [RosterImportController::class, 'show'])
         ->name('campus.roster.show');
@@ -58,6 +96,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('campus/{institution}/roster', [RosterImportController::class, 'store'])
         ->name('campus.roster.store');
+
+    Route::get('api/skills/taxonomy', [SkillTaxonomyController::class, 'index'])
+        ->name('skills.taxonomy.index');
 });
 
 require __DIR__.'/settings.php';

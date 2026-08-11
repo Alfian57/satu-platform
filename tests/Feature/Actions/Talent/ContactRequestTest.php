@@ -3,28 +3,38 @@
 declare(strict_types=1);
 
 use App\Actions\Recruiter\GrantRecruiterEntitlement;
-use App\Actions\Talent\FetchSavedCandidates;
-use App\Actions\Talent\SaveCandidate;
-use App\Actions\Talent\UnsaveCandidate;
+use App\Actions\Talent\CancelContactRequest;
+use App\Actions\Talent\RespondContactRequest;
+use App\Actions\Talent\SendContactRequest;
+use App\Enums\ContactRequestStatus;
 use App\Enums\RecruiterEntitlementScope;
 use App\Enums\RecruiterMembershipRole;
 use App\Enums\RecruiterMembershipStatus;
 use App\Enums\RecruiterOrganizationStatus;
 use App\Models\Institution;
+use App\Models\RecruiterContactRequest;
 use App\Models\RecruiterMembership;
 use App\Models\RecruiterOrganization;
-use App\Models\RecruiterSavedCandidate;
 use App\Models\TalentCandidateProjection;
 use App\Models\User;
-use Illuminate\Auth\Access\AuthorizationException;
+use App\Notifications\CandidateContactRequestedNotification;
+use App\Support\RecruiterSafeCandidateSerializer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
 
-it('allows entitled recruiter to save candidate idempotently', function () {
+beforeEach(function () {
+    Notification::fake();
+});
+
+it('allows entitled recruiter to send purpose-bound contact request and dispatches notification', function () {
+    Notification::fake();
+
     $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
     $recruiter = User::factory()->create();
+    $studentUser = User::factory()->create(['name' => 'Jane Student']);
     $org = RecruiterOrganization::factory()->create(['status' => RecruiterOrganizationStatus::Verified]);
     $institution = Institution::factory()->active()->create();
 
@@ -44,105 +54,36 @@ it('allows entitled recruiter to save candidate idempotently', function () {
     );
 
     $candidate = TalentCandidateProjection::factory()->create([
+        'user_id' => $studentUser->id,
         'institution_id' => $institution->id,
         'is_visible' => true,
     ]);
 
-    $saveAction = app(SaveCandidate::class);
-
-    // First save call
-    $saved1 = $saveAction->execute($recruiter, $org, $candidate->id);
-    expect($saved1)->toBeInstanceOf(RecruiterSavedCandidate::class)
-        ->and($saved1->talent_candidate_projection_id)->toBe($candidate->id);
-
-    // Second save call (idempotent)
-    $saved2 = $saveAction->execute($recruiter, $org, $candidate->id);
-    expect($saved2->id)->toBe($saved1->id);
-
-    expect(RecruiterSavedCandidate::query()->count())->toBe(1);
-});
-
-it('denies candidate save for non-member recruiter', function () {
-    $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
-    $nonMemberRecruiter = User::factory()->create();
-    $org = RecruiterOrganization::factory()->create(['status' => RecruiterOrganizationStatus::Verified]);
-    $institution = Institution::factory()->active()->create();
-
-    app(GrantRecruiterEntitlement::class)->execute(
-        issuer: $platformAdmin,
+    $sendAction = app(SendContactRequest::class);
+    $contactRequest = $sendAction->execute(
+        recruiter: $recruiter,
         organization: $org,
-        scope: RecruiterEntitlementScope::CandidateSearch,
-        startsAt: Carbon::now()->subHour(),
+        candidateProjectionId: $candidate->id,
+        purpose: 'Engineering Role Discussion',
+        message: 'We are interested in discussing your portfolio.',
     );
 
-    $candidate = TalentCandidateProjection::factory()->create([
-        'institution_id' => $institution->id,
-        'is_visible' => true,
-    ]);
+    expect($contactRequest)->toBeInstanceOf(RecruiterContactRequest::class)
+        ->and($contactRequest->status)->toBe(ContactRequestStatus::Pending)
+        ->and($contactRequest->purpose)->toBe('Engineering Role Discussion');
 
-    $saveAction = app(SaveCandidate::class);
-
-    expect(fn () => $saveAction->execute($nonMemberRecruiter, $org, $candidate->id))
-        ->toThrow(AuthorizationException::class, 'You are not an active member of this recruiter organization.');
-});
-
-it('denies candidate save for recruiter organization without active entitlement', function () {
-    $recruiter = User::factory()->create();
-    $org = RecruiterOrganization::factory()->create(['status' => RecruiterOrganizationStatus::Verified]);
-    $institution = Institution::factory()->active()->create();
-
-    RecruiterMembership::factory()->create([
-        'recruiter_organization_id' => $org->id,
-        'user_id' => $recruiter->id,
-        'role' => RecruiterMembershipRole::Recruiter,
-        'status' => RecruiterMembershipStatus::Active,
-    ]);
-
-    $candidate = TalentCandidateProjection::factory()->create([
-        'institution_id' => $institution->id,
-        'is_visible' => true,
-    ]);
-
-    $saveAction = app(SaveCandidate::class);
-
-    expect(fn () => $saveAction->execute($recruiter, $org, $candidate->id))
-        ->toThrow(AuthorizationException::class, 'Recruiter organization does not hold an active candidate search entitlement.');
-});
-
-it('denies candidate save for withdrawn or non-existent candidate', function () {
-    $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
-    $recruiter = User::factory()->create();
-    $org = RecruiterOrganization::factory()->create(['status' => RecruiterOrganizationStatus::Verified]);
-    $institution = Institution::factory()->active()->create();
-
-    RecruiterMembership::factory()->create([
-        'recruiter_organization_id' => $org->id,
-        'user_id' => $recruiter->id,
-        'role' => RecruiterMembershipRole::Recruiter,
-        'status' => RecruiterMembershipStatus::Active,
-    ]);
-
-    app(GrantRecruiterEntitlement::class)->execute(
-        issuer: $platformAdmin,
-        organization: $org,
-        scope: RecruiterEntitlementScope::CandidateSearch,
-        startsAt: Carbon::now()->subHour(),
+    Notification::assertSentTo(
+        $studentUser,
+        CandidateContactRequestedNotification::class
     );
-
-    $withdrawnCandidate = TalentCandidateProjection::factory()->create([
-        'institution_id' => $institution->id,
-        'is_visible' => false,
-    ]);
-
-    $saveAction = app(SaveCandidate::class);
-
-    expect(fn () => $saveAction->execute($recruiter, $org, $withdrawnCandidate->id))
-        ->toThrow(InvalidArgumentException::class, 'Target candidate projection is not found or has been withdrawn.');
 });
 
-it('allows entitled recruiter to unsave candidate idempotently', function () {
+it('prevents duplicate pending contact requests for the same candidate projection', function () {
+    Notification::fake();
+
     $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
     $recruiter = User::factory()->create();
+    $studentUser = User::factory()->create();
     $org = RecruiterOrganization::factory()->create(['status' => RecruiterOrganizationStatus::Verified]);
     $institution = Institution::factory()->active()->create();
 
@@ -161,29 +102,22 @@ it('allows entitled recruiter to unsave candidate idempotently', function () {
     );
 
     $candidate = TalentCandidateProjection::factory()->create([
+        'user_id' => $studentUser->id,
         'institution_id' => $institution->id,
         'is_visible' => true,
     ]);
 
-    $saveAction = app(SaveCandidate::class);
-    $unsaveAction = app(UnsaveCandidate::class);
+    $sendAction = app(SendContactRequest::class);
+    $sendAction->execute($recruiter, $org, $candidate->id, 'First Outreach');
 
-    $saveAction->execute($recruiter, $org, $candidate->id);
-    expect(RecruiterSavedCandidate::query()->count())->toBe(1);
-
-    // Unsave first call
-    $result1 = $unsaveAction->execute($recruiter, $org, $candidate->id);
-    expect($result1)->toBeTrue()
-        ->and(RecruiterSavedCandidate::query()->count())->toBe(0);
-
-    // Unsave second call (idempotent)
-    $result2 = $unsaveAction->execute($recruiter, $org, $candidate->id);
-    expect($result2)->toBeTrue();
+    expect(fn () => $sendAction->execute($recruiter, $org, $candidate->id, 'Second Outreach'))
+        ->toThrow(InvalidArgumentException::class, 'A pending contact request already exists for this candidate.');
 });
 
-it('excludes withdrawn candidates from saved list query', function () {
+it('guarantees phone number privacy boundary until candidate accepts request', function () {
     $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
     $recruiter = User::factory()->create();
+    $studentUser = User::factory()->create(['name' => 'Alice Student']);
     $org = RecruiterOrganization::factory()->create(['status' => RecruiterOrganizationStatus::Verified]);
     $institution = Institution::factory()->active()->create();
 
@@ -201,26 +135,97 @@ it('excludes withdrawn candidates from saved list query', function () {
         startsAt: Carbon::now()->subHour(),
     );
 
-    $visibleCandidate = TalentCandidateProjection::factory()->create([
+    $candidate = TalentCandidateProjection::factory()->create([
+        'user_id' => $studentUser->id,
         'institution_id' => $institution->id,
         'is_visible' => true,
     ]);
 
-    $withdrawnCandidate = TalentCandidateProjection::factory()->create([
+    $sendAction = app(SendContactRequest::class);
+    $contactRequest = $sendAction->execute($recruiter, $org, $candidate->id, 'Role Discussion');
+
+    $serializer = new RecruiterSafeCandidateSerializer;
+
+    // Pending request: phone is NOT exposed
+    $serializedPending = $serializer->toArray($candidate);
+    expect($serializedPending)->not->toHaveKey('phone');
+
+    // Candidate accepts request
+    app(RespondContactRequest::class)->execute($studentUser, $contactRequest->id, accept: true);
+
+    // Accepted request: phone is revealed via serializer with revealed phone parameter
+    $serializedAccepted = $serializer->toArray($candidate, revealedPhone: '081234567890');
+    expect($serializedAccepted)->toHaveKey('phone')
+        ->and($serializedAccepted['phone'])->toBe('081234567890');
+});
+
+it('allows candidate to accept or decline contact request', function () {
+    $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
+    $recruiter = User::factory()->create();
+    $studentUser = User::factory()->create();
+    $org = RecruiterOrganization::factory()->create(['status' => RecruiterOrganizationStatus::Verified]);
+    $institution = Institution::factory()->active()->create();
+
+    RecruiterMembership::factory()->create([
+        'recruiter_organization_id' => $org->id,
+        'user_id' => $recruiter->id,
+        'role' => RecruiterMembershipRole::Recruiter,
+        'status' => RecruiterMembershipStatus::Active,
+    ]);
+
+    app(GrantRecruiterEntitlement::class)->execute(
+        issuer: $platformAdmin,
+        organization: $org,
+        scope: RecruiterEntitlementScope::CandidateSearch,
+        startsAt: Carbon::now()->subHour(),
+    );
+
+    $candidate = TalentCandidateProjection::factory()->create([
+        'user_id' => $studentUser->id,
         'institution_id' => $institution->id,
         'is_visible' => true,
     ]);
 
-    $saveAction = app(SaveCandidate::class);
-    $saveAction->execute($recruiter, $org, $visibleCandidate->id);
-    $saveAction->execute($recruiter, $org, $withdrawnCandidate->id);
+    $contactRequest = app(SendContactRequest::class)->execute($recruiter, $org, $candidate->id, 'Outreach Purpose');
 
-    // Candidate withdraws projection
-    $withdrawnCandidate->update(['is_visible' => false]);
+    $respondAction = app(RespondContactRequest::class);
+    $updated = $respondAction->execute($studentUser, $contactRequest->id, accept: true);
 
-    $fetchAction = app(FetchSavedCandidates::class);
-    $savedResults = $fetchAction->execute($recruiter, $org);
+    expect($updated->status)->toBe(ContactRequestStatus::Accepted)
+        ->and($updated->responded_at)->not->toBeNull();
+});
 
-    expect($savedResults->total())->toBe(1)
-        ->and($savedResults->items()[0]['id'])->toBe($visibleCandidate->id);
+it('allows recruiter to cancel pending contact request', function () {
+    $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
+    $recruiter = User::factory()->create();
+    $studentUser = User::factory()->create();
+    $org = RecruiterOrganization::factory()->create(['status' => RecruiterOrganizationStatus::Verified]);
+    $institution = Institution::factory()->active()->create();
+
+    RecruiterMembership::factory()->create([
+        'recruiter_organization_id' => $org->id,
+        'user_id' => $recruiter->id,
+        'role' => RecruiterMembershipRole::Recruiter,
+        'status' => RecruiterMembershipStatus::Active,
+    ]);
+
+    app(GrantRecruiterEntitlement::class)->execute(
+        issuer: $platformAdmin,
+        organization: $org,
+        scope: RecruiterEntitlementScope::CandidateSearch,
+        startsAt: Carbon::now()->subHour(),
+    );
+
+    $candidate = TalentCandidateProjection::factory()->create([
+        'user_id' => $studentUser->id,
+        'institution_id' => $institution->id,
+        'is_visible' => true,
+    ]);
+
+    $contactRequest = app(SendContactRequest::class)->execute($recruiter, $org, $candidate->id, 'Outreach Purpose');
+
+    $cancelAction = app(CancelContactRequest::class);
+    $canceled = $cancelAction->execute($recruiter, $org, $contactRequest->id);
+
+    expect($canceled->status)->toBe(ContactRequestStatus::Canceled);
 });

@@ -48,6 +48,14 @@ class SandboxGateway implements AcademicGateway
                 'error' => 'validation_error',
                 'message' => 'Invalid mapping payload.',
             ], 422),
+            'auth_error' => Http::response([
+                'error' => 'unauthorized',
+                'message' => 'Provider rejected the credentials.',
+            ], 401),
+            'rate_limit' => Http::response([
+                'error' => 'rate_limit',
+                'message' => 'Too many requests.',
+            ], 429),
             'duplicate' => Http::response([
                 'error' => 'conflict',
                 'message' => 'Record already exists.',

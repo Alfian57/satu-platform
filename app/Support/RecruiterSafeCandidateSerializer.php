@@ -13,11 +13,11 @@ class RecruiterSafeCandidateSerializer
      *
      * @return array<string, mixed>
      */
-    public function toArray(TalentCandidateProjection $projection): array
+    public function toArray(TalentCandidateProjection $projection, ?string $revealedPhone = null): array
     {
         $projection->loadMissing('institution');
 
-        return [
+        $data = [
             'id' => $projection->id,
             'headline' => $projection->headline,
             'bio' => $projection->bio,
@@ -28,5 +28,11 @@ class RecruiterSafeCandidateSerializer
             'verified_at' => $projection->verified_at?->toIso8601String(),
             'institution_name' => $projection->institution?->name,
         ];
+
+        if ($revealedPhone !== null) {
+            $data['phone'] = $revealedPhone;
+        }
+
+        return $data;
     }
 }
