@@ -25,7 +25,10 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique('integration_connection_id');
-            $table->index(['institution_id', 'integration_connection_id']);
+            $table->index(
+                ['institution_id', 'integration_connection_id'],
+                'integration_metrics_institution_connection_idx',
+            );
         });
     }
 

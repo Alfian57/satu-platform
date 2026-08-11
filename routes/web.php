@@ -10,6 +10,7 @@ use App\Http\Controllers\RosterImportController;
 use App\Http\Controllers\SavedCandidatesController;
 use App\Http\Controllers\SkillTaxonomyController;
 use App\Http\Controllers\StudentContactRequestController;
+use App\Http\Controllers\StudentProfileController;
 use App\Http\Controllers\TalentSearchController;
 use Illuminate\Support\Facades\Route;
 
@@ -120,6 +121,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('api/skills/taxonomy', [SkillTaxonomyController::class, 'index'])
         ->name('skills.taxonomy.index');
+
+    Route::prefix('student-profiles')->name('student-profiles.')->group(function () {
+        Route::post('/', [StudentProfileController::class, 'store'])
+            ->name('store');
+        Route::get('/{studentProfile}', [StudentProfileController::class, 'show'])
+            ->name('show');
+        Route::patch('/{studentProfile}', [StudentProfileController::class, 'update'])
+            ->name('update');
+        Route::patch('/{studentProfile}/visibility', [StudentProfileController::class, 'updateVisibility'])
+            ->name('visibility.update');
+        Route::put('/{studentProfile}/availability', [StudentProfileController::class, 'replaceAvailability'])
+            ->name('availability.update');
+    });
 });
 
 require __DIR__.'/settings.php';

@@ -8,6 +8,7 @@ use Database\Factories\SkillTaxonomyFactory;
 use Illuminate\Database\Eloquent\Attributes\Guarded;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -33,5 +34,21 @@ class SkillTaxonomy extends Model
         return [
             'is_verified' => 'boolean',
         ];
+    }
+
+    /**
+     * @return HasMany<ProfileSkill, $this>
+     */
+    public function profileSkills(): HasMany
+    {
+        return $this->hasMany(ProfileSkill::class);
+    }
+
+    /**
+     * @return HasMany<ProfileInterest, $this>
+     */
+    public function profileInterests(): HasMany
+    {
+        return $this->hasMany(ProfileInterest::class);
     }
 }

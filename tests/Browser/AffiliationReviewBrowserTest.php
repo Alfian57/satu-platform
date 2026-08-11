@@ -124,7 +124,9 @@ test('deferred queue exposes a stable ten row skeleton before content', function
     browserPendingAffiliation($institution);
     $this->actingAs($reviewer);
 
-    $page = visit(route('campus.affiliations.index', $institution))
+    $page = visit(route('campus.affiliations.index', $institution), [
+        'waitUntil' => 'domcontentloaded',
+    ])
         ->resize(1366, 768)
         ->assertPresent('@affiliation-queue-skeleton')
         ->screenshot(false, 'i06-affiliation-deferred-skeleton-1366x768');

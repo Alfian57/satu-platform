@@ -69,6 +69,14 @@ class Institution extends Model
     }
 
     /**
+     * @return HasMany<StudentProfile, $this>
+     */
+    public function studentProfiles(): HasMany
+    {
+        return $this->hasMany(StudentProfile::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
