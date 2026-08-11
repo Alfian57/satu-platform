@@ -5,6 +5,7 @@ use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\RecruiterContactRequestController;
+use App\Http\Controllers\RosterImportController;
 use App\Http\Controllers\SavedCandidatesController;
 use App\Http\Controllers\SkillTaxonomyController;
 use App\Http\Controllers\StudentContactRequestController;
@@ -86,6 +87,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('campus/credit-mappings/{id}/retire', [AcademicCreditMappingController::class, 'retire'])
         ->name('campus.credit-mappings.retire');
+
+    Route::get('campus/{institution}/roster', [RosterImportController::class, 'show'])
+        ->name('campus.roster.show');
+
+    Route::post('campus/{institution}/roster/preview', [RosterImportController::class, 'preview'])
+        ->name('campus.roster.preview');
+
+    Route::post('campus/{institution}/roster', [RosterImportController::class, 'store'])
+        ->name('campus.roster.store');
 
     Route::get('api/skills/taxonomy', [SkillTaxonomyController::class, 'index'])
         ->name('skills.taxonomy.index');
