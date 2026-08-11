@@ -5,6 +5,7 @@ use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\IntegrationConnection;
 use App\Models\IntegrationSync;
+use App\Models\IntegrationSyncEvent;
 use App\Models\User;
 
 function createCampusOperator(): array
@@ -31,11 +32,15 @@ test('campus operator can inspect the sync ledger', function () {
     $connection = IntegrationConnection::factory()->create([
         'institution_id' => $institution->id,
     ]);
-    IntegrationSync::factory()->create([
+    $sync = IntegrationSync::factory()->create([
         'integration_connection_id' => $connection->id,
         'source' => 'roster-2026.csv',
         'status' => IntegrationSyncStatus::Dead,
-        'error' => 'status pengiriman tidak sinkron',
+    ]);
+    IntegrationSyncEvent::factory()->create([
+        'integration_sync_id' => $sync->id,
+        'status' => IntegrationSyncStatus::Dead,
+        'reason' => 'status pengiriman tidak sinkron',
     ]);
 
     visit(route('campus.integrations.index'))

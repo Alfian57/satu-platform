@@ -43,7 +43,7 @@ class AcademicIntegrationController extends Controller
         if ($institution === null || ! $user->is_platform_admin && ! $this->isCampusOperator($user, $institution)) {
             return Inertia::render('campus/integrations', [
                 'connections' => [],
-                'syncs' => [],
+                'syncs' => $this->emptyPaginatedSyncs(),
                 'filters' => $this->emptyFilters(),
                 'forbidden' => true,
             ]);
@@ -222,6 +222,23 @@ class AcademicIntegrationController extends Controller
                 ->values()
                 ->all()),
             'connection_options' => [],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function emptyPaginatedSyncs(): array
+    {
+        return [
+            'data' => [],
+            'links' => [],
+            'meta' => [
+                'current_page' => 1,
+                'last_page' => 1,
+                'per_page' => 25,
+                'total' => 0,
+            ],
         ];
     }
 }

@@ -13,6 +13,7 @@ use App\Models\IntegrationSync;
 use App\Models\IntegrationSyncEvent;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
@@ -162,6 +163,8 @@ it('exposes a sanitized error and timeline but never a raw payload', function ()
 });
 
 it('lets a campus operator retry a dead sync', function () {
+    Queue::fake();
+
     $institution = Institution::factory()->active()->create();
     $operator = makeOperator($institution);
 
