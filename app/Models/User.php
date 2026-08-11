@@ -75,6 +75,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<Project, $this>
+     */
+    public function ownedProjects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'owner_id');
+    }
+
+    /**
      * @return HasMany<AuditLog, $this>
      */
     public function auditLogs(): HasMany

@@ -51,4 +51,12 @@ class SkillTaxonomy extends Model
     {
         return $this->hasMany(ProfileInterest::class);
     }
+
+    /**
+     * @return HasMany<ProjectRoleSkill, $this>
+     */
+    public function projectRoleSkills(): HasMany
+    {
+        return $this->hasMany(ProjectRoleSkill::class);
+    }
 }
