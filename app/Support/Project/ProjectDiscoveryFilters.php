@@ -128,8 +128,8 @@ final readonly class ProjectDiscoveryFilters
     {
         return [
             'q' => $this->search ?? '',
-            'status' => self::enumValues($this->statuses),
-            'visibility' => self::enumValues($this->visibilities),
+            'status' => self::enumValueList($this->statuses),
+            'visibility' => self::enumValueList($this->visibilities),
             'sort' => $this->sort,
             'direction' => $this->direction,
             'institution_id' => $this->institutionId,
@@ -213,6 +213,18 @@ final readonly class ProjectDiscoveryFilters
             static fn (\BackedEnum $enum): string => (string) $enum->value,
             $enums,
         ));
+    }
+
+    /**
+     * @param  list<\BackedEnum>  $enums
+     * @return list<string>
+     */
+    private static function enumValueList(array $enums): array
+    {
+        return array_map(
+            static fn (\BackedEnum $enum): string => (string) $enum->value,
+            $enums,
+        );
     }
 
     private static function defaultDirection(string $sort): string
