@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
+import { recover } from '@/routes';
 import { store } from '@/routes/login';
 
 type Props = {
@@ -35,10 +36,17 @@ export default function Login({ status }: Props) {
                                     name="username"
                                     required
                                     autoFocus
-                                    tabIndex={1}
                                     autoComplete="username"
                                     placeholder="nama_pengguna"
+                                    aria-describedby="username-help"
                                 />
+                                <p
+                                    id="username-help"
+                                    className="text-xs leading-relaxed text-muted-foreground"
+                                >
+                                    Nama pengguna hanya untuk masuk ke SATU,
+                                    bukan untuk profil publik.
+                                </p>
                                 <InputError message={errors.username} />
                             </div>
 
@@ -48,7 +56,6 @@ export default function Login({ status }: Props) {
                                     id="password"
                                     name="password"
                                     required
-                                    tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Password"
                                 />
@@ -56,18 +63,22 @@ export default function Login({ status }: Props) {
                             </div>
 
                             <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
-                                />
+                                <Checkbox id="remember" name="remember" />
                                 <Label htmlFor="remember">Ingat saya</Label>
+                            </div>
+
+                            <div className="flex justify-end text-sm">
+                                <TextLink
+                                    href={recover()}
+                                    data-test="forgot-password-link"
+                                >
+                                    Lupa password?
+                                </TextLink>
                             </div>
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full"
-                                tabIndex={4}
+                                className="mt-4 w-full cursor-pointer disabled:cursor-not-allowed"
                                 disabled={processing}
                                 data-test="login-button"
                             >
@@ -78,16 +89,17 @@ export default function Login({ status }: Props) {
 
                         <div className="text-center text-sm text-muted-foreground">
                             Belum punya akun?{' '}
-                            <TextLink href={register()} tabIndex={5}>
-                                Daftar
-                            </TextLink>
+                            <TextLink href={register()}>Daftar</TextLink>
                         </div>
                     </>
                 )}
             </Form>
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div
+                    role="status"
+                    className="rounded-md border border-verified/35 bg-verified-subtle px-3 py-2 text-center text-sm font-medium text-verified-subtle-foreground"
+                >
                     {status}
                 </div>
             )}
@@ -97,5 +109,6 @@ export default function Login({ status }: Props) {
 
 Login.layout = {
     title: 'Masuk ke akunmu',
-    description: 'Masukkan nama pengguna dan password untuk masuk.',
+    description:
+        'Masukkan nama pengguna dan password. Nomor WhatsApp dipakai untuk verifikasi dan recovery.',
 };

@@ -7,6 +7,7 @@ use App\Concerns\ProfileValidationRules;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -20,6 +21,15 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        if (
+            request()->hasSession()
+            && ! request()->session()->pull('auth.registration_verified', false)
+        ) {
+            throw ValidationException::withMessages([
+                'phone' => 'Verifikasi nomor WhatsApp diperlukan sebelum akun dibuat.',
+            ]);
+        }
+
         Validator::make($input, [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),

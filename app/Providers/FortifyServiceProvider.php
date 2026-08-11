@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Http\Controllers\Auth\AuthFlowController;
 use App\Http\Responses\Fortify\RegisterResponse;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -12,7 +13,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 use Laravel\Fortify\Fortify;
@@ -65,9 +65,16 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => Inertia::render('auth/register', [
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
-        ]));
+        Fortify::registerView(function (Request $request) {
+            if ($request->boolean('restart')) {
+                $request->session()->forget('auth.registration');
+            }
+
+            return Inertia::render(
+                'auth/register',
+                AuthFlowController::registrationPageProps($request),
+            );
+        });
 
         Fortify::confirmPasswordView(fn () => Inertia::render('auth/confirm-password'));
     }

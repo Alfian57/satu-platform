@@ -3,6 +3,7 @@
 use App\Http\Controllers\AcademicCreditMappingController;
 use App\Http\Controllers\AcademicIntegrationController;
 use App\Http\Controllers\AffiliationReviewController;
+use App\Http\Controllers\Auth\AuthFlowController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
@@ -17,6 +18,44 @@ use App\Http\Controllers\TalentSearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+
+Route::middleware('guest')->group(function () {
+    Route::get('register/verify', [AuthFlowController::class, 'showRegistrationVerification'])
+        ->name('register.otp');
+
+    Route::post('register/otp', [AuthFlowController::class, 'startRegistration'])
+        ->name('register.start');
+
+    Route::post('register/verify', [AuthFlowController::class, 'verifyRegistration'])
+        ->name('register.otp.verify');
+
+    Route::post('register/otp/resend', [AuthFlowController::class, 'resendRegistration'])
+        ->name('register.otp.resend');
+
+    Route::get('recover', [AuthFlowController::class, 'showRecovery'])
+        ->name('recover');
+
+    Route::post('recover', [AuthFlowController::class, 'startRecovery'])
+        ->name('recover.start');
+
+    Route::get('recover/verify', [AuthFlowController::class, 'showRecoveryVerification'])
+        ->name('recover.otp');
+
+    Route::post('recover/verify', [AuthFlowController::class, 'verifyRecovery'])
+        ->name('recover.otp.verify');
+
+    Route::post('recover/otp/resend', [AuthFlowController::class, 'resendRecovery'])
+        ->name('recover.otp.resend');
+
+    Route::get('recover/reset', [AuthFlowController::class, 'showRecoveryReset'])
+        ->name('recover.reset');
+
+    Route::post('recover/reset', [AuthFlowController::class, 'resetRecoveredPassword'])
+        ->name('recover.password.update');
+});
+
+Route::get('invitation/{token}', [AuthFlowController::class, 'showInvitation'])
+    ->name('invitation.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('recruiter/talent')->name('recruiter.talent.')->group(function () {

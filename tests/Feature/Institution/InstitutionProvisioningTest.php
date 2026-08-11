@@ -16,7 +16,6 @@ use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use RuntimeException;
 
 uses(RefreshDatabase::class);
 
@@ -272,19 +271,18 @@ test('invitation token is stored as hash, not plaintext', function () {
 });
 
 test('privileged role cannot be obtained via public registration', function () {
-    $response = $this->post(route('register.store'), [
+    $this->post(route('register.store'), [
         'name' => 'Attacker',
         'username' => 'attacker',
         'password' => 'password',
         'password_confirmation' => 'password',
     ]);
 
-    $this->assertAuthenticated();
+    $this->assertGuest();
 
     $user = User::query()->where('username', 'attacker')->first();
 
-    expect($user->institutionMemberships)->toBeEmpty()
-        ->and($user->is_platform_admin)->toBeFalse();
+    expect($user)->toBeNull();
 });
 
 /*
