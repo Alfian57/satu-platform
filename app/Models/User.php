@@ -67,6 +67,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<StudentProfile, $this>
+     */
+    public function studentProfiles(): HasMany
+    {
+        return $this->hasMany(StudentProfile::class);
+    }
+
+    /**
      * @return HasMany<AuditLog, $this>
      */
     public function auditLogs(): HasMany

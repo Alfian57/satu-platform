@@ -15,7 +15,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('recruiter_organization_id')->constrained('recruiter_organizations')->cascadeOnDelete();
             $table->foreignId('recruiter_user_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('talent_candidate_projection_id')->constrained('talent_candidate_projections')->cascadeOnDelete();
+            $table->foreignId('talent_candidate_projection_id');
+            $table->foreign('talent_candidate_projection_id', 'contact_requests_projection_fk')
+                ->references('id')
+                ->on('talent_candidate_projections')
+                ->cascadeOnDelete();
             $table->foreignId('candidate_user_id')->constrained('users')->cascadeOnDelete();
             $table->string('purpose');
             $table->text('message')->nullable();
@@ -24,9 +28,18 @@ return new class extends Migration
             $table->timestamp('expires_at');
             $table->timestamps();
 
-            $table->index(['recruiter_organization_id', 'status']);
-            $table->index(['candidate_user_id', 'status']);
-            $table->index(['expires_at', 'status']);
+            $table->index(
+                ['recruiter_organization_id', 'status'],
+                'contact_requests_org_status_idx',
+            );
+            $table->index(
+                ['candidate_user_id', 'status'],
+                'contact_requests_candidate_status_idx',
+            );
+            $table->index(
+                ['expires_at', 'status'],
+                'contact_requests_expiry_status_idx',
+            );
         });
     }
 
