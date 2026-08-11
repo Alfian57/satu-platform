@@ -749,6 +749,7 @@ function ReviewQueueRegion({
                         <div className="grid gap-2 border-t border-border pt-4">
                             <Button
                                 type="submit"
+                                data-test="affiliation-decision-submit"
                                 variant={
                                     decision === 'reject'
                                         ? 'destructive'

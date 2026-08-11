@@ -52,7 +52,7 @@ test('campus reviewer can lock and approve an affiliation from the docket', func
         ->press('Tinjau')
         ->assertSee('Berkas AF-'.$request->getKey())
         ->assertSee('Setujui afiliasi')
-        ->press('Setujui afiliasi')
+        ->press('@affiliation-decision-submit')
         ->assertSee('Keputusan tersimpan')
         ->assertSee('Tidak ada berkas pada filter ini')
         ->assertNoJavaScriptErrors()

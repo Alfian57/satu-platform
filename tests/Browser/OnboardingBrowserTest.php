@@ -312,7 +312,7 @@ test('student can complete the affiliation request with a keyboard', function ()
         ->assertSelected('institution_id', (string) $institution->id)
         ->keys('#institution_id', 'Tab')
         ->assertScript('document.activeElement?.matches(\'#nim\')', true)
-        ->keys('#nim', 'SATU-BROWSER-007')
+        ->typeSlowly('#nim', 'SATU-BROWSER-007', 10)
         ->keys('#nim', 'Tab')
         ->assertScript(
             'document.activeElement?.textContent?.includes(\'Lanjutkan nanti\')',
