@@ -55,6 +55,7 @@ test('campus reviewer can lock and approve an affiliation from the docket', func
         ->press('@affiliation-decision-submit')
         ->assertSee('Keputusan tersimpan')
         ->assertSee('Tidak ada berkas pada filter ini')
+        ->screenshot(true, 'i06-affiliation-approved-desktop-1280x720')
         ->assertNoJavaScriptErrors()
         ->assertNoConsoleLogs()
         ->assertNoAccessibilityIssues();
