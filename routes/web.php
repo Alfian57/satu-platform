@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademicCreditMappingController;
+use App\Http\Controllers\AcademicIntegrationController;
 use App\Http\Controllers\AffiliationReviewController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
@@ -118,6 +119,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             [AffiliationReviewController::class, 'decide'],
         )->name('campus.affiliations.decisions.store');
     });
+
+    Route::get('campus/integrations', [AcademicIntegrationController::class, 'index'])
+        ->name('campus.integrations.index');
+
+    Route::post('campus/integrations/syncs/{id}/retry', [AcademicIntegrationController::class, 'retry'])
+        ->name('campus.integrations.syncs.retry');
+
+    Route::post('campus/integrations/syncs/{id}/reconcile', [AcademicIntegrationController::class, 'reconcile'])
+        ->name('campus.integrations.syncs.reconcile');
 
     Route::get('api/skills/taxonomy', [SkillTaxonomyController::class, 'index'])
         ->name('skills.taxonomy.index');
