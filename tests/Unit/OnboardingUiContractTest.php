@@ -59,15 +59,23 @@ test('onboarding uses the SATU enrollment ledger and Wayfinder contract', functi
         ->not->toContain('aria-label="Loading"');
 });
 
-test('onboarding explains privacy without capturing unresolved consent', function () {
+test('onboarding explains visibility and captures explicit recruiter consent', function () {
     $page = onboardingUiProjectFile('resources/js/pages/onboarding.tsx');
+    $profile = onboardingUiProjectFile('resources/js/components/onboarding-profile.tsx');
 
     expect($page)
         ->toContain('Data portofolio belum dibagikan')
-        ->toContain('Pengaturan visibilitas dan persetujuan')
-        ->not->toContain('type="checkbox"')
+        ->toContain('Pengaturan visibilitas dan persetujuan');
+
+    expect($profile)
+        ->toContain('Persetujuan dicatat sebagai riwayat perubahan')
+        ->toContain('Izinkan recruiter menemukan profil ini')
+        ->toContain('studentProfiles.store().url')
+        ->toContain('studentProfiles.visibility.update(profile.id).url')
+        ->toContain('role="combobox"')
         ->not->toContain('consent_type')
-        ->not->toContain('lawful_basis');
+        ->not->toContain('lawful_basis')
+        ->not->toContain("\u{2014}");
 });
 
 test('the sidebar exposes onboarding as a contextual action, not primary navigation', function () {

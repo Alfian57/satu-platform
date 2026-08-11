@@ -10,6 +10,7 @@ use App\Enums\InstitutionStatus;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\InstitutionRoster;
+use App\Models\StudentProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -75,6 +76,12 @@ class OnboardingController extends Controller
             default => null,
         };
         $phoneNumber = $user->phoneNumber()->first();
+        $studentProfile = $membership?->status === InstitutionMembershipStatus::Verified
+            ? StudentProfile::query()
+                ->whereBelongsTo($user, 'user')
+                ->whereBelongsTo($membership->institution, 'institution')
+                ->first(['id'])
+            : null;
 
         return Inertia::render('onboarding', [
             'account' => [
@@ -99,6 +106,7 @@ class OnboardingController extends Controller
                 'institutionName' => $membership->institution->name,
                 'status' => $membership->status->value,
             ],
+            'studentProfileId' => $studentProfile?->getKey(),
             'affiliation' => $affiliationRequest === null ? null : [
                 'status' => $affiliationRequest->status->value,
                 'submittedAt' => $affiliationRequest->submitted_at->toIso8601String(),

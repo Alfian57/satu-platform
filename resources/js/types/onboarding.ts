@@ -34,6 +34,7 @@ export type OnboardingPageProps = {
     account: OnboardingAccount;
     institutions: OnboardingInstitution[];
     membership: OnboardingMembership | null;
+    studentProfileId: number | null;
     affiliation: OnboardingAffiliation | null;
     phone: OnboardingPhone | null;
     canRequest: boolean;
