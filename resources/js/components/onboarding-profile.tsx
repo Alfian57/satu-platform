@@ -46,7 +46,12 @@ type Proficiency = 'beginner' | 'intermediate' | 'advanced' | 'expert';
 type PortfolioVisibility = 'private' | 'institution' | 'recruiter' | 'public';
 type ProfileSection = 'basics' | 'skills' | 'availability' | 'visibility';
 type ProfileIssue =
-    'network' | 'session_expired' | 'forbidden' | 'rate_limited' | 'server';
+    | 'network'
+    | 'session_expired'
+    | 'forbidden'
+    | 'rate_limited'
+    | 'stale'
+    | 'server';
 
 type Taxonomy = {
     id: number;
@@ -79,6 +84,7 @@ type AvailabilityWindow = {
 
 type StudentProfile = {
     id: number;
+    updated_at: string;
     bio: string | null;
     study_program: string | null;
     study_year: number | null;
@@ -138,16 +144,19 @@ type ProfileWritePayload = {
     recruiter_discoverable?: boolean;
     availability_windows?: AvailabilityPayload[];
     timezone?: string;
+    expected_updated_at?: string;
 };
 
 type AvailabilityWritePayload = {
     windows: AvailabilityPayload[];
     timezone: string;
+    expected_updated_at?: string;
 };
 
 type VisibilityWritePayload = {
     portfolio_visibility: PortfolioVisibility;
     recruiter_discoverable: boolean;
+    expected_updated_at?: string;
 };
 
 type OnboardingProfileProps = {
@@ -245,6 +254,10 @@ function issueFromStatus(status: number): ProfileIssue {
         return 'rate_limited';
     }
 
+    if (status === 409) {
+        return 'stale';
+    }
+
     return 'server';
 }
 
@@ -285,6 +298,13 @@ const issueCopy: Record<
         action: 'Coba lagi',
         icon: CircleAlert,
     },
+    stale: {
+        title: 'Data profil berubah',
+        description:
+            'Sesi lain sudah memperbarui profil ini. Muat data terbaru untuk membandingkan perubahan sebelum menyimpan draft ini lagi.',
+        action: 'Muat data terbaru',
+        icon: RefreshCw,
+    },
     server: {
         title: 'Profil belum dapat disimpan',
         description:
@@ -303,27 +323,41 @@ function ProfileActionRecovery({
 }) {
     const copy = issueCopy[issue];
     const IssueIcon = copy.icon;
+    const recoveryRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        window.requestAnimationFrame(() => recoveryRef.current?.focus());
+    }, [issue]);
 
     return (
-        <Alert
-            className="border-pending/40 bg-pending-subtle text-pending-subtle-foreground"
-            data-test="profile-action-recovery"
+        <div
+            ref={recoveryRef}
+            tabIndex={-1}
+            className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            data-test="profile-action-recovery-focus"
         >
-            <IssueIcon aria-hidden="true" />
-            <AlertTitle className="line-clamp-none">{copy.title}</AlertTitle>
-            <AlertDescription className="text-current">
-                <p>{copy.description}</p>
-                <Button
-                    type="button"
-                    size="sm"
-                    className="mt-3 cursor-pointer disabled:cursor-not-allowed"
-                    onClick={onRetry}
-                >
-                    <RefreshCw />
-                    {copy.action}
-                </Button>
-            </AlertDescription>
-        </Alert>
+            <Alert
+                className="border-pending/40 bg-pending-subtle text-pending-subtle-foreground"
+                data-test="profile-action-recovery"
+            >
+                <IssueIcon aria-hidden="true" />
+                <AlertTitle className="line-clamp-none">
+                    {copy.title}
+                </AlertTitle>
+                <AlertDescription className="text-current">
+                    <p>{copy.description}</p>
+                    <Button
+                        type="button"
+                        size="sm"
+                        className="mt-3 cursor-pointer disabled:cursor-not-allowed"
+                        onClick={onRetry}
+                    >
+                        <RefreshCw />
+                        {copy.action}
+                    </Button>
+                </AlertDescription>
+            </Alert>
+        </div>
     );
 }
 
@@ -782,6 +816,7 @@ export function OnboardingProfile({
     function hydrateProfile(nextProfile: StudentProfile) {
         setProfile(nextProfile);
         setProfileLoading(false);
+        setProfileIssue(null);
         setBio(nextProfile.bio ?? '');
         setStudyProgram(nextProfile.study_program ?? '');
         setStudyYear(nextProfile.study_year);
@@ -866,6 +901,13 @@ export function OnboardingProfile({
         window.requestAnimationFrame(() => errorSummary.current?.focus());
     }
 
+    function reloadProfile() {
+        setActionIssue(null);
+        setProfileIssue(null);
+        setProfileLoading(true);
+        setProfileLoadAttempt((current) => current + 1);
+    }
+
     function beginAction(retry: () => void) {
         retryAction.current = retry;
         setActionIssue(null);
@@ -887,15 +929,22 @@ export function OnboardingProfile({
                 return false;
             },
             onHttpException: (response: { status: number }) => {
-                setActionIssue(issueFromStatus(response.status));
+                const issue = issueFromStatus(response.status);
+                setActionIssue(issue);
+
+                if (issue === 'stale') {
+                    retryAction.current = reloadProfile;
+                }
 
                 return false;
             },
         };
     }
 
-    function profileBasePayload(): Omit<ProfileWritePayload, 'institution_id'> {
-        return {
+    function profileBasePayload(
+        expectedUpdatedAt?: string,
+    ): Omit<ProfileWritePayload, 'institution_id'> {
+        const payload: Omit<ProfileWritePayload, 'institution_id'> = {
             bio,
             study_program: studyProgram,
             study_year: studyYear,
@@ -907,6 +956,12 @@ export function OnboardingProfile({
             })),
             interests: interests.map((interest) => interest.taxonomy_id),
         };
+
+        if (expectedUpdatedAt !== undefined) {
+            payload.expected_updated_at = expectedUpdatedAt;
+        }
+
+        return payload;
     }
 
     function createProfile(
@@ -941,7 +996,7 @@ export function OnboardingProfile({
         }
 
         beginAction(saveBasics);
-        profileForm.transform(() => profileBasePayload());
+        profileForm.transform(() => profileBasePayload(profile.updated_at));
         profileForm
             .patch(
                 studentProfiles.update(profile.id).url,
@@ -962,7 +1017,7 @@ export function OnboardingProfile({
         }
 
         beginAction(saveSkills);
-        profileForm.transform(() => profileBasePayload());
+        profileForm.transform(() => profileBasePayload(profile.updated_at));
         profileForm
             .patch(
                 studentProfiles.update(profile.id).url,
@@ -993,6 +1048,7 @@ export function OnboardingProfile({
         availabilityForm.transform(() => ({
             windows: availabilityPayload(availability),
             timezone,
+            expected_updated_at: profile.updated_at,
         }));
         availabilityForm
             .put(
@@ -1024,6 +1080,7 @@ export function OnboardingProfile({
         visibilityForm.transform(() => ({
             portfolio_visibility: portfolioVisibility,
             recruiter_discoverable: recruiterDiscoverable,
+            expected_updated_at: profile.updated_at,
         }));
         visibilityForm
             .patch(

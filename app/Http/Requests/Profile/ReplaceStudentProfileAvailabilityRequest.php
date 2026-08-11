@@ -30,6 +30,7 @@ class ReplaceStudentProfileAvailabilityRequest extends FormRequest
             'windows.*.ends_at' => ['required', 'date_format:H:i,H:i:s'],
             'windows.*.timezone' => ['sometimes', 'timezone'],
             'timezone' => ['sometimes', 'timezone'],
+            'expected_updated_at' => ['sometimes', 'nullable', 'date'],
         ];
     }
 }

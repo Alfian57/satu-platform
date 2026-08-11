@@ -18,6 +18,7 @@ final class UpdateStudentProfile
     public function __construct(
         private readonly SyncStudentProfileTaxonomies $syncTaxonomies,
         private readonly AuditRecorder $audit,
+        private readonly EnsureStudentProfileIsFresh $ensureFresh,
     ) {}
 
     /**
@@ -34,6 +35,7 @@ final class UpdateStudentProfile
                 ->lockForUpdate()
                 ->whereKey($studentProfile->getKey())
                 ->firstOrFail();
+            $this->ensureFresh->handle($profile, $data['expected_updated_at'] ?? null);
             $before = $this->summary($profile);
             $changedFields = [];
 

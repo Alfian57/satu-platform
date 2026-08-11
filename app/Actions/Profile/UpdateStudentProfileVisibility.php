@@ -19,6 +19,7 @@ final class UpdateStudentProfileVisibility
     public function __construct(
         private readonly ConsentRecorder $consent,
         private readonly AuditRecorder $audit,
+        private readonly EnsureStudentProfileIsFresh $ensureFresh,
     ) {}
 
     /**
@@ -35,6 +36,7 @@ final class UpdateStudentProfileVisibility
                 ->lockForUpdate()
                 ->whereKey($studentProfile->getKey())
                 ->firstOrFail();
+            $this->ensureFresh->handle($profile, $data['expected_updated_at'] ?? null);
             $before = [
                 'portfolio_visibility' => $profile->portfolio_visibility->value,
                 'recruiter_discoverable' => $profile->recruiter_discoverable,
