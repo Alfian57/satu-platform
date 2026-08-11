@@ -3,8 +3,11 @@
 declare(strict_types=1);
 
 use App\Enums\AffiliationStatus;
+use App\Enums\MessagePurpose;
 use App\Enums\MessageStatus;
+use App\Enums\OtpChallengeStatus;
 use App\Enums\OtpPurpose;
+use App\Enums\PhoneStatus;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\InstitutionRoster;
@@ -25,10 +28,11 @@ it('enforces private username authentication without email exposure', function (
         'password' => Hash::make('Secret123!'),
     ]);
 
-    PhoneNumber::factory()->verified()->create([
+    PhoneNumber::factory()->create([
         'user_id' => $user->id,
         'e164' => '+6281234567890',
         'national_number' => '081234567890',
+        'status' => PhoneStatus::Verified,
         'phone_hash' => PhoneIdentity::hash('+6281234567890'),
     ]);
 
@@ -56,9 +60,10 @@ it('verifies roster exact match auto-links campus affiliation while mismatch fla
     ]);
 
     $exactUser = User::factory()->create();
-    $exactPhone = PhoneNumber::factory()->verified()->create([
+    PhoneNumber::factory()->create([
         'user_id' => $exactUser->id,
         'e164' => '+6281987654321',
+        'status' => PhoneStatus::Verified,
         'phone_hash' => PhoneIdentity::hash('+6281987654321'),
     ]);
 
@@ -103,30 +108,29 @@ it('strictly denies cross-tenant access to institution roster records', function
 });
 
 it('sanitizes OTP challenges and outbox messages without exposing plain OTPs', function () {
-    $user = User::factory()->create();
-
     $otp = OtpChallenge::create([
-        'user_id' => $user->id,
-        'phone_number' => '+6285555444333',
+        'target' => PhoneIdentity::hash('+6285555444333'),
         'purpose' => OtpPurpose::Registration,
-        'code_hash' => Hash::make('123456'),
+        'token' => 'token-hash-secret',
+        'status' => OtpChallengeStatus::Pending,
         'expires_at' => now()->addMinutes(10),
     ]);
 
     $serialized = $otp->toArray();
 
-    expect($serialized)->not->toHaveKey('code')
-        ->and($serialized)->toHaveKey('code_hash');
+    expect($serialized)->not->toHaveKey('raw_code')
+        ->and($serialized)->toHaveKey('token')
+        ->and($serialized)->toHaveKey('status');
 });
 
 it('records outbox delivery status and handles delivery failures gracefully', function () {
     $outbox = MessageOutbox::create([
-        'recipient' => '+6287777666555',
+        'purpose' => MessagePurpose::OtpRegistration,
+        'recipient' => PhoneIdentity::hash('+6287777666555'),
         'payload' => 'Outbox message payload',
         'status' => MessageStatus::Failed,
-        'error' => 'Fonnte gateway connection timeout',
     ]);
 
     expect($outbox->status)->toBe(MessageStatus::Failed)
-        ->and($outbox->error)->toContain('Fonnte');
+        ->and($outbox->purpose)->toBe(MessagePurpose::OtpRegistration);
 });
