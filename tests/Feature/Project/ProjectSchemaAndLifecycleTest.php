@@ -116,12 +116,12 @@ test('verified student can create a project with role capacities and verified sk
         ],
     ]);
 
-    expect($project->status)->toBe(ProjectStatus::Open)
+    expect($project->status)->toBe(ProjectStatus::Draft)
         ->and($project->visibility)->toBe(ProjectVisibility::Institution)
         ->and($project->institution_id)->toBe($institution->getKey())
         ->and($project->owner_id)->toBe($owner->getKey())
         ->and($project->capacity)->toBe(3)
-        ->and($project->acceptsMembers())->toBeTrue()
+        ->and($project->acceptsMembers())->toBeFalse()
         ->and($project->roles)->toHaveCount(2)
         ->and($project->roles->sum('capacity'))->toBe(3)
         ->and($project->roles->first()->skills->first()->proficiency)

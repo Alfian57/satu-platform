@@ -55,6 +55,21 @@ final class ProjectPolicy
         return $this->update($user, $project);
     }
 
+    public function open(User $user, Project $project): bool
+    {
+        return $this->transition($user, $project);
+    }
+
+    public function cancel(User $user, Project $project): bool
+    {
+        return $this->transition($user, $project);
+    }
+
+    public function archive(User $user, Project $project): bool
+    {
+        return $this->transition($user, $project);
+    }
+
     private function ownsProjectInActiveInstitution(User $user, Project $project): bool
     {
         if (
