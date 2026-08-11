@@ -31,6 +31,22 @@ final class ProjectPolicy
         ]);
     }
 
+    public function viewAny(User $user, Institution $institution): bool
+    {
+        if (! $user->exists || ! $institution->exists) {
+            return false;
+        }
+
+        return $this->institutionContextResolver->resolve(
+            $user,
+            $institution,
+            [
+                InstitutionMembershipRole::Student,
+                InstitutionMembershipRole::CampusAdmin,
+            ],
+        ) !== null;
+    }
+
     public function create(User $user, Institution $institution): bool
     {
         return $this->institutionContextResolver->resolve(
