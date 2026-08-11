@@ -4,11 +4,13 @@ namespace App\Enums;
 
 enum ProjectStatus: string
 {
+    case Draft = 'draft';
     case Open = 'open';
     case Forming = 'forming';
     case Full = 'full';
     case Closed = 'closed';
     case Cancelled = 'cancelled';
+    case Archived = 'archived';
 
     public function acceptsMembers(): bool
     {
@@ -34,6 +36,10 @@ enum ProjectStatus: string
         }
 
         return match ($this) {
+            self::Draft => in_array($target, [
+                self::Open,
+                self::Cancelled,
+            ], true),
             self::Open => in_array($target, [
                 self::Forming,
                 self::Full,
@@ -51,7 +57,8 @@ enum ProjectStatus: string
                 self::Closed,
                 self::Cancelled,
             ], true),
-            self::Closed, self::Cancelled => false,
+            self::Closed, self::Cancelled => $target === self::Archived,
+            self::Archived => false,
         };
     }
 }

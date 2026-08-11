@@ -42,6 +42,13 @@ class ProjectFactory extends Factory
         ]);
     }
 
+    public function draft(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => ProjectStatus::Draft,
+        ]);
+    }
+
     public function forming(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -67,6 +74,13 @@ class ProjectFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => ProjectStatus::Cancelled,
+        ]);
+    }
+
+    public function archived(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => ProjectStatus::Archived,
         ]);
     }
 

@@ -22,7 +22,7 @@ return new class extends Migration
             $table->enum('status', array_map(
                 static fn (ProjectStatus $status): string => $status->value,
                 ProjectStatus::cases(),
-            ))->default(ProjectStatus::Open->value);
+            ))->default(ProjectStatus::Draft->value);
             $table->enum('visibility', array_map(
                 static fn (ProjectVisibility $visibility): string => $visibility->value,
                 ProjectVisibility::cases(),

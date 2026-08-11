@@ -42,7 +42,7 @@ class Project extends Model implements InstitutionOwned
      * @var array<string, mixed>
      */
     protected $attributes = [
-        'status' => ProjectStatus::Open->value,
+        'status' => ProjectStatus::Draft->value,
         'visibility' => ProjectVisibility::Institution->value,
         'capacity' => 5,
     ];

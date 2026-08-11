@@ -5,6 +5,7 @@ use App\Http\Controllers\AffiliationReviewController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RecruiterContactRequestController;
 use App\Http\Controllers\RosterImportController;
 use App\Http\Controllers\SavedCandidatesController;
@@ -31,6 +32,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('candidates.unsave');
     });
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
+
+    Route::prefix('projects')->name('projects.')->group(function () {
+        Route::post('/', [ProjectController::class, 'store'])
+            ->name('store');
+        Route::get('/{project}', [ProjectController::class, 'show'])
+            ->name('show');
+        Route::patch('/{project}', [ProjectController::class, 'update'])
+            ->name('update');
+        Route::post('/{project}/open', [ProjectController::class, 'open'])
+            ->name('open');
+        Route::post('/{project}/cancel', [ProjectController::class, 'cancel'])
+            ->name('cancel');
+        Route::post('/{project}/archive', [ProjectController::class, 'archive'])
+            ->name('archive');
+    });
 
     Route::get('onboarding', [OnboardingController::class, 'show'])
         ->name('onboarding.show');
