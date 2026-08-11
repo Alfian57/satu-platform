@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\InstitutionMemberships\RequestInstitutionMembership;
+use App\Actions\Affiliations\SubmitAffiliationRequest;
+use App\Exceptions\VerifiedPhoneRequired;
 use App\Http\Requests\InstitutionMemberships\RequestInstitutionMembershipRequest;
 use App\Models\Institution;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -12,13 +13,17 @@ class InstitutionMembershipController extends Controller
 {
     public function store(
         RequestInstitutionMembershipRequest $request,
-        RequestInstitutionMembership $requestMembership,
+        SubmitAffiliationRequest $submitAffiliation,
     ): RedirectResponse {
         try {
-            $membership = $requestMembership->handle(
+            $affiliationRequest = $submitAffiliation->handle(
                 $request->user(),
                 Institution::query()->findOrFail($request->integer('institution_id')),
+                $request->string('nim')->toString(),
             );
+        } catch (VerifiedPhoneRequired) {
+            return to_route('onboarding.show')
+                ->with('onboarding_recovery', 'phone_required');
         } catch (AuthorizationException $exception) {
             if (! $request->header('X-Inertia')) {
                 throw $exception;
@@ -28,6 +33,8 @@ class InstitutionMembershipController extends Controller
                 ->with('onboarding_recovery', 'forbidden');
         }
 
-        return to_route('onboarding.show')->with('membership_status', $membership->status->value);
+        return to_route('onboarding.show')
+            ->with('membership_status', $affiliationRequest->membership->status->value)
+            ->with('affiliation_status', $affiliationRequest->status->value);
     }
 }

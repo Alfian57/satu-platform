@@ -16,12 +16,29 @@ export type OnboardingMembership = {
     status: OnboardingMembershipStatus;
 };
 
+export type OnboardingAffiliationStatus =
+    'pending_review' | 'verified' | 'revision_required' | 'rejected';
+
+export type OnboardingAffiliation = {
+    status: OnboardingAffiliationStatus;
+    submittedAt: string;
+    needsRefresh: boolean;
+};
+
+export type OnboardingPhone = {
+    masked: string;
+    verified: boolean;
+};
+
 export type OnboardingPageProps = {
     account: OnboardingAccount;
     institutions: OnboardingInstitution[];
     membership: OnboardingMembership | null;
+    affiliation: OnboardingAffiliation | null;
+    phone: OnboardingPhone | null;
     canRequest: boolean;
     canRetry: boolean;
     membershipOutcome: OnboardingMembershipStatus | null;
-    submissionIssue: 'session_expired' | 'forbidden' | null;
+    affiliationOutcome: OnboardingAffiliationStatus | null;
+    submissionIssue: 'session_expired' | 'forbidden' | 'phone_required' | null;
 };

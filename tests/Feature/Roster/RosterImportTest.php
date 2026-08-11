@@ -1,12 +1,14 @@
 <?php
 
 use App\Actions\Roster\ImportRoster;
+use App\Enums\InstitutionRosterStatus;
 use App\Enums\InstitutionStatus;
 use App\Models\Institution;
 use App\Models\InstitutionRoster;
 use App\Models\InstitutionRosterRow;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
@@ -121,12 +123,20 @@ test('commit stores roster and rows in database', function () {
     expect($roster)->toBeInstanceOf(InstitutionRoster::class)
         ->and($roster->total_rows)->toBe(2)
         ->and($roster->valid_rows)->toBe(2)
-        ->and($roster->institution_id)->toBe($institution->id);
+        ->and($roster->institution_id)->toBe($institution->id)
+        ->and($roster->status)->toBe(InstitutionRosterStatus::Active)
+        ->and($roster->activated_at)->not->toBeNull();
 
     $rows = InstitutionRosterRow::query()->where('roster_id', $roster->id)->get();
 
     expect($rows)->toHaveCount(2)
-        ->and($rows[0]->nim)->toBe('12345');
+        ->and($rows[0]->nim)->toBe('12345')
+        ->and($rows[0]->toArray())->not->toHaveKeys(['phone_hash', 'phone_encrypted']);
+
+    $rawRow = DB::table('institution_roster_rows')->where('id', $rows[0]->getKey())->first();
+
+    expect($rawRow->phone_encrypted)->not->toBe('+6281234567890')
+        ->and($rawRow->phone_hash)->toHaveLength(64);
 });
 
 test('commit is idempotent via checksum', function () {
@@ -145,7 +155,28 @@ test('commit is idempotent via checksum', function () {
         ->where('institution_id', $institution->id)
         ->count();
 
-    expect($count)->toBe(2);
+    expect($count)->toBe(1);
+});
+
+test('new roster atomically supersedes the previous active roster', function () {
+    $institution = Institution::factory()->active()->create();
+    $admin = User::factory()->create(['is_platform_admin' => true]);
+    $action = new ImportRoster;
+    $firstPath = createRosterCsv([
+        ['nim' => '10001', 'nama' => 'Lama', 'program_studi' => 'Teknik', 'angkatan' => '2024', 'semester' => '2025/2026 Genap', 'phone' => '+6281234567810'],
+    ]);
+    $secondPath = createRosterCsv([
+        ['nim' => '10002', 'nama' => 'Baru', 'program_studi' => 'Teknik', 'angkatan' => '2025', 'semester' => '2026/2027 Ganjil', 'phone' => '+6281234567811'],
+    ]);
+
+    $first = $action->commit($admin, $institution, $firstPath, '2025/2026 Genap');
+    $second = $action->commit($admin, $institution, $secondPath, '2026/2027 Ganjil');
+
+    expect($first->refresh()->status)->toBe(InstitutionRosterStatus::Superseded)
+        ->and($first->superseded_at)->not->toBeNull()
+        ->and($second->status)->toBe(InstitutionRosterStatus::Active)
+        ->and(InstitutionRoster::query()->where('status', InstitutionRosterStatus::Active)->count())
+        ->toBe(1);
 });
 
 test('preview does not modify database', function () {

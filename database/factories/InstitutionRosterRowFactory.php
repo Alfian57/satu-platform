@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\InstitutionRoster;
 use App\Models\InstitutionRosterRow;
+use App\Support\PhoneIdentity;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,6 +19,8 @@ class InstitutionRosterRowFactory extends Factory
      */
     public function definition(): array
     {
+        $phone = '+62812'.fake()->numerify('########');
+
         return [
             'roster_id' => InstitutionRoster::factory(),
             'nim' => fake()->numerify('########'),
@@ -25,7 +28,8 @@ class InstitutionRosterRowFactory extends Factory
             'program_studi' => fake()->word(),
             'angkatan' => (string) fake()->year(),
             'semester' => '2025/2026 Genap',
-            'phone' => '+628'.fake()->numerify('##########'),
+            'phone_hash' => PhoneIdentity::hash($phone),
+            'phone_encrypted' => $phone,
             'is_active' => true,
         ];
     }

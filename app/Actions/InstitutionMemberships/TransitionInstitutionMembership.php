@@ -127,11 +127,14 @@ class TransitionInstitutionMembership
         }
 
         if (
-            $verificationMethod === InstitutionMembershipVerificationMethod::ApprovedDomain
+            in_array($verificationMethod, [
+                InstitutionMembershipVerificationMethod::ApprovedDomain,
+                InstitutionMembershipVerificationMethod::RosterExactMatch,
+            ], true)
             && $reviewer !== null
         ) {
             throw new InvalidInstitutionMembershipTransition(
-                'Approved-domain verification cannot include a campus reviewer.',
+                'Automatic verification cannot include a campus reviewer.',
             );
         }
 

@@ -124,6 +124,12 @@ test('membership status factory states keep coherent provenance', function (
         InstitutionMembershipVerificationMethod::ApprovedDomain,
         null,
     ],
+    'roster exact match' => [
+        'verifiedByRosterExactMatch',
+        InstitutionMembershipStatus::Verified,
+        InstitutionMembershipVerificationMethod::RosterExactMatch,
+        null,
+    ],
     'campus review' => [
         'verifiedByCampusAdmin',
         InstitutionMembershipStatus::Verified,
@@ -223,6 +229,26 @@ test('an unverified membership may be verified by an approved domain', function 
         ->and($transitioned->verified_at)->not->toBeNull()
         ->and($transitioned->verification_method)
         ->toBe(InstitutionMembershipVerificationMethod::ApprovedDomain)
+        ->and($transitioned->reviewed_at)->toBeNull()
+        ->and($transitioned->reviewed_by_id)->toBeNull()
+        ->and($transitioned->last_review_outcome)->toBeNull();
+});
+
+test('a pending membership may be verified by an exact roster match', function () {
+    $membership = InstitutionMembership::factory()->pending()->create();
+    $requestedAt = $membership->requested_at;
+
+    $transitioned = app(TransitionInstitutionMembership::class)->handle(
+        $membership,
+        InstitutionMembershipStatus::Verified,
+        InstitutionMembershipVerificationMethod::RosterExactMatch,
+    );
+
+    expect($transitioned->status)->toBe(InstitutionMembershipStatus::Verified)
+        ->and($transitioned->requested_at?->equalTo($requestedAt))->toBeTrue()
+        ->and($transitioned->verified_at)->not->toBeNull()
+        ->and($transitioned->verification_method)
+        ->toBe(InstitutionMembershipVerificationMethod::RosterExactMatch)
         ->and($transitioned->reviewed_at)->toBeNull()
         ->and($transitioned->reviewed_by_id)->toBeNull()
         ->and($transitioned->last_review_outcome)->toBeNull();

@@ -8,6 +8,7 @@ use App\Events\InstitutionMembershipRequested;
 use App\Models\AuditLog;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
+use App\Models\PhoneNumber;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
@@ -142,9 +143,13 @@ test('unverified membership transitions to pending on request', function () {
 test('authenticated student can request institution membership', function () {
     $user = User::factory()->create();
     $institution = Institution::factory()->active()->create();
+    PhoneNumber::factory()->for($user)->create();
 
     $this->actingAs($user)
-        ->post(route('institution-memberships.store'), ['institution_id' => $institution->getKey()])
+        ->post(route('institution-memberships.store'), [
+            'institution_id' => $institution->getKey(),
+            'nim' => 'SATU-HTTP-001',
+        ])
         ->assertRedirect(route('onboarding.show'));
 
     $membership = InstitutionMembership::query()
@@ -159,7 +164,10 @@ test('authenticated student can request institution membership', function () {
 test('unauthenticated users cannot request membership', function () {
     $institution = Institution::factory()->active()->create();
 
-    $this->post(route('institution-memberships.store'), ['institution_id' => $institution->getKey()])
+    $this->post(route('institution-memberships.store'), [
+        'institution_id' => $institution->getKey(),
+        'nim' => 'SATU-GUEST-001',
+    ])
         ->assertRedirect(route('login'));
 
     expect(InstitutionMembership::query()->count())->toBe(0);
@@ -170,28 +178,54 @@ test('membership request validates required institution_id', function () {
 
     $this->actingAs($user)
         ->post(route('institution-memberships.store'), [])
-        ->assertSessionHasErrors('institution_id');
+        ->assertSessionHasErrors(['institution_id', 'nim']);
 });
 
 test('membership request validates institution_id exists and is active', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->post(route('institution-memberships.store'), ['institution_id' => 99999])
+        ->post(route('institution-memberships.store'), [
+            'institution_id' => 99999,
+            'nim' => 'SATU-INVALID-001',
+        ])
         ->assertSessionHasErrors('institution_id');
 
     $suspended = Institution::factory()->create(['status' => InstitutionStatus::Suspended]);
 
     $this->actingAs($user)
-        ->post(route('institution-memberships.store'), ['institution_id' => $suspended->getKey()])
+        ->post(route('institution-memberships.store'), [
+            'institution_id' => $suspended->getKey(),
+            'nim' => 'SATU-SUSPENDED-001',
+        ])
         ->assertSessionHasErrors('institution_id');
+});
+
+test('membership request returns safe recovery when verified phone is missing', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->active()->create();
+
+    $this->actingAs($user)
+        ->post(route('institution-memberships.store'), [
+            'institution_id' => $institution->getKey(),
+            'nim' => 'SATU-PHONE-001',
+        ])
+        ->assertRedirect(route('onboarding.show'))
+        ->assertSessionHas('onboarding_recovery', 'phone_required');
+
+    expect(InstitutionMembership::query()->count())->toBe(0);
 });
 
 test('membership request rate limiting is isolated per authenticated user', function () {
     $limitedUser = User::factory()->create();
     $otherUser = User::factory()->create();
     $institution = Institution::factory()->active()->create();
-    $payload = ['institution_id' => $institution->getKey()];
+    PhoneNumber::factory()->for($limitedUser)->create();
+    PhoneNumber::factory()->for($otherUser)->create();
+    $payload = [
+        'institution_id' => $institution->getKey(),
+        'nim' => 'SATU-RATE-001',
+    ];
 
     foreach (range(1, 5) as $attempt) {
         $this->actingAs($limitedUser)
@@ -222,10 +256,12 @@ test('privileged and cross-user identifiers cannot redirect an affiliation reque
         ->for($otherUser)
         ->for($institution)
         ->create();
+    PhoneNumber::factory()->for($user)->create();
 
     $this->actingAs($user)
         ->post(route('institution-memberships.store'), [
             'institution_id' => $institution->getKey(),
+            'nim' => 'SATU-BOUNDARY-001',
             'user_id' => $otherUser->getKey(),
             'membership_id' => $otherMembership->getKey(),
         ])
@@ -246,9 +282,13 @@ test('a suspended membership is denied without exposing membership internals', f
     $user = User::factory()->create();
     $institution = Institution::factory()->active()->create();
     InstitutionMembership::factory()->suspended()->for($user)->for($institution)->create();
+    PhoneNumber::factory()->for($user)->create();
 
     $response = $this->actingAs($user)
-        ->post(route('institution-memberships.store'), ['institution_id' => $institution->getKey()]);
+        ->post(route('institution-memberships.store'), [
+            'institution_id' => $institution->getKey(),
+            'nim' => 'SATU-SUSPENDED-002',
+        ]);
 
     $response->assertForbidden();
     expect($response->getContent())->not->toContain('verification_method')

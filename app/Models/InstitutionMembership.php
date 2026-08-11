@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -87,6 +88,14 @@ class InstitutionMembership extends Model implements InstitutionOwned
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by_id');
+    }
+
+    /**
+     * @return HasOne<AffiliationRequest, $this>
+     */
+    public function affiliationRequest(): HasOne
+    {
+        return $this->hasOne(AffiliationRequest::class);
     }
 
     /**

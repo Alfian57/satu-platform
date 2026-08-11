@@ -1,11 +1,19 @@
 <?php
 
+use App\Enums\InstitutionRosterStatus;
 use App\Enums\InstitutionStatus;
+use App\Models\AffiliationRequest;
 use App\Models\Institution;
 use App\Models\InstitutionDomain;
 use App\Models\InstitutionMembership;
+use App\Models\InstitutionRoster;
+use App\Models\PhoneNumber;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
+
+beforeEach(function () {
+    $this->withoutVite();
+});
 
 test('onboarding requires authentication', function () {
     $this->get(route('onboarding.show'))
@@ -39,9 +47,12 @@ test('onboarding exposes active institutions in deterministic order without doma
                     ['id' => $second->id, 'name' => 'Universitas Zeta'],
                 ])
                 ->where('membership', null)
+                ->where('affiliation', null)
+                ->where('phone', null)
                 ->where('canRequest', true)
                 ->where('canRetry', false)
                 ->where('membershipOutcome', null)
+                ->where('affiliationOutcome', null)
                 ->where('submissionIssue', null)
                 ->missing('institutions.0.domain')
                 ->missing('account.name'),
@@ -300,7 +311,7 @@ test('onboarding exposes a safe one-time outcome after a membership request', fu
 test('onboarding exposes only the allowlisted recovery states', function () {
     $user = User::factory()->create();
 
-    foreach (['session_expired', 'forbidden'] as $recoveryState) {
+    foreach (['session_expired', 'forbidden', 'phone_required'] as $recoveryState) {
         $this->withSession(['onboarding_recovery' => $recoveryState])
             ->actingAs($user)
             ->get(route('onboarding.show'))
@@ -318,6 +329,65 @@ test('onboarding exposes only the allowlisted recovery states', function () {
         ->assertInertia(
             fn (Assert $page) => $page
                 ->where('submissionIssue', null),
+        );
+});
+
+test('onboarding projects only the masked verified phone', function () {
+    $user = User::factory()->create();
+    $phone = PhoneNumber::factory()
+        ->for($user)
+        ->forNumber('+6281234567812')
+        ->create();
+
+    $this->actingAs($user)
+        ->get(route('onboarding.show'))
+        ->assertSuccessful()
+        ->assertInertia(
+            fn (Assert $page) => $page
+                ->where('phone', [
+                    'masked' => $phone->masked,
+                    'verified' => true,
+                ])
+                ->missing('phone.number')
+                ->missing('phone.numberHash'),
+        );
+});
+
+test('stale affiliation exposes safe recovery without roster or match details', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->active()->create();
+    $membership = InstitutionMembership::factory()
+        ->pending()
+        ->for($user)
+        ->for($institution)
+        ->create();
+    $oldRoster = InstitutionRoster::factory()->for($institution)->create([
+        'status' => InstitutionRosterStatus::Superseded,
+        'activated_at' => now()->subDay(),
+        'superseded_at' => now(),
+    ]);
+    InstitutionRoster::factory()->for($institution)->create();
+    AffiliationRequest::factory()
+        ->for($institution)
+        ->for($user, 'user')
+        ->create([
+            'institution_membership_id' => $membership->getKey(),
+            'roster_id' => $oldRoster->getKey(),
+        ]);
+
+    $this->actingAs($user)
+        ->get(route('onboarding.show'))
+        ->assertSuccessful()
+        ->assertInertia(
+            fn (Assert $page) => $page
+                ->where('affiliation.status', 'pending_review')
+                ->where('affiliation.needsRefresh', true)
+                ->where('canRequest', true)
+                ->where('canRetry', true)
+                ->missing('affiliation.matchResult')
+                ->missing('affiliation.roster')
+                ->missing('affiliation.rosterRow')
+                ->missing('affiliation.nim'),
         );
 });
 

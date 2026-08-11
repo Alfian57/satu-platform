@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademicCreditMappingController;
+use App\Http\Controllers\AffiliationReviewController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
@@ -96,6 +97,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('campus/{institution}/roster', [RosterImportController::class, 'store'])
         ->name('campus.roster.store');
+
+    Route::scopeBindings()->group(function () {
+        Route::get('campus/{institution}/affiliations', [AffiliationReviewController::class, 'index'])
+            ->name('campus.affiliations.index');
+
+        Route::post(
+            'campus/{institution}/affiliations/{affiliationRequest}/lock',
+            [AffiliationReviewController::class, 'acquire'],
+        )->name('campus.affiliations.locks.store');
+
+        Route::delete(
+            'campus/{institution}/affiliations/{affiliationRequest}/lock',
+            [AffiliationReviewController::class, 'release'],
+        )->name('campus.affiliations.locks.destroy');
+
+        Route::post(
+            'campus/{institution}/affiliations/{affiliationRequest}/decision',
+            [AffiliationReviewController::class, 'decide'],
+        )->name('campus.affiliations.decisions.store');
+    });
 
     Route::get('api/skills/taxonomy', [SkillTaxonomyController::class, 'index'])
         ->name('skills.taxonomy.index');
