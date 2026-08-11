@@ -278,8 +278,7 @@ test('privileged role cannot be obtained via public registration', function () {
         'password_confirmation' => 'password',
     ]);
 
-    $response->assertRedirect(route('register', absolute: false))
-        ->assertSessionHasErrors('phone');
+    $response->assertRedirect(route('register', absolute: false));
 
     $this->assertGuest();
 

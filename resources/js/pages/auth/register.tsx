@@ -238,7 +238,6 @@ export default function Register({ passwordRules, registration }: Props) {
                                         type="text"
                                         required
                                         autoFocus
-                                        tabIndex={1}
                                         autoComplete="name"
                                         name="name"
                                         placeholder="Nama lengkap"
@@ -254,7 +253,6 @@ export default function Register({ passwordRules, registration }: Props) {
                                         id="username"
                                         type="text"
                                         required
-                                        tabIndex={2}
                                         autoComplete="username"
                                         name="username"
                                         placeholder="nama_pengguna"
@@ -278,7 +276,6 @@ export default function Register({ passwordRules, registration }: Props) {
                                         id="phone"
                                         type="tel"
                                         required
-                                        tabIndex={3}
                                         autoComplete="tel"
                                         inputMode="numeric"
                                         name="phone"
@@ -301,7 +298,6 @@ export default function Register({ passwordRules, registration }: Props) {
                                     <PasswordInput
                                         id="password"
                                         required
-                                        tabIndex={4}
                                         autoComplete="new-password"
                                         name="password"
                                         placeholder="Password"
@@ -317,7 +313,6 @@ export default function Register({ passwordRules, registration }: Props) {
                                     <PasswordInput
                                         id="password_confirmation"
                                         required
-                                        tabIndex={5}
                                         autoComplete="new-password"
                                         name="password_confirmation"
                                         placeholder="Konfirmasi password"
@@ -332,7 +327,6 @@ export default function Register({ passwordRules, registration }: Props) {
                                     type="submit"
                                     size="lg"
                                     className="mt-2 w-full cursor-pointer disabled:cursor-not-allowed"
-                                    tabIndex={6}
                                     disabled={processing}
                                     data-test="register-user-button"
                                 >
@@ -354,9 +348,7 @@ export default function Register({ passwordRules, registration }: Props) {
 
                             <div className="text-center text-sm text-muted-foreground">
                                 Sudah punya akun?{' '}
-                                <TextLink href={login()} tabIndex={7}>
-                                    Masuk
-                                </TextLink>
+                                <TextLink href={login()}>Masuk</TextLink>
                             </div>
                         </>
                     )}

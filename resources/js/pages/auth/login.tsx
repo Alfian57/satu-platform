@@ -36,7 +36,6 @@ export default function Login({ status }: Props) {
                                     name="username"
                                     required
                                     autoFocus
-                                    tabIndex={1}
                                     autoComplete="username"
                                     placeholder="nama_pengguna"
                                     aria-describedby="username-help"
@@ -57,7 +56,6 @@ export default function Login({ status }: Props) {
                                     id="password"
                                     name="password"
                                     required
-                                    tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Password"
                                 />
@@ -65,18 +63,13 @@ export default function Login({ status }: Props) {
                             </div>
 
                             <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
-                                />
+                                <Checkbox id="remember" name="remember" />
                                 <Label htmlFor="remember">Ingat saya</Label>
                             </div>
 
                             <div className="flex justify-end text-sm">
                                 <TextLink
                                     href={recover()}
-                                    tabIndex={4}
                                     data-test="forgot-password-link"
                                 >
                                     Lupa password?
@@ -86,7 +79,6 @@ export default function Login({ status }: Props) {
                             <Button
                                 type="submit"
                                 className="mt-4 w-full cursor-pointer disabled:cursor-not-allowed"
-                                tabIndex={5}
                                 disabled={processing}
                                 data-test="login-button"
                             >
@@ -97,9 +89,7 @@ export default function Login({ status }: Props) {
 
                         <div className="text-center text-sm text-muted-foreground">
                             Belum punya akun?{' '}
-                            <TextLink href={register()} tabIndex={6}>
-                                Daftar
-                            </TextLink>
+                            <TextLink href={register()}>Daftar</TextLink>
                         </div>
                     </>
                 )}
