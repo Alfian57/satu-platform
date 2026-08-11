@@ -8,8 +8,10 @@ use App\Actions\Project\ArchiveProject;
 use App\Actions\Project\CancelProject;
 use App\Actions\Project\CreateProject;
 use App\Actions\Project\OpenProject;
+use App\Actions\Project\ProjectDiscoveryQuery;
 use App\Actions\Project\UpdateProject;
 use App\Exceptions\InvalidProjectTransition;
+use App\Http\Requests\Project\ListProjectsRequest;
 use App\Http\Requests\Project\ProjectTransitionRequest;
 use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
@@ -18,12 +20,52 @@ use App\Models\Project;
 use App\Models\ProjectRole;
 use App\Models\ProjectRoleSkill;
 use App\Models\User;
+use App\Support\Project\ProjectDiscoveryFilters;
+use App\Support\Project\ProjectDiscoverySerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
 
 final class ProjectController extends Controller
 {
+    public function index(
+        ListProjectsRequest $request,
+        ProjectDiscoveryQuery $discoveryQuery,
+        ProjectDiscoverySerializer $serializer,
+    ): Response {
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            abort(401);
+        }
+
+        $result = $discoveryQuery->execute($user, $request->filters());
+
+        return Inertia::render('projects/index', [
+            'institution' => [
+                'id' => $result->institution->getKey(),
+                'name' => $result->institution->name,
+            ],
+            'projects' => $serializer->page($result->paginator),
+            'filters' => $result->filters->toArray(),
+            'filter_options' => [
+                'status' => array_map(
+                    static fn (\BackedEnum $status): string => (string) $status->value,
+                    ProjectDiscoveryFilters::discoverableStatuses(),
+                ),
+                'visibility' => array_map(
+                    static fn (\BackedEnum $visibility): string => (string) $visibility->value,
+                    ProjectDiscoveryFilters::discoverableVisibilities(),
+                ),
+                'sort' => ProjectDiscoveryFilters::sortableFields(),
+                'direction' => ['asc', 'desc'],
+                'per_page' => ['default' => 20, 'max' => 50],
+            ],
+        ]);
+    }
+
     public function show(Project $project): JsonResponse
     {
         Gate::authorize('view', $project);

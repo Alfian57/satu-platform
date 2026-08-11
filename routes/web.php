@@ -74,6 +74,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
 
     Route::prefix('projects')->name('projects.')->group(function () {
+        Route::get('/', [ProjectController::class, 'index'])
+            ->name('index');
         Route::post('/', [ProjectController::class, 'store'])
             ->name('store');
         Route::get('/{project}', [ProjectController::class, 'show'])

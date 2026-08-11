@@ -71,6 +71,7 @@ test('project schema exposes institution ownership, lifecycle, requirements, and
         ->toContain("'project_roles_project_fk'")
         ->toContain("'project_role_skills_taxonomy_fk'")
         ->toContain("'projects_institution_status_deadline_idx'")
+        ->toContain("'projects_discovery_filters_idx'")
         ->toContain("'project_role_skills_role_taxonomy_unique'");
 
     foreach ([
@@ -79,6 +80,7 @@ test('project schema exposes institution ownership, lifecycle, requirements, and
         'project_roles_project_fk',
         'project_role_skills_taxonomy_fk',
         'projects_institution_status_deadline_idx',
+        'projects_discovery_filters_idx',
         'project_role_skills_role_taxonomy_unique',
     ] as $constraintName) {
         expect(mb_strlen($constraintName))->toBeLessThanOrEqual(64);
