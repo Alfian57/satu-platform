@@ -5,6 +5,7 @@ use App\Models\AuditLog;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\PhoneNumber;
+use App\Models\StudentProfile;
 use App\Models\User;
 
 test('student can submit an affiliation request from the onboarding ledger', function () {
@@ -28,6 +29,72 @@ test('student can submit an affiliation request from the onboarding ledger', fun
         ->assertNoConsoleLogs()
         ->assertNoAccessibilityIssues();
 });
+
+test('verified student can save a minimum profile from the onboarding ledger', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->active()->create();
+    InstitutionMembership::factory()
+        ->verifiedByApprovedDomain()
+        ->for($user)
+        ->for($institution)
+        ->create();
+    $this->actingAs($user);
+
+    visit(route('onboarding.show'))
+        ->wait(0.2)
+        ->assertSee('Lengkapi profilmu dengan ritmemu sendiri')
+        ->click('#skill-taxonomy-search')
+        ->assertSee('Ketik nama untuk mencari.')
+        ->fill('#profile-bio', 'Saya sedang mengembangkan produk kolaborasi kampus.')
+        ->fill('#study-program', 'Informatika')
+        ->select('#study-year', '3')
+        ->press('Simpan profil inti')
+        ->wait(0.3)
+        ->assertSee('Perubahan bagian ini sudah tersimpan.')
+        ->assertSee('Profil tersimpan')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+
+    expect(StudentProfile::query()->whereBelongsTo($user, 'user')->whereBelongsTo($institution, 'institution')->exists())
+        ->toBeTrue();
+});
+
+test('profile onboarding remains readable at supported viewports', function (
+    int $width,
+    int $height,
+    ?string $filename,
+) {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->active()->create();
+    InstitutionMembership::factory()
+        ->verifiedByApprovedDomain()
+        ->for($user)
+        ->for($institution)
+        ->create();
+    $this->actingAs($user);
+
+    $page = visit(route('onboarding.show'))
+        ->resize($width, $height)
+        ->assertPresent('@student-profile')
+        ->assertSee('Visibilitas dan persetujuan')
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+
+    if ($filename !== null) {
+        $page->screenshot(true, $filename);
+    }
+})->with([
+    'mobile' => [320, 800, 'i20-profile-mobile-320x800'],
+    'tablet' => [768, 1024, null],
+    'small laptop' => [1366, 768, null],
+    'desktop' => [1536, 960, 'i20-profile-desktop-1536x960'],
+]);
 
 test('pending affiliation is read only and explains the verification boundary', function () {
     $user = User::factory()->create();

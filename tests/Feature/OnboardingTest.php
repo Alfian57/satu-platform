@@ -8,6 +8,7 @@ use App\Models\InstitutionDomain;
 use App\Models\InstitutionMembership;
 use App\Models\InstitutionRoster;
 use App\Models\PhoneNumber;
+use App\Models\StudentProfile;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -47,6 +48,7 @@ test('onboarding exposes active institutions in deterministic order without doma
                     ['id' => $second->id, 'name' => 'Universitas Zeta'],
                 ])
                 ->where('membership', null)
+                ->where('studentProfileId', null)
                 ->where('affiliation', null)
                 ->where('phone', null)
                 ->where('canRequest', true)
@@ -56,6 +58,29 @@ test('onboarding exposes active institutions in deterministic order without doma
                 ->where('submissionIssue', null)
                 ->missing('institutions.0.domain')
                 ->missing('account.name'),
+        );
+});
+
+test('onboarding exposes only the current verified institution profile id', function () {
+    $user = User::factory()->create();
+    $institution = Institution::factory()->active()->create();
+    $otherInstitution = Institution::factory()->active()->create();
+
+    InstitutionMembership::factory()
+        ->verifiedByApprovedDomain()
+        ->for($user)
+        ->for($institution)
+        ->create();
+    $profile = StudentProfile::factory()->for($user)->for($institution)->create();
+    StudentProfile::factory()->for($user)->for($otherInstitution)->create();
+
+    $this->actingAs($user)
+        ->get(route('onboarding.show'))
+        ->assertSuccessful()
+        ->assertInertia(
+            fn (Assert $page) => $page
+                ->where('membership.institutionId', $institution->id)
+                ->where('studentProfileId', $profile->id),
         );
 });
 

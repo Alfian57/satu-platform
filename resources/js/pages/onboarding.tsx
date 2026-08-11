@@ -19,6 +19,7 @@ import { useEffect, useRef, useState } from 'react';
 import AlertError from '@/components/alert-error';
 import { AppPage } from '@/components/app-page';
 import InputError from '@/components/input-error';
+import { OnboardingProfile } from '@/components/onboarding-profile';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -212,38 +213,45 @@ function SubmissionRecovery({
 
 function ProgressRail({
     affiliationVerified,
+    profileId,
 }: {
     affiliationVerified: boolean;
+    profileId: number | null;
 }) {
-    const completedCount = affiliationVerified ? 3 : 2;
+    const completedCount =
+        2 + (affiliationVerified ? 1 : 0) + (profileId !== null ? 1 : 0);
+    const totalCount = 4;
 
     return (
         <div className="grid gap-8">
             <section aria-labelledby="progress-title">
                 <p className="font-label text-label text-muted-foreground">
-                    Progres afiliasi
+                    Progres onboarding
                 </p>
                 <div className="mt-2 flex items-end justify-between gap-4">
                     <h2 id="progress-title" className="text-title font-bold">
-                        {completedCount} dari 3 selesai
+                        {completedCount} dari {totalCount} selesai
                     </h2>
                     <span
                         aria-hidden="true"
                         className="font-label text-sm text-muted-foreground"
                     >
-                        {Math.round((completedCount / 3) * 100)}%
+                        {Math.round((completedCount / totalCount) * 100)}%
                     </span>
                 </div>
 
                 <div
-                    aria-label={`${completedCount} dari 3 tahap afiliasi selesai`}
-                    className="mt-4 grid grid-cols-3 gap-1"
+                    aria-label={`${completedCount} dari ${totalCount} tahap onboarding selesai`}
+                    className="mt-4 grid grid-cols-4 gap-1"
                     role="progressbar"
                     aria-valuemin={0}
-                    aria-valuemax={3}
+                    aria-valuemax={totalCount}
                     aria-valuenow={completedCount}
                 >
-                    {[1, 2, 3].map((step) => (
+                    {Array.from(
+                        { length: totalCount },
+                        (_, index) => index + 1,
+                    ).map((step) => (
                         <span
                             key={step}
                             className={cn(
@@ -274,6 +282,15 @@ function ProgressRail({
                             affiliationVerified
                                 ? 'Kampus sudah terverifikasi'
                                 : 'Masih perlu diselesaikan'
+                        }
+                    />
+                    <ProgressRow
+                        complete={profileId !== null}
+                        label="Profil mahasiswa"
+                        detail={
+                            profileId !== null
+                                ? 'Profil sudah tersimpan, masih bisa dilengkapi'
+                                : 'Belum dibuat'
                         }
                     />
                 </ol>
@@ -406,6 +423,7 @@ export default function Onboarding({
     account,
     institutions,
     membership,
+    studentProfileId,
     affiliation,
     phone,
     canRequest,
@@ -424,6 +442,9 @@ export default function Onboarding({
     } | null>(null);
     const [submissionIssue, setSubmissionIssue] =
         useState<SubmissionIssue | null>(initialSubmissionIssue);
+    const [profileIdForRail, setProfileIdForRail] = useState<number | null>(
+        studentProfileId,
+    );
     const form = useForm<{ institution_id: number | ''; nim: string }>({
         institution_id:
             (canRetry || initialSubmissionIssue === 'forbidden') &&
@@ -538,7 +559,12 @@ export default function Onboarding({
         <>
             <Head title="Afiliasi kampus" />
             <AppPage
-                contextRail={<ProgressRail affiliationVerified={isVerified} />}
+                contextRail={
+                    <ProgressRail
+                        affiliationVerified={isVerified}
+                        profileId={profileIdForRail}
+                    />
+                }
                 contextRailLabel="Progres dan privasi onboarding"
             >
                 <div
@@ -880,6 +906,18 @@ export default function Onboarding({
                             </div>
                         </div>
                     </section>
+
+                    <OnboardingProfile
+                        key={`${isVerified}-${studentProfileId ?? 'new'}`}
+                        affiliationVerified={isVerified}
+                        institutionId={
+                            isVerified
+                                ? (membership?.institutionId ?? null)
+                                : null
+                        }
+                        onProfileCreated={setProfileIdForRail}
+                        profileId={studentProfileId}
+                    />
                 </div>
             </AppPage>
         </>
