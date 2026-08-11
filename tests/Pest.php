@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Notification\FakeWhatsAppGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,4 +48,14 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+function latestWhatsappOtp(FakeWhatsAppGateway $gateway): string
+{
+    $messages = $gateway->sentMessages();
+    $message = $messages[array_key_last($messages)]['message'] ?? '';
+
+    preg_match('/\b(\d{6})\b/', $message, $matches);
+
+    return $matches[1] ?? throw new RuntimeException('No OTP was sent by the fake gateway.');
 }

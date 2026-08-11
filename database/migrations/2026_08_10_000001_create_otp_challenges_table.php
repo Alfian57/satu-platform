@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('purpose');
             $table->string('target')->comment('normalized E.164 phone');
-            $table->string('token', 6)->comment('hashed OTP');
+            $table->string('token', 255)->comment('hashed OTP');
             $table->string('status')->default('pending');
             $table->timestamp('expires_at');
             $table->unsignedTinyInteger('attempts')->default(0);

@@ -6,9 +6,11 @@ use App\Enums\MessageStatus;
 use App\Models\MessageDelivery;
 use App\Models\MessageOutbox;
 use App\Support\Notification\WhatsAppGateway;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Crypt;
 
 class SendWhatsAppMessage implements ShouldQueue
 {
@@ -54,7 +56,15 @@ class SendWhatsAppMessage implements ShouldQueue
     private function buildMessage(MessageOutbox $outbox): string
     {
         if ($outbox->payload !== null) {
-            $data = json_decode($outbox->payload, true);
+            $payload = $outbox->payload;
+
+            try {
+                $payload = Crypt::decryptString($payload);
+            } catch (DecryptException) {
+                // Keep compatibility with existing non-sensitive fixtures.
+            }
+
+            $data = json_decode($payload, true);
 
             if (is_array($data) && isset($data['message'])) {
                 return $data['message'];

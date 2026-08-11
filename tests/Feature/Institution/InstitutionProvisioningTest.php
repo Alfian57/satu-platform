@@ -16,7 +16,6 @@ use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use RuntimeException;
 
 uses(RefreshDatabase::class);
 
@@ -279,12 +278,14 @@ test('privileged role cannot be obtained via public registration', function () {
         'password_confirmation' => 'password',
     ]);
 
-    $this->assertAuthenticated();
+    $response->assertRedirect(route('register', absolute: false))
+        ->assertSessionHasErrors('phone');
+
+    $this->assertGuest();
 
     $user = User::query()->where('username', 'attacker')->first();
 
-    expect($user->institutionMemberships)->toBeEmpty()
-        ->and($user->is_platform_admin)->toBeFalse();
+    expect($user)->toBeNull();
 });
 
 /*
