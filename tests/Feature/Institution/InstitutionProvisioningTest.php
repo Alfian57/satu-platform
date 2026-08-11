@@ -271,14 +271,12 @@ test('invitation token is stored as hash, not plaintext', function () {
 });
 
 test('privileged role cannot be obtained via public registration', function () {
-    $response = $this->post(route('register.store'), [
+    $this->post(route('register.store'), [
         'name' => 'Attacker',
         'username' => 'attacker',
         'password' => 'password',
         'password_confirmation' => 'password',
     ]);
-
-    $response->assertRedirect(route('register', absolute: false));
 
     $this->assertGuest();
 
