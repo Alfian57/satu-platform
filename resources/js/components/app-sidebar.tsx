@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Building2, LayoutDashboard } from 'lucide-react';
+import { BriefcaseBusiness, Building2, LayoutDashboard } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import {
@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { show as onboarding } from '@/routes/onboarding';
+import { index as projectsIndex } from '@/routes/projects';
 import type {
     InstitutionMembershipStatus,
     NavItem,
@@ -22,6 +23,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutDashboard,
+    },
+    {
+        title: 'Project',
+        href: projectsIndex(),
+        icon: BriefcaseBusiness,
     },
 ];
 
@@ -104,6 +110,10 @@ function InstitutionMembershipContext({ shell }: { shell: ShellContext }) {
 
 export function AppSidebar() {
     const { shell } = usePage().props;
+    const visibleMainNavItems =
+        shell.institutionMembership?.status === 'verified'
+            ? mainNavItems
+            : mainNavItems.filter((item) => item.title !== 'Project');
 
     return (
         <Sidebar collapsible="offcanvas" variant="sidebar">
@@ -117,7 +127,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent className="py-6">
-                <NavMain items={mainNavItems} />
+                <NavMain items={visibleMainNavItems} />
             </SidebarContent>
 
             <SidebarFooter className="border-t border-sidebar-border p-0">
