@@ -32,6 +32,7 @@ class RequestInstitutionMembershipRequest extends FormRequest
                         ),
                     ),
             ],
+            'nim' => ['bail', 'required', 'string', 'max:50'],
         ];
     }
 
@@ -44,6 +45,9 @@ class RequestInstitutionMembershipRequest extends FormRequest
             'institution_id.required' => 'Pilih kampus sebelum mengirim permintaan.',
             'institution_id.integer' => 'Pilihan kampus tidak valid.',
             'institution_id.exists' => 'Kampus yang dipilih sedang tidak tersedia. Pilih kampus lain.',
+            'nim.required' => 'Masukkan NIM yang terdaftar di kampus.',
+            'nim.string' => 'NIM tidak valid.',
+            'nim.max' => 'NIM maksimal 50 karakter.',
         ];
     }
 }

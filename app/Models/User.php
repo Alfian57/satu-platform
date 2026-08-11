@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -47,6 +48,22 @@ class User extends Authenticatable
     public function institutionMemberships(): HasMany
     {
         return $this->hasMany(InstitutionMembership::class);
+    }
+
+    /**
+     * @return HasOne<PhoneNumber, $this>
+     */
+    public function phoneNumber(): HasOne
+    {
+        return $this->hasOne(PhoneNumber::class);
+    }
+
+    /**
+     * @return HasMany<AffiliationRequest, $this>
+     */
+    public function affiliationRequests(): HasMany
+    {
+        return $this->hasMany(AffiliationRequest::class);
     }
 
     /**

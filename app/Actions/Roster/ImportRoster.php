@@ -2,11 +2,14 @@
 
 namespace App\Actions\Roster;
 
+use App\Enums\InstitutionRosterStatus;
 use App\Models\Institution;
 use App\Models\InstitutionRoster;
 use App\Models\InstitutionRosterRow;
 use App\Models\User;
+use App\Support\PhoneIdentity;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -87,7 +90,26 @@ final class ImportRoster
         $filename = basename($filePath);
 
         return DB::transaction(function () use ($institution, $semester, $filename, $checksum, $totalRows, $validRows, $errorRows, $parsed, $actor) {
-            $roster = InstitutionRoster::query()->create([
+            Institution::query()->lockForUpdate()->findOrFail($institution->getKey());
+
+            $existingRoster = InstitutionRoster::query()
+                ->whereBelongsTo($institution)
+                ->where('checksum', $checksum)
+                ->first();
+
+            if ($existingRoster !== null) {
+                return $existingRoster;
+            }
+
+            InstitutionRoster::query()
+                ->whereBelongsTo($institution)
+                ->active()
+                ->update([
+                    'status' => InstitutionRosterStatus::Superseded,
+                    'superseded_at' => now(),
+                ]);
+
+            $roster = InstitutionRoster::query()->forceCreate([
                 'institution_id' => $institution->id,
                 'semester' => $semester,
                 'source_filename' => $filename,
@@ -95,14 +117,23 @@ final class ImportRoster
                 'total_rows' => $totalRows,
                 'valid_rows' => $validRows,
                 'error_rows' => $errorRows,
+                'status' => InstitutionRosterStatus::Active,
                 'imported_by' => $actor?->id,
+                'activated_at' => now(),
             ]);
 
-            $insert = array_map(fn (array $row) => array_merge($row, [
-                'roster_id' => $roster->id,
-                'created_at' => Carbon::now()->toDateTimeString(),
-                'updated_at' => Carbon::now()->toDateTimeString(),
-            ]), $parsed);
+            $insert = array_map(function (array $row) use ($roster): array {
+                $phone = (string) $row['phone'];
+                unset($row['phone']);
+
+                return array_merge($row, [
+                    'roster_id' => $roster->id,
+                    'phone_hash' => PhoneIdentity::hash($phone),
+                    'phone_encrypted' => Crypt::encryptString($phone),
+                    'created_at' => Carbon::now()->toDateTimeString(),
+                    'updated_at' => Carbon::now()->toDateTimeString(),
+                ]);
+            }, $parsed);
 
             foreach (array_chunk($insert, 500) as $chunk) {
                 InstitutionRosterRow::query()->insert($chunk);
@@ -130,7 +161,9 @@ final class ImportRoster
                         $isFirstRow = false;
 
                         continue;
-                    }                    $cells = $row->toArray();
+                    }
+
+                    $cells = $row->toArray();
                     if (empty(array_filter($cells))) {
                         continue;
                     }
@@ -168,25 +201,9 @@ final class ImportRoster
             'program_studi' => trim($row['program_studi']),
             'angkatan' => trim((string) $row['angkatan']),
             'semester' => trim($row['semester']),
-            'phone' => $this->normalizePhone($row['phone']),
+            'phone' => PhoneIdentity::normalize($row['phone']),
             'is_active' => strtolower(trim($row['status_aktif'] ?? 'Aktif')) === 'aktif',
         ];
-    }
-
-    private function normalizePhone(string $phone): string
-    {
-        $normalized = trim($phone);
-        $normalized = preg_replace('/[^\d+]/', '', $normalized);
-
-        if (str_starts_with($normalized, '0')) {
-            $normalized = '+62'.substr($normalized, 1);
-        }
-
-        if (str_starts_with($normalized, '62') && ! str_starts_with($normalized, '+')) {
-            $normalized = '+'.$normalized;
-        }
-
-        return $normalized;
     }
 
     /**

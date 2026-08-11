@@ -27,9 +27,11 @@ import { dashboard, login } from '@/routes';
 import { store } from '@/routes/institution-memberships';
 import { show as onboarding } from '@/routes/onboarding';
 import type {
+    OnboardingAffiliation,
     OnboardingMembership,
     OnboardingMembershipStatus,
     OnboardingPageProps,
+    OnboardingPhone,
 } from '@/types';
 
 const statusCopy: Record<
@@ -88,7 +90,12 @@ const outcomeAnnouncements: Record<OnboardingMembershipStatus, string> = {
 };
 
 type SubmissionIssue =
-    'network' | 'session_expired' | 'forbidden' | 'rate_limited' | 'server';
+    | 'network'
+    | 'session_expired'
+    | 'forbidden'
+    | 'phone_required'
+    | 'rate_limited'
+    | 'server';
 
 const submissionIssueCopy: Record<
     SubmissionIssue,
@@ -119,6 +126,13 @@ const submissionIssueCopy: Record<
             'Permintaan tidak diproses. Pilihan kampusmu tetap tersimpan. Periksa akses terbaru sebelum mencoba kembali.',
         action: 'Periksa akses lagi',
         icon: LockKeyhole,
+    },
+    phone_required: {
+        title: 'Nomor WhatsApp belum terverifikasi',
+        description:
+            'Pencocokan afiliasi memerlukan nomor WhatsApp terverifikasi milikmu. Selesaikan verifikasi nomor, lalu periksa kembali halaman ini.',
+        action: 'Periksa status nomor',
+        icon: ShieldCheck,
     },
     rate_limited: {
         title: 'Terlalu banyak percobaan',
@@ -172,7 +186,8 @@ function SubmissionRecovery({
                             className="cursor-pointer disabled:cursor-not-allowed"
                             disabled={processing}
                             onClick={
-                                issue === 'forbidden'
+                                issue === 'forbidden' ||
+                                issue === 'phone_required'
                                     ? () => router.reload()
                                     : onRetry
                             }
@@ -336,9 +351,13 @@ function ProgressRow({
 function MembershipFacts({
     username,
     membership,
+    phone,
+    affiliation,
 }: {
     username: string;
     membership: OnboardingMembership | null;
+    phone: OnboardingPhone | null;
+    affiliation: OnboardingAffiliation | null;
 }) {
     return (
         <dl className="divide-y divide-border border-y border-border">
@@ -348,6 +367,16 @@ function MembershipFacts({
                 </dt>
                 <dd className="min-w-0 text-sm font-medium break-all">
                     {username}
+                </dd>
+            </div>
+            <div className="grid gap-1 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-5">
+                <dt className="font-label text-label text-muted-foreground">
+                    Nomor WhatsApp
+                </dt>
+                <dd className="min-w-0 text-sm font-medium">
+                    {phone?.verified
+                        ? `${phone.masked} (terverifikasi)`
+                        : 'Belum terverifikasi'}
                 </dd>
             </div>
             <div className="grid gap-1 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-5">
@@ -366,6 +395,7 @@ function MembershipFacts({
                     {membership
                         ? statusCopy[membership.status].label
                         : 'Belum diajukan'}
+                    {affiliation?.needsRefresh ? ' (perlu diperbarui)' : ''}
                 </dd>
             </div>
         </dl>
@@ -376,9 +406,12 @@ export default function Onboarding({
     account,
     institutions,
     membership,
+    affiliation,
+    phone,
     canRequest,
     canRetry,
     membershipOutcome,
+    affiliationOutcome,
     submissionIssue: initialSubmissionIssue,
 }: OnboardingPageProps) {
     const errorSummary = useRef<HTMLDivElement>(null);
@@ -391,20 +424,17 @@ export default function Onboarding({
     } | null>(null);
     const [submissionIssue, setSubmissionIssue] =
         useState<SubmissionIssue | null>(initialSubmissionIssue);
-    const form = useForm<{ institution_id: number | '' }>(
-        'onboarding-affiliation',
-        {
-            institution_id:
-                (canRetry || initialSubmissionIssue === 'forbidden') &&
-                membership &&
-                institutions.some(
-                    (institution) =>
-                        institution.id === membership.institutionId,
-                )
-                    ? membership.institutionId
-                    : '',
-        },
-    );
+    const form = useForm<{ institution_id: number | ''; nim: string }>({
+        institution_id:
+            (canRetry || initialSubmissionIssue === 'forbidden') &&
+            membership &&
+            institutions.some(
+                (institution) => institution.id === membership.institutionId,
+            )
+                ? membership.institutionId
+                : '',
+        nim: '',
+    });
     const hasErrors = Object.keys(form.errors).length > 0;
     const isVerified = membership?.status === 'verified';
     const status = membership ? statusCopy[membership.status] : null;
@@ -526,6 +556,13 @@ export default function Onboarding({
                             {outcomeAnnouncements[membershipOutcome]}
                         </p>
                     )}
+                    {affiliationOutcome && (
+                        <p className="sr-only" role="status" aria-live="polite">
+                            {affiliationOutcome === 'verified'
+                                ? 'Afiliasi kampus berhasil diverifikasi.'
+                                : 'Status permintaan afiliasi berhasil diperbarui.'}
+                        </p>
+                    )}
                     <p className="sr-only" role="status" aria-live="polite">
                         {form.processing
                             ? 'Permintaan afiliasi sedang dikirim.'
@@ -585,7 +622,7 @@ export default function Onboarding({
                                     </h2>
                                     <p className="mt-2 max-w-[62ch] text-sm leading-relaxed text-muted-foreground sm:text-base">
                                         {canRetry
-                                            ? 'Permintaan sebelumnya belum dapat diverifikasi. Periksa pilihan kampus, lalu kirim ulang permintaanmu.'
+                                            ? 'Data afiliasimu perlu diperbarui. Periksa kampus, masukkan ulang NIM, lalu kirim permintaan terbaru.'
                                             : (status?.description ??
                                               'Pilih institusi yang benar. Permintaanmu akan diteruskan untuk ditinjau oleh admin kampus.')}
                                     </p>
@@ -595,6 +632,8 @@ export default function Onboarding({
                                     <MembershipFacts
                                         username={account.username}
                                         membership={membership}
+                                        phone={phone}
+                                        affiliation={affiliation}
                                     />
                                 </div>
 
@@ -703,6 +742,53 @@ export default function Onboarding({
                                             />
                                         </div>
 
+                                        <div className="grid gap-2">
+                                            <label
+                                                className="text-sm font-semibold"
+                                                htmlFor="nim"
+                                            >
+                                                NIM
+                                            </label>
+                                            <input
+                                                id="nim"
+                                                name="nim"
+                                                type="text"
+                                                autoComplete="off"
+                                                value={form.data.nim}
+                                                onChange={(event) =>
+                                                    form.setData(
+                                                        'nim',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                disabled={form.processing}
+                                                aria-invalid={
+                                                    form.errors.nim
+                                                        ? true
+                                                        : undefined
+                                                }
+                                                aria-describedby={
+                                                    form.errors.nim
+                                                        ? 'nim-error'
+                                                        : 'nim-help'
+                                                }
+                                                className="h-control-lg w-full rounded-md border border-input bg-background px-3 text-sm text-foreground transition-colors duration-fast ease-ledger outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+                                            />
+                                            <p
+                                                id="nim-help"
+                                                className="text-xs leading-relaxed text-muted-foreground"
+                                            >
+                                                Masukkan NIM yang tercatat di
+                                                kampus. SATU mencocokkannya
+                                                bersama nomor WhatsApp
+                                                terverifikasi milikmu.
+                                            </p>
+                                            <InputError
+                                                id="nim-error"
+                                                message={form.errors.nim}
+                                            />
+                                        </div>
+
                                         {institutions.length === 0 ? (
                                             <div className="grid gap-4 border-y border-border py-4">
                                                 <div role="status">
@@ -745,6 +831,8 @@ export default function Onboarding({
                                                         form.processing ||
                                                         form.data
                                                             .institution_id ===
+                                                            '' ||
+                                                        form.data.nim.trim() ===
                                                             ''
                                                     }
                                                 >

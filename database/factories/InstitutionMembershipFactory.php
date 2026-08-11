@@ -91,6 +91,19 @@ class InstitutionMembershipFactory extends Factory
         ]);
     }
 
+    public function verifiedByRosterExactMatch(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => InstitutionMembershipStatus::Verified,
+            'requested_at' => now(),
+            'reviewed_at' => null,
+            'reviewed_by_id' => null,
+            'verified_at' => now(),
+            'verification_method' => InstitutionMembershipVerificationMethod::RosterExactMatch,
+            'last_review_outcome' => null,
+        ]);
+    }
+
     public function verifiedByCampusAdmin(?User $reviewer = null): static
     {
         return $this->state(fn (array $attributes) => [

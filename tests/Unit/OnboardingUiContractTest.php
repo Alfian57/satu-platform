@@ -27,8 +27,9 @@ test('onboarding uses the SATU enrollment ledger and Wayfinder contract', functi
         ->toContain('data-test="membership-outcome-announcement"')
         ->toContain('aria-live="polite"')
         ->toContain('summary?.focus()')
-        ->toContain("useForm<{ institution_id: number | '' }>(")
-        ->toContain("'onboarding-affiliation'")
+        ->toContain("useForm<{ institution_id: number | ''; nim: string }>(")
+        ->toContain('name="nim"')
+        ->toContain("issue === 'phone_required'")
         ->toContain('onNetworkError:')
         ->toContain('onHttpException:')
         ->toContain("focusRecovery('network')")
@@ -42,6 +43,7 @@ test('onboarding uses the SATU enrollment ledger and Wayfinder contract', functi
         ->toContain('disabled={')
         ->toContain('cursor-pointer')
         ->toContain('disabled:cursor-not-allowed')
+        ->not->toContain("'onboarding-affiliation',")
         ->not->toContain('href="/')
         ->not->toContain("\u{2014}");
 

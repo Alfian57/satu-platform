@@ -4,6 +4,7 @@ use App\Enums\InstitutionStatus;
 use App\Models\AuditLog;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
+use App\Models\PhoneNumber;
 use App\Models\User;
 
 test('student can submit an affiliation request from the onboarding ledger', function () {
@@ -11,11 +12,13 @@ test('student can submit an affiliation request from the onboarding ledger', fun
     $institution = Institution::factory()->active()->create([
         'name' => 'Universitas SATU',
     ]);
+    PhoneNumber::factory()->for($user)->create();
     $this->actingAs($user);
 
     visit(route('onboarding.show'))
         ->assertDataAttribute('@onboarding-root', 'membership-state', 'empty')
         ->select('institution_id', (string) $institution->id)
+        ->fill('nim', 'SATU-BROWSER-001')
         ->press('Kirim permintaan')
         ->assertSee('Permintaanmu sedang ditinjau')
         ->assertSee('Permintaan afiliasi berhasil dikirim dan menunggu tinjauan.')
@@ -58,11 +61,13 @@ test('a rejected affiliation can be corrected and retried', function () {
         ->for($user)
         ->for($institution)
         ->create();
+    PhoneNumber::factory()->for($user)->create();
     $this->actingAs($user);
 
     visit(route('onboarding.show'))
         ->assertSee('Ajukan kembali afiliasimu')
         ->assertSelected('institution_id', (string) $institution->id)
+        ->fill('nim', 'SATU-BROWSER-002')
         ->press('Ajukan kembali')
         ->assertSee('Permintaanmu sedang ditinjau')
         ->assertDataAttribute('@onboarding-root', 'membership-state', 'pending')
@@ -75,6 +80,7 @@ test('a rejected affiliation can be corrected and retried', function () {
 test('rapid submission is blocked in the client and idempotent on the server', function () {
     $user = User::factory()->create();
     $institution = Institution::factory()->active()->create();
+    PhoneNumber::factory()->for($user)->create();
     $this->actingAs($user);
 
     $page = visit(route('onboarding.show'))
@@ -87,6 +93,7 @@ test('rapid submission is blocked in the client and idempotent on the server', f
             'not-allowed',
         )
         ->select('institution_id', (string) $institution->id)
+        ->fill('nim', 'SATU-BROWSER-003')
         ->assertScript(
             'getComputedStyle(document.querySelector(\'[data-test="onboarding-submit"]\')).cursor',
             'pointer',
@@ -131,10 +138,12 @@ test('rapid submission is blocked in the client and idempotent on the server', f
 test('a network failure preserves the selection and offers a focused retry', function () {
     $user = User::factory()->create();
     $institution = Institution::factory()->active()->create();
+    PhoneNumber::factory()->for($user)->create();
     $this->actingAs($user);
 
     $page = visit(route('onboarding.show'))
-        ->select('institution_id', (string) $institution->id);
+        ->select('institution_id', (string) $institution->id)
+        ->fill('nim', 'SATU-BROWSER-004');
 
     $page->script(<<<'JS'
         () => {
@@ -200,10 +209,12 @@ test('permission loss during retry is safe and keeps the local choice', function
         ->for($user)
         ->for($institution)
         ->create();
+    PhoneNumber::factory()->for($user)->create();
     $this->actingAs($user);
 
     $page = visit(route('onboarding.show'))
-        ->assertSelected('institution_id', (string) $institution->id);
+        ->assertSelected('institution_id', (string) $institution->id)
+        ->fill('nim', 'SATU-BROWSER-005');
 
     $page->script(<<<'JS'
         () => {
@@ -269,7 +280,8 @@ test('validation failure returns focus to the same error summary every time', fu
     $this->actingAs($user);
 
     $page = visit(route('onboarding.show'))
-        ->select('institution_id', (string) $institution->id);
+        ->select('institution_id', (string) $institution->id)
+        ->fill('nim', 'SATU-BROWSER-006');
 
     $institution->update(['status' => InstitutionStatus::Suspended]);
 
@@ -292,12 +304,16 @@ test('validation failure returns focus to the same error summary every time', fu
 test('student can complete the affiliation request with a keyboard', function () {
     $user = User::factory()->create();
     $institution = Institution::factory()->active()->create();
+    PhoneNumber::factory()->for($user)->create();
     $this->actingAs($user);
 
     visit(route('onboarding.show'))
         ->keys('#institution_id', 'ArrowDown')
         ->assertSelected('institution_id', (string) $institution->id)
         ->keys('#institution_id', 'Tab')
+        ->assertScript('document.activeElement?.matches(\'#nim\')', true)
+        ->keys('#nim', 'SATU-BROWSER-007')
+        ->keys('#nim', 'Tab')
         ->assertScript(
             'document.activeElement?.textContent?.includes(\'Lanjutkan nanti\')',
             true,

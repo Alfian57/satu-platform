@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\InstitutionRosterRowFactory;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,10 +16,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $program_studi
  * @property string|null $angkatan
  * @property string $semester
- * @property string $phone
+ * @property string $phone_hash
+ * @property string $phone_encrypted
  * @property bool $is_active
  * @property array<string, mixed>|null $validation_errors
  */
+#[Hidden(['phone_hash', 'phone_encrypted'])]
 class InstitutionRosterRow extends Model
 {
     /** @use HasFactory<InstitutionRosterRowFactory> */
@@ -40,6 +43,7 @@ class InstitutionRosterRow extends Model
     protected function casts(): array
     {
         return [
+            'phone_encrypted' => 'encrypted',
             'is_active' => 'boolean',
             'validation_errors' => 'array',
         ];

@@ -61,6 +61,14 @@ class Institution extends Model
     }
 
     /**
+     * @return HasMany<AffiliationRequest, $this>
+     */
+    public function affiliationRequests(): HasMany
+    {
+        return $this->hasMany(AffiliationRequest::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

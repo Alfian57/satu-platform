@@ -31,7 +31,7 @@ return new class extends Migration
                 ->constrained('users')
                 ->restrictOnDelete();
             $table->timestamp('verified_at')->nullable();
-            $table->enum('verification_method', ['approved_domain', 'campus_admin_review'])
+            $table->enum('verification_method', ['approved_domain', 'roster_exact_match', 'campus_admin_review'])
                 ->nullable();
             $table->enum('last_review_outcome', ['approved', 'rejected'])
                 ->nullable();

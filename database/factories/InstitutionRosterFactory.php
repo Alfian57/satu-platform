@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\InstitutionRosterStatus;
 use App\Models\Institution;
 use App\Models\InstitutionRoster;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -26,6 +27,9 @@ class InstitutionRosterFactory extends Factory
             'total_rows' => 0,
             'valid_rows' => 0,
             'error_rows' => 0,
+            'status' => InstitutionRosterStatus::Active,
+            'activated_at' => now(),
+            'superseded_at' => null,
         ];
     }
 }
