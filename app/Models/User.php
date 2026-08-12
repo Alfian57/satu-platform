@@ -131,6 +131,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<Message, $this>
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'author_id');
+    }
+
+    /**
      * @return HasMany<AuditLog, $this>
      */
     public function auditLogs(): HasMany

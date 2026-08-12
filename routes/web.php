@@ -9,6 +9,7 @@ use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectDiscussionController;
 use App\Http\Controllers\ProjectWorkspaceController;
 use App\Http\Controllers\RecommendationFeedbackController;
 use App\Http\Controllers\RecruiterContactRequestController;
@@ -100,6 +101,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::scopeBindings()->prefix('{project}/workspace')->group(function () {
             Route::get('/', [ProjectWorkspaceController::class, 'show'])
                 ->name('workspace');
+            Route::get('discussions', [ProjectDiscussionController::class, 'index'])
+                ->name('workspace.discussions.index');
+            Route::post('discussions', [ProjectDiscussionController::class, 'store'])
+                ->name('workspace.discussions.store');
+            Route::patch('discussions/{message}', [ProjectDiscussionController::class, 'update'])
+                ->name('workspace.discussions.update');
+            Route::delete('discussions/{message}', [ProjectDiscussionController::class, 'destroy'])
+                ->name('workspace.discussions.destroy');
             Route::post('tasks', [ProjectWorkspaceController::class, 'store'])
                 ->name('workspace.tasks.store');
             Route::patch('tasks/{task}', [ProjectWorkspaceController::class, 'update'])
