@@ -17,6 +17,7 @@ const statusCopy: Record<RealtimeStatus, string> = {
     reconnecting: 'Realtime menyambung kembali',
     disconnected: 'Realtime terputus',
     unavailable: 'Realtime tidak tersedia',
+    offline: 'Koneksi offline, menunggu pemulihan',
 };
 
 export function WorkspaceRealtimeStatus({
@@ -25,7 +26,10 @@ export function WorkspaceRealtimeStatus({
     onRetry,
 }: Props) {
     const isConnected = status === 'connected';
-    const canRetry = status === 'disconnected' || status === 'unavailable';
+    const canRetry =
+        status === 'disconnected' ||
+        status === 'unavailable' ||
+        status === 'offline';
     const StatusIcon = isConnected ? Wifi : WifiOff;
 
     return (
@@ -56,6 +60,7 @@ export function WorkspaceRealtimeStatus({
                     size="sm"
                     className="h-auto min-h-0 cursor-pointer px-1 py-0.5 text-xs"
                     onClick={onRetry}
+                    data-test="workspace-realtime-retry"
                 >
                     <RefreshCw aria-hidden="true" className="size-3.5" />
                     Coba lagi

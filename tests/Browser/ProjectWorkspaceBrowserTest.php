@@ -109,6 +109,77 @@ test('empty workspace offers a keyboard reachable next action on mobile', functi
         ->assertNoAccessibilityIssues();
 });
 
+test('workspace reconciles changes missed while the browser is offline', function () {
+    ['owner' => $owner, 'project' => $project] = browserWorkspaceContext();
+    Task::factory()
+        ->for($project)
+        ->for($owner, 'createdBy')
+        ->create([
+            'title' => 'Task sebelum koneksi terputus',
+        ]);
+
+    $this->actingAs($owner);
+
+    $page = visit(route('projects.workspace', $project))
+        ->resize(1366, 900)
+        ->assertSee('Task sebelum koneksi terputus')
+        ->wait(0.3);
+    $page->script("window.dispatchEvent(new Event('offline'))");
+    $page
+        ->waitForText('Koneksi offline, menunggu pemulihan')
+        ->screenshot(true, 'p40-workspace-offline-desktop-1366x900');
+
+    Task::factory()
+        ->for($project)
+        ->for($owner, 'createdBy')
+        ->create([
+            'title' => 'Task yang dibuat saat offline',
+        ]);
+
+    $page->script("window.dispatchEvent(new Event('online'))");
+    $page
+        ->waitForText('Koneksi kembali. Snapshot workspace terbaru sudah disinkronkan dari database.')
+        ->screenshot(true, 'p40-workspace-reconnected-desktop-1366x900')
+        ->assertSee('Task yang dibuat saat offline')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
+test('workspace recovers a stale task edit from the latest database snapshot', function () {
+    ['owner' => $owner, 'project' => $project] = browserWorkspaceContext();
+    $task = Task::factory()
+        ->for($project)
+        ->for($owner, 'createdBy')
+        ->create([
+            'title' => 'Judul task dari snapshot awal',
+        ]);
+
+    $this->actingAs($owner);
+
+    $page = visit(route('projects.workspace', $project))
+        ->assertSee('Judul task dari snapshot awal')
+        ->fill('#task-edit-title', 'Draft lokal yang belum tersinkron');
+
+    $task->forceFill([
+        'title' => 'Judul task dari sesi lain',
+        'updated_at' => now()->addMinute(),
+    ])->save();
+
+    $page
+        ->click('@task-edit-submit')
+        ->waitForText('Task berubah di sesi lain')
+        ->assertSee('Muat data terbaru')
+        ->resize(390, 844)
+        ->screenshot(true, 'p40-workspace-stale-mobile-390x844')
+        ->click('@workspace-action-recovery')
+        ->waitForText('Data terbaru sudah dimuat dari database.')
+        ->assertSee('Judul task dari sesi lain')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
 test('team can add a discussion note from the workspace composer', function () {
     ['owner' => $owner, 'project' => $project] = browserWorkspaceContext();
 

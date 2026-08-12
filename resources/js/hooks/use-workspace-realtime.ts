@@ -9,12 +9,14 @@ import type {
 
 const TASK_EVENT = '.workspace.task.changed';
 const DISCUSSION_EVENT = '.workspace.discussion.changed';
+const MAX_REMEMBERED_EVENTS = 300;
 
 type WorkspaceRealtimeOptions = {
     institutionId: number;
     projectId: number;
     onTaskDelta: (delta: WorkspaceRealtimeDelta) => void;
     onDiscussionDelta: (delta: WorkspaceRealtimeDelta) => void;
+    onReconnect: () => void;
 };
 
 type UnknownRecord = Record<string, unknown>;
@@ -51,7 +53,8 @@ function parseDelta(
         eventInstitutionId !== institutionId ||
         eventProjectId !== projectId ||
         (typeof version !== 'string' && version !== null) ||
-        typeof occurredAt !== 'string'
+        typeof occurredAt !== 'string' ||
+        Number.isNaN(Date.parse(occurredAt))
     ) {
         return null;
     }
@@ -108,11 +111,62 @@ function eventKey(delta: WorkspaceRealtimeDelta): string {
     ].join(':');
 }
 
+function eventResourceKey(delta: WorkspaceRealtimeDelta): string {
+    return `${delta.resource}:${delta.resource_id}`;
+}
+
+function rememberEvent(events: Map<string, true>, key: string): void {
+    if (events.has(key)) {
+        return;
+    }
+
+    if (events.size >= MAX_REMEMBERED_EVENTS) {
+        const oldestKey = events.keys().next().value;
+
+        if (typeof oldestKey === 'string') {
+            events.delete(oldestKey);
+        }
+    }
+
+    events.set(key, true);
+}
+
+function rememberLatestEvent(
+    events: Map<string, string>,
+    key: string,
+    occurredAt: string,
+): void {
+    if (events.size >= MAX_REMEMBERED_EVENTS && !events.has(key)) {
+        const oldestKey = events.keys().next().value;
+
+        if (typeof oldestKey === 'string') {
+            events.delete(oldestKey);
+        }
+    }
+
+    events.delete(key);
+    events.set(key, occurredAt);
+}
+
+function isOlderEvent(
+    events: Map<string, string>,
+    delta: WorkspaceRealtimeDelta,
+): boolean {
+    const previousOccurredAt = events.get(eventResourceKey(delta));
+
+    if (previousOccurredAt === undefined) {
+        return false;
+    }
+
+    return Date.parse(delta.occurred_at) < Date.parse(previousOccurredAt);
+}
+
 export function useWorkspaceRealtime({
     institutionId,
     projectId,
     onTaskDelta,
     onDiscussionDelta,
+    onReconnect,
 }: WorkspaceRealtimeOptions) {
     const [connectionState, setConnectionState] =
         useState<WorkspaceRealtimeStatus>('connecting');
@@ -120,18 +174,87 @@ export function useWorkspaceRealtime({
         WorkspacePresenceMember[]
     >([]);
     const [retryNonce, setRetryNonce] = useState(0);
-    const callbacks = useRef({ onTaskDelta, onDiscussionDelta });
-    const seenEvents = useRef<Set<string>>(new Set());
+    const callbacks = useRef({
+        onTaskDelta,
+        onDiscussionDelta,
+        onReconnect,
+    });
+    const seenEvents = useRef<Map<string, true>>(new Map());
+    const latestEvents = useRef<Map<string, string>>(new Map());
 
     useEffect(() => {
-        callbacks.current = { onTaskDelta, onDiscussionDelta };
-    }, [onDiscussionDelta, onTaskDelta]);
+        callbacks.current = { onTaskDelta, onDiscussionDelta, onReconnect };
+    }, [onDiscussionDelta, onReconnect, onTaskDelta]);
 
     useEffect(() => {
         let isActive = true;
-        const echo = getWorkspaceEcho();
+        let hasConnected = false;
+        let isBrowserOffline = false;
+        let needsReconciliation = false;
 
         seenEvents.current.clear();
+        latestEvents.current.clear();
+
+        const markConnected = (): void => {
+            if (!isActive || isBrowserOffline) {
+                return;
+            }
+
+            const shouldReconcile = needsReconciliation;
+            hasConnected = true;
+            needsReconciliation = false;
+            setConnectionState('connected');
+
+            if (shouldReconcile) {
+                callbacks.current.onReconnect();
+            }
+        };
+
+        const handleBrowserOffline = (): void => {
+            if (!isActive) {
+                return;
+            }
+
+            needsReconciliation = true;
+            isBrowserOffline = true;
+            setPresenceMembers([]);
+            setConnectionState('offline');
+            resetWorkspaceEcho();
+        };
+
+        const handleBrowserOnline = (): void => {
+            if (!isActive) {
+                return;
+            }
+
+            isBrowserOffline = false;
+            setConnectionState('reconnecting');
+            resetWorkspaceEcho();
+            needsReconciliation = false;
+            callbacks.current.onReconnect();
+            setRetryNonce((current) => current + 1);
+        };
+
+        window.addEventListener('offline', handleBrowserOffline);
+        window.addEventListener('online', handleBrowserOnline);
+
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            isBrowserOffline = true;
+            needsReconciliation = true;
+            queueMicrotask(() => {
+                if (isActive) {
+                    setConnectionState('offline');
+                }
+            });
+
+            return () => {
+                isActive = false;
+                window.removeEventListener('offline', handleBrowserOffline);
+                window.removeEventListener('online', handleBrowserOnline);
+            };
+        }
+
+        const echo = getWorkspaceEcho();
 
         if (echo === null) {
             queueMicrotask(() => {
@@ -140,7 +263,11 @@ export function useWorkspaceRealtime({
                 }
             });
 
-            return;
+            return () => {
+                isActive = false;
+                window.removeEventListener('offline', handleBrowserOffline);
+                window.removeEventListener('online', handleBrowserOnline);
+            };
         }
 
         queueMicrotask(() => {
@@ -148,25 +275,38 @@ export function useWorkspaceRealtime({
                 setConnectionState('connecting');
             }
         });
-        let hasConnected = false;
 
         const workspaceChannelName = `institutions.${institutionId}.projects.${projectId}.workspace`;
         const presenceChannelName = `institutions.${institutionId}.projects.${projectId}.presence`;
 
         const handleConnectionChange = (status: ConnectionStatus): void => {
-            if (isActive) {
-                const nextStatus = mapConnectionStatus(status);
-
-                if (nextStatus === 'connected') {
-                    hasConnected = true;
-                }
-
-                setConnectionState(
-                    nextStatus === 'connecting' && hasConnected
-                        ? 'reconnecting'
-                        : nextStatus,
-                );
+            if (!isActive) {
+                return;
             }
+
+            if (isBrowserOffline) {
+                setConnectionState('offline');
+
+                return;
+            }
+
+            const nextStatus = mapConnectionStatus(status);
+
+            if (nextStatus === 'connected') {
+                markConnected();
+
+                return;
+            }
+
+            if (nextStatus === 'disconnected' || nextStatus === 'unavailable') {
+                needsReconciliation = hasConnected;
+            }
+
+            setConnectionState(
+                nextStatus === 'connecting' && hasConnected
+                    ? 'reconnecting'
+                    : nextStatus,
+            );
         };
 
         const removeConnectionListener = echo.connector.onConnectionChange(
@@ -176,7 +316,7 @@ export function useWorkspaceRealtime({
         const handleTaskDelta = (payload: unknown): void => {
             const delta = parseDelta(payload, 'task', institutionId, projectId);
 
-            if (delta === null) {
+            if (delta === null || isOlderEvent(latestEvents.current, delta)) {
                 return;
             }
 
@@ -186,11 +326,12 @@ export function useWorkspaceRealtime({
                 return;
             }
 
-            if (seenEvents.current.size >= 300) {
-                seenEvents.current.clear();
-            }
-
-            seenEvents.current.add(key);
+            rememberEvent(seenEvents.current, key);
+            rememberLatestEvent(
+                latestEvents.current,
+                eventResourceKey(delta),
+                delta.occurred_at,
+            );
             callbacks.current.onTaskDelta(delta);
         };
 
@@ -202,7 +343,7 @@ export function useWorkspaceRealtime({
                 projectId,
             );
 
-            if (delta === null) {
+            if (delta === null || isOlderEvent(latestEvents.current, delta)) {
                 return;
             }
 
@@ -212,16 +353,24 @@ export function useWorkspaceRealtime({
                 return;
             }
 
-            if (seenEvents.current.size >= 300) {
-                seenEvents.current.clear();
-            }
-
-            seenEvents.current.add(key);
+            rememberEvent(seenEvents.current, key);
+            rememberLatestEvent(
+                latestEvents.current,
+                eventResourceKey(delta),
+                delta.occurred_at,
+            );
             callbacks.current.onDiscussionDelta(delta);
         };
 
         const handleChannelError = (): void => {
             if (isActive) {
+                if (isBrowserOffline) {
+                    setConnectionState('offline');
+
+                    return;
+                }
+
+                needsReconciliation = hasConnected;
                 setConnectionState('unavailable');
             }
         };
@@ -230,12 +379,7 @@ export function useWorkspaceRealtime({
             .private(workspaceChannelName)
             .listen(TASK_EVENT, handleTaskDelta)
             .listen(DISCUSSION_EVENT, handleDiscussionDelta)
-            .subscribed(() => {
-                if (isActive) {
-                    hasConnected = true;
-                    setConnectionState('connected');
-                }
-            })
+            .subscribed(markConnected)
             .error(handleChannelError);
 
         echo.join(presenceChannelName)
@@ -270,6 +414,8 @@ export function useWorkspaceRealtime({
         return () => {
             isActive = false;
             removeConnectionListener();
+            window.removeEventListener('offline', handleBrowserOffline);
+            window.removeEventListener('online', handleBrowserOnline);
             workspaceChannel.stopListening(TASK_EVENT, handleTaskDelta);
             workspaceChannel.stopListening(
                 DISCUSSION_EVENT,
@@ -281,7 +427,9 @@ export function useWorkspaceRealtime({
     }, [institutionId, projectId, retryNonce]);
 
     function retryConnection(): void {
+        setConnectionState('reconnecting');
         resetWorkspaceEcho();
+        callbacks.current.onReconnect();
         setRetryNonce((current) => current + 1);
     }
 

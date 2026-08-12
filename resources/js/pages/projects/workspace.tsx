@@ -103,7 +103,12 @@ type WorkspaceProps = {
     permissions: TaskWorkspacePermissions;
 };
 
-type RealtimeReconciliationScope = 'tasks' | 'discussion';
+type RealtimeReconciliationScope = 'workspace' | 'tasks' | 'discussion';
+
+type ReconciliationReason =
+    'delta' | 'reconnect' | 'manual' | 'stale' | 'command';
+
+type WorkspaceRecoveryAction = 'retry' | 'reload' | 'stale';
 
 type ErrorMap = Record<string, unknown>;
 
@@ -615,6 +620,8 @@ export default function ProjectWorkspace({
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [actionMessage, setActionMessage] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
+    const [actionRecovery, setActionRecovery] =
+        useState<WorkspaceRecoveryAction | null>(null);
     const [realtimeNotice, setRealtimeNotice] = useState<string | null>(null);
     const [pendingDelete, setPendingDelete] = useState<WorkspaceTask | null>(
         null,
@@ -622,9 +629,10 @@ export default function ProjectWorkspace({
     const reconciliationQueue = useRef<Set<RealtimeReconciliationScope>>(
         new Set(),
     );
-    const reconciliationInFlight = useRef<Set<RealtimeReconciliationScope>>(
-        new Set(),
-    );
+    const reconciliationReasons = useRef<Set<ReconciliationReason>>(new Set());
+    const reconciliationInFlight = useRef(false);
+    const reconciliationSuccessNotice = useRef<string | null>(null);
+    const retryAction = useRef<(() => void) | null>(null);
     const isWorkspaceMounted = useRef(true);
 
     const createForm = useHttp<CreateTaskData, TaskResponse>({
@@ -664,35 +672,120 @@ export default function ProjectWorkspace({
     const transitionErrors = transitionForm.errors as ErrorMap;
     const assignErrors = assignForm.errors as ErrorMap;
 
-    function requestRealtimeReconciliation(
-        scope: RealtimeReconciliationScope,
-    ): void {
-        reconciliationQueue.current.add(scope);
+    function reconciliationProps(
+        scopes: Set<RealtimeReconciliationScope>,
+    ): string[] {
+        if (scopes.has('workspace')) {
+            return [
+                'project',
+                'tasks',
+                'discussion',
+                'members',
+                'filters',
+                'permissions',
+            ];
+        }
 
-        if (reconciliationInFlight.current.has(scope)) {
+        const props = new Set<string>();
+
+        if (scopes.has('tasks')) {
+            props.add('tasks');
+            props.add('members');
+        }
+
+        if (scopes.has('discussion')) {
+            props.add('discussion');
+        }
+
+        return Array.from(props);
+    }
+
+    function reconciliationStartMessage(
+        scopes: Set<RealtimeReconciliationScope>,
+        reasons: Set<ReconciliationReason>,
+    ): string {
+        if (reasons.has('reconnect')) {
+            return 'Koneksi kembali. Menyinkronkan snapshot workspace dari database...';
+        }
+
+        if (reasons.has('stale')) {
+            return 'Data berubah di sesi lain. Memuat versi terbaru dari database...';
+        }
+
+        if (reasons.has('manual')) {
+            return 'Memuat snapshot workspace terbaru dari database...';
+        }
+
+        return scopes.has('discussion') && !scopes.has('tasks')
+            ? 'Perubahan diskusi diterima. Menyinkronkan snapshot terbaru dari database...'
+            : 'Perubahan task diterima. Menyinkronkan snapshot terbaru dari database...';
+    }
+
+    function reconciliationSuccessMessage(
+        scopes: Set<RealtimeReconciliationScope>,
+        reasons: Set<ReconciliationReason>,
+    ): string {
+        if (reasons.has('reconnect')) {
+            return 'Koneksi kembali. Snapshot workspace terbaru sudah disinkronkan dari database.';
+        }
+
+        if (reasons.has('stale')) {
+            return 'Data terbaru sudah dimuat dari database. Periksa kembali draft sebelum menyimpan.';
+        }
+
+        if (reasons.has('manual')) {
+            return 'Snapshot workspace terbaru sudah dimuat dari database.';
+        }
+
+        return scopes.has('discussion') && !scopes.has('tasks')
+            ? 'Snapshot diskusi terbaru sudah disinkronkan dari database.'
+            : 'Snapshot task terbaru sudah disinkronkan dari database.';
+    }
+
+    function flushReconciliation(): void {
+        if (
+            !isWorkspaceMounted.current ||
+            reconciliationInFlight.current ||
+            reconciliationQueue.current.size === 0
+        ) {
             return;
         }
 
-        reconciliationInFlight.current.add(scope);
-        reconciliationQueue.current.delete(scope);
-        setRealtimeNotice(
-            scope === 'tasks'
-                ? 'Perubahan task diterima. Menyinkronkan snapshot terbaru dari database...'
-                : 'Perubahan diskusi diterima. Menyinkronkan snapshot terbaru dari database...',
-        );
+        const scopes = new Set(reconciliationQueue.current);
+        const reasons = new Set(reconciliationReasons.current);
+        const successMessage = reconciliationSuccessNotice.current;
+
+        reconciliationQueue.current.clear();
+        reconciliationReasons.current.clear();
+        reconciliationSuccessNotice.current = null;
+        reconciliationInFlight.current = true;
+        setRealtimeNotice(reconciliationStartMessage(scopes, reasons));
 
         router.reload({
-            only: scope === 'tasks' ? ['tasks', 'members'] : ['discussion'],
+            only: reconciliationProps(scopes),
             onSuccess: () => {
                 if (!isWorkspaceMounted.current) {
                     return;
                 }
 
                 setRealtimeNotice(
-                    scope === 'tasks'
-                        ? 'Snapshot task terbaru sudah disinkronkan dari database.'
-                        : 'Snapshot diskusi terbaru sudah disinkronkan dari database.',
+                    reconciliationSuccessMessage(scopes, reasons),
                 );
+
+                if (
+                    reasons.has('reconnect') ||
+                    reasons.has('manual') ||
+                    reasons.has('stale') ||
+                    reasons.has('command')
+                ) {
+                    setActionError(null);
+                    setActionRecovery(null);
+                    retryAction.current = null;
+                }
+
+                if (successMessage !== null) {
+                    setActionMessage(successMessage);
+                }
             },
             onError: () => {
                 if (!isWorkspaceMounted.current) {
@@ -700,20 +793,44 @@ export default function ProjectWorkspace({
                 }
 
                 setActionError(
-                    'Realtime menerima perubahan, tetapi snapshot terbaru belum dapat dimuat. Gunakan Muat ulang untuk mencoba lagi.',
+                    'Snapshot terbaru belum dapat dimuat. Data yang terlihat dipertahankan, silakan coba lagi.',
                 );
+                setActionRecovery('reload');
+                retryAction.current = () =>
+                    requestWorkspaceReconciliation('manual');
             },
             onFinish: () => {
-                reconciliationInFlight.current.delete(scope);
-
-                if (
-                    isWorkspaceMounted.current &&
-                    reconciliationQueue.current.has(scope)
-                ) {
-                    requestRealtimeReconciliation(scope);
-                }
+                reconciliationInFlight.current = false;
+                flushReconciliation();
             },
         });
+    }
+
+    function requestRealtimeReconciliation(
+        scope: Exclude<RealtimeReconciliationScope, 'workspace'>,
+        reason: ReconciliationReason = 'delta',
+        successMessage: string | null = null,
+    ): void {
+        if (!reconciliationQueue.current.has('workspace')) {
+            reconciliationQueue.current.add(scope);
+        }
+
+        reconciliationReasons.current.add(reason);
+
+        if (successMessage !== null) {
+            reconciliationSuccessNotice.current = successMessage;
+        }
+
+        flushReconciliation();
+    }
+
+    function requestWorkspaceReconciliation(
+        reason: Exclude<ReconciliationReason, 'delta' | 'command'>,
+    ): void {
+        reconciliationQueue.current.clear();
+        reconciliationQueue.current.add('workspace');
+        reconciliationReasons.current.add(reason);
+        flushReconciliation();
     }
 
     const realtime = useWorkspaceRealtime({
@@ -721,17 +838,19 @@ export default function ProjectWorkspace({
         projectId: project.id,
         onTaskDelta: () => requestRealtimeReconciliation('tasks'),
         onDiscussionDelta: () => requestRealtimeReconciliation('discussion'),
+        onReconnect: () => requestWorkspaceReconciliation('reconnect'),
     });
 
     useEffect(() => {
         const queue = reconciliationQueue.current;
-        const inFlight = reconciliationInFlight.current;
+        const reasons = reconciliationReasons.current;
         isWorkspaceMounted.current = true;
 
         return () => {
             isWorkspaceMounted.current = false;
             queue.clear();
-            inFlight.clear();
+            reasons.clear();
+            reconciliationSuccessNotice.current = null;
         };
     }, []);
 
@@ -768,7 +887,7 @@ export default function ProjectWorkspace({
     function selectTask(task: WorkspaceTask) {
         setSelectedTaskId(task.id);
         setEditorMode('edit');
-        setActionError(null);
+        clearActionFeedback();
         editForm.clearErrors();
         editForm.setData({
             title: task.title,
@@ -782,7 +901,7 @@ export default function ProjectWorkspace({
     function startCreate() {
         setSelectedTaskId(null);
         setEditorMode('create');
-        setActionError(null);
+        clearActionFeedback();
         createForm.clearErrors();
         createForm.setData({
             title: '',
@@ -792,48 +911,45 @@ export default function ProjectWorkspace({
         });
     }
 
-    function commandOptions(fallback: string) {
+    function clearActionFeedback(): void {
+        setActionMessage(null);
+        setActionError(null);
+        setActionRecovery(null);
+        retryAction.current = null;
+    }
+
+    function commandOptions(fallback: string, retry: () => void) {
         return {
             onHttpException: (response: { status: number }) => {
                 setActionError(requestFailureMessage(response.status));
+                setActionRecovery(response.status === 409 ? 'stale' : 'reload');
+                retryAction.current = retry;
 
                 return false;
             },
             onNetworkError: () => {
                 setActionError(`${fallback} Periksa koneksi lalu coba lagi.`);
+                setActionRecovery('retry');
+                retryAction.current = retry;
 
                 return false;
             },
         };
     }
 
-    function reloadWorkspace(successMessage: string) {
-        router.reload({
-            only: ['tasks', 'members'],
-            onSuccess: () => {
-                setActionError(null);
-                setActionMessage(successMessage);
-            },
-            onError: () => {
-                setActionError(
-                    'Perubahan tersimpan, tetapi daftar terbaru belum dapat dimuat. Coba refresh lagi.',
-                );
-            },
-        });
+    function reloadWorkspace(successMessage: string): void {
+        requestRealtimeReconciliation('tasks', 'command', successMessage);
     }
 
-    function submitCreate(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
+    function runCreate(): void {
         if (createForm.processing) {
             return;
         }
 
-        setActionMessage(null);
-        setActionError(null);
+        clearActionFeedback();
         createForm
             .post(ProjectWorkspaceController.store(project.id).url, {
-                ...commandOptions('Task belum tersimpan.'),
+                ...commandOptions('Task belum tersimpan.', runCreate),
             })
             .then((response) => {
                 setSelectedTaskId(response.data.id);
@@ -843,15 +959,17 @@ export default function ProjectWorkspace({
             .catch(() => undefined);
     }
 
-    function submitEdit(event: React.FormEvent<HTMLFormElement>) {
+    function submitCreate(event: React.FormEvent<HTMLFormElement>): void {
         event.preventDefault();
+        runCreate();
+    }
 
+    function runEdit(): void {
         if (selectedTask === null || editForm.processing) {
             return;
         }
 
-        setActionMessage(null);
-        setActionError(null);
+        clearActionFeedback();
         editForm.transform((data) => ({
             ...data,
             expected_updated_at: selectedTask.updated_at,
@@ -863,7 +981,10 @@ export default function ProjectWorkspace({
                     task: selectedTask.id,
                 }).url,
                 {
-                    ...commandOptions('Perubahan task belum tersimpan.'),
+                    ...commandOptions(
+                        'Perubahan task belum tersimpan.',
+                        runEdit,
+                    ),
                 },
             )
             .then(() => {
@@ -872,13 +993,17 @@ export default function ProjectWorkspace({
             .catch(() => undefined);
     }
 
-    function transitionTask(status: TaskStatus) {
+    function submitEdit(event: React.FormEvent<HTMLFormElement>): void {
+        event.preventDefault();
+        runEdit();
+    }
+
+    function runTransition(status: TaskStatus): void {
         if (selectedTask === null || transitionForm.processing) {
             return;
         }
 
-        setActionMessage(null);
-        setActionError(null);
+        clearActionFeedback();
         transitionForm.transform((data) => ({
             ...data,
             status,
@@ -891,7 +1016,9 @@ export default function ProjectWorkspace({
                     task: selectedTask.id,
                 }).url,
                 {
-                    ...commandOptions('Status task belum berubah.'),
+                    ...commandOptions('Status task belum berubah.', () =>
+                        runTransition(status),
+                    ),
                 },
             )
             .then(() => {
@@ -900,9 +1027,11 @@ export default function ProjectWorkspace({
             .catch(() => undefined);
     }
 
-    function assignTask(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+    function transitionTask(status: TaskStatus): void {
+        runTransition(status);
+    }
 
+    function runAssignTask(): void {
         if (
             selectedTask === null ||
             assignForm.processing ||
@@ -911,8 +1040,7 @@ export default function ProjectWorkspace({
             return;
         }
 
-        setActionMessage(null);
-        setActionError(null);
+        clearActionFeedback();
         assignForm
             .post(
                 ProjectWorkspaceController.assign({
@@ -920,7 +1048,10 @@ export default function ProjectWorkspace({
                     task: selectedTask.id,
                 }).url,
                 {
-                    ...commandOptions('Penanggung jawab belum ditambahkan.'),
+                    ...commandOptions(
+                        'Penanggung jawab belum ditambahkan.',
+                        runAssignTask,
+                    ),
                 },
             )
             .then(() => {
@@ -930,13 +1061,17 @@ export default function ProjectWorkspace({
             .catch(() => undefined);
     }
 
-    function unassignTask(userId: number) {
+    function assignTask(event: React.FormEvent<HTMLFormElement>): void {
+        event.preventDefault();
+        runAssignTask();
+    }
+
+    function runUnassignTask(userId: number): void {
         if (selectedTask === null || unassignForm.processing) {
             return;
         }
 
-        setActionMessage(null);
-        setActionError(null);
+        clearActionFeedback();
         unassignForm.transform((data) => ({
             ...data,
             assignee_id: userId,
@@ -948,7 +1083,9 @@ export default function ProjectWorkspace({
                     task: selectedTask.id,
                 }).url,
                 {
-                    ...commandOptions('Penanggung jawab belum dilepas.'),
+                    ...commandOptions('Penanggung jawab belum dilepas.', () =>
+                        runUnassignTask(userId),
+                    ),
                 },
             )
             .then(() => {
@@ -958,14 +1095,17 @@ export default function ProjectWorkspace({
             .catch(() => undefined);
     }
 
-    function deleteTask() {
+    function unassignTask(userId: number): void {
+        runUnassignTask(userId);
+    }
+
+    function runDeleteTask(): void {
         if (pendingDelete === null || deleteForm.processing) {
             return;
         }
 
         const task = pendingDelete;
-        setActionMessage(null);
-        setActionError(null);
+        clearActionFeedback();
         deleteForm
             .delete(
                 ProjectWorkspaceController.destroy({
@@ -973,7 +1113,10 @@ export default function ProjectWorkspace({
                     task: task.id,
                 }).url,
                 {
-                    ...commandOptions('Task belum dapat dihapus.'),
+                    ...commandOptions(
+                        'Task belum dapat dihapus.',
+                        runDeleteTask,
+                    ),
                 },
             )
             .then(() => {
@@ -985,9 +1128,13 @@ export default function ProjectWorkspace({
             .catch(() => undefined);
     }
 
+    function deleteTask(): void {
+        runDeleteTask();
+    }
+
     function applyFilters(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        setActionError(null);
+        clearActionFeedback();
         router.visit(
             ProjectWorkspaceController.show(project.id, {
                 query: {
@@ -1023,6 +1170,7 @@ export default function ProjectWorkspace({
     }
 
     function resetFilters() {
+        clearActionFeedback();
         setFilterDraft((current) => ({
             ...current,
             q: '',
@@ -1038,6 +1186,25 @@ export default function ProjectWorkspace({
                 preserveScroll: true,
                 preserveState: false,
             },
+        );
+    }
+
+    function recoverAction(): void {
+        const recovery = actionRecovery;
+        const retry = retryAction.current;
+
+        setActionError(null);
+        setActionRecovery(null);
+        retryAction.current = null;
+
+        if (recovery === 'retry') {
+            retry?.();
+
+            return;
+        }
+
+        requestWorkspaceReconciliation(
+            recovery === 'stale' ? 'stale' : 'manual',
         );
     }
 
@@ -1103,16 +1270,8 @@ export default function ProjectWorkspace({
                                 className="cursor-pointer"
                                 disabled={isRefreshing}
                                 onClick={() => {
-                                    setActionError(null);
-                                    router.reload({
-                                        only: [
-                                            'project',
-                                            'tasks',
-                                            'members',
-                                            'filters',
-                                            'permissions',
-                                        ],
-                                    });
+                                    clearActionFeedback();
+                                    requestWorkspaceReconciliation('manual');
                                 }}
                                 data-test="workspace-refresh"
                             >
@@ -1194,20 +1353,24 @@ export default function ProjectWorkspace({
                                 <button
                                     type="button"
                                     className="cursor-pointer px-2 py-1 text-xs font-semibold underline underline-offset-2 hover:no-underline"
-                                    onClick={() => {
-                                        setActionError(null);
-                                        router.reload({
-                                            only: ['tasks', 'members'],
-                                        });
-                                    }}
+                                    onClick={recoverAction}
+                                    data-test="workspace-action-recovery"
                                 >
-                                    Muat ulang
+                                    {actionRecovery === 'retry'
+                                        ? 'Coba lagi'
+                                        : actionRecovery === 'stale'
+                                          ? 'Muat data terbaru'
+                                          : 'Muat ulang'}
                                 </button>
                                 <button
                                     type="button"
                                     className="cursor-pointer p-1 text-current hover:opacity-70"
                                     aria-label="Tutup pesan error"
-                                    onClick={() => setActionError(null)}
+                                    onClick={() => {
+                                        setActionError(null);
+                                        setActionRecovery(null);
+                                        retryAction.current = null;
+                                    }}
                                 >
                                     <X aria-hidden="true" className="size-4" />
                                 </button>
