@@ -103,6 +103,14 @@ class Project extends Model implements InstitutionOwned
         return $this->hasMany(Task::class);
     }
 
+    /**
+     * @return HasMany<Message, $this>
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
+
     public function institutionId(): int
     {
         return $this->institution_id;
