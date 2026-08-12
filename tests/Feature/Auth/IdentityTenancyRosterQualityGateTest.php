@@ -55,7 +55,7 @@ it('verifies roster exact match auto-links campus affiliation while mismatch fla
         'roster_id' => $roster->id,
         'nim' => '2201001',
         'phone_hash' => PhoneIdentity::hash('+6281987654321'),
-        'full_name' => 'Budi Santoso',
+        'nama' => 'Budi Santoso',
     ]);
 
     $exactUser = User::factory()->create();
