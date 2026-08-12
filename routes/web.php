@@ -205,6 +205,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('campus/credit-mappings/{id}/retire', [AcademicCreditMappingController::class, 'retire'])
         ->name('campus.credit-mappings.retire');
 
+    Route::get('campus/{institution}/overview', [CampusOverviewController::class, 'show'])
+        ->name('campus.overview.show');
+
     Route::get('campus/{institution}/roster', [RosterImportController::class, 'show'])
         ->name('campus.roster.show');
 
