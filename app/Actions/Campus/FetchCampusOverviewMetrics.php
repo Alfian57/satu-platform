@@ -10,6 +10,7 @@ use App\Models\Project;
 use App\Models\StudentProfile;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class FetchCampusOverviewMetrics
@@ -256,7 +257,7 @@ class FetchCampusOverviewMetrics
     }
 
     /**
-     * @return \Illuminate\Pagination\LengthAwarePaginator<int, mixed>
+     * @return LengthAwarePaginator<int, mixed>
      */
     private function paginateMembers(
         Institution $institution,
@@ -265,7 +266,7 @@ class FetchCampusOverviewMetrics
         ?string $program,
         int $page,
         int $perPage,
-    ): \Illuminate\Pagination\LengthAwarePaginator {
+    ): LengthAwarePaginator {
         $query = InstitutionMembership::query()
             ->where('institution_id', $institution->getKey())
             ->with(['user', 'user.studentProfiles']);
@@ -284,7 +285,7 @@ class FetchCampusOverviewMetrics
             });
         }
 
-        /** @var \Illuminate\Pagination\LengthAwarePaginator<int, mixed> $paginator */
+        /** @var LengthAwarePaginator<int, mixed> $paginator */
         $paginator = $query->orderByDesc('created_at')->paginate($perPage, ['*'], 'page', $page);
 
         $paginator->getCollection()->transform(function (InstitutionMembership $m) {
