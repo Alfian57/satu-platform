@@ -111,6 +111,14 @@ class Project extends Model implements InstitutionOwned
         return $this->hasMany(Message::class);
     }
 
+    /**
+     * @return HasMany<Attachment, $this>
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(Attachment::class);
+    }
+
     public function institutionId(): int
     {
         return $this->institution_id;
