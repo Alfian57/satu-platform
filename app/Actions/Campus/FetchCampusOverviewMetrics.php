@@ -9,7 +9,6 @@ use App\Models\InstitutionMembership;
 use App\Models\Project;
 use App\Models\StudentProfile;
 use Carbon\CarbonImmutable;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -174,11 +173,11 @@ class FetchCampusOverviewMetrics
             });
 
         if ($dateFrom !== null) {
-            $query->where('reviewed_at', '>=', $dateFrom);
+            $query->where('created_at', '>=', $dateFrom);
         }
 
         if ($dateTo !== null) {
-            $query->where('reviewed_at', '<=', $dateTo);
+            $query->where('created_at', '<=', $dateTo);
         }
 
         $reviews = $query->with('affiliationRequest')->get();
@@ -210,10 +209,8 @@ class FetchCampusOverviewMetrics
 
             if ($review->affiliationRequest !== null) {
                 $submittedAt = $review->affiliationRequest->submitted_at;
-                $reviewedAt = $review->reviewed_at;
-                if ($submittedAt !== null && $reviewedAt !== null) {
-                    $totalHours += max(0, $submittedAt->diffInMinutes($reviewedAt) / 60.0);
-                }
+                $reviewedAt = $review->created_at;
+                $totalHours += max(0, $submittedAt->diffInMinutes($reviewedAt) / 60.0);
             }
         }
 
@@ -247,19 +244,19 @@ class FetchCampusOverviewMetrics
             ->whereNotNull('study_program')
             ->where('study_program', '!=', '');
 
-        $results = $query->select('study_program', DB::raw('count(*) as aggregate'))
+        $results = $query->select('study_program', DB::raw('count(*) as count'))
             ->groupBy('study_program')
-            ->orderByDesc('aggregate')
+            ->orderByDesc('count')
             ->get();
 
-        return $results->map(fn ($row) => [
-            'program' => (string) $row->study_program,
-            'count' => (int) $row->aggregate,
-        ])->all();
+        return array_values($results->map(fn ($row) => [
+            'program' => (string) $row->getAttribute('study_program'),
+            'count' => (int) $row->getAttribute('count'),
+        ])->all());
     }
 
     /**
-     * @return LengthAwarePaginator<InstitutionMembership>
+     * @return \Illuminate\Pagination\LengthAwarePaginator<int, mixed>
      */
     private function paginateMembers(
         Institution $institution,
@@ -268,7 +265,7 @@ class FetchCampusOverviewMetrics
         ?string $program,
         int $page,
         int $perPage,
-    ): LengthAwarePaginator {
+    ): \Illuminate\Pagination\LengthAwarePaginator {
         $query = InstitutionMembership::query()
             ->where('institution_id', $institution->getKey())
             ->with(['user', 'user.studentProfiles']);
@@ -287,7 +284,7 @@ class FetchCampusOverviewMetrics
             });
         }
 
-        /** @var LengthAwarePaginator<InstitutionMembership> $paginator */
+        /** @var \Illuminate\Pagination\LengthAwarePaginator<int, mixed> $paginator */
         $paginator = $query->orderByDesc('created_at')->paginate($perPage, ['*'], 'page', $page);
 
         $paginator->getCollection()->transform(function (InstitutionMembership $m) {
