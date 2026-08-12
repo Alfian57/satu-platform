@@ -212,6 +212,37 @@ test('team can manage a task through the workspace commands', function () {
     expect(Task::query()->whereKey($task)->exists())->toBeFalse();
 });
 
+test('workspace rejects a stale task edit without changing the database state', function () {
+    ['owner' => $owner, 'project' => $project] = workspaceControllerContext();
+    $task = Task::factory()
+        ->for($project)
+        ->for($owner, 'createdBy')
+        ->create([
+            'title' => 'Judul dari snapshot lama',
+        ]);
+    $expectedUpdatedAt = $task->updated_at->toIso8601String();
+
+    $task->forceFill([
+        'title' => 'Judul yang sudah diperbarui sesi lain',
+        'updated_at' => now()->addMinute(),
+    ])->save();
+
+    $this->actingAs($owner)
+        ->patchJson(
+            route('projects.workspace.tasks.update', [
+                'project' => $project,
+                'task' => $task,
+            ]),
+            [
+                'title' => 'Draft lokal yang stale',
+                'expected_updated_at' => $expectedUpdatedAt,
+            ],
+        )
+        ->assertConflict();
+
+    expect($task->refresh()->title)->toBe('Judul yang sudah diperbarui sesi lain');
+});
+
 test('workspace query budget stays bounded as task and discussion volume grows', function () {
     ['owner' => $owner, 'project' => $project] = workspaceControllerContext();
 
