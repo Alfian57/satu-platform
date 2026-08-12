@@ -115,6 +115,22 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<Task, $this>
+     */
+    public function createdTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'created_by_id');
+    }
+
+    /**
+     * @return HasMany<TaskAssignment, $this>
+     */
+    public function taskAssignments(): HasMany
+    {
+        return $this->hasMany(TaskAssignment::class);
+    }
+
+    /**
      * @return HasMany<AuditLog, $this>
      */
     public function auditLogs(): HasMany
