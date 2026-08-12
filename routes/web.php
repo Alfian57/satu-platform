@@ -10,6 +10,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\ProjectAttachmentController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectDiscussionController;
 use App\Http\Controllers\ProjectWorkspaceController;
@@ -111,6 +112,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('workspace.discussions.update');
             Route::delete('discussions/{message}', [ProjectDiscussionController::class, 'destroy'])
                 ->name('workspace.discussions.destroy');
+            Route::post('attachments', [ProjectAttachmentController::class, 'store'])
+                ->name('workspace.attachments.store');
+            Route::get('attachments/{attachment}', [ProjectAttachmentController::class, 'download'])
+                ->name('workspace.attachments.download');
+            Route::delete('attachments/{attachment}', [ProjectAttachmentController::class, 'destroy'])
+                ->name('workspace.attachments.destroy');
             Route::post('tasks', [ProjectWorkspaceController::class, 'store'])
                 ->name('workspace.tasks.store');
             Route::patch('tasks/{task}', [ProjectWorkspaceController::class, 'update'])
