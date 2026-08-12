@@ -154,7 +154,7 @@ export default function CampusInclusion({
                 <div className="border-b border-border pb-6">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div>
-                            <div className="flex items-center gap-2 text-sm font-medium text-amber-600 dark:text-amber-500">
+                            <div className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-400">
                                 <Shield className="size-4" />
                                 <span>Restricted Operational Surface</span>
                             </div>
@@ -358,8 +358,8 @@ export default function CampusInclusion({
                                                     <span
                                                         className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
                                                             signal.restricted_feature_state
-                                                                ? 'bg-amber-500/10 text-amber-600'
-                                                                : 'bg-emerald-500/10 text-emerald-600'
+                                                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300'
+                                                                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300'
                                                         }`}
                                                     >
                                                         {signal.restricted_feature_state
