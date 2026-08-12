@@ -48,6 +48,10 @@ return new class extends Migration
                 ['institution_id', 'status', 'visibility', 'deadline'],
                 'projects_discovery_filters_idx',
             );
+            $table->index(
+                ['institution_id', 'owner_id', 'status', 'deadline', 'id'],
+                'projects_dashboard_owner_status_idx',
+            );
             $table->index(['owner_id', 'status'], 'projects_owner_status_idx');
         });
 

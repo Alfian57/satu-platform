@@ -17,10 +17,19 @@ test('schema migrations use bounded MySQL identifier names', function () {
         database_path('migrations/2026_08_10_231233_create_integration_sync_metrics_table.php') => [
             'integration_metrics_institution_connection_idx',
         ],
+        database_path('migrations/2026_08_11_151844_create_project_tables.php') => [
+            'projects_dashboard_owner_status_idx',
+        ],
         database_path('migrations/2026_08_12_013323_create_matching_tables.php') => [
             'match_score_versions_author_fk',
             'match_runs_tenant_actor_project_idx',
             'recommendations_tenant_project_score_idx',
+        ],
+        database_path('migrations/2026_08_08_100113_create_inclusion_signals_table.php') => [
+            'inclusion_signals_queue_idx',
+        ],
+        database_path('migrations/2026_08_08_100114_create_inclusion_reviews_table.php') => [
+            'inclusion_reviews_signal_created_idx',
         ],
         database_path('migrations/2026_08_12_021835_create_recommendation_feedback_table.php') => [
             'recommendation_feedback_recommendation_fk',

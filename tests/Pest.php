@@ -1,7 +1,9 @@
 <?php
 
 use App\Support\Notification\FakeWhatsAppGateway;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /*
@@ -58,4 +60,45 @@ function latestWhatsappOtp(FakeWhatsAppGateway $gateway): string
     preg_match('/\b(\d{6})\b/', $message, $matches);
 
     return $matches[1] ?? throw new RuntimeException('No OTP was sent by the fake gateway.');
+}
+
+/**
+ * Measure the SQL queries executed while running a callback.
+ *
+ * @param  callable(): mixed  $callback
+ * @param  list<string>  $tables
+ * @return array{total: int, tables: array<string, int>}
+ */
+function measureDatabaseQueries(callable $callback, array $tables = []): array
+{
+    /** @var ConnectionInterface $connection */
+    $connection = DB::connection();
+    $connection->flushQueryLog();
+    $connection->enableQueryLog();
+
+    try {
+        $callback();
+
+        /** @var list<array{query: string, bindings: array<int, mixed>, time: float}> $queries */
+        $queries = $connection->getQueryLog();
+    } finally {
+        $connection->disableQueryLog();
+    }
+
+    $counts = array_fill_keys($tables, 0);
+
+    foreach ($queries as $query) {
+        $sql = strtolower($query['query']);
+
+        foreach (array_keys($counts) as $table) {
+            if (str_contains($sql, $table)) {
+                $counts[$table]++;
+            }
+        }
+    }
+
+    return [
+        'total' => count($queries),
+        'tables' => $counts,
+    ];
 }

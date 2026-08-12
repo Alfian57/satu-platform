@@ -9,6 +9,7 @@ use App\Models\InclusionSignal;
 use App\Models\InclusionSignalVersion;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
+use App\Models\Project;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,89 @@ test('institution_memberships_queue_order_idx covers correct columns', function 
         ->firstWhere('name', 'institution_memberships_queue_order_idx')['columns'] ?? [];
 
     expect($indexColumns)->toBe(['institution_id', 'status', 'requested_at']);
+});
+
+test('projects dashboard index covers tenant owner ordering for the active-project query', function () {
+    $indexColumns = collect(Schema::getIndexes('projects'))
+        ->firstWhere('name', 'projects_dashboard_owner_status_idx')['columns'] ?? [];
+
+    expect($indexColumns)->toBe([
+        'institution_id',
+        'owner_id',
+        'status',
+        'deadline',
+        'id',
+    ]);
+});
+
+test('projects dashboard query uses the tenant-owner composite index prefix', function () {
+    $institution = Institution::factory()->active()->create();
+    $owner = User::factory()->create();
+    InstitutionMembership::factory()
+        ->student()
+        ->verifiedByApprovedDomain()
+        ->for($owner)
+        ->for($institution)
+        ->create();
+
+    Project::factory()
+        ->open()
+        ->for($institution)
+        ->for($owner, 'owner')
+        ->create();
+
+    $plan = DB::select(
+        'EXPLAIN QUERY PLAN SELECT id, institution_id, owner_id, title, status, deadline FROM projects WHERE institution_id = ? AND owner_id = ? AND status IN (?, ?, ?) ORDER BY deadline ASC, id ASC LIMIT 3',
+        [
+            $institution->getKey(),
+            $owner->getKey(),
+            'open',
+            'forming',
+            'full',
+        ],
+    );
+
+    $details = collect($plan)->pluck('detail')->implode(' | ');
+
+    expect($details)->toContain('USING INDEX projects_dashboard_owner_status_idx')
+        ->and($details)->not->toContain('SCAN projects');
+});
+
+test('inclusion queue index covers the restricted review ordering columns', function () {
+    $indexColumns = collect(Schema::getIndexes('inclusion_signals'))
+        ->firstWhere('name', 'inclusion_signals_queue_idx')['columns'] ?? [];
+
+    expect($indexColumns)->toBe([
+        'institution_id',
+        'restricted_feature_state',
+        'period',
+        'created_at',
+        'id',
+    ]);
+});
+
+test('inclusion queue query uses the queue index instead of scanning signals', function () {
+    $institution = Institution::factory()->active()->create();
+    $subject = User::factory()->create();
+    $version = InclusionSignalVersion::factory()->create();
+
+    InclusionSignal::factory()->create([
+        'institution_id' => $institution->getKey(),
+        'subject_id' => $subject->getKey(),
+        'version_id' => $version->getKey(),
+        'period' => '2026-S1',
+        'restricted_feature_state' => true,
+    ]);
+
+    $plan = DB::select(
+        'EXPLAIN QUERY PLAN SELECT id, institution_id, subject_id, version_id, period, restricted_feature_state, created_at FROM inclusion_signals WHERE institution_id = ? AND restricted_feature_state = 1 AND period = ? ORDER BY created_at DESC, id DESC LIMIT 25',
+        [$institution->getKey(), '2026-S1'],
+    );
+
+    $details = collect($plan)->pluck('detail')->implode(' | ');
+
+    expect($details)->toContain('USING INDEX inclusion_signals_queue_idx')
+        ->and($details)->not->toContain('SCAN inclusion_signals');
 });
 
 test('membership review queue uses the composite index prefix in its query plan', function () {

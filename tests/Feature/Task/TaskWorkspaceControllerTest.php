@@ -211,6 +211,64 @@ test('team can manage a task through the workspace commands', function () {
     expect(Task::query()->whereKey($task)->exists())->toBeFalse();
 });
 
+test('workspace query budget stays bounded as task and discussion volume grows', function () {
+    ['owner' => $owner, 'project' => $project] = workspaceControllerContext();
+
+    collect(range(1, 3))->each(function (int $number) use ($project, $owner): void {
+        Task::factory()
+            ->todo()
+            ->for($project)
+            ->for($owner, 'createdBy')
+            ->create([
+                'title' => 'Baseline workspace task '.$number,
+            ]);
+
+        Message::factory()
+            ->for($project)
+            ->for($owner, 'author')
+            ->create([
+                'body' => 'Baseline workspace discussion '.$number,
+            ]);
+    });
+
+    $baseline = measureDatabaseQueries(function () use ($owner, $project): void {
+        $this->actingAs($owner)
+            ->get(route('projects.workspace', [
+                'project' => $project,
+                'per_page' => 2,
+            ]))
+            ->assertSuccessful();
+    });
+
+    collect(range(4, 27))->each(function (int $number) use ($project, $owner): void {
+        Task::factory()
+            ->todo()
+            ->for($project)
+            ->for($owner, 'createdBy')
+            ->create([
+                'title' => 'Workspace volume task '.$number,
+            ]);
+
+        Message::factory()
+            ->for($project)
+            ->for($owner, 'author')
+            ->create([
+                'body' => 'Workspace volume discussion '.$number,
+            ]);
+    });
+
+    $expanded = measureDatabaseQueries(function () use ($owner, $project): void {
+        $this->actingAs($owner)
+            ->get(route('projects.workspace', [
+                'project' => $project,
+                'per_page' => 2,
+            ]))
+            ->assertSuccessful();
+    });
+
+    expect($expanded['total'])->toBe($baseline['total']);
+});
+
 test('workspace filters and paginates tasks from the database snapshot', function () {
     ['owner' => $owner, 'project' => $project] = workspaceControllerContext();
     Task::factory()

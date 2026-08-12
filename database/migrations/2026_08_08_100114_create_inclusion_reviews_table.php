@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('support_action')->nullable();
             $table->text('reason')->nullable();
             $table->timestamps();
+
+            $table->index(['inclusion_signal_id', 'created_at'], 'inclusion_reviews_signal_created_idx');
         });
 
         $this->installAppendOnlyTriggers();

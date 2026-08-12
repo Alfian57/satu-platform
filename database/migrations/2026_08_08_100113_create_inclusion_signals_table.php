@@ -24,6 +24,10 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['institution_id', 'subject_id', 'version_id', 'period'], 'inc_signal_idx');
+            $table->index(
+                ['institution_id', 'restricted_feature_state', 'period', 'created_at', 'id'],
+                'inclusion_signals_queue_idx',
+            );
         });
 
         $this->installAppendOnlyTriggers();

@@ -222,6 +222,61 @@ test('keeps deadline pagination deterministic and eager loads discovery relation
         ->and($relationQueries['skill_taxonomies'])->toBe(1);
 });
 
+test('project discovery query budget stays bounded as result volume grows', function () {
+    [$viewer, $institution] = discoveryViewerContext();
+    $skill = SkillTaxonomy::factory()->create(['name' => 'Testing volume']);
+
+    collect(range(1, 3))->each(function (int $number) use ($institution, $skill): void {
+        $project = Project::factory()
+            ->for($institution)
+            ->create([
+                'title' => 'Baseline discovery '.$number,
+                'deadline' => now()->addDays($number),
+            ]);
+        $role = ProjectRole::factory()->for($project)->create();
+        ProjectRoleSkill::factory()
+            ->for($role, 'projectRole')
+            ->for($skill, 'taxonomy')
+            ->create();
+    });
+
+    $baseline = measureDatabaseQueries(function () use ($viewer): void {
+        $this->actingAs($viewer)
+            ->get(route('projects.index', [
+                'sort' => 'deadline',
+                'direction' => 'asc',
+                'per_page' => 2,
+            ]))
+            ->assertSuccessful();
+    });
+
+    collect(range(4, 27))->each(function (int $number) use ($institution, $skill): void {
+        $project = Project::factory()
+            ->for($institution)
+            ->create([
+                'title' => 'Volume discovery '.$number,
+                'deadline' => now()->addDays($number),
+            ]);
+        $role = ProjectRole::factory()->for($project)->create();
+        ProjectRoleSkill::factory()
+            ->for($role, 'projectRole')
+            ->for($skill, 'taxonomy')
+            ->create();
+    });
+
+    $expanded = measureDatabaseQueries(function () use ($viewer): void {
+        $this->actingAs($viewer)
+            ->get(route('projects.index', [
+                'sort' => 'deadline',
+                'direction' => 'asc',
+                'per_page' => 2,
+            ]))
+            ->assertSuccessful();
+    });
+
+    expect($expanded['total'])->toBe($baseline['total']);
+});
+
 test('rejects unsupported discovery filters', function () {
     [$viewer] = discoveryViewerContext();
 

@@ -281,6 +281,120 @@ test('dashboard feedback route denies a recommendation from another tenant', fun
     expect(RecommendationFeedback::query()->count())->toBe(0);
 });
 
+test('dashboard query budget stays bounded as active projects and recommendations grow', function () {
+    $context = dashboardRecommendationContext();
+
+    collect(range(1, 3))->each(function (int $number) use ($context): void {
+        $project = Project::factory()
+            ->open()
+            ->for($context['institution'])
+            ->for($context['candidate'], 'owner')
+            ->create([
+                'title' => 'Project baseline '.$number,
+                'deadline' => now()->addDays($number),
+            ]);
+
+        $run = MatchRun::factory()
+            ->for($context['institution'])
+            ->for($context['candidate'], 'actor')
+            ->for($project)
+            ->for(MatchScoreVersion::current(), 'version')
+            ->create([
+                'institution_id' => $context['institution']->getKey(),
+                'actor_id' => $context['candidate']->getKey(),
+                'project_id' => $project->getKey(),
+                'version_id' => MatchScoreVersion::current()->getKey(),
+            ]);
+
+        Recommendation::factory()
+            ->for($run, 'matchRun')
+            ->for($context['institution'])
+            ->for($project)
+            ->for($context['candidate'], 'candidate')
+            ->create([
+                'match_run_id' => $run->getKey(),
+                'institution_id' => $context['institution']->getKey(),
+                'project_id' => $project->getKey(),
+                'candidate_id' => $context['candidate']->getKey(),
+                'component_scores' => [
+                    MatchingDimension::SkillFit->value => 0.8,
+                    MatchingDimension::ProjectNeed->value => 0.9,
+                    MatchingDimension::Availability->value => 0.7,
+                    MatchingDimension::ConnectivityOpportunity->value => 0.95,
+                ],
+                'reason_candidates' => [[
+                    'dimension' => MatchingDimension::ProjectNeed->value,
+                    'score' => 0.9,
+                    'type' => 'positive',
+                    'reason' => 'Baseline recommendation '.$number,
+                ]],
+            ]);
+    });
+
+    $baseline = measureDatabaseQueries(function () use ($context): void {
+        $this->withoutVite()
+            ->actingAs($context['candidate'])
+            ->get(route('dashboard'))
+            ->assertSuccessful();
+    });
+
+    collect(range(4, 27))->each(function (int $number) use ($context): void {
+        $project = Project::factory()
+            ->open()
+            ->for($context['institution'])
+            ->for($context['candidate'], 'owner')
+            ->create([
+                'title' => 'Project volume '.$number,
+                'deadline' => now()->addDays($number),
+            ]);
+
+        $run = MatchRun::factory()
+            ->for($context['institution'])
+            ->for($context['candidate'], 'actor')
+            ->for($project)
+            ->for(MatchScoreVersion::current(), 'version')
+            ->create([
+                'institution_id' => $context['institution']->getKey(),
+                'actor_id' => $context['candidate']->getKey(),
+                'project_id' => $project->getKey(),
+                'version_id' => MatchScoreVersion::current()->getKey(),
+            ]);
+
+        Recommendation::factory()
+            ->for($run, 'matchRun')
+            ->for($context['institution'])
+            ->for($project)
+            ->for($context['candidate'], 'candidate')
+            ->create([
+                'match_run_id' => $run->getKey(),
+                'institution_id' => $context['institution']->getKey(),
+                'project_id' => $project->getKey(),
+                'candidate_id' => $context['candidate']->getKey(),
+                'component_scores' => [
+                    MatchingDimension::SkillFit->value => 0.8,
+                    MatchingDimension::ProjectNeed->value => 0.9,
+                    MatchingDimension::Availability->value => 0.7,
+                    MatchingDimension::ConnectivityOpportunity->value => 0.95,
+                ],
+                'reason_candidates' => [[
+                    'dimension' => MatchingDimension::ProjectNeed->value,
+                    'score' => 0.9,
+                    'type' => 'positive',
+                    'reason' => 'Volume recommendation '.$number,
+                ]],
+            ]);
+    });
+
+    $expanded = measureDatabaseQueries(function () use ($context): void {
+        $this->withoutVite()
+            ->actingAs($context['candidate'])
+            ->get(route('dashboard'))
+            ->assertSuccessful();
+    });
+
+    expect($expanded['total'])->toBe($baseline['total']);
+});
+
 test('stale dashboard recommendations expose recovery and reject feedback', function () {
     $context = dashboardRecommendationContext();
     MatchScoreVersion::factory()->version('2.0.0')->create();
