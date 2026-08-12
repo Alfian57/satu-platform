@@ -4,6 +4,7 @@ use App\Http\Controllers\AcademicCreditMappingController;
 use App\Http\Controllers\AcademicIntegrationController;
 use App\Http\Controllers\AffiliationReviewController;
 use App\Http\Controllers\Auth\AuthFlowController;
+use App\Http\Controllers\CampusOverviewController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
@@ -213,6 +214,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('campus/credit-mappings/{id}/retire', [AcademicCreditMappingController::class, 'retire'])
         ->name('campus.credit-mappings.retire');
+
+    Route::get('campus/{institution}/overview', [CampusOverviewController::class, 'show'])
+        ->name('campus.overview.show');
 
     Route::get('campus/{institution}/roster', [RosterImportController::class, 'show'])
         ->name('campus.roster.show');
