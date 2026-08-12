@@ -163,44 +163,46 @@ export default function CampusOverview({
                 >
                     <div className="flex flex-1 flex-wrap items-center gap-4">
                         <div className="space-y-1">
-                            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                            <label className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
                                 <Calendar className="size-3.5" /> Tanggal Mulai
                             </label>
                             <input
                                 type="date"
                                 value={dateFrom}
                                 onChange={(e) => setDateFrom(e.target.value)}
-                                className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                                <Calendar className="size-3.5" /> Tanggal Selesai
+                            <label className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                                <Calendar className="size-3.5" /> Tanggal
+                                Selesai
                             </label>
                             <input
                                 type="date"
                                 value={dateTo}
                                 onChange={(e) => setDateTo(e.target.value)}
-                                className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
                             />
                         </div>
-                        <div className="space-y-1 min-w-[200px]">
-                            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                                <GraduationCap className="size-3.5" /> Program Studi
+                        <div className="min-w-[200px] space-y-1">
+                            <label className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                                <GraduationCap className="size-3.5" /> Program
+                                Studi
                             </label>
                             <input
                                 type="text"
                                 placeholder="Contoh: Teknik Informatika"
                                 value={program}
                                 onChange={(e) => setProgram(e.target.value)}
-                                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
                             />
                         </div>
                     </div>
                     <button
                         type="submit"
                         disabled={isPending}
-                        className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:ring-2 focus:ring-primary focus:outline-none disabled:opacity-50"
                     >
                         <Filter className="size-4" />
                         <span>Filter</span>
@@ -225,9 +227,11 @@ export default function CampusOverview({
                                 {metrics.memberships.verified} Terverifikasi
                             </span>
                         </div>
-                        <div className="mt-4 border-t border-border/50 pt-3 text-xs text-muted-foreground flex justify-between">
+                        <div className="mt-4 flex justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
                             <span>Pending: {metrics.memberships.pending}</span>
-                            <span>Unverified: {metrics.memberships.unverified}</span>
+                            <span>
+                                Unverified: {metrics.memberships.unverified}
+                            </span>
                         </div>
                     </div>
 
@@ -247,7 +251,7 @@ export default function CampusOverview({
                                 {metrics.projects.active} Aktif
                             </span>
                         </div>
-                        <div className="mt-4 border-t border-border/50 pt-3 text-xs text-muted-foreground flex justify-between">
+                        <div className="mt-4 flex justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
                             <span>Selesai: {metrics.projects.completed}</span>
                             <span>Draft: {metrics.projects.draft}</span>
                         </div>
@@ -269,9 +273,14 @@ export default function CampusOverview({
                                 {metrics.contributions.validated} Divalidasi
                             </span>
                         </div>
-                        <div className="mt-4 border-t border-border/50 pt-3 text-xs text-muted-foreground flex justify-between">
-                            <span>Pending: {metrics.contributions.pending}</span>
-                            <span>Revisi: {metrics.contributions.revision_required}</span>
+                        <div className="mt-4 flex justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
+                            <span>
+                                Pending: {metrics.contributions.pending}
+                            </span>
+                            <span>
+                                Revisi:{' '}
+                                {metrics.contributions.revision_required}
+                            </span>
                         </div>
                     </div>
 
@@ -288,12 +297,19 @@ export default function CampusOverview({
                                 {metrics.review_turnaround.average_hours}h
                             </span>
                             <span className="text-xs font-medium text-muted-foreground">
-                                {metrics.review_turnaround.total_reviewed} Ditinjau
+                                {metrics.review_turnaround.total_reviewed}{' '}
+                                Ditinjau
                             </span>
                         </div>
-                        <div className="mt-4 border-t border-border/50 pt-3 text-xs text-muted-foreground flex justify-between">
-                            <span>Disetujui: {metrics.review_turnaround.approved_count}</span>
-                            <span>Ditolak: {metrics.review_turnaround.rejected_count}</span>
+                        <div className="mt-4 flex justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
+                            <span>
+                                Disetujui:{' '}
+                                {metrics.review_turnaround.approved_count}
+                            </span>
+                            <span>
+                                Ditolak:{' '}
+                                {metrics.review_turnaround.rejected_count}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -302,7 +318,7 @@ export default function CampusOverview({
                 <div className="grid gap-8 lg:grid-cols-3">
                     {/* Program Distribution Table */}
                     <div className="rounded-xl border border-border bg-card p-6 shadow-xs lg:col-span-1">
-                        <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+                        <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
                             <Activity className="size-4 text-primary" />
                             Distribusi Program Studi
                         </h2>
@@ -321,7 +337,7 @@ export default function CampusOverview({
                                         key={idx}
                                         className="flex items-center justify-between py-3 text-sm"
                                     >
-                                        <span className="font-medium text-foreground truncate max-w-[180px]">
+                                        <span className="max-w-[180px] truncate font-medium text-foreground">
                                             {item.program}
                                         </span>
                                         <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">
@@ -341,7 +357,8 @@ export default function CampusOverview({
                                     Daftar Keanggotaan Mahasiswa
                                 </h2>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    Detail {members.pagination.total} mahasiswa terdaftar
+                                    Detail {members.pagination.total} mahasiswa
+                                    terdaftar
                                 </p>
                             </div>
                         </div>
@@ -351,7 +368,9 @@ export default function CampusOverview({
                                 <thead className="border-b border-border bg-muted/50 text-xs font-medium text-muted-foreground">
                                     <tr>
                                         <th className="px-4 py-3">Username</th>
-                                        <th className="px-4 py-3">Program Studi</th>
+                                        <th className="px-4 py-3">
+                                            Program Studi
+                                        </th>
                                         <th className="px-4 py-3">Peran</th>
                                         <th className="px-4 py-3">Status</th>
                                     </tr>
@@ -363,12 +382,16 @@ export default function CampusOverview({
                                                 colSpan={4}
                                                 className="px-4 py-8 text-center text-xs text-muted-foreground"
                                             >
-                                                Tidak ada data mahasiswa ditemukan
+                                                Tidak ada data mahasiswa
+                                                ditemukan
                                             </td>
                                         </tr>
                                     ) : (
                                         members.items.map((m) => (
-                                            <tr key={m.id} className="hover:bg-muted/30">
+                                            <tr
+                                                key={m.id}
+                                                className="hover:bg-muted/30"
+                                            >
                                                 <td className="px-4 py-3 font-medium text-foreground">
                                                     @{m.username}
                                                 </td>
@@ -381,9 +404,11 @@ export default function CampusOverview({
                                                 <td className="px-4 py-3">
                                                     <span
                                                         className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                            m.status === 'verified'
+                                                            m.status ===
+                                                            'verified'
                                                                 ? 'bg-emerald-500/10 text-emerald-600'
-                                                                : m.status === 'pending'
+                                                                : m.status ===
+                                                                    'pending'
                                                                   ? 'bg-amber-500/10 text-amber-600'
                                                                   : 'bg-muted text-muted-foreground'
                                                         }`}
@@ -402,15 +427,21 @@ export default function CampusOverview({
                         {members.pagination.last_page > 1 && (
                             <div className="mt-4 flex items-center justify-between border-t border-border pt-4 text-xs text-muted-foreground">
                                 <span>
-                                    Halaman {members.pagination.current_page} dari{' '}
-                                    {members.pagination.last_page}
+                                    Halaman {members.pagination.current_page}{' '}
+                                    dari {members.pagination.last_page}
                                 </span>
                                 <div className="flex items-center gap-2">
                                     <button
                                         type="button"
-                                        disabled={members.pagination.current_page === 1 || isPending}
+                                        disabled={
+                                            members.pagination.current_page ===
+                                                1 || isPending
+                                        }
                                         onClick={() =>
-                                            handlePageChange(members.pagination.current_page - 1)
+                                            handlePageChange(
+                                                members.pagination
+                                                    .current_page - 1,
+                                            )
                                         }
                                         className="rounded-md border border-input px-3 py-1 text-xs font-medium hover:bg-accent disabled:opacity-50"
                                     >
@@ -419,11 +450,15 @@ export default function CampusOverview({
                                     <button
                                         type="button"
                                         disabled={
-                                            members.pagination.current_page === members.pagination.last_page ||
+                                            members.pagination.current_page ===
+                                                members.pagination.last_page ||
                                             isPending
                                         }
                                         onClick={() =>
-                                            handlePageChange(members.pagination.current_page + 1)
+                                            handlePageChange(
+                                                members.pagination
+                                                    .current_page + 1,
+                                            )
                                         }
                                         className="rounded-md border border-input px-3 py-1 text-xs font-medium hover:bg-accent disabled:opacity-50"
                                     >
