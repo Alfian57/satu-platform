@@ -9,6 +9,7 @@ use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectWorkspaceController;
 use App\Http\Controllers\RecommendationFeedbackController;
 use App\Http\Controllers\RecruiterContactRequestController;
 use App\Http\Controllers\RosterImportController;
@@ -95,6 +96,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('create');
         Route::post('/', [ProjectController::class, 'store'])
             ->name('store');
+
+        Route::scopeBindings()->prefix('{project}/workspace')->group(function () {
+            Route::get('/', [ProjectWorkspaceController::class, 'show'])
+                ->name('workspace');
+            Route::post('tasks', [ProjectWorkspaceController::class, 'store'])
+                ->name('workspace.tasks.store');
+            Route::patch('tasks/{task}', [ProjectWorkspaceController::class, 'update'])
+                ->name('workspace.tasks.update');
+            Route::post('tasks/{task}/status', [ProjectWorkspaceController::class, 'transition'])
+                ->name('workspace.tasks.transition');
+            Route::post('tasks/{task}/assignments', [ProjectWorkspaceController::class, 'assign'])
+                ->name('workspace.tasks.assign');
+            Route::delete('tasks/{task}/assignments', [ProjectWorkspaceController::class, 'unassign'])
+                ->name('workspace.tasks.unassign');
+            Route::delete('tasks/{task}', [ProjectWorkspaceController::class, 'destroy'])
+                ->name('workspace.tasks.destroy');
+        });
+
         Route::get('/{project}/edit', [ProjectController::class, 'edit'])
             ->name('edit');
         Route::get('/{project}', [ProjectController::class, 'show'])

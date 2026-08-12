@@ -24,6 +24,7 @@ use App\Models\InstitutionMembership;
 use App\Models\Project;
 use App\Models\ProjectRole;
 use App\Models\ProjectRoleSkill;
+use App\Models\Task;
 use App\Models\User;
 use App\Support\Project\ProjectDiscoveryFilters;
 use App\Support\Project\ProjectDiscoverySerializer;
@@ -121,6 +122,7 @@ final class ProjectController extends Controller
             'can_edit' => Gate::allows('update', $project)
                 && in_array($project->status, [ProjectStatus::Draft, ProjectStatus::Open], true),
             'can_transition' => Gate::allows('transition', $project),
+            'can_workspace' => Gate::allows('viewAny', [Task::class, $project]),
         ]);
     }
 

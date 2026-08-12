@@ -3,6 +3,7 @@ import {
     Archive,
     CalendarDays,
     CheckCircle2,
+    ClipboardList,
     Circle,
     CircleDot,
     CircleX,
@@ -15,6 +16,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import ProjectController from '@/actions/App/Http/Controllers/ProjectController';
+import ProjectWorkspaceController from '@/actions/App/Http/Controllers/ProjectWorkspaceController';
 import { AppPage } from '@/components/app-page';
 import { TeamFormationPanel } from '@/components/projects/team-formation-panel';
 import { Button } from '@/components/ui/button';
@@ -46,6 +48,7 @@ type ProjectShowProps = {
     team: TeamFormationState;
     can_edit: boolean;
     can_transition: boolean;
+    can_workspace: boolean;
 };
 
 type PageProps = {
@@ -237,6 +240,7 @@ function ProjectActionRail({
     project,
     canEdit,
     canTransition,
+    canWorkspace,
     processing,
     onOpen,
     onDestructiveAction,
@@ -244,6 +248,7 @@ function ProjectActionRail({
     project: ProjectDetail;
     canEdit: boolean;
     canTransition: boolean;
+    canWorkspace: boolean;
     processing: boolean;
     onOpen: () => void;
     onDestructiveAction: (action: TransitionAction) => void;
@@ -272,6 +277,19 @@ function ProjectActionRail({
                     <Link href={projectEdit(project.id)}>
                         <Edit3 aria-hidden="true" />
                         Edit detail project
+                    </Link>
+                </Button>
+            )}
+            {canWorkspace && (
+                <Button
+                    asChild
+                    variant="outline"
+                    className="w-full cursor-pointer"
+                    data-test="open-workspace"
+                >
+                    <Link href={ProjectWorkspaceController.show(project.id)}>
+                        <ClipboardList aria-hidden="true" />
+                        Buka workspace task
                     </Link>
                 </Button>
             )}
@@ -344,6 +362,7 @@ export default function ProjectShow({
     team,
     can_edit: canEdit,
     can_transition: canTransition,
+    can_workspace: canWorkspace,
 }: ProjectShowProps) {
     const { auth } = usePage<PageProps>().props;
     const [project, setProject] = useState(initialProject);
@@ -742,6 +761,7 @@ export default function ProjectShow({
                                 processing={transitionForm.processing}
                                 onOpen={() => runTransition('open')}
                                 onDestructiveAction={setPendingAction}
+                                canWorkspace={canWorkspace}
                             />
 
                             <TeamFormationPanel
