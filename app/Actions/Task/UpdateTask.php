@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Task;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Events\WorkspaceTaskChanged;
 use App\Models\Institution;
 use App\Models\Project;
 use App\Models\Task;
@@ -93,6 +94,15 @@ final class UpdateTask
                     institution: Institution::query()->findOrFail($lockedProject->institution_id),
                     before: [...$before, 'fields' => $changedFields],
                     after: [...$this->summary($lockedTask), 'fields' => $changedFields],
+                );
+
+                WorkspaceTaskChanged::dispatch(
+                    institutionId: (int) $lockedProject->institution_id,
+                    projectId: (int) $lockedProject->getKey(),
+                    resourceId: (int) $lockedTask->getKey(),
+                    operation: 'task.updated',
+                    version: $lockedTask->updated_at->toIso8601String(),
+                    occurredAt: now()->toIso8601String(),
                 );
             }
 

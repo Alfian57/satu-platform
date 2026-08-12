@@ -6,6 +6,7 @@ namespace App\Actions\Attachment;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\AttachmentPurpose;
+use App\Events\WorkspaceDiscussionChanged;
 use App\Models\Attachment;
 use App\Models\Institution;
 use App\Models\Message;
@@ -121,6 +122,17 @@ final class UploadAttachment
                     institution: Institution::query()->findOrFail($lockedProject->institution_id),
                     after: $this->summary($attachment),
                 );
+
+                if ($lockedMessage !== null) {
+                    WorkspaceDiscussionChanged::dispatch(
+                        institutionId: (int) $lockedProject->institution_id,
+                        projectId: (int) $lockedProject->getKey(),
+                        resourceId: (int) $lockedMessage->getKey(),
+                        operation: 'discussion.attachment.created',
+                        version: null,
+                        occurredAt: now()->toIso8601String(),
+                    );
+                }
 
                 return $attachment->refresh()->load(['project', 'uploadedBy']);
             }, attempts: 3);

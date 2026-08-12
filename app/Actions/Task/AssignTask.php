@@ -7,6 +7,7 @@ namespace App\Actions\Task;
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\TeamMembershipStatus;
+use App\Events\WorkspaceTaskChanged;
 use App\Models\Institution;
 use App\Models\Project;
 use App\Models\Task;
@@ -68,6 +69,15 @@ final class AssignTask
                     'task_id' => $lockedTask->getKey(),
                     'user_id' => $assignee->getKey(),
                 ],
+            );
+
+            WorkspaceTaskChanged::dispatch(
+                institutionId: (int) $lockedProject->institution_id,
+                projectId: (int) $lockedProject->getKey(),
+                resourceId: (int) $lockedTask->getKey(),
+                operation: 'task.assigned',
+                version: $lockedTask->updated_at->toIso8601String(),
+                occurredAt: now()->toIso8601String(),
             );
 
             return $assignment->load('assignee');

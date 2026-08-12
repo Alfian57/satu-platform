@@ -7,6 +7,7 @@ namespace App\Actions\Task;
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
+use App\Events\WorkspaceTaskChanged;
 use App\Models\Institution;
 use App\Models\Project;
 use App\Models\Task;
@@ -67,6 +68,15 @@ final class CreateTask
                 actor: $actor,
                 institution: Institution::query()->findOrFail($lockedProject->institution_id),
                 after: $this->summary($task),
+            );
+
+            WorkspaceTaskChanged::dispatch(
+                institutionId: (int) $lockedProject->institution_id,
+                projectId: (int) $lockedProject->getKey(),
+                resourceId: (int) $task->getKey(),
+                operation: 'task.created',
+                version: $task->updated_at->toIso8601String(),
+                occurredAt: now()->toIso8601String(),
             );
 
             return $task->refresh()->load(['project', 'createdBy', 'assignments.assignee']);
