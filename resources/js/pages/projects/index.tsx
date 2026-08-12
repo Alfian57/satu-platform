@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertCircle,
     CalendarDays,
@@ -11,6 +11,7 @@ import {
     Clock3,
     Filter,
     FolderSearch,
+    Plus,
     Search,
     ShieldCheck,
     UsersRound,
@@ -24,7 +25,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { index as projectsIndex } from '@/routes/projects';
+import {
+    create as projectsCreate,
+    index as projectsIndex,
+    show as projectShow,
+} from '@/routes/projects';
 import type { QueryParams } from '@/wayfinder';
 
 /**
@@ -260,7 +265,13 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
 
                     <div className="min-w-0 space-y-2">
                         <h3 className="text-title font-semibold break-words">
-                            {project.title}
+                            <Link
+                                href={projectShow(project.id)}
+                                className="cursor-pointer underline-offset-4 hover:underline"
+                                data-test="project-detail-link"
+                            >
+                                {project.title}
+                            </Link>
                         </h3>
                         {project.description && (
                             <p className="max-w-[75ch] text-sm leading-6 break-words whitespace-pre-line text-muted-foreground">
@@ -647,6 +658,22 @@ export default function ProjectIndex({
                                 Daftar ini mengikuti afiliasi kampus yang sedang
                                 aktif pada akunmu.
                             </p>
+                            <Button
+                                asChild
+                                className="mt-2 w-full cursor-pointer"
+                                data-test="create-project-link"
+                            >
+                                <Link
+                                    href={projectsCreate({
+                                        query: {
+                                            institution_id: institution.id,
+                                        },
+                                    })}
+                                >
+                                    <Plus aria-hidden="true" />
+                                    Buat project baru
+                                </Link>
+                            </Button>
                         </div>
                     </header>
 
