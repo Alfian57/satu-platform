@@ -4,10 +4,12 @@ use App\Http\Controllers\AcademicCreditMappingController;
 use App\Http\Controllers\AcademicIntegrationController;
 use App\Http\Controllers\AffiliationReviewController;
 use App\Http\Controllers\Auth\AuthFlowController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\RecommendationFeedbackController;
 use App\Http\Controllers\RecruiterContactRequestController;
 use App\Http\Controllers\RosterImportController;
 use App\Http\Controllers\SavedCandidatesController;
@@ -15,6 +17,7 @@ use App\Http\Controllers\SkillTaxonomyController;
 use App\Http\Controllers\StudentContactRequestController;
 use App\Http\Controllers\StudentProfileController;
 use App\Http\Controllers\TalentSearchController;
+use App\Http\Controllers\TeamTransitionController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -71,7 +74,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('candidates/{id}/unsave', [SavedCandidatesController::class, 'destroy'])
             ->name('candidates.unsave');
     });
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)
+        ->name('dashboard');
+
+    Route::prefix('dashboard/recommendations/{recommendation}')
+        ->name('dashboard.recommendations.')
+        ->group(function () {
+            Route::post('hide', [RecommendationFeedbackController::class, 'hide'])
+                ->name('hide');
+            Route::post('not-relevant', [RecommendationFeedbackController::class, 'notRelevant'])
+                ->name('not-relevant');
+            Route::post('profile-fix', [RecommendationFeedbackController::class, 'profileFix'])
+                ->name('profile-fix');
+        });
 
     Route::prefix('projects')->name('projects.')->group(function () {
         Route::get('/', [ProjectController::class, 'index'])
@@ -92,7 +107,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('cancel');
         Route::post('/{project}/archive', [ProjectController::class, 'archive'])
             ->name('archive');
+        Route::post('/{project}/invitations', [TeamTransitionController::class, 'invite'])
+            ->name('invitations.store');
+        Route::post('/{project}/join-requests', [TeamTransitionController::class, 'requestJoin'])
+            ->name('join-requests.store');
     });
+
+    Route::post('team-invitations/{teamInvitation}/accept', [TeamTransitionController::class, 'acceptInvitation'])
+        ->name('team.invitations.accept');
+    Route::post('team-invitations/{teamInvitation}/reject', [TeamTransitionController::class, 'rejectInvitation'])
+        ->name('team.invitations.reject');
+    Route::post('team-invitations/{teamInvitation}/revoke', [TeamTransitionController::class, 'revokeInvitation'])
+        ->name('team.invitations.revoke');
+    Route::post('team-join-requests/{teamJoinRequest}/accept', [TeamTransitionController::class, 'acceptJoinRequest'])
+        ->name('team.join-requests.accept');
+    Route::post('team-join-requests/{teamJoinRequest}/reject', [TeamTransitionController::class, 'rejectJoinRequest'])
+        ->name('team.join-requests.reject');
+    Route::post('team-memberships/{teamMembership}/leave', [TeamTransitionController::class, 'leave'])
+        ->name('team.memberships.leave');
+    Route::post('team-memberships/{teamMembership}/remove', [TeamTransitionController::class, 'remove'])
+        ->name('team.memberships.remove');
 
     Route::get('onboarding', [OnboardingController::class, 'show'])
         ->name('onboarding.show');

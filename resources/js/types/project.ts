@@ -70,3 +70,67 @@ export type ProjectTransitionData = {
     occupied_capacity?: number;
     expected_updated_at?: string;
 };
+
+export type TeamPerson = {
+    id: number;
+    name: string;
+};
+
+export type TeamRoleReference = {
+    id: number;
+    title: string;
+};
+
+export type TeamCapacity = {
+    total: number;
+    occupied: number;
+    remaining: number;
+    state: 'open' | 'full' | 'closed' | string;
+    is_full: boolean;
+};
+
+export type TeamInvitation = {
+    id: number;
+    project_role_id: number | null;
+    role: TeamRoleReference | null;
+    person: TeamPerson | null;
+    status:
+        'pending' | 'accepted' | 'rejected' | 'expired' | 'revoked' | string;
+    expires_at: string;
+    is_expired: boolean;
+};
+
+export type TeamJoinRequest = {
+    id: number;
+    project_role_id: number | null;
+    role: TeamRoleReference | null;
+    requester: TeamPerson | null;
+    status:
+        'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'expired' | string;
+    message: string | null;
+    requested_at: string;
+};
+
+export type TeamMembership = {
+    id: number;
+    user: TeamPerson | null;
+    role: TeamRoleReference | null;
+    status: 'active' | 'left' | 'removed' | string;
+    joined_at: string | null;
+};
+
+export type TeamFormationState = {
+    capacity: TeamCapacity;
+    permissions: {
+        can_request_join: boolean;
+        can_manage_requests: boolean;
+        can_manage_invitations: boolean;
+        can_leave: boolean;
+    };
+    current_membership: TeamMembership | null;
+    pending_invitations: TeamInvitation[];
+    pending_join_request: TeamJoinRequest | null;
+    join_requests: TeamJoinRequest[];
+    sent_invitations: TeamInvitation[];
+    active_members: TeamMembership[];
+};

@@ -17,6 +17,16 @@ test('schema migrations use bounded MySQL identifier names', function () {
         database_path('migrations/2026_08_10_231233_create_integration_sync_metrics_table.php') => [
             'integration_metrics_institution_connection_idx',
         ],
+        database_path('migrations/2026_08_12_013323_create_matching_tables.php') => [
+            'match_score_versions_author_fk',
+            'match_runs_tenant_actor_project_idx',
+            'recommendations_tenant_project_score_idx',
+        ],
+        database_path('migrations/2026_08_12_021835_create_recommendation_feedback_table.php') => [
+            'recommendation_feedback_recommendation_fk',
+            'recommendation_feedback_recommendation_actor_uq',
+            'recommendation_feedback_tenant_actor_type_idx',
+        ],
     ];
 
     foreach ($migrationSources as $path => $constraintNames) {
@@ -35,16 +45,36 @@ test('schema migrations use bounded MySQL identifier names', function () {
     $foreignKeys = collect([
         ...Schema::getForeignKeys('recruiter_saved_candidates'),
         ...Schema::getForeignKeys('recruiter_contact_requests'),
+        ...Schema::getForeignKeys('match_score_versions'),
+        ...Schema::getForeignKeys('match_runs'),
+        ...Schema::getForeignKeys('recommendations'),
+        ...Schema::getForeignKeys('recommendation_feedback'),
     ])->pluck('name');
     $indexes = collect([
         ...Schema::getIndexes('recruiter_saved_candidates'),
         ...Schema::getIndexes('recruiter_contact_requests'),
         ...Schema::getIndexes('integration_sync_metrics'),
+        ...Schema::getIndexes('match_score_versions'),
+        ...Schema::getIndexes('match_runs'),
+        ...Schema::getIndexes('recommendations'),
+        ...Schema::getIndexes('recommendation_feedback'),
     ])->pluck('name');
 
     expect($foreignKeys)
         ->toContain('saved_candidates_projection_fk')
         ->toContain('contact_requests_projection_fk')
+        ->toContain('match_score_versions_author_fk')
+        ->toContain('match_runs_institution_fk')
+        ->toContain('match_runs_actor_fk')
+        ->toContain('match_runs_project_fk')
+        ->toContain('match_runs_version_fk')
+        ->toContain('recommendations_match_run_fk')
+        ->toContain('recommendations_institution_fk')
+        ->toContain('recommendations_project_fk')
+        ->toContain('recommendations_candidate_fk')
+        ->toContain('recommendation_feedback_recommendation_fk')
+        ->toContain('recommendation_feedback_institution_fk')
+        ->toContain('recommendation_feedback_actor_fk')
         ->each(fn (string $name) => expect(mb_strlen($name))->toBeLessThanOrEqual(64));
 
     expect($indexes)
@@ -53,5 +83,9 @@ test('schema migrations use bounded MySQL identifier names', function () {
         ->toContain('contact_requests_candidate_status_idx')
         ->toContain('contact_requests_expiry_status_idx')
         ->toContain('integration_metrics_institution_connection_idx')
+        ->toContain('match_runs_tenant_actor_project_idx')
+        ->toContain('recommendations_tenant_project_score_idx')
+        ->toContain('recommendation_feedback_recommendation_actor_uq')
+        ->toContain('recommendation_feedback_tenant_actor_type_idx')
         ->each(fn (string $name) => expect(mb_strlen($name))->toBeLessThanOrEqual(64));
 });

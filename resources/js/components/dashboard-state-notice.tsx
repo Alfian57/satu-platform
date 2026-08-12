@@ -1,12 +1,17 @@
+import { Link } from '@inertiajs/react';
+import type { InertiaLinkProps } from '@inertiajs/react';
 import { Clock3, RefreshCw, ShieldAlert } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { DashboardNotice } from '@/types';
+import type { DashboardAction, DashboardNotice } from '@/types';
+
+type ActionHref = NonNullable<InertiaLinkProps['href']>;
 
 type Props = {
     notice: DashboardNotice;
-    onDemoAction: (actionLabel: string) => void;
+    getActionHref: (action: DashboardAction) => ActionHref | null;
+    onAction: (action: DashboardAction) => void;
 };
 
 const noticeStyles: Record<
@@ -29,10 +34,15 @@ const noticeStyles: Record<
     },
 };
 
-export function DashboardStateNotice({ notice, onDemoAction }: Props) {
+export function DashboardStateNotice({
+    notice,
+    getActionHref,
+    onAction,
+}: Props) {
     const style = noticeStyles[notice.tone];
     const Icon = style.icon;
-    const actionLabel = notice.actionLabel;
+    const action = notice.action;
+    const actionHref = action ? getActionHref(action) : null;
 
     return (
         <div
@@ -61,15 +71,25 @@ export function DashboardStateNotice({ notice, onDemoAction }: Props) {
                     )}
                 </div>
             </div>
-            {actionLabel && (
+            {action && actionHref !== null && (
+                <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="w-full shrink-0 border-current bg-transparent text-current hover:bg-background/40 hover:text-current sm:w-auto"
+                >
+                    <Link href={actionHref}>{action.label}</Link>
+                </Button>
+            )}
+            {action && actionHref === null && (
                 <Button
                     type="button"
                     variant="outline"
                     size="lg"
                     className="w-full shrink-0 border-current bg-transparent text-current hover:bg-background/40 hover:text-current sm:w-auto"
-                    onClick={() => onDemoAction(actionLabel)}
+                    onClick={() => onAction(action)}
                 >
-                    {actionLabel}
+                    {action.label}
                 </Button>
             )}
         </div>

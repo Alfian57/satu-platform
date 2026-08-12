@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+import type { InertiaLinkProps } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowRight,
@@ -13,15 +15,19 @@ import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type {
+    DashboardAction,
     DashboardDocketFact,
     DashboardFactIcon,
     DashboardNextAction,
     DashboardStatusTone,
 } from '@/types';
 
+type ActionHref = NonNullable<InertiaLinkProps['href']>;
+
 type Props = {
     action: DashboardNextAction;
-    onDemoAction: (actionLabel: string) => void;
+    getActionHref: (action: DashboardAction) => ActionHref | null;
+    onAction: (action: DashboardAction) => void;
 };
 
 const factIcons: Record<DashboardFactIcon, LucideIcon> = {
@@ -41,28 +47,28 @@ const statusStyles: Record<
         className:
             'border-correction/30 bg-gradient-to-b from-correction-subtle via-correction-subtle/90 to-correction-subtle/70 text-correction-subtle-foreground',
         iconContainerClass:
-            'p-2.5 rounded-lg bg-correction/15 text-correction ring-1 ring-correction/25 shadow-2xs',
+            'rounded-lg bg-correction/15 p-2.5 text-correction ring-1 ring-correction/25 shadow-2xs',
     },
     pending: {
         icon: Clock3,
         className:
             'border-pending/30 bg-gradient-to-b from-pending-subtle via-pending-subtle/90 to-pending-subtle/70 text-pending-subtle-foreground',
         iconContainerClass:
-            'p-2.5 rounded-lg bg-pending/15 text-pending ring-1 ring-pending/25 shadow-2xs',
+            'rounded-lg bg-pending/15 p-2.5 text-pending ring-1 ring-pending/25 shadow-2xs',
     },
     neutral: {
         icon: FileText,
         className:
             'border-primary/25 bg-gradient-to-b from-accent via-accent/90 to-accent/70 text-accent-foreground',
         iconContainerClass:
-            'p-2.5 rounded-lg bg-primary/15 text-primary ring-1 ring-primary/25 shadow-2xs',
+            'rounded-lg bg-primary/15 p-2.5 text-primary ring-1 ring-primary/25 shadow-2xs',
     },
     verified: {
         icon: CircleCheck,
         className:
             'border-verified/30 bg-gradient-to-b from-verified-subtle via-verified-subtle/90 to-verified-subtle/70 text-verified-subtle-foreground',
         iconContainerClass:
-            'p-2.5 rounded-lg bg-verified/15 text-verified ring-1 ring-verified/25 shadow-2xs',
+            'rounded-lg bg-verified/15 p-2.5 text-verified ring-1 ring-verified/25 shadow-2xs',
     },
 };
 
@@ -127,7 +133,7 @@ function FactValue({ fact }: { fact: DashboardDocketFact }) {
 
 function FactRow({ fact }: { fact: DashboardDocketFact }) {
     return (
-        <div className="grid border-b border-border/80 transition-colors last:border-b-0 hover:bg-muted/15 sm:grid-cols-[9.5rem_minmax(0,1fr)]">
+        <div className="grid border-b border-border/80 transition-colors last:border-b-0 hover:bg-muted/15">
             <dt className="border-b border-border/80 bg-muted/40 px-4 py-2.5 font-label text-label font-semibold tracking-wider text-muted-foreground uppercase sm:border-r sm:border-b-0 sm:px-5 sm:py-3 xl:py-1.5">
                 {fact.label}
             </dt>
@@ -138,20 +144,79 @@ function FactRow({ fact }: { fact: DashboardDocketFact }) {
     );
 }
 
-export function DashboardNextAction({ action, onDemoAction }: Props) {
+function ActionControl({
+    action,
+    dataTest,
+    getActionHref,
+    onAction,
+    primary = false,
+}: {
+    action: DashboardAction;
+    dataTest?: string;
+    getActionHref: (action: DashboardAction) => ActionHref | null;
+    onAction: (action: DashboardAction) => void;
+    primary?: boolean;
+}) {
+    const href = getActionHref(action);
+    const icon = primary ? <PencilLine aria-hidden="true" /> : null;
+    const className = primary
+        ? 'w-full font-semibold shadow-sm transition-all duration-fast hover:-translate-y-0.5 hover:shadow sm:w-auto'
+        : 'group w-full text-primary transition-all duration-fast hover:bg-accent/80 hover:text-primary sm:w-auto';
+
+    if (href !== null) {
+        return (
+            <Button
+                asChild
+                size="lg"
+                variant={primary ? 'default' : 'ghost'}
+                className={className}
+            >
+                <Link href={href} data-test={dataTest}>
+                    {icon}
+                    {action.label}
+                    {!primary && (
+                        <ArrowRight
+                            aria-hidden="true"
+                            className="size-4 transition-transform group-hover:translate-x-1"
+                        />
+                    )}
+                </Link>
+            </Button>
+        );
+    }
+
+    return (
+        <Button
+            type="button"
+            size="lg"
+            variant={primary ? 'default' : 'ghost'}
+            className={className}
+            data-test={dataTest}
+            onClick={() => onAction(action)}
+        >
+            {icon}
+            {action.label}
+            {!primary && <ArrowRight aria-hidden="true" className="size-4" />}
+        </Button>
+    );
+}
+
+export function DashboardNextAction({
+    action,
+    getActionHref,
+    onAction,
+}: Props) {
     const status = statusStyles[action.statusTone];
     const StatusIcon = status.icon;
-    const primaryActionLabel = action.primaryActionLabel;
-    const secondaryActionLabel = action.secondaryActionLabel;
     const hasActions =
-        primaryActionLabel !== undefined || secondaryActionLabel !== undefined;
+        action.primaryAction !== null || action.secondaryAction !== null;
 
     return (
         <section
             aria-labelledby="dashboard-next-action"
             data-test="dashboard-docket"
         >
-            <div className="grid overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm transition-shadow duration-standard hover:shadow-md sm:grid-cols-[7.5rem_minmax(0,1fr)]">
+            <div className="grid overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm transition-shadow duration-standard hover:shadow-md motion-reduce:transition-none sm:grid-cols-[7.5rem_minmax(0,1fr)]">
                 <div
                     className={cn(
                         'flex items-center gap-3 border-b px-4 py-4 sm:flex-col sm:justify-start sm:border-r sm:border-b-0 sm:px-4 sm:py-6 sm:text-center xl:py-5',
@@ -217,39 +282,21 @@ export function DashboardNextAction({ action, onDemoAction }: Props) {
 
                     {hasActions && (
                         <div className="grid gap-2.5 border-t border-border/80 bg-muted/10 px-4 py-4 sm:flex sm:flex-wrap sm:items-center sm:px-5 xl:py-2">
-                            {primaryActionLabel && (
-                                <Button
-                                    type="button"
-                                    size="lg"
-                                    className="w-full font-semibold shadow-sm transition-all duration-fast hover:-translate-y-0.5 hover:shadow sm:w-auto"
-                                    data-test="dashboard-primary-action"
-                                    onClick={() =>
-                                        onDemoAction(primaryActionLabel)
-                                    }
-                                >
-                                    <PencilLine
-                                        aria-hidden="true"
-                                        className="size-4"
-                                    />
-                                    {primaryActionLabel}
-                                </Button>
+                            {action.primaryAction && (
+                                <ActionControl
+                                    action={action.primaryAction}
+                                    dataTest="dashboard-primary-action"
+                                    getActionHref={getActionHref}
+                                    onAction={onAction}
+                                    primary
+                                />
                             )}
-                            {secondaryActionLabel && (
-                                <Button
-                                    type="button"
-                                    size="lg"
-                                    variant="ghost"
-                                    className="group w-full text-primary transition-all duration-fast hover:bg-accent/80 hover:text-primary sm:w-auto"
-                                    onClick={() =>
-                                        onDemoAction(secondaryActionLabel)
-                                    }
-                                >
-                                    {secondaryActionLabel}
-                                    <ArrowRight
-                                        aria-hidden="true"
-                                        className="size-4 transition-transform group-hover:translate-x-1"
-                                    />
-                                </Button>
+                            {action.secondaryAction && (
+                                <ActionControl
+                                    action={action.secondaryAction}
+                                    getActionHref={getActionHref}
+                                    onAction={onAction}
+                                />
                             )}
                         </div>
                     )}
