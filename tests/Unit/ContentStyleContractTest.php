@@ -87,9 +87,16 @@ test('first-party text files do not use the unicode em dash', function () {
 });
 
 test('dashboard auth and settings use the approved copy contract', function () {
-    $dashboard = contentStyleProjectFile(
-        'resources/js/lib/dashboard-reference-data.ts',
-    );
+    $dashboard = implode("\n", array_map(
+        contentStyleProjectFile(...),
+        [
+            'resources/js/pages/dashboard.tsx',
+            'resources/js/components/dashboard-next-action.tsx',
+            'resources/js/components/dashboard-project-ledger.tsx',
+            'resources/js/components/dashboard-context-rail.tsx',
+            'resources/js/components/dashboard-state-notice.tsx',
+        ],
+    ));
     $surfaceCopy = implode("\n", array_map(
         contentStyleProjectFile(...),
         [
@@ -108,14 +115,15 @@ test('dashboard auth and settings use the approved copy contract', function () {
     ));
 
     expect($dashboard)
-        ->toContain("label: 'Direview oleh'")
-        ->toContain('Data demo sintetis. Ini bukan aktivitas akun Anda.')
-        ->not->toContain('Direviu')
+        ->toContain('Ringkasan ini memakai data akun dan konteks')
+        ->toContain('Recommendation untukmu')
+        ->toContain('Perbarui profil')
+        ->toContain('Tidak relevan')
+        ->not->toContain('Data demo sintetis')
         ->not->toContain('capability')
         ->not->toContain('Next action')
-        ->not->toContain("'23 Jul 2026'")
-        ->not->toContain("'26 Jul'")
-        ->not->toContain("'30 Jul'");
+        ->not->toContain('Direviu')
+        ->not->toContain('window.location');
 
     foreach ([
         'Log in to your account',

@@ -115,7 +115,7 @@ test('dashboard copy and recommendation actions keep the privacy boundary', func
         expect($file)
             ->not->toContain('connectivity_opportunity')
             ->not->toContain('inclusion')
-            ->not->toContain('—');
+            ->not->toContain("\u{2014}");
     }
 
     expect($files[1])
