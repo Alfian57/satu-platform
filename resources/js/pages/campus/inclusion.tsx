@@ -116,6 +116,15 @@ export default function CampusInclusion({
         });
     };
 
+    const handleSignalKeyDown = (e: React.KeyboardEvent, signalId: number) => {
+        if (e.key !== 'Enter' && e.key !== ' ') {
+            return;
+        }
+
+        e.preventDefault();
+        handleSelectSignal(signalId);
+    };
+
     const handleReviewSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -235,7 +244,8 @@ export default function CampusInclusion({
                     <button
                         type="submit"
                         disabled={isPending || !engineActive}
-                        className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:ring-2 focus:ring-primary focus:outline-none disabled:opacity-50"
+                        data-test="inclusion-filter-button"
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:ring-2 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <Filter className="size-4" />
                         <span>Filter Antrean</span>
@@ -261,7 +271,11 @@ export default function CampusInclusion({
                             </span>
                         </div>
 
-                        <div className="space-y-3" aria-busy={isPending}>
+                        <div
+                            className="space-y-3"
+                            aria-busy={isPending}
+                            data-test="inclusion-queue"
+                        >
                             {isPending && (
                                 <div className="sr-only" role="status">
                                     Memuat antrean inklusi...
@@ -306,7 +320,17 @@ export default function CampusInclusion({
                                             onClick={() =>
                                                 handleSelectSignal(signal.id)
                                             }
-                                            className={`cursor-pointer rounded-lg border p-4 transition-colors hover:bg-muted/40 ${
+                                            onKeyDown={(e) =>
+                                                handleSignalKeyDown(
+                                                    e,
+                                                    signal.id,
+                                                )
+                                            }
+                                            role="button"
+                                            tabIndex={0}
+                                            aria-pressed={isSelected}
+                                            data-test="inclusion-queue-item"
+                                            className={`cursor-pointer rounded-lg border p-4 transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
                                                 isSelected
                                                     ? 'border-primary bg-primary/5'
                                                     : 'border-border bg-card'
@@ -394,7 +418,10 @@ export default function CampusInclusion({
                                 pendukung.
                             </div>
                         ) : (
-                            <div className="space-y-6">
+                            <div
+                                className="space-y-6"
+                                data-test="inclusion-detail"
+                            >
                                 {/* Signal Details */}
                                 <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4 text-xs">
                                     <div className="flex justify-between border-b border-border/60 pb-2">
@@ -571,6 +598,7 @@ export default function CampusInclusion({
                                                     e.target.value,
                                                 )
                                             }
+                                            data-test="inclusion-reason"
                                             className="w-full rounded-md border border-input bg-background p-3 text-xs focus:ring-2 focus:ring-primary focus:outline-none"
                                         />
                                         {errors.reason && (
@@ -583,7 +611,8 @@ export default function CampusInclusion({
                                     <button
                                         type="submit"
                                         disabled={processing}
-                                        className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-xs font-medium text-primary-foreground hover:bg-primary/90 focus:ring-2 focus:ring-primary focus:outline-none disabled:opacity-50"
+                                        data-test="inclusion-submit"
+                                        className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-xs font-medium text-primary-foreground hover:bg-primary/90 focus:ring-2 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         <UserCheck className="size-4" />
                                         <span>Simpan Keputusan Peninjauan</span>
