@@ -611,8 +611,12 @@ function StudentTeamView({ projectId, roles, team }: Props) {
                                 placeholder="Contoh: Saya dapat membantu menyusun API dan dokumentasi teknis."
                                 className="min-h-24 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-base transition-[color,background-color,border-color] duration-fast outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 md:text-sm"
                                 aria-invalid={Boolean(errors.message)}
+                                aria-describedby="team-request-message-hint"
                             />
-                            <p className="text-xs leading-5 text-muted-foreground">
+                            <p
+                                id="team-request-message-hint"
+                                className="text-xs leading-5 text-muted-foreground"
+                            >
                                 Hindari informasi pribadi yang tidak diperlukan
                                 untuk menilai kontribusi.
                             </p>

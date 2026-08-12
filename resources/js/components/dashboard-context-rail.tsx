@@ -212,7 +212,11 @@ function RecommendationReady({
                 </p>
             )}
 
-            <ul className="grid gap-2.5 px-4 py-3">
+            <ul
+                aria-label="Alasan kecocokan project"
+                className="grid gap-2.5 px-4 py-3"
+                data-test="dashboard-recommendation-reasons"
+            >
                 {recommendation.reasons.map((reason) => (
                     <li
                         key={reason}
