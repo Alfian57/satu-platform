@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Discussion;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Events\WorkspaceDiscussionChanged;
 use App\Models\Institution;
 use App\Models\Message;
 use App\Models\Project;
@@ -53,6 +54,15 @@ final class UpdateDiscussion
                     institution: Institution::query()->findOrFail($lockedProject->institution_id),
                     before: $before,
                     after: $this->summary($lockedMessage),
+                );
+
+                WorkspaceDiscussionChanged::dispatch(
+                    institutionId: (int) $lockedProject->institution_id,
+                    projectId: (int) $lockedProject->getKey(),
+                    resourceId: (int) $lockedMessage->getKey(),
+                    operation: 'discussion.updated',
+                    version: $lockedMessage->updated_at->toIso8601String(),
+                    occurredAt: now()->toIso8601String(),
                 );
             }
 

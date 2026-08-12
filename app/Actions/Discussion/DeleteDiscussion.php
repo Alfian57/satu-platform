@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Discussion;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Events\WorkspaceDiscussionChanged;
 use App\Models\Institution;
 use App\Models\Message;
 use App\Models\Project;
@@ -49,6 +50,15 @@ final class DeleteDiscussion
             );
 
             $lockedMessage->delete();
+
+            WorkspaceDiscussionChanged::dispatch(
+                institutionId: (int) $lockedProject->institution_id,
+                projectId: (int) $lockedProject->getKey(),
+                resourceId: (int) $lockedMessage->getKey(),
+                operation: 'discussion.deleted',
+                version: null,
+                occurredAt: now()->toIso8601String(),
+            );
         }, attempts: 3);
     }
 }

@@ -6,6 +6,7 @@ namespace App\Actions\Task;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\TaskStatus;
+use App\Events\WorkspaceTaskChanged;
 use App\Exceptions\InvalidTaskTransition;
 use App\Models\Institution;
 use App\Models\Project;
@@ -65,6 +66,15 @@ final class TransitionTaskStatus
                 institution: Institution::query()->findOrFail($lockedProject->institution_id),
                 before: $before,
                 after: $this->summary($lockedTask),
+            );
+
+            WorkspaceTaskChanged::dispatch(
+                institutionId: (int) $lockedProject->institution_id,
+                projectId: (int) $lockedProject->getKey(),
+                resourceId: (int) $lockedTask->getKey(),
+                operation: 'task.status_changed',
+                version: $lockedTask->updated_at->toIso8601String(),
+                occurredAt: now()->toIso8601String(),
             );
 
             return $lockedTask->refresh();
