@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Task;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Events\WorkspaceTaskChanged;
 use App\Models\Institution;
 use App\Models\Project;
 use App\Models\Task;
@@ -47,6 +48,15 @@ final class DeleteTask
             );
 
             $lockedTask->delete();
+
+            WorkspaceTaskChanged::dispatch(
+                institutionId: (int) $lockedProject->institution_id,
+                projectId: (int) $lockedProject->getKey(),
+                resourceId: (int) $lockedTask->getKey(),
+                operation: 'task.deleted',
+                version: null,
+                occurredAt: now()->toIso8601String(),
+            );
         }, attempts: 3);
     }
 }

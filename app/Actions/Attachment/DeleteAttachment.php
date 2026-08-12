@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Attachment;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Events\WorkspaceDiscussionChanged;
 use App\Models\Attachment;
 use App\Models\Institution;
 use App\Models\Project;
@@ -51,6 +52,17 @@ final class DeleteAttachment
             });
 
             $lockedAttachment->delete();
+
+            if ($lockedAttachment->message_id !== null) {
+                WorkspaceDiscussionChanged::dispatch(
+                    institutionId: (int) $lockedProject->institution_id,
+                    projectId: (int) $lockedProject->getKey(),
+                    resourceId: (int) $lockedAttachment->message_id,
+                    operation: 'discussion.attachment.deleted',
+                    version: null,
+                    occurredAt: now()->toIso8601String(),
+                );
+            }
         }, attempts: 3);
     }
 

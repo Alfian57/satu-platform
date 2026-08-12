@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Discussion;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Events\WorkspaceDiscussionChanged;
 use App\Models\Institution;
 use App\Models\Message;
 use App\Models\Project;
@@ -47,6 +48,15 @@ final class CreateDiscussion
                 actor: $actor,
                 institution: Institution::query()->findOrFail($lockedProject->institution_id),
                 after: $this->summary($message),
+            );
+
+            WorkspaceDiscussionChanged::dispatch(
+                institutionId: (int) $lockedProject->institution_id,
+                projectId: (int) $lockedProject->getKey(),
+                resourceId: (int) $message->getKey(),
+                operation: 'discussion.created',
+                version: $message->updated_at->toIso8601String(),
+                occurredAt: now()->toIso8601String(),
             );
 
             return $message->refresh()->load(['project', 'author']);
