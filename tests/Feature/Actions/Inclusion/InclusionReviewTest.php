@@ -188,6 +188,60 @@ it('records an append-only inclusion review decision with required reason and au
     })->toThrow(Exception::class);
 });
 
+it('inclusion review queue query budget stays bounded as signal volume grows', function () {
+    $institution = Institution::factory()->active()->create();
+    $admin = User::factory()->create();
+
+    InstitutionMembership::factory()->create([
+        'institution_id' => $institution->id,
+        'user_id' => $admin->id,
+        'role' => InstitutionMembershipRole::CampusAdmin,
+        'status' => InstitutionMembershipStatus::Verified,
+    ]);
+
+    $version = InclusionSignalVersion::factory()->create();
+
+    collect(range(1, 3))->each(function (int $number) use ($institution, $version): void {
+        $signal = InclusionSignal::factory()->create([
+            'institution_id' => $institution->id,
+            'version_id' => $version->id,
+            'period' => '2026-S1',
+            'restricted_feature_state' => true,
+        ]);
+
+        InclusionReview::factory()->create([
+            'inclusion_signal_id' => $signal->id,
+            'human_conclusion' => 'acknowledged',
+            'reason' => 'Baseline review '.$number,
+        ]);
+    });
+
+    $baseline = measureDatabaseQueries(function () use ($admin, $institution): void {
+        app(InclusionReviewQueue::class)->paginate($admin, $institution, '2026-S1', true);
+    });
+
+    collect(range(4, 27))->each(function (int $number) use ($institution, $version): void {
+        $signal = InclusionSignal::factory()->create([
+            'institution_id' => $institution->id,
+            'version_id' => $version->id,
+            'period' => '2026-S1',
+            'restricted_feature_state' => true,
+        ]);
+
+        InclusionReview::factory()->create([
+            'inclusion_signal_id' => $signal->id,
+            'human_conclusion' => 'acknowledged',
+            'reason' => 'Volume review '.$number,
+        ]);
+    });
+
+    $expanded = measureDatabaseQueries(function () use ($admin, $institution): void {
+        app(InclusionReviewQueue::class)->paginate($admin, $institution, '2026-S1', true);
+    });
+
+    expect($expanded['total'])->toBe($baseline['total']);
+});
+
 it('serializes inclusion signals safely without leaking private or unallowlisted data', function () {
     $institution = Institution::factory()->active()->create();
     $subject = User::factory()->create([

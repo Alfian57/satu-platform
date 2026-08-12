@@ -232,6 +232,37 @@ test('authorized queue projects masked identifiers and no roster row details', f
         );
 });
 
+test('affiliation review queue query budget stays bounded as queue volume grows', function () {
+    $institution = Institution::factory()->active()->create();
+    $reviewer = affiliationReviewer($institution);
+
+    collect(range(1, 3))->each(function () use ($institution): void {
+        pendingAffiliation($institution);
+    });
+
+    $baseline = measureDatabaseQueries(function () use ($reviewer, $institution): void {
+        app(AffiliationReviewQueue::class)->paginate(
+            $reviewer,
+            $institution,
+            perPage: 2,
+        );
+    });
+
+    collect(range(4, 27))->each(function () use ($institution): void {
+        pendingAffiliation($institution);
+    });
+
+    $expanded = measureDatabaseQueries(function () use ($reviewer, $institution): void {
+        app(AffiliationReviewQueue::class)->paginate(
+            $reviewer,
+            $institution,
+            perPage: 2,
+        );
+    });
+
+    expect($expanded['total'])->toBe($baseline['total']);
+});
+
 test('cross tenant nested routes are indistinguishable from missing records', function () {
     $institution = Institution::factory()->active()->create();
     $otherInstitution = Institution::factory()->active()->create();
