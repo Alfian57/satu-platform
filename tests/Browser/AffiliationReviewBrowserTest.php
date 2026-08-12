@@ -125,7 +125,7 @@ test('deferred queue exposes a stable ten row skeleton before content', function
     $this->actingAs($reviewer);
 
     $page = visit(route('campus.affiliations.index', $institution), [
-        'waitUntil' => 'domcontentloaded',
+        'waitUntil' => 'commit',
     ])
         ->resize(1366, 768)
         ->assertPresent('@affiliation-queue-skeleton')
