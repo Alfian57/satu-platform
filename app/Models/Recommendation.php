@@ -8,9 +8,12 @@ use App\Concerns\InstitutionOwned;
 use App\Enums\MatchingDimension;
 use Database\Factories\RecommendationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -83,9 +86,47 @@ class Recommendation extends Model implements InstitutionOwned
         return $this->belongsTo(User::class, 'candidate_id');
     }
 
+    /**
+     * @return HasMany<RecommendationFeedback, $this>
+     */
+    public function feedback(): HasMany
+    {
+        return $this->hasMany(RecommendationFeedback::class);
+    }
+
+    /**
+     * Scope the query to one institution.
+     *
+     * @param  Builder<Recommendation>  $query
+     */
+    #[Scope]
+    protected function forInstitution(Builder $query, Institution|int $institution): void
+    {
+        $query->where(
+            'institution_id',
+            $institution instanceof Institution ? $institution->getKey() : $institution,
+        );
+    }
+
     public function institutionId(): int
     {
         return $this->institution_id;
+    }
+
+    public function scoreVersionId(): ?int
+    {
+        if ($this->relationLoaded('matchRun')) {
+            return $this->matchRun?->version_id;
+        }
+
+        $versionId = $this->matchRun()->value('version_id');
+
+        return $versionId === null ? null : (int) $versionId;
+    }
+
+    public function isStaleAgainst(?int $currentVersionId): bool
+    {
+        return $currentVersionId === null || $this->scoreVersionId() !== $currentVersionId;
     }
 
     /**
@@ -95,14 +136,18 @@ class Recommendation extends Model implements InstitutionOwned
      */
     public function safeExplanation(): array
     {
-        $components = array_filter(
+        $publicDimensions = [
+            MatchingDimension::SkillFit->value,
+            MatchingDimension::ProjectNeed->value,
+            MatchingDimension::Availability->value,
+        ];
+        $components = array_intersect_key(
             $this->component_scores,
-            static fn (float $score, string $dimension): bool => $dimension !== MatchingDimension::ConnectivityOpportunity->value,
-            ARRAY_FILTER_USE_BOTH,
+            array_fill_keys($publicDimensions, true),
         );
         $reasons = array_values(array_filter(
             $this->reason_candidates,
-            static fn (array $reason): bool => $reason['dimension'] !== MatchingDimension::ConnectivityOpportunity->value,
+            fn (array $reason): bool => in_array($reason['dimension'], $publicDimensions, true),
         ));
 
         return [

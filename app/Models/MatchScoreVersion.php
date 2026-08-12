@@ -55,6 +55,16 @@ class MatchScoreVersion extends Model
         return (float) ($this->weights[$dimension->value] ?? 0.0);
     }
 
+    public static function current(): ?self
+    {
+        return static::query()
+            ->whereNotNull('activated_at')
+            ->where('activated_at', '<=', now())
+            ->orderByDesc('activated_at')
+            ->orderByDesc('id')
+            ->first();
+    }
+
     /**
      * @return list<MatchingDimension>
      */
