@@ -28,7 +28,10 @@ final class ProjectDiscussionController extends Controller
 
         $messages = Message::query()
             ->forProject($project)
-            ->with('author:id,name')
+            ->with([
+                'author:id,name',
+                'attachments.uploadedBy:id,name',
+            ])
             ->ordered()
             ->paginate($filters->perPage, ['*'], 'page', $filters->page)
             ->appends($filters->queryParameters());

@@ -19,10 +19,13 @@ use App\Http\Requests\Task\StoreTaskRequest;
 use App\Http\Requests\Task\TransitionTaskRequest;
 use App\Http\Requests\Task\UnassignTaskRequest;
 use App\Http\Requests\Task\UpdateTaskRequest;
+use App\Models\Message;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TeamMembership;
 use App\Models\User;
+use App\Support\Discussion\DiscussionFilters;
+use App\Support\Discussion\DiscussionSerializer;
 use App\Support\Task\TaskWorkspaceSerializer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -37,6 +40,7 @@ final class ProjectWorkspaceController extends Controller
         ShowTaskWorkspaceRequest $request,
         Project $project,
         TaskWorkspaceSerializer $serializer,
+        DiscussionSerializer $discussionSerializer,
     ): Response {
         /** @var User $user */
         $user = $request->user();
@@ -74,6 +78,22 @@ final class ProjectWorkspaceController extends Controller
             ->paginate($filters->perPage, ['*'], 'page', $filters->page)
             ->appends($filters->queryParameters());
 
+        $discussionFilters = new DiscussionFilters;
+        $discussion = Message::query()
+            ->forProject($project)
+            ->with([
+                'author:id,name',
+                'attachments.uploadedBy:id,name',
+            ])
+            ->ordered()
+            ->paginate(
+                $discussionFilters->perPage,
+                ['*'],
+                'discussion_page',
+                $discussionFilters->page,
+            )
+            ->appends($discussionFilters->queryParameters());
+
         $project->loadMissing('owner:id,name');
         $members = collect([
             [
@@ -102,6 +122,7 @@ final class ProjectWorkspaceController extends Controller
         return Inertia::render('projects/workspace', [
             'project' => $serializer->project($project),
             'tasks' => $serializer->page($tasks),
+            'discussion' => $discussionSerializer->page($discussion),
             'members' => $members,
             'filters' => $filters->toArray(),
             'permissions' => [

@@ -151,6 +151,18 @@ test('authorized members can download an attachment but receive no public URL', 
         ->assertDownload('catatan.txt')
         ->assertHeader('Content-Type', 'text/plain; charset=utf-8')
         ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+    $preview = $this->actingAs($member)
+        ->get(route('projects.workspace.attachments.preview', [
+            'project' => $project,
+            'attachment' => $attachment,
+        ]));
+
+    $preview->assertOk()
+        ->assertHeader('Content-Type', 'text/plain; charset=utf-8')
+        ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+    expect($preview->headers->get('Content-Disposition'))->toStartWith('inline;');
 });
 
 test('non-members cannot download an attachment across workspace boundaries', function () {

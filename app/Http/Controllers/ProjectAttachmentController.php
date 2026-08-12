@@ -75,6 +75,19 @@ final class ProjectAttachmentController extends Controller
         return $storage->download($attachment);
     }
 
+    public function preview(
+        DownloadAttachmentRequest $request,
+        Project $project,
+        Attachment $attachment,
+        AttachmentStorage $storage,
+    ): StreamedResponse {
+        if ($attachment->project_id !== $project->getKey()) {
+            abort(404);
+        }
+
+        return $storage->preview($attachment);
+    }
+
     public function destroy(
         DeleteAttachmentRequest $request,
         Project $project,

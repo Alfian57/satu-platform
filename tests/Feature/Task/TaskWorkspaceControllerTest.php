@@ -6,6 +6,7 @@ use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
+use App\Models\Message;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TeamMembership;
@@ -64,6 +65,10 @@ test('owner and active member receive a tenant-safe workspace projection', funct
             'title' => 'Task yang terlihat team',
             'priority' => TaskPriority::High,
         ]);
+    Message::factory()
+        ->for($project)
+        ->for($owner, 'author')
+        ->create(['body' => 'Catatan awal workspace']);
 
     $this->actingAs($owner)
         ->get(route('projects.workspace', $project))
@@ -75,6 +80,7 @@ test('owner and active member receive a tenant-safe workspace projection', funct
             ->where('tasks.data.0.id', $task->getKey())
             ->where('tasks.data.0.title', 'Task yang terlihat team')
             ->where('tasks.data.0.created_by.name', $owner->name)
+            ->where('discussion.data.0.body', 'Catatan awal workspace')
             ->where('members.0.id', $owner->getKey())
             ->where('permissions.can_manage_tasks', true));
 
