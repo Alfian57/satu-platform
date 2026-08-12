@@ -8,6 +8,7 @@ export function AppContent({
 }: React.ComponentProps<typeof SidebarInset>) {
     return (
         <SidebarInset
+            id="main-content"
             className={cn('overflow-x-hidden', className)}
             {...props}
         />

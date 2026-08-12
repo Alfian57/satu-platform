@@ -148,8 +148,8 @@ const statusClasses: Record<TaskStatus, string> = {
 const priorityClasses: Record<TaskPriority, string> = {
     low: 'text-muted-foreground',
     medium: 'text-primary',
-    high: 'text-pending-subtle-foreground',
-    urgent: 'text-correction-subtle-foreground',
+    high: 'font-medium text-pending-subtle-foreground',
+    urgent: 'font-medium text-correction-subtle-foreground',
 };
 
 const selectClassName =
