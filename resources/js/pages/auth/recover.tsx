@@ -120,7 +120,7 @@ function RecoveryOtpStep({ recovery }: { recovery: RecoveryState }) {
                 maskedPhone={maskedPhone}
             />
 
-            <Form {...verify.form()} resetOnSuccess={['otp']}>
+            <Form action={verify.url()} method="post" resetOnSuccess={['otp']}>
                 {({ processing, errors }) => (
                     <div className="grid gap-5">
                         <ErrorSummary errors={errors} />
@@ -165,7 +165,7 @@ function RecoveryOtpStep({ recovery }: { recovery: RecoveryState }) {
             </Form>
 
             <div className="grid gap-3 border-t border-border pt-5 text-sm">
-                <Form {...resend.form()}>
+                <Form action={resend.url()} method="post">
                     {({ processing }) => (
                         <div className="grid gap-2">
                             {secondsLeft > 0 ? (
@@ -210,7 +210,8 @@ function RecoveryOtpStep({ recovery }: { recovery: RecoveryState }) {
 function RecoveryResetStep() {
     return (
         <Form
-            {...update.form()}
+            action={update.url()}
+            method="post"
             resetOnSuccess={['password', 'password_confirmation']}
         >
             {({ processing, errors }) => (
@@ -272,7 +273,7 @@ function RecoveryResetStep() {
 
 function RecoveryPhoneStep({ status }: { status: RecoveryState['status'] }) {
     return (
-        <Form {...start.form()} className="flex flex-col gap-6">
+        <Form action={start.url()} method="post" className="flex flex-col gap-6">
             {({ processing, errors }) => (
                 <>
                     <ErrorSummary errors={errors} />
