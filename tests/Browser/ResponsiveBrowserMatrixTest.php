@@ -69,14 +69,18 @@ test('onboarding flow works at mobile and desktop', function () {
 });
 
 test('workspace flow works at mobile and desktop', function () {
-    visit(route('workspace.index'))
+    $workspace = visit(route('projects', ['project' => 1]))
+        ->press('Buka workspace')
+        ->wait(0.5);
+
+    $workspace
         ->resize(375, 812)
         ->assertNoJavaScriptErrors()
         ->assertNoConsoleLogs()
         ->assertNoAccessibilityIssues()
         ->screenshot(true, 'i75-workspace-mobile-375x812');
 
-    visit(route('workspace.index'))
+    $workspace
         ->resize(1366, 900)
         ->assertNoJavaScriptErrors()
         ->assertNoConsoleLogs()
