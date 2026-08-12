@@ -123,7 +123,7 @@ function RegistrationOtpStep({
                 maskedPhone={maskedPhone}
             />
 
-            <Form {...verify.form()} resetOnSuccess={['otp']}>
+            <Form action={verify.url()} method="post" resetOnSuccess={['otp']}>
                 {({ processing, errors }) => (
                     <div className="grid gap-5">
                         <ErrorSummary errors={errors} />
@@ -168,7 +168,7 @@ function RegistrationOtpStep({
             </Form>
 
             <div className="grid gap-3 border-t border-border pt-5 text-sm">
-                <Form {...resend.form()}>
+                <Form action={resend.url()} method="post">
                     {({ processing }) => (
                         <div className="grid gap-2">
                             {secondsLeft > 0 ? (
@@ -221,7 +221,8 @@ export default function Register({ passwordRules, registration }: Props) {
                 <RegistrationOtpStep registration={state} />
             ) : (
                 <Form
-                    {...start.form()}
+                    action={start.url()}
+                    method="post"
                     resetOnSuccess={['password', 'password_confirmation']}
                     disableWhileProcessing
                     className="flex flex-col gap-6"
