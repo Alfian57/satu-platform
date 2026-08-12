@@ -38,6 +38,43 @@ export type WorkspaceProject = {
     owner: WorkspacePerson;
 };
 
+export type WorkspaceAttachmentPurpose = 'attachment' | 'evidence';
+
+export type WorkspaceAttachment = {
+    id: number;
+    purpose: WorkspaceAttachmentPurpose;
+    message_id: number | null;
+    original_name: string;
+    mime_type: string;
+    size_bytes: number;
+    uploaded_by: WorkspacePerson;
+    created_at: string;
+    updated_at: string;
+};
+
+export type WorkspaceDiscussion = {
+    id: number;
+    body: string;
+    author: WorkspacePerson;
+    attachments: WorkspaceAttachment[];
+    is_edited: boolean;
+    created_at: string;
+    updated_at: string;
+};
+
+export type DiscussionPage = {
+    data: WorkspaceDiscussion[];
+    links: Array<Record<string, unknown>>;
+    meta: {
+        current_page: number;
+        from: number | null;
+        last_page: number;
+        per_page: number;
+        to: number | null;
+        total: number;
+    };
+};
+
 export type TaskPage = {
     data: WorkspaceTask[];
     links: Array<Record<string, unknown>>;

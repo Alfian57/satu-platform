@@ -2,6 +2,7 @@
 
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
+use App\Models\Message;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TeamMembership;
@@ -98,6 +99,64 @@ test('empty workspace offers a keyboard reachable next action on mobile', functi
             true,
         )
         ->screenshot(true, 'p33-task-workspace-created-mobile-320x800')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
+test('team can add a discussion note from the workspace composer', function () {
+    ['owner' => $owner, 'project' => $project] = browserWorkspaceContext();
+
+    $this->actingAs($owner);
+
+    visit(route('projects.workspace', $project))
+        ->resize(390, 844)
+        ->assertSee('Diskusi dan evidence')
+        ->fill('#discussion-body', 'Keputusan team: lanjutkan review evidence.')
+        ->click('@discussion-submit')
+        ->waitForText('Catatan berhasil ditambahkan ke diskusi.')
+        ->assertSee('Keputusan team: lanjutkan review evidence.')
+        ->assertSee('Catatan team')
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
+test('discussion timeline screenshots cover desktop and mobile evidence', function () {
+    ['owner' => $owner, 'project' => $project] = browserWorkspaceContext();
+
+    Message::factory()
+        ->for($project)
+        ->for($owner, 'author')
+        ->create([
+            'body' => 'Desktop screenshot: keputusan team tercatat di ledger.',
+        ]);
+    Message::factory()
+        ->for($project)
+        ->for($owner, 'author')
+        ->create([
+            'body' => 'Mobile screenshot: next action tetap terbaca tanpa overflow.',
+        ]);
+
+    $this->actingAs($owner);
+
+    $page = visit(route('projects.workspace', $project))
+        ->resize(1366, 900)
+        ->assertSee('Diskusi dan evidence')
+        ->assertSee('keputusan team tercatat di ledger')
+        ->screenshot(true, 'p36-discussion-desktop-1366x900');
+
+    $page
+        ->resize(390, 844)
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(true, 'p36-discussion-mobile-390x844')
         ->assertNoJavaScriptErrors()
         ->assertNoConsoleLogs()
         ->assertNoAccessibilityIssues();

@@ -23,6 +23,7 @@ import { useEffect, useMemo, useState } from 'react';
 import ProjectWorkspaceController from '@/actions/App/Http/Controllers/ProjectWorkspaceController';
 import { AppPage } from '@/components/app-page';
 import InputError from '@/components/input-error';
+import { WorkspaceDiscussion } from '@/components/projects/workspace-discussion';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -43,6 +44,7 @@ import type {
     TaskStatus,
     TaskWorkspaceFilters,
     TaskWorkspacePermissions,
+    DiscussionPage,
     WorkspaceMember,
     WorkspacePerson,
     WorkspaceProject,
@@ -93,6 +95,7 @@ type DeleteResponse = {
 type WorkspaceProps = {
     project: WorkspaceProject;
     tasks: TaskPage;
+    discussion: DiscussionPage;
     members: WorkspaceMember[];
     filters: TaskWorkspaceFilters;
     permissions: TaskWorkspacePermissions;
@@ -593,6 +596,7 @@ function WorkspaceEmptyState({
 export default function ProjectWorkspace({
     project,
     tasks,
+    discussion,
     members,
     filters,
     permissions,
@@ -1862,6 +1866,10 @@ export default function ProjectWorkspace({
                             </nav>
                         )}
                     </main>
+                    <WorkspaceDiscussion
+                        projectId={project.id}
+                        initialPage={discussion}
+                    />
                 </div>
             </AppPage>
 
