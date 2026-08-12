@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Enums\AffiliationStatus;
+use App\Enums\InstitutionMembershipStatus;
 use App\Enums\MessagePurpose;
 use App\Enums\MessageStatus;
 use App\Enums\OtpChallengeStatus;
@@ -70,21 +70,21 @@ it('verifies roster exact match auto-links campus affiliation while mismatch fla
         'institution_id' => $institution->id,
         'user_id' => $exactUser->id,
         'nim' => '2201001',
-        'status' => AffiliationStatus::Verified,
+        'status' => InstitutionMembershipStatus::Verified,
         'verified_at' => now(),
     ]);
 
-    expect($exactMembership->status)->toBe(AffiliationStatus::Verified);
+    expect($exactMembership->status)->toBe(InstitutionMembershipStatus::Verified);
 
     $mismatchUser = User::factory()->create();
     $pendingMembership = InstitutionMembership::create([
         'institution_id' => $institution->id,
         'user_id' => $mismatchUser->id,
         'nim' => '9999999',
-        'status' => AffiliationStatus::Pending,
+        'status' => InstitutionMembershipStatus::Pending,
     ]);
 
-    expect($pendingMembership->status)->toBe(AffiliationStatus::Pending);
+    expect($pendingMembership->status)->toBe(InstitutionMembershipStatus::Pending);
 });
 
 it('strictly denies cross-tenant access to institution roster records', function () {
