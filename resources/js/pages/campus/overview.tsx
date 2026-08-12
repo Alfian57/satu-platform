@@ -1,6 +1,5 @@
 import { Head, router } from '@inertiajs/react';
 import {
-    Activity,
     Award,
     Calendar,
     Clock,
@@ -11,8 +10,8 @@ import {
     Users,
 } from 'lucide-react';
 import React, { useState, useTransition } from 'react';
-import AppLayout from '@/layouts/app-layout';
 import { Skeleton } from '@/components/ui/skeleton';
+import AppLayout from '@/layouts/app-layout';
 
 interface OverviewMetrics {
     memberships: {
