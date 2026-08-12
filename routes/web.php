@@ -116,6 +116,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('workspace.attachments.store');
             Route::get('attachments/{attachment}', [ProjectAttachmentController::class, 'download'])
                 ->name('workspace.attachments.download');
+            Route::get('attachments/{attachment}/preview', [ProjectAttachmentController::class, 'preview'])
+                ->name('workspace.attachments.preview');
             Route::delete('attachments/{attachment}', [ProjectAttachmentController::class, 'destroy'])
                 ->name('workspace.attachments.destroy');
             Route::post('tasks', [ProjectWorkspaceController::class, 'store'])

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Attachment;
 use App\Models\AuditLog;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
@@ -102,6 +103,14 @@ test('active members can create and paginate newest discussions with a safe proj
             'created_at' => now()->subMinute(),
             'updated_at' => now()->subMinute(),
         ]);
+    Attachment::factory()
+        ->evidence()
+        ->forMessage($new)
+        ->for($member, 'uploadedBy')
+        ->create([
+            'original_name' => 'decision.png',
+            'mime_type' => 'image/png',
+        ]);
 
     $this->actingAs($member)
         ->getJson(route('projects.workspace.discussions.index', [
@@ -115,6 +124,9 @@ test('active members can create and paginate newest discussions with a safe proj
         ->assertJsonPath('meta.total', 3)
         ->assertJsonPath('meta.current_page', 1)
         ->assertJsonPath('meta.per_page', 2)
+        ->assertJsonPath('data.0.attachments.0.original_name', 'decision.png')
+        ->assertJsonPath('data.0.attachments.0.uploaded_by.name', $member->name)
+        ->assertJsonMissingPath('data.0.attachments.0.path')
         ->assertJsonMissingPath('data.0.project_id')
         ->assertJsonMissingPath('data.0.institution_id')
         ->assertJsonMissingPath('data.0.author.username')
