@@ -1,8 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import {
-    AlertCircle,
     CheckCircle2,
-    Clock,
     FileText,
     Filter,
     HelpCircle,
@@ -10,7 +8,6 @@ import {
     Shield,
     ShieldAlert,
     UserCheck,
-    XCircle,
 } from 'lucide-react';
 import React, { useState, useTransition } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -121,7 +118,10 @@ export default function CampusInclusion({
 
     const handleReviewSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedSignal) return;
+
+        if (!selectedSignal) {
+            return;
+        }
 
         post(
             `/campus/${institution.id}/inclusion/${selectedSignal.id}/reviews`,
