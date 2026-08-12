@@ -142,11 +142,11 @@
     --pending: #8a5100;
     --pending-foreground: #ffffff;
     --pending-subtle: #fff1d6;
-    --pending-subtle-foreground: #6c3e00;
+    --pending-subtle-foreground: #7a4d00;
     --correction: #b42318;
     --correction-foreground: #ffffff;
     --correction-subtle: #fde8e7;
-    --correction-subtle-foreground: #8f1d16;
+    --correction-subtle-foreground: #9c2b23;
     --border: #c7d0df;
     --input: #718097;
     --ring: #1e5bd7;
@@ -195,11 +195,11 @@
     --pending: #e2a23c;
     --pending-foreground: #2f1b00;
     --pending-subtle: #3b2a0d;
-    --pending-subtle-foreground: #ffd487;
+    --pending-subtle-foreground: #ffdd99;
     --correction: #ff8a82;
     --correction-foreground: #330b08;
     --correction-subtle: #421918;
-    --correction-subtle-foreground: #ffb4ad;
+    --correction-subtle-foreground: #ffbeb7;
     --border: #34445d;
     --input: #798aa3;
     --ring: #8aabff;

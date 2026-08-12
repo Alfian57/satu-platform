@@ -491,6 +491,10 @@ export default function Onboarding({
                         : recoverySummary.current;
 
                 summary?.focus();
+                summary?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                });
             });
         });
 
