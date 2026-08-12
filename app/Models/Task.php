@@ -80,6 +80,14 @@ class Task extends Model implements InstitutionOwned
             ->withTimestamps();
     }
 
+    /**
+     * @return HasMany<ContributionVersion, $this>
+     */
+    public function contributionVersions(): HasMany
+    {
+        return $this->hasMany(ContributionVersion::class);
+    }
+
     public function institutionId(): int
     {
         return (int) $this->project->institution_id;

@@ -85,6 +85,14 @@ class Institution extends Model
     }
 
     /**
+     * @return HasMany<Contribution, $this>
+     */
+    public function contributions(): HasMany
+    {
+        return $this->hasMany(Contribution::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

@@ -119,6 +119,14 @@ class Project extends Model implements InstitutionOwned
         return $this->hasMany(Attachment::class);
     }
 
+    /**
+     * @return HasMany<Contribution, $this>
+     */
+    public function contributions(): HasMany
+    {
+        return $this->hasMany(Contribution::class);
+    }
+
     public function institutionId(): int
     {
         return $this->institution_id;
