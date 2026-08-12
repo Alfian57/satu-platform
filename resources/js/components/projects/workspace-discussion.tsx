@@ -12,6 +12,11 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
+    download as attachmentDownload,
+    preview as attachmentPreview,
+    store as attachmentStore,
+} from '@/actions/App/Http/Controllers/ProjectAttachmentController';
+import {
     index as discussionIndex,
     store as discussionStore,
 } from '@/actions/App/Http/Controllers/ProjectDiscussionController';
@@ -25,11 +30,6 @@ import type {
     WorkspaceDiscussion,
     WorkspaceAttachmentPurpose,
 } from '@/types/task';
-import {
-    download as attachmentDownload,
-    preview as attachmentPreview,
-    store as attachmentStore,
-} from '@/actions/App/Http/Controllers/ProjectAttachmentController';
 
 type DiscussionFormData = {
     body: string;
