@@ -11,12 +11,16 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class SendWhatsAppMessage implements ShouldQueue
 {
     use Queueable;
 
     public int $tries = 3;
+
+    public int $timeout = 90;
 
     /**
      * @var array<int>
@@ -32,6 +36,12 @@ class SendWhatsAppMessage implements ShouldQueue
         $outbox = MessageOutbox::query()->findOrFail($this->outboxId);
 
         if ($outbox->status !== MessageStatus::Pending) {
+            return;
+        }
+
+        if ($outbox->attempts >= $outbox->max_attempts) {
+            $outbox->recordFailure('attempts_exhausted');
+
             return;
         }
 
@@ -115,5 +125,29 @@ class SendWhatsAppMessage implements ShouldQueue
         $redacted = preg_replace('/\d{10,14}/', '[PHONE]', $error);
 
         return mb_substr((string) $redacted, 0, 500);
+    }
+
+    /**
+     * Reconcile an outbox when the job exhausts its retries or crashes.
+     *
+     * The outbox is marked failed through an append-only record so it never is
+     * left stuck in "processing". A successful send is never overwritten and
+     * no extra delivery record is created, keeping domain state intact.
+     */
+    public function failed(Throwable $exception): void
+    {
+        $outbox = MessageOutbox::query()->find($this->outboxId);
+
+        if ($outbox === null) {
+            return;
+        }
+
+        $outbox->recordFailure('max_retries');
+
+        Log::error('WhatsApp delivery job exhausted retries', [
+            'outbox_id' => $outbox->getKey(),
+            'purpose' => $outbox->purpose->value,
+            'error_class' => $exception::class,
+        ]);
     }
 }
