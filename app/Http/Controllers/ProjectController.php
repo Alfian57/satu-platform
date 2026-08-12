@@ -10,19 +10,26 @@ use App\Actions\Project\CreateProject;
 use App\Actions\Project\OpenProject;
 use App\Actions\Project\ProjectDiscoveryQuery;
 use App\Actions\Project\UpdateProject;
+use App\Enums\InstitutionMembershipRole;
+use App\Enums\InstitutionMembershipStatus;
+use App\Enums\InstitutionStatus;
+use App\Enums\ProjectStatus;
 use App\Exceptions\InvalidProjectTransition;
 use App\Http\Requests\Project\ListProjectsRequest;
 use App\Http\Requests\Project\ProjectTransitionRequest;
 use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Models\Institution;
+use App\Models\InstitutionMembership;
 use App\Models\Project;
 use App\Models\ProjectRole;
 use App\Models\ProjectRoleSkill;
 use App\Models\User;
 use App\Support\Project\ProjectDiscoveryFilters;
 use App\Support\Project\ProjectDiscoverySerializer;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -66,11 +73,55 @@ final class ProjectController extends Controller
         ]);
     }
 
-    public function show(Project $project): JsonResponse
+    public function create(Request $request): Response
+    {
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            abort(401);
+        }
+
+        $institution = $this->institutionForCreation(
+            $user,
+            $request->filled('institution_id') ? $request->integer('institution_id') : null,
+        );
+
+        return Inertia::render('projects/create', [
+            'institution' => [
+                'id' => $institution->getKey(),
+                'name' => $institution->name,
+            ],
+        ]);
+    }
+
+    public function show(Request $request, Project $project): JsonResponse|Response
     {
         Gate::authorize('view', $project);
+        $payload = $this->payload($project);
 
-        return response()->json(['data' => $this->payload($project)]);
+        if ($request->expectsJson()) {
+            return response()->json(['data' => $payload]);
+        }
+
+        return Inertia::render('projects/show', [
+            'project' => $payload,
+            'can_edit' => Gate::allows('update', $project)
+                && in_array($project->status, [ProjectStatus::Draft, ProjectStatus::Open], true),
+            'can_transition' => Gate::allows('transition', $project),
+        ]);
+    }
+
+    public function edit(Project $project): Response
+    {
+        Gate::authorize('update', $project);
+
+        if (! in_array($project->status, [ProjectStatus::Draft, ProjectStatus::Open], true)) {
+            abort(409, 'Project hanya dapat diedit saat berstatus draft atau open.');
+        }
+
+        return Inertia::render('projects/edit', [
+            'project' => $this->payload($project),
+        ]);
     }
 
     public function store(
@@ -172,12 +223,24 @@ final class ProjectController extends Controller
      */
     private function payload(Project $project): array
     {
-        $project->load(['roles.skills.taxonomy']);
+        $project->load([
+            'institution:id,name',
+            'owner:id,name',
+            'roles.skills.taxonomy',
+        ]);
 
         return [
             'id' => $project->getKey(),
             'institution_id' => $project->institution_id,
+            'institution' => [
+                'id' => $project->institution->getKey(),
+                'name' => $project->institution->name,
+            ],
             'owner_id' => $project->owner_id,
+            'owner' => [
+                'id' => $project->owner->getKey(),
+                'name' => $project->owner->name,
+            ],
             'title' => $project->title,
             'description' => $project->description,
             'status' => $project->status->value,
@@ -199,6 +262,31 @@ final class ProjectController extends Controller
                 ])->values()->all(),
             ])->values()->all(),
         ];
+    }
+
+    private function institutionForCreation(User $user, ?int $institutionId): Institution
+    {
+        $membership = InstitutionMembership::query()
+            ->with('institution:id,name,status')
+            ->whereBelongsTo($user)
+            ->where('status', InstitutionMembershipStatus::Verified)
+            ->where('role', InstitutionMembershipRole::Student)
+            ->whereRelation('institution', 'status', InstitutionStatus::Active)
+            ->when(
+                $institutionId !== null,
+                fn (Builder $query): Builder => $query->where('institution_id', $institutionId),
+            )
+            ->latest('requested_at')
+            ->latest('id')
+            ->first();
+
+        if ($membership?->institution === null) {
+            abort(403, 'Tidak ada konteks kampus yang dapat dipakai untuk membuat project.');
+        }
+
+        Gate::forUser($user)->authorize('create', [Project::class, $membership->institution]);
+
+        return $membership->institution;
     }
 
     private function throwTransitionValidation(InvalidProjectTransition $exception): never
