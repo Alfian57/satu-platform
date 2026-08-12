@@ -76,6 +76,7 @@ test('owner and active member receive a tenant-safe workspace projection', funct
         ->assertInertia(fn (Assert $page) => $page
             ->component('projects/workspace')
             ->where('project.id', $project->getKey())
+            ->where('project.institution_id', $project->institution_id)
             ->where('project.title', 'Workspace API project')
             ->where('tasks.data.0.id', $task->getKey())
             ->where('tasks.data.0.title', 'Task yang terlihat team')

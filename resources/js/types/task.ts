@@ -32,6 +32,7 @@ export type WorkspaceTask = {
 
 export type WorkspaceProject = {
     id: number;
+    institution_id: number;
     title: string;
     status: string;
     deadline: string;
