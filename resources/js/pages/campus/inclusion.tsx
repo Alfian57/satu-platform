@@ -464,7 +464,10 @@ export default function CampusInclusion({
                                             <span className="font-medium text-muted-foreground">
                                                 Bukti Faktual Pola:
                                             </span>
-                                            <pre className="overflow-x-auto rounded border border-border bg-background p-2 font-mono text-[11px] text-foreground">
+                                            <pre
+                                                tabIndex={0}
+                                                className="overflow-x-auto rounded border border-border bg-background p-2 font-mono text-[11px] text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                                            >
                                                 {JSON.stringify(
                                                     selectedSignal.evidence_summary,
                                                     null,
