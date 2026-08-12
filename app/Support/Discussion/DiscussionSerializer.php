@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace App\Support\Discussion;
 
+use App\Models\Attachment;
 use App\Models\Message;
+use App\Support\Attachment\AttachmentSerializer;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 final class DiscussionSerializer
 {
+    public function __construct(
+        private readonly AttachmentSerializer $attachmentSerializer,
+    ) {}
+
     /**
      * @param  LengthAwarePaginator<int, Message>  $paginator
      * @return array<string, mixed>
@@ -37,7 +43,10 @@ final class DiscussionSerializer
      */
     public function message(Message $message): array
     {
-        $message->loadMissing('author:id,name');
+        $message->loadMissing([
+            'author:id,name',
+            'attachments.uploadedBy:id,name',
+        ]);
 
         return [
             'id' => $message->getKey(),
@@ -46,6 +55,10 @@ final class DiscussionSerializer
                 'id' => $message->author->getKey(),
                 'name' => $message->author->name,
             ],
+            'attachments' => $message->attachments
+                ->map(fn (Attachment $attachment): array => $this->attachmentSerializer->attachment($attachment))
+                ->values()
+                ->all(),
             'is_edited' => $message->updated_at->greaterThan($message->created_at),
             'created_at' => $message->created_at->toIso8601String(),
             'updated_at' => $message->updated_at->toIso8601String(),

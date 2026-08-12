@@ -68,6 +68,25 @@ final class AttachmentStorage
         );
     }
 
+    public function preview(Attachment $attachment): StreamedResponse
+    {
+        $disk = $this->disk($attachment);
+
+        if (! $this->isManagedPath($attachment) || ! $disk->exists($attachment->path)) {
+            abort(404);
+        }
+
+        return $disk->response(
+            $attachment->path,
+            $attachment->original_name,
+            [
+                'Content-Type' => $attachment->mime_type,
+                'Content-Length' => (string) $attachment->size_bytes,
+                'X-Content-Type-Options' => 'nosniff',
+            ],
+        );
+    }
+
     public function isManagedPath(Attachment $attachment): bool
     {
         $project = $attachment->project;
