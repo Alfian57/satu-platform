@@ -529,14 +529,14 @@ export default function CampusInclusion({
 
                                     <div className="space-y-1">
                                         <label
-                                                htmlFor="human-conclusion"
-                                                className="text-xs font-medium text-muted-foreground"
-                                            >
-                                                Keputusan Manusia (*Conclusion*)
-                                            </label>
-                                            <select
-                                                id="human-conclusion"
-                                                value={data.human_conclusion}
+                                            htmlFor="human-conclusion"
+                                            className="text-xs font-medium text-muted-foreground"
+                                        >
+                                            Keputusan Manusia (*Conclusion*)
+                                        </label>
+                                        <select
+                                            id="human-conclusion"
+                                            value={data.human_conclusion}
                                             onChange={(e) =>
                                                 setData(
                                                     'human_conclusion',
