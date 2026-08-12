@@ -1,15 +1,11 @@
-export const dashboardReferenceStates = [
-    'revision',
-    'first-run',
-    'empty',
-    'loading',
-    'long-content',
-    'partial-permission',
-    'error',
-    'stale',
-] as const;
+export type DashboardActionKey =
+    'onboarding' | 'projects' | 'project' | 'refresh';
 
-export type DashboardReferenceState = (typeof dashboardReferenceStates)[number];
+export type DashboardAction = {
+    key: DashboardActionKey;
+    label: string;
+    projectId?: number;
+};
 
 export type DashboardStatusTone =
     'correction' | 'pending' | 'neutral' | 'verified';
@@ -38,13 +34,14 @@ export type DashboardNextAction = {
     statusTone: DashboardStatusTone;
     title: string;
     facts: DashboardDocketFact[];
-    primaryActionLabel?: string;
-    secondaryActionLabel?: string;
+    primaryAction: DashboardAction | null;
+    secondaryAction: DashboardAction | null;
 };
 
 export type DashboardDeadlineTone = 'correction' | 'neutral';
 
 export type DashboardActiveProject = {
+    id: number;
     index: string;
     name: string;
     nextTask: string;
@@ -58,36 +55,35 @@ export type DashboardProjectsRegion =
           state: 'ready';
           projects: DashboardActiveProject[];
           totalCount: number;
-          remainingActionLabel?: string;
+          remainingActionLabel?: string | null;
       }
     | {
           state: 'loading';
           announcement: string;
       }
     | {
-          state: 'empty';
+          state: 'empty' | 'error' | 'forbidden';
           title: string;
           description: string;
-          actionLabel?: string;
-      }
-    | {
-          state: 'error';
-          title: string;
-          description: string;
-          actionLabel: string;
+          action?: DashboardAction | null;
       };
 
 export type DashboardReviewQueue = {
-    count: number;
-    itemLabel: string;
-    statusLabel: string;
+    state: 'unavailable';
+    title: string;
+    description: string;
 };
 
 export type DashboardRecommendation = {
+    id: number;
+    projectId: number | null;
     title: string;
     role: string;
     reasons: string[];
-    actionLabel: string;
+    scoreVersion: string | null;
+    isStale: boolean;
+    createdAt: string;
+    expiresAt: string | null;
 };
 
 export type DashboardRecommendationRegion =
@@ -100,34 +96,46 @@ export type DashboardRecommendationRegion =
           announcement: string;
       }
     | {
-          state: 'empty';
+          state: 'empty' | 'error' | 'forbidden';
           title: string;
           description: string;
-          actionLabel?: string;
-      }
-    | {
-          state: 'error';
-          title: string;
-          description: string;
-          actionLabel: string;
+          action?: DashboardAction | null;
       };
 
 export type DashboardNotice = {
     tone: 'error' | 'pending' | 'stale';
     title: string;
     description: string;
-    actionLabel?: string;
+    action?: DashboardAction | null;
     timestamp?: string;
     timestampIso?: string;
 };
 
-export type DashboardReferenceScenario = {
-    source: 'synthetic';
-    state: DashboardReferenceState;
-    syntheticLabel: string;
-    notice?: DashboardNotice;
+export type DashboardProfileReadiness = {
+    state: 'unavailable' | 'missing' | 'incomplete' | 'ready';
+    profileId: number | null;
+    skillsCount: number;
+    availabilityCount: number;
+};
+
+export type DashboardInstitution = {
+    id: number;
+    name: string;
+};
+
+export type DashboardPageProps = {
+    auth: {
+        user: {
+            id: number;
+            name: string;
+        } | null;
+    };
+    institution: DashboardInstitution | null;
+    profileReadiness: DashboardProfileReadiness;
     nextAction: DashboardNextAction;
-    projectsRegion: DashboardProjectsRegion;
     reviewQueue: DashboardReviewQueue;
-    recommendationRegion: DashboardRecommendationRegion;
+    dashboardNotice: DashboardNotice | null;
+    refreshedAt: string;
+    activeProjects?: DashboardProjectsRegion;
+    recommendations?: DashboardRecommendationRegion;
 };

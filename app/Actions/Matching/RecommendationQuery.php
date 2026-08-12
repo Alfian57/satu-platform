@@ -61,6 +61,7 @@ final class RecommendationQuery
             })
             ->with([
                 'project:id,institution_id,title,status,deadline',
+                'project.roles:id,project_id,title',
                 'matchRun:id,version_id',
                 'matchRun.version:id,version,activated_at',
             ])

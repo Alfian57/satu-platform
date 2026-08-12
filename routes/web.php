@@ -4,10 +4,12 @@ use App\Http\Controllers\AcademicCreditMappingController;
 use App\Http\Controllers\AcademicIntegrationController;
 use App\Http\Controllers\AffiliationReviewController;
 use App\Http\Controllers\Auth\AuthFlowController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\RecommendationFeedbackController;
 use App\Http\Controllers\RecruiterContactRequestController;
 use App\Http\Controllers\RosterImportController;
 use App\Http\Controllers\SavedCandidatesController;
@@ -71,7 +73,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('candidates/{id}/unsave', [SavedCandidatesController::class, 'destroy'])
             ->name('candidates.unsave');
     });
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)
+        ->name('dashboard');
+
+    Route::prefix('dashboard/recommendations/{recommendation}')
+        ->name('dashboard.recommendations.')
+        ->group(function () {
+            Route::post('hide', [RecommendationFeedbackController::class, 'hide'])
+                ->name('hide');
+            Route::post('not-relevant', [RecommendationFeedbackController::class, 'notRelevant'])
+                ->name('not-relevant');
+            Route::post('profile-fix', [RecommendationFeedbackController::class, 'profileFix'])
+                ->name('profile-fix');
+        });
 
     Route::prefix('projects')->name('projects.')->group(function () {
         Route::get('/', [ProjectController::class, 'index'])

@@ -1,38 +1,102 @@
+import { Link } from '@inertiajs/react';
+import type { InertiaLinkProps } from '@inertiajs/react';
 import {
     ArrowRight,
     Check,
     Clock3,
+    EyeOff,
     Lightbulb,
     RefreshCw,
     SearchX,
+    ShieldAlert,
+    UserRoundCog,
     UsersRound,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type {
+    DashboardAction,
     DashboardRecommendationRegion,
     DashboardReviewQueue,
 } from '@/types';
 
+type ActionHref = NonNullable<InertiaLinkProps['href']>;
+
+export type DashboardRecommendationFeedback =
+    'hide' | 'notRelevant' | 'profileFix';
+
 type Props = {
     reviewQueue: DashboardReviewQueue;
     recommendationRegion: DashboardRecommendationRegion;
-    onDemoAction: (actionLabel: string) => void;
+    getActionHref: (action: DashboardAction) => ActionHref | null;
+    onAction: (action: DashboardAction) => void;
+    onFeedback: (
+        recommendationId: number,
+        feedback: DashboardRecommendationFeedback,
+    ) => void;
+    processingFeedback?: DashboardRecommendationFeedback | null;
 };
+
+function RegionAction({
+    action,
+    getActionHref,
+    onAction,
+}: {
+    action: DashboardAction;
+    getActionHref: (action: DashboardAction) => ActionHref | null;
+    onAction: (action: DashboardAction) => void;
+}) {
+    const href = getActionHref(action);
+
+    if (href !== null) {
+        return (
+            <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="mt-4 w-full border-primary text-primary hover:text-primary"
+            >
+                <Link href={href}>
+                    {action.label}
+                    <ArrowRight aria-hidden="true" />
+                </Link>
+            </Button>
+        );
+    }
+
+    return (
+        <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="mt-4 w-full border-primary text-primary hover:text-primary"
+            onClick={() => onAction(action)}
+        >
+            {action.label}
+            <ArrowRight aria-hidden="true" />
+        </Button>
+    );
+}
 
 function RecommendationState({
     region,
-    onDemoAction,
+    getActionHref,
+    onAction,
 }: {
     region: Extract<
         DashboardRecommendationRegion,
-        { state: 'empty' | 'error' }
+        { state: 'empty' | 'error' | 'forbidden' }
     >;
-    onDemoAction: (actionLabel: string) => void;
+    getActionHref: (action: DashboardAction) => ActionHref | null;
+    onAction: (action: DashboardAction) => void;
 }) {
-    const Icon = region.state === 'error' ? RefreshCw : SearchX;
-    const actionLabel = region.actionLabel;
+    const Icon =
+        region.state === 'error'
+            ? RefreshCw
+            : region.state === 'forbidden'
+              ? ShieldAlert
+              : SearchX;
 
     return (
         <div
@@ -53,17 +117,12 @@ function RecommendationState({
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 {region.description}
             </p>
-            {actionLabel && (
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    className="mt-4 w-full border-primary text-primary hover:text-primary"
-                    onClick={() => onDemoAction(actionLabel)}
-                >
-                    {actionLabel}
-                    <ArrowRight aria-hidden="true" />
-                </Button>
+            {region.action && (
+                <RegionAction
+                    action={region.action}
+                    getActionHref={getActionHref}
+                    onAction={onAction}
+                />
             )}
         </div>
     );
@@ -97,15 +156,34 @@ function RecommendationLoading({ announcement }: { announcement: string }) {
 
 function RecommendationReady({
     region,
-    onDemoAction,
+    getActionHref,
+    onFeedback,
+    processingFeedback,
 }: {
     region: Extract<DashboardRecommendationRegion, { state: 'ready' }>;
-    onDemoAction: (actionLabel: string) => void;
+    getActionHref: (action: DashboardAction) => ActionHref | null;
+    onFeedback: (
+        recommendationId: number,
+        feedback: DashboardRecommendationFeedback,
+    ) => void;
+    processingFeedback?: DashboardRecommendationFeedback | null;
 }) {
     const { recommendation } = region;
+    const projectAction: DashboardAction = {
+        key: 'project',
+        label: 'Lihat detail project',
+        projectId: recommendation.projectId ?? undefined,
+    };
+    const profileAction: DashboardAction = {
+        key: 'onboarding',
+        label: 'Perbarui profil',
+    };
+    const isProcessing =
+        processingFeedback !== null && processingFeedback !== undefined;
+    const isStale = recommendation.isStale;
 
     return (
-        <div className="mt-4 overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm transition-all duration-standard hover:shadow-md">
+        <div className="mt-4 overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm transition-all duration-standard hover:shadow-md motion-reduce:transition-none">
             <div className="flex items-center gap-3.5 border-b border-border/80 bg-muted/20 px-4 py-3.5">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-accent text-primary shadow-2xs">
                     <UsersRound aria-hidden="true" className="size-5" />
@@ -122,6 +200,17 @@ function RecommendationReady({
                     </p>
                 </div>
             </div>
+
+            {isStale && (
+                <p
+                    className="border-b border-pending/30 bg-pending-subtle px-4 py-3 text-sm leading-5 text-pending-subtle-foreground"
+                    data-test="dashboard-recommendation-stale"
+                    role="status"
+                >
+                    Versi pencocokan item ini sudah berubah. Muat ulang sebelum
+                    memberi feedback.
+                </p>
+            )}
 
             <ul className="grid gap-2.5 px-4 py-3">
                 {recommendation.reasons.map((reason) => (
@@ -147,19 +236,63 @@ function RecommendationReady({
             </ul>
 
             <div className="border-t border-border/80 bg-muted/10 p-3">
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    className="group w-full border-primary/40 text-primary transition-all hover:bg-primary hover:text-white"
-                    onClick={() => onDemoAction(recommendation.actionLabel)}
-                >
-                    {recommendation.actionLabel}
-                    <ArrowRight
-                        aria-hidden="true"
-                        className="size-4 transition-transform group-hover:translate-x-1"
-                    />
-                </Button>
+                {recommendation.projectId !== null &&
+                    getActionHref(projectAction) !== null && (
+                        <Button
+                            asChild
+                            size="lg"
+                            className="group w-full transition-all hover:bg-primary hover:text-white"
+                        >
+                            <Link href={getActionHref(projectAction)!}>
+                                {projectAction.label}
+                                <ArrowRight
+                                    aria-hidden="true"
+                                    className="size-4 transition-transform group-hover:translate-x-1"
+                                />
+                            </Link>
+                        </Button>
+                    )}
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-primary"
+                        disabled={isProcessing || isStale}
+                        data-test="dashboard-recommendation-hide"
+                        onClick={() => onFeedback(recommendation.id, 'hide')}
+                    >
+                        <EyeOff aria-hidden="true" />
+                        Sembunyikan
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground"
+                        disabled={isProcessing || isStale}
+                        data-test="dashboard-recommendation-not-relevant"
+                        onClick={() =>
+                            onFeedback(recommendation.id, 'notRelevant')
+                        }
+                    >
+                        Tidak relevan
+                    </Button>
+                    {getActionHref(profileAction) !== null && (
+                        <Button
+                            asChild
+                            type="button"
+                            variant="link"
+                            size="sm"
+                            className="ml-auto text-primary"
+                        >
+                            <Link href={getActionHref(profileAction)!}>
+                                <UserRoundCog aria-hidden="true" />
+                                {profileAction.label}
+                            </Link>
+                        </Button>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -168,7 +301,10 @@ function RecommendationReady({
 export function DashboardContextRail({
     reviewQueue,
     recommendationRegion,
-    onDemoAction,
+    getActionHref,
+    onAction,
+    onFeedback,
+    processingFeedback,
 }: Props) {
     return (
         <div
@@ -186,19 +322,19 @@ export function DashboardContextRail({
                 <h3 id="review-queue-heading" className="text-sm font-semibold">
                     Menunggu tinjauan
                 </h3>
-                <div className="mt-3 flex items-center gap-3.5 rounded-xl border border-pending/30 bg-gradient-to-r from-pending-subtle via-pending-subtle/90 to-pending-subtle/40 px-4 py-4 text-pending-subtle-foreground shadow-sm">
-                    <span className="flex shrink-0 rounded-lg bg-pending/20 p-2 text-pending shadow-2xs">
+                <div className="mt-3 flex items-start gap-3.5 rounded-xl border border-border bg-muted/30 px-4 py-4 text-muted-foreground shadow-sm">
+                    <span className="flex shrink-0 rounded-lg bg-muted p-2 text-primary shadow-2xs">
                         <Clock3
                             aria-hidden="true"
                             className="size-6 stroke-[1.8]"
                         />
                     </span>
                     <p className="min-w-0 text-sm leading-5">
-                        <span className="block text-base font-bold">
-                            {reviewQueue.count} {reviewQueue.itemLabel}
+                        <span className="block text-base font-bold text-foreground">
+                            {reviewQueue.title}
                         </span>
-                        <span className="wrap-anywhere opacity-90">
-                            {reviewQueue.statusLabel}
+                        <span className="mt-1 block wrap-anywhere">
+                            {reviewQueue.description}
                         </span>
                     </p>
                 </div>
@@ -217,7 +353,7 @@ export function DashboardContextRail({
                         id="recommendation-heading"
                         className="text-sm font-semibold"
                     >
-                        Rekomendasi untukmu
+                        Recommendation untukmu
                     </h3>
                 </div>
 
@@ -228,17 +364,21 @@ export function DashboardContextRail({
                 )}
 
                 {(recommendationRegion.state === 'empty' ||
-                    recommendationRegion.state === 'error') && (
+                    recommendationRegion.state === 'error' ||
+                    recommendationRegion.state === 'forbidden') && (
                     <RecommendationState
                         region={recommendationRegion}
-                        onDemoAction={onDemoAction}
+                        getActionHref={getActionHref}
+                        onAction={onAction}
                     />
                 )}
 
                 {recommendationRegion.state === 'ready' && (
                     <RecommendationReady
                         region={recommendationRegion}
-                        onDemoAction={onDemoAction}
+                        getActionHref={getActionHref}
+                        onFeedback={onFeedback}
+                        processingFeedback={processingFeedback}
                     />
                 )}
             </section>
