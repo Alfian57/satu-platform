@@ -36,6 +36,11 @@ export default function NotificationIndex({
                 <p className="mb-4 text-sm text-muted-foreground">
                     {unreadCount} belum dibaca
                 </p>
+                <div aria-live="polite" className="sr-only">
+                    {notifications.data.length > 0
+                        ? `Total ${notifications.data.length} notifikasi`
+                        : 'Belum ada notifikasi'}
+                </div>
                 {notifications.data.length === 0 ? (
                     <p className="text-muted-foreground">
                         Belum ada notifikasi.

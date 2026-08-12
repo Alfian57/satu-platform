@@ -9,5 +9,15 @@ type Props = {
 export function AppShell({ children }: Props) {
     const isOpen = usePage().props.sidebarOpen;
 
-    return <SidebarProvider defaultOpen={isOpen}>{children}</SidebarProvider>;
+    return (
+        <SidebarProvider defaultOpen={isOpen}>
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-background focus:p-4 focus:ring-2 focus:ring-ring"
+            >
+                Lewati ke konten utama
+            </a>
+            {children}
+        </SidebarProvider>
+    );
 }
