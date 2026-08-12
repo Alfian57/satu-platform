@@ -273,7 +273,11 @@ function RecoveryResetStep() {
 
 function RecoveryPhoneStep({ status }: { status: RecoveryState['status'] }) {
     return (
-        <Form action={start.url()} method="post" className="flex flex-col gap-6">
+        <Form
+            action={start.url()}
+            method="post"
+            className="flex flex-col gap-6"
+        >
             {({ processing, errors }) => (
                 <>
                     <ErrorSummary errors={errors} />
