@@ -27,6 +27,7 @@ use App\Models\ProjectRoleSkill;
 use App\Models\User;
 use App\Support\Project\ProjectDiscoveryFilters;
 use App\Support\Project\ProjectDiscoverySerializer;
+use App\Support\Team\TeamFormationSerializer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,6 +38,10 @@ use Inertia\Response;
 
 final class ProjectController extends Controller
 {
+    public function __construct(
+        private readonly TeamFormationSerializer $teamFormationSerializer,
+    ) {}
+
     public function index(
         ListProjectsRequest $request,
         ProjectDiscoveryQuery $discoveryQuery,
@@ -96,15 +101,23 @@ final class ProjectController extends Controller
 
     public function show(Request $request, Project $project): JsonResponse|Response
     {
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            abort(401);
+        }
+
         Gate::authorize('view', $project);
         $payload = $this->payload($project);
+        $team = $this->teamFormationSerializer->serialize($project, $user);
 
         if ($request->expectsJson()) {
-            return response()->json(['data' => $payload]);
+            return response()->json(['data' => [...$payload, 'team' => $team]]);
         }
 
         return Inertia::render('projects/show', [
             'project' => $payload,
+            'team' => $team,
             'can_edit' => Gate::allows('update', $project)
                 && in_array($project->status, [ProjectStatus::Draft, ProjectStatus::Open], true),
             'can_transition' => Gate::allows('transition', $project),

@@ -9,6 +9,9 @@ use App\Models\Project;
 use App\Models\ProjectRole;
 use App\Models\ProjectRoleSkill;
 use App\Models\SkillTaxonomy;
+use App\Models\TeamInvitation;
+use App\Models\TeamJoinRequest;
+use App\Models\TeamMembership;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -162,4 +165,118 @@ test('json project detail remains available for command clients', function () {
         ->assertJsonPath('data.id', $project->getKey())
         ->assertJsonPath('data.institution.name', $institution->name)
         ->assertJsonPath('data.owner.id', $owner->getKey());
+});
+
+test('owner receives a scoped request queue and capacity projection', function () {
+    [$owner, $institution] = detailPageOwnerContext();
+    $requester = User::factory()->create(['name' => 'Mahasiswa Peminta']);
+
+    InstitutionMembership::factory()
+        ->student()
+        ->verifiedByApprovedDomain()
+        ->for($requester)
+        ->for($institution)
+        ->create();
+
+    $project = Project::factory()
+        ->open()
+        ->for($institution)
+        ->for($owner, 'owner')
+        ->create(['capacity' => 2]);
+    $role = ProjectRole::factory()->for($project)->create([
+        'title' => 'Backend engineer',
+    ]);
+    TeamJoinRequest::factory()
+        ->for($project)
+        ->for($requester, 'requester')
+        ->forRole($role)
+        ->create(['message' => 'Saya siap mengerjakan API.']);
+
+    $this->actingAs($owner)
+        ->get(route('projects.show', $project))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('team.capacity.total', 2)
+            ->where('team.capacity.occupied', 0)
+            ->where('team.capacity.remaining', 2)
+            ->where('team.permissions.can_manage_requests', true)
+            ->where('team.join_requests.0.requester.name', 'Mahasiswa Peminta')
+            ->where('team.join_requests.0.role.title', 'Backend engineer')
+            ->where('team.join_requests.0.message', 'Saya siap mengerjakan API.')
+            ->missing('team.join_requests.0.requester.phone'));
+});
+
+test('student receives only their project invitation and join state', function () {
+    [$owner, $institution] = detailPageOwnerContext();
+    $student = User::factory()->create(['name' => 'Mahasiswa Undangan']);
+
+    InstitutionMembership::factory()
+        ->student()
+        ->verifiedByApprovedDomain()
+        ->for($student)
+        ->for($institution)
+        ->create();
+
+    $project = Project::factory()
+        ->open()
+        ->for($institution)
+        ->for($owner, 'owner')
+        ->create();
+    $role = ProjectRole::factory()->for($project)->create([
+        'title' => 'Product designer',
+    ]);
+    TeamInvitation::factory()
+        ->for($project)
+        ->for($owner, 'inviter')
+        ->for($student, 'invitee')
+        ->forRole($role)
+        ->create();
+
+    $this->actingAs($student)
+        ->get(route('projects.show', $project))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('team.capacity.state', 'open')
+            ->where('team.permissions.can_request_join', true)
+            ->where('team.pending_invitations.0.person.name', $owner->name)
+            ->where('team.pending_invitations.0.role.title', 'Product designer')
+            ->where('team.pending_invitations.0.status', 'pending')
+            ->has('team.join_requests', 0));
+});
+
+test('student receives a read-only capacity state when the team is full', function () {
+    [$owner, $institution] = detailPageOwnerContext();
+    $member = User::factory()->create(['name' => 'Anggota Aktif']);
+    $student = User::factory()->create(['name' => 'Mahasiswa Menunggu Slot']);
+
+    foreach ([$member, $student] as $user) {
+        InstitutionMembership::factory()
+            ->student()
+            ->verifiedByApprovedDomain()
+            ->for($user)
+            ->for($institution)
+            ->create();
+    }
+
+    $project = Project::factory()
+        ->full()
+        ->for($institution)
+        ->for($owner, 'owner')
+        ->create(['capacity' => 1]);
+    TeamMembership::factory()
+        ->active()
+        ->for($project)
+        ->for($member)
+        ->create();
+
+    $this->actingAs($student)
+        ->get(route('projects.show', $project))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('team.capacity.state', 'full')
+            ->where('team.capacity.occupied', 1)
+            ->where('team.capacity.remaining', 0)
+            ->where('team.capacity.is_full', true)
+            ->where('team.permissions.can_request_join', false)
+            ->where('team.pending_join_request', null));
 });

@@ -16,6 +16,7 @@ import type { LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import ProjectController from '@/actions/App/Http/Controllers/ProjectController';
 import { AppPage } from '@/components/app-page';
+import { TeamFormationPanel } from '@/components/projects/team-formation-panel';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -37,10 +38,12 @@ import type {
     ProjectStatus,
     ProjectTransitionData,
     ProjectVisibility,
+    TeamFormationState,
 } from '@/types/project';
 
 type ProjectShowProps = {
     project: ProjectDetail;
+    team: TeamFormationState;
     can_edit: boolean;
     can_transition: boolean;
 };
@@ -338,6 +341,7 @@ function ProjectActionRail({
 
 export default function ProjectShow({
     project: initialProject,
+    team,
     can_edit: canEdit,
     can_transition: canTransition,
 }: ProjectShowProps) {
@@ -374,12 +378,18 @@ export default function ProjectShow({
     );
 
     useEffect(() => {
-        const removeStartListener = router.on('start', () =>
-            setIsRefreshing(true),
-        );
-        const removeFinishListener = router.on('finish', () =>
-            setIsRefreshing(false),
-        );
+        const isTeamOnlyReload = (visit: { only: string[] }): boolean =>
+            visit.only.length === 1 && visit.only[0] === 'team';
+        const removeStartListener = router.on('start', (event) => {
+            if (!isTeamOnlyReload(event.detail.visit)) {
+                setIsRefreshing(true);
+            }
+        });
+        const removeFinishListener = router.on('finish', (event) => {
+            if (!isTeamOnlyReload(event.detail.visit)) {
+                setIsRefreshing(false);
+            }
+        });
 
         return () => {
             removeStartListener();
@@ -732,6 +742,12 @@ export default function ProjectShow({
                                 processing={transitionForm.processing}
                                 onOpen={() => runTransition('open')}
                                 onDestructiveAction={setPendingAction}
+                            />
+
+                            <TeamFormationPanel
+                                projectId={project.id}
+                                roles={project.roles}
+                                team={team}
                             />
                         </main>
                     )}
