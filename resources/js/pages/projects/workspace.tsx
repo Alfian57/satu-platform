@@ -537,12 +537,16 @@ function TaskLoadingState() {
     return (
         <div
             data-test="workspace-refresh-skeleton"
+            role="region"
+            aria-busy="true"
+            aria-label="Daftar task sedang dimuat"
             className="grid gap-3 border-y border-border py-4"
-            aria-hidden="true"
         >
-            <Skeleton className="h-4 w-2/5" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
+            <div aria-hidden="true" className="grid gap-3">
+                <Skeleton className="h-4 w-2/5" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+            </div>
         </div>
     );
 }
@@ -1300,6 +1304,7 @@ export default function ProjectWorkspace({
                     <div
                         role="status"
                         aria-live="polite"
+                        data-test="workspace-refresh-status"
                         className="min-h-5 text-sm text-muted-foreground"
                     >
                         {isRefreshing && (

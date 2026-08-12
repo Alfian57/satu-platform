@@ -86,6 +86,125 @@ test('team can operate the task workspace on desktop and mobile', function () {
         ->assertNoAccessibilityIssues();
 });
 
+test('workspace exposes a stable refresh skeleton and polite loading status', function () {
+    ['owner' => $owner, 'project' => $project] = browserWorkspaceContext();
+    Task::factory()
+        ->for($project)
+        ->for($owner, 'createdBy')
+        ->create([
+            'title' => 'Task untuk verifikasi loading workspace',
+        ]);
+
+    $this->actingAs($owner);
+
+    $page = visit(route('projects.workspace', $project))
+        ->resize(1366, 900)
+        ->assertSee('Task untuk verifikasi loading workspace');
+
+    $page->script(<<<JS
+        (() => {
+            const target = '/projects/{$project->getKey()}/workspace';
+            let delayed = false;
+            const originalFetch = window.fetch.bind(window);
+            const originalOpen = XMLHttpRequest.prototype.open;
+            const originalSend = XMLHttpRequest.prototype.send;
+
+            window.fetch = (input, init) => {
+                const url = typeof input === 'string' ? input : input?.url ?? '';
+
+                if (!delayed && url.includes(target)) {
+                    delayed = true;
+
+                    return new Promise((resolve) => {
+                        setTimeout(() => resolve(originalFetch(input, init)), 2000);
+                    });
+                }
+
+                return originalFetch(input, init);
+            };
+
+            XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+                this.__pestWorkspaceRequest = String(url).includes(target);
+
+                return originalOpen.call(this, method, url, ...rest);
+            };
+
+            XMLHttpRequest.prototype.send = function (...args) {
+                if (!delayed && this.__pestWorkspaceRequest) {
+                    delayed = true;
+
+                    setTimeout(() => originalSend.apply(this, args), 2000);
+
+                    return;
+                }
+
+                return originalSend.apply(this, args);
+            };
+        })();
+        JS);
+
+    $page->script("document.querySelector('[data-test=workspace-refresh]').click()");
+    $page
+        ->assertScript(
+            "document.querySelector('[data-test=workspace-refresh-skeleton]')?.getAttribute('aria-busy') === 'true'",
+            true,
+        )
+        ->assertScript(
+            "document.querySelector('[data-test=workspace-refresh-status]')?.textContent.includes('Memuat snapshot workspace terbaru')",
+            true,
+        )
+        ->screenshot(true, 'p41-workspace-refresh-loading-desktop-1366x900')
+        ->waitForText('Snapshot workspace terbaru sudah dimuat dari database.')
+        ->assertScript(
+            "document.querySelector('[data-test=workspace-refresh-skeleton]') === null",
+            true,
+        )
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
+test('two browser clients converge on the database workspace snapshot', function () {
+    ['owner' => $owner, 'project' => $project] = browserWorkspaceContext();
+    Task::factory()
+        ->for($project)
+        ->for($owner, 'createdBy')
+        ->create([
+            'title' => 'Task yang dilihat dua client',
+        ]);
+
+    $this->actingAs($owner);
+
+    [$primaryClient, $secondaryClient] = visit([
+        route('projects.workspace', $project),
+        route('projects.workspace', $project),
+    ]);
+
+    $primaryClient
+        ->resize(1366, 900)
+        ->assertSee('Task yang dilihat dua client')
+        ->click('@task-status-in_progress')
+        ->waitForText('Status task menjadi Sedang dikerjakan')
+        ->assertSee('Sedang dikerjakan');
+
+    $secondaryClient
+        ->resize(1366, 900)
+        ->assertSee('Task yang dilihat dua client')
+        ->click('@workspace-refresh')
+        ->waitForText('Snapshot workspace terbaru sudah dimuat dari database.')
+        ->assertSee('Sedang dikerjakan')
+        ->screenshot(true, 'p41-workspace-two-client-desktop-1366x900')
+        ->resize(390, 844)
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(true, 'p41-workspace-two-client-mobile-390x844')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
 test('empty workspace offers a keyboard reachable next action on mobile', function () {
     ['owner' => $owner, 'project' => $project] = browserWorkspaceContext();
 

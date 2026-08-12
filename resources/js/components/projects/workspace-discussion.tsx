@@ -761,7 +761,12 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                         {initialPage.meta.total} catatan tersimpan
                     </p>
                     {olderMessagesForm.processing && (
-                        <span className="text-xs text-muted-foreground">
+                        <span
+                            className="text-xs text-muted-foreground"
+                            role="status"
+                            aria-live="polite"
+                            data-test="discussion-loading-status"
+                        >
                             Memuat catatan sebelumnya...
                         </span>
                     )}
