@@ -1,6 +1,6 @@
 <?php
 
-function dashboardReferenceProjectFile(string $path): string
+function dashboardProjectFile(string $path): string
 {
     $contents = file_get_contents(dirname(__DIR__, 2).DIRECTORY_SEPARATOR.$path);
 
@@ -11,71 +11,37 @@ function dashboardReferenceProjectFile(string $path): string
     return $contents;
 }
 
-test('defines the complete client-only dashboard state matrix with a safe fallback', function () {
-    $types = dashboardReferenceProjectFile(
-        'resources/js/types/dashboard.ts',
-    );
-    $fixture = dashboardReferenceProjectFile(
-        'resources/js/lib/dashboard-reference-data.ts',
-    );
-    $page = dashboardReferenceProjectFile('resources/js/pages/dashboard.tsx');
+test('dashboard reads server application props instead of a client fixture', function () {
+    $page = dashboardProjectFile('resources/js/pages/dashboard.tsx');
+    $types = dashboardProjectFile('resources/js/types/dashboard.ts');
 
-    foreach ([
-        'revision',
-        'first-run',
-        'empty',
-        'loading',
-        'long-content',
-        'partial-permission',
-        'error',
-        'stale',
-    ] as $state) {
-        expect($types)->toContain("'{$state}'");
-        expect($fixture)->toContain("state: '{$state}'");
-    }
-
-    expect($fixture)
-        ->toContain('export function resolveDashboardReferenceState(')
-        ->toContain("return 'revision';")
-        ->toContain('new URLSearchParams(query)')
-        ->toContain('satisfies DashboardReferenceScenario');
+    expect(file_exists(dirname(__DIR__, 2).'/resources/js/lib/dashboard-reference-data.ts'))
+        ->toBeFalse();
 
     expect($page)
-        ->toContain('resolveDashboardReferenceState(page.url)')
-        ->toContain('dashboardReferenceScenarios[referenceState]')
-        ->toContain('data-dashboard-state={referenceState}')
-        ->not->toContain('dashboard:');
+        ->toContain('usePage<DashboardPageProps>()')
+        ->toContain('data-dashboard-source="application"')
+        ->toContain('<Deferred')
+        ->not->toContain('dashboardReference')
+        ->not->toContain('Data demo sintetis')
+        ->not->toContain('window.location');
+
+    expect($types)
+        ->toContain('DashboardPageProps')
+        ->toContain('DashboardRecommendation')
+        ->toContain('DashboardAction');
 });
 
-test('marks every reference dashboard state as synthetic', function () {
-    $fixture = dashboardReferenceProjectFile(
-        'resources/js/lib/dashboard-reference-data.ts',
-    );
-    $page = dashboardReferenceProjectFile('resources/js/pages/dashboard.tsx');
-
-    expect(substr_count($fixture, "source: 'synthetic'"))
-        ->toBe(8);
-
-    expect($fixture)
-        ->toContain('Data demo sintetis. Ini bukan aktivitas akun Anda.')
-        ->toContain("label: 'Direview oleh'")
-        ->toContain("reference: 'REV-024'")
-        ->toContain("title: 'Lengkapi bukti kontribusi'")
-        ->toContain("value: 'Nadia Putri'")
-        ->toContain("title: 'Desain sistem informasi relawan'");
-
-    expect($page)
-        ->toContain('data-dashboard-source={scenario.source}')
-        ->toContain('{scenario.syntheticLabel}');
-});
-
-test('keeps the docket first composition across responsive states', function () {
-    $page = dashboardReferenceProjectFile('resources/js/pages/dashboard.tsx');
-    $docket = dashboardReferenceProjectFile(
+test('dashboard keeps the approved docket, ledger, and context rail composition', function () {
+    $page = dashboardProjectFile('resources/js/pages/dashboard.tsx');
+    $docket = dashboardProjectFile(
         'resources/js/components/dashboard-next-action.tsx',
     );
-    $ledger = dashboardReferenceProjectFile(
+    $ledger = dashboardProjectFile(
         'resources/js/components/dashboard-project-ledger.tsx',
+    );
+    $rail = dashboardProjectFile(
+        'resources/js/components/dashboard-context-rail.tsx',
     );
 
     expect($page)
@@ -90,8 +56,7 @@ test('keeps the docket first composition across responsive states', function () 
         ->toContain('<dl>')
         ->toContain('aria-labelledby="dashboard-next-action"')
         ->toContain('{action.statusLabel}')
-        ->toContain('<time dateTime={fact.dateTime}>')
-        ->toContain('sm:grid-cols-[7.5rem_minmax(0,1fr)]');
+        ->toContain('<time dateTime={fact.dateTime}>');
 
     expect($ledger)
         ->toContain('<ol')
@@ -100,140 +65,61 @@ test('keeps the docket first composition across responsive states', function () 
         ->toContain('<time dateTime={project.deadlineIso}>')
         ->toContain('md:hidden')
         ->not->toContain('truncate');
-});
-
-test('uses the canonical Project label and wraps long content', function () {
-    $files = [
-        dashboardReferenceProjectFile(
-            'resources/js/lib/dashboard-reference-data.ts',
-        ),
-        dashboardReferenceProjectFile(
-            'resources/js/components/dashboard-next-action.tsx',
-        ),
-        dashboardReferenceProjectFile(
-            'resources/js/components/dashboard-project-ledger.tsx',
-        ),
-        dashboardReferenceProjectFile(
-            'resources/js/components/dashboard-context-rail.tsx',
-        ),
-    ];
-
-    foreach ($files as $file) {
-        expect($file)
-            ->not->toContain('Proyek')
-            ->not->toContain('truncate');
-    }
-
-    expect($files[0])
-        ->toContain("label: 'Project'")
-        ->toContain('totalCount: 12')
-        ->toContain('remainingActionLabel:');
-
-    expect($files[2])
-        ->toContain('Project aktif')
-        ->toContain('wrap-anywhere');
-});
-
-test('keeps loading and interaction motion safe for reduced motion users', function () {
-    $skeleton = dashboardReferenceProjectFile(
-        'resources/js/components/ui/skeleton.tsx',
-    );
-    $docket = dashboardReferenceProjectFile(
-        'resources/js/components/dashboard-next-action.tsx',
-    );
-    $ledger = dashboardReferenceProjectFile(
-        'resources/js/components/dashboard-project-ledger.tsx',
-    );
-
-    expect($skeleton)->toContain('motion-reduce:animate-none');
-    expect($ledger)->toContain('motion-reduce:transition-none');
-    expect($docket)->not->toContain('animate-');
-});
-
-test('keeps synthetic actions honest and free of hardcoded destinations', function () {
-    $files = [
-        dashboardReferenceProjectFile('resources/js/pages/dashboard.tsx'),
-        dashboardReferenceProjectFile(
-            'resources/js/components/dashboard-next-action.tsx',
-        ),
-        dashboardReferenceProjectFile(
-            'resources/js/components/dashboard-project-ledger.tsx',
-        ),
-        dashboardReferenceProjectFile(
-            'resources/js/components/dashboard-context-rail.tsx',
-        ),
-        dashboardReferenceProjectFile(
-            'resources/js/components/dashboard-state-notice.tsx',
-        ),
-    ];
-
-    expect($files[0])
-        ->toContain("toast.info('Data demo sintetis'")
-        ->toContain('belum terhubung ke fitur aplikasi pada fase ini.');
-
-    foreach ($files as $file) {
-        expect($file)
-            ->not->toMatch('/href=[\"\']\//')
-            ->not->toContain('window.location');
-    }
-});
-
-test('explains edge states without sensitive inference', function () {
-    $fixture = dashboardReferenceProjectFile(
-        'resources/js/lib/dashboard-reference-data.ts',
-    );
-    $rail = dashboardReferenceProjectFile(
-        'resources/js/components/dashboard-context-rail.tsx',
-    );
-
-    expect($fixture)
-        ->toContain('Riset pengguna dibutuhkan')
-        ->toContain('Afiliasi kampus sedang ditinjau')
-        ->toContain('Data profilmu tetap aman')
-        ->toContain('Ada perubahan terbaru')
-        ->not->toMatch('/\bterisolasi\b/i')
-        ->not->toMatch('/\brentan\b/i')
-        ->not->toMatch('/\bmental\b/i');
 
     expect($rail)
         ->toContain('aria-labelledby="review-queue-heading"')
         ->toContain('aria-labelledby="recommendation-heading"')
         ->toContain('recommendation.reasons.map')
-        ->toContain('aria-live="polite"')
-        ->toContain('{reviewQueue.statusLabel}');
+        ->toContain('dashboard-recommendation-hide')
+        ->toContain('dashboard-recommendation-not-relevant');
 });
 
-test('keeps dashboard metadata and evidence affordances semantically honest', function () {
-    $ledger = dashboardReferenceProjectFile(
-        'resources/js/components/dashboard-project-ledger.tsx',
+test('dashboard loading and interaction states honor accessibility contracts', function () {
+    $skeleton = dashboardProjectFile(
+        'resources/js/components/ui/skeleton.tsx',
     );
-    $rail = dashboardReferenceProjectFile(
-        'resources/js/components/dashboard-context-rail.tsx',
-    );
-    $notice = dashboardReferenceProjectFile(
-        'resources/js/components/dashboard-state-notice.tsx',
-    );
-    $docket = dashboardReferenceProjectFile(
+    $docket = dashboardProjectFile(
         'resources/js/components/dashboard-next-action.tsx',
     );
+    $ledger = dashboardProjectFile(
+        'resources/js/components/dashboard-project-ledger.tsx',
+    );
+    $rail = dashboardProjectFile(
+        'resources/js/components/dashboard-context-rail.tsx',
+    );
 
+    expect($skeleton)->toContain('motion-reduce:animate-none');
     expect($ledger)
-        ->toContain("region.state === 'empty'")
-        ->toContain('totalCount !== undefined')
-        ->toContain('data-test="dashboard-project-count"')
-        ->toContain('sm:grid-cols-[4.75rem_minmax(0,1fr)]')
-        ->not->toContain('text-[0.6875rem]');
-
+        ->toContain('aria-busy="true"')
+        ->toContain('role="status"')
+        ->toContain('motion-reduce');
     expect($rail)
-        ->toContain('data-test="dashboard-recommendation-marker"')
-        ->toContain('rounded-full')
-        ->toContain('bg-accent')
-        ->toContain('text-primary')
-        ->not->toContain('aria-checked');
+        ->toContain('aria-busy="true"')
+        ->toContain('role="status"')
+        ->toContain('motion-reduce');
+    expect($docket)->not->toContain('animate-');
+});
 
-    expect($notice)
-        ->toContain("notice.tone === 'error' ? undefined : 'polite'")
-        ->not->toContain('text-[0.6875rem]');
+test('dashboard copy and recommendation actions keep the privacy boundary', function () {
+    $files = [
+        dashboardProjectFile('resources/js/pages/dashboard.tsx'),
+        dashboardProjectFile(
+            'resources/js/components/dashboard-context-rail.tsx',
+        ),
+        dashboardProjectFile(
+            'resources/js/components/dashboard-next-action.tsx',
+        ),
+    ];
 
-    expect($docket)->not->toContain('text-[0.6875rem]');
+    foreach ($files as $file) {
+        expect($file)
+            ->not->toContain('connectivity_opportunity')
+            ->not->toContain('inclusion')
+            ->not->toContain("\u{2014}");
+    }
+
+    expect($files[1])
+        ->toContain('Perbarui profil')
+        ->toContain('Sembunyikan')
+        ->toContain('Tidak relevan');
 });

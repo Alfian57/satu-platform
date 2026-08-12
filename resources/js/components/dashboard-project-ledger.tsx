@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+import type { InertiaLinkProps } from '@inertiajs/react';
 import {
     ArrowRight,
     CalendarDays,
@@ -8,11 +10,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { DashboardActiveProject, DashboardProjectsRegion } from '@/types';
+import { show as projectShow } from '@/routes/projects';
+import type {
+    DashboardAction,
+    DashboardActiveProject,
+    DashboardProjectsRegion,
+} from '@/types';
+
+type ActionHref = NonNullable<InertiaLinkProps['href']>;
 
 type Props = {
     region: DashboardProjectsRegion;
-    onDemoAction: (actionLabel: string) => void;
+    getActionHref: (action: DashboardAction) => ActionHref | null;
+    onAction: (action: DashboardAction) => void;
 };
 
 function MobileProjectFacts({ project }: { project: DashboardActiveProject }) {
@@ -49,10 +59,7 @@ function MobileProjectFacts({ project }: { project: DashboardActiveProject }) {
                             : 'text-foreground',
                     )}
                 >
-                    <CalendarDays
-                        aria-hidden="true"
-                        className="size-4 shrink-0"
-                    />
+                    <CalendarDays aria-hidden="true" className="size-4" />
                     <time dateTime={project.deadlineIso}>
                         {project.deadline}
                     </time>
@@ -62,52 +69,35 @@ function MobileProjectFacts({ project }: { project: DashboardActiveProject }) {
     );
 }
 
-function ProjectRow({
-    project,
-    onDemoAction,
-}: {
-    project: DashboardActiveProject;
-    onDemoAction: (actionLabel: string) => void;
-}) {
+function ProjectRow({ project }: { project: DashboardActiveProject }) {
     return (
-        <li
-            data-test="dashboard-project-row"
-            className="border-b border-border/80 last:border-b-0"
-        >
-            <button
-                type="button"
-                className="group grid min-h-11 w-full grid-cols-[2.75rem_minmax(0,1fr)] items-stretch text-left transition-colors duration-fast ease-ledger hover:bg-accent/50 motion-reduce:transition-none md:grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem]"
-                onClick={() => onDemoAction(`Buka project ${project.name}`)}
+        <li data-test="dashboard-project-row">
+            <Link
+                href={projectShow(project.id)}
+                className="group grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)] items-stretch px-3 py-0 transition-colors hover:bg-accent/40 motion-reduce:transition-none md:grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem] md:items-center md:py-3"
+                aria-label={`Buka project ${project.name}`}
             >
-                <span className="self-center px-3 py-4 text-right font-label text-label font-bold text-muted-foreground transition-colors group-hover:text-primary md:px-4">
+                <span className="flex items-center justify-center font-label text-label font-semibold text-muted-foreground md:justify-start">
                     {project.index}
                 </span>
-
-                <MobileProjectFacts project={project} />
-
-                <span className="hidden min-w-0 items-center border-l border-border/80 px-4 py-3 font-semibold wrap-anywhere md:flex">
+                <span className="hidden min-w-0 border-l border-border px-4 py-1 font-semibold wrap-anywhere md:block">
                     {project.name}
                 </span>
-                <span className="hidden min-w-0 items-center border-l border-border/80 px-4 py-3 text-sm leading-5 wrap-anywhere text-muted-foreground md:flex">
+                <span className="hidden min-w-0 border-l border-border px-4 py-1 text-sm leading-5 wrap-anywhere md:block">
                     {project.nextTask}
                 </span>
-                <span className="hidden min-w-0 items-center border-l border-border/80 px-4 py-3 text-sm font-semibold md:flex">
-                    <span
-                        className={cn(
-                            'inline-flex items-center gap-1.5 text-xs font-semibold',
-                            project.deadlineTone === 'correction'
-                                ? 'rounded border border-correction/30 bg-correction-subtle px-2 py-0.5 text-correction-subtle-foreground'
-                                : 'text-foreground',
-                        )}
-                    >
-                        <CalendarDays
-                            aria-hidden="true"
-                            className="size-3.5 shrink-0"
-                        />
-                        <time dateTime={project.deadlineIso}>
-                            {project.deadline}
-                        </time>
-                    </span>
+                <span
+                    className={cn(
+                        'hidden items-center gap-2 border-l border-border px-4 py-1 text-sm font-semibold md:flex',
+                        project.deadlineTone === 'correction'
+                            ? 'text-correction'
+                            : 'text-foreground',
+                    )}
+                >
+                    <CalendarDays aria-hidden="true" className="size-4" />
+                    <time dateTime={project.deadlineIso}>
+                        {project.deadline}
+                    </time>
                 </span>
                 <span className="hidden items-center justify-center md:flex">
                     <ChevronRight
@@ -115,20 +105,66 @@ function ProjectRow({
                         className="size-4 text-muted-foreground/70 transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
                     />
                 </span>
-            </button>
+                <MobileProjectFacts project={project} />
+            </Link>
         </li>
+    );
+}
+
+function RegionAction({
+    action,
+    getActionHref,
+    onAction,
+}: {
+    action: DashboardAction;
+    getActionHref: (action: DashboardAction) => ActionHref | null;
+    onAction: (action: DashboardAction) => void;
+}) {
+    const href = getActionHref(action);
+
+    if (href !== null) {
+        return (
+            <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="w-full shrink-0 border-primary/40 text-primary transition-all hover:bg-primary hover:text-white sm:w-auto"
+            >
+                <Link href={href}>
+                    {action.label}
+                    <ArrowRight aria-hidden="true" />
+                </Link>
+            </Button>
+        );
+    }
+
+    return (
+        <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="w-full shrink-0 border-primary/40 text-primary transition-all hover:bg-primary hover:text-white sm:w-auto"
+            onClick={() => onAction(action)}
+        >
+            {action.label}
+            <ArrowRight aria-hidden="true" />
+        </Button>
     );
 }
 
 function ProjectRegionState({
     region,
-    onDemoAction,
+    getActionHref,
+    onAction,
 }: {
-    region: Extract<DashboardProjectsRegion, { state: 'empty' | 'error' }>;
-    onDemoAction: (actionLabel: string) => void;
+    region: Extract<
+        DashboardProjectsRegion,
+        { state: 'empty' | 'error' | 'forbidden' }
+    >;
+    getActionHref: (action: DashboardAction) => ActionHref | null;
+    onAction: (action: DashboardAction) => void;
 }) {
     const Icon = region.state === 'error' ? RefreshCw : FolderOpen;
-    const actionLabel = region.actionLabel;
 
     return (
         <div
@@ -155,17 +191,12 @@ function ProjectRegionState({
                     </p>
                 </div>
             </div>
-            {actionLabel && (
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    className="w-full shrink-0 border-primary/40 text-primary transition-all hover:bg-primary hover:text-white sm:w-auto"
-                    onClick={() => onDemoAction(actionLabel)}
-                >
-                    {actionLabel}
-                    <ArrowRight aria-hidden="true" />
-                </Button>
+            {region.action && (
+                <RegionAction
+                    action={region.action}
+                    getActionHref={getActionHref}
+                    onAction={onAction}
+                />
             )}
         </div>
     );
@@ -198,15 +229,17 @@ function ProjectLoading({ announcement }: { announcement: string }) {
     );
 }
 
-export function DashboardProjectLedger({ region, onDemoAction }: Props) {
+export function DashboardProjectLedger({
+    region,
+    getActionHref,
+    onAction,
+}: Props) {
     const totalCount =
         region.state === 'ready'
             ? region.totalCount
             : region.state === 'empty'
               ? 0
               : undefined;
-    const remainingActionLabel =
-        region.state === 'ready' ? region.remainingActionLabel : undefined;
 
     return (
         <section
@@ -235,10 +268,13 @@ export function DashboardProjectLedger({ region, onDemoAction }: Props) {
                 <ProjectLoading announcement={region.announcement} />
             )}
 
-            {(region.state === 'empty' || region.state === 'error') && (
+            {(region.state === 'empty' ||
+                region.state === 'error' ||
+                region.state === 'forbidden') && (
                 <ProjectRegionState
                     region={region}
-                    onDemoAction={onDemoAction}
+                    getActionHref={getActionHref}
+                    onAction={onAction}
                 />
             )}
 
@@ -253,7 +289,7 @@ export function DashboardProjectLedger({ region, onDemoAction }: Props) {
                             Project
                         </span>
                         <span className="border-l border-border/80 px-4 py-2.5">
-                            Tugas berikutnya
+                            Berikutnya
                         </span>
                         <span className="border-l border-border/80 px-4 py-2.5">
                             Batas waktu
@@ -263,31 +299,20 @@ export function DashboardProjectLedger({ region, onDemoAction }: Props) {
 
                     <ol className="divide-y divide-border/80">
                         {region.projects.map((project) => (
-                            <ProjectRow
-                                key={project.index}
-                                project={project}
-                                onDemoAction={onDemoAction}
-                            />
+                            <ProjectRow key={project.id} project={project} />
                         ))}
                     </ol>
 
-                    {remainingActionLabel && (
+                    {region.remainingActionLabel && (
                         <div className="border-t border-border/80 bg-muted/20 px-2 py-2">
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="lg"
-                                className="group w-full justify-between text-primary transition-colors hover:bg-accent/80 hover:text-primary"
-                                onClick={() =>
-                                    onDemoAction(remainingActionLabel)
-                                }
-                            >
-                                {remainingActionLabel}
-                                <ArrowRight
-                                    aria-hidden="true"
-                                    className="size-4 transition-transform group-hover:translate-x-1"
-                                />
-                            </Button>
+                            <RegionAction
+                                action={{
+                                    key: 'projects',
+                                    label: region.remainingActionLabel,
+                                }}
+                                getActionHref={getActionHref}
+                                onAction={onAction}
+                            />
                         </div>
                     )}
                 </div>
