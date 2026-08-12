@@ -726,6 +726,7 @@ export default function ProjectWorkspace({
     useEffect(() => {
         const queue = reconciliationQueue.current;
         const inFlight = reconciliationInFlight.current;
+        isWorkspaceMounted.current = true;
 
         return () => {
             isWorkspaceMounted.current = false;
@@ -1966,7 +1967,6 @@ export default function ProjectWorkspace({
                         )}
                     </main>
                     <WorkspaceDiscussion
-                        key={`discussion-${discussion.meta.current_page}-${discussion.meta.total}-${discussion.data[0]?.id ?? 0}-${discussion.data[0]?.updated_at ?? ''}`}
                         projectId={project.id}
                         initialPage={discussion}
                     />
