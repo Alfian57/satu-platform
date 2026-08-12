@@ -32,7 +32,8 @@ test('authorized campus admin can view institution scoped overview metrics', fun
     // Create project
     Project::factory()->for($institution)->open()->create();
 
-    $this->actingAs($admin)
+    $this->withoutVite()
+        ->actingAs($admin)
         ->get(route('campus.overview.show', $institution))
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
@@ -62,7 +63,8 @@ test('campus overview metrics enforce strict institution isolation', function ()
         ->assertForbidden();
 
     // Admin A accessing Institution A overview shows 0 projects from B
-    $this->actingAs($adminA)
+    $this->withoutVite()
+        ->actingAs($adminA)
         ->get(route('campus.overview.show', $institutionA))
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
@@ -92,7 +94,8 @@ test('overview supports date and program filtering', function () {
     StudentProfile::factory()->for($studentSI)->create(['study_program' => 'Sistem Informasi']);
     InstitutionMembership::factory()->verifiedByApprovedDomain()->for($studentSI)->for($institution)->create();
 
-    $this->actingAs($admin)
+    $this->withoutVite()
+        ->actingAs($admin)
         ->get(route('campus.overview.show', [$institution, 'program' => 'Teknik Informatika']))
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page

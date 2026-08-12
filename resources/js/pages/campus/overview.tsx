@@ -3,7 +3,6 @@ import {
     Activity,
     Award,
     Calendar,
-    CheckCircle2,
     Clock,
     Filter,
     FolderKanban,

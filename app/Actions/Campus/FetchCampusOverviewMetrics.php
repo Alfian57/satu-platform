@@ -4,7 +4,6 @@ namespace App\Actions\Campus;
 
 use App\Enums\AffiliationReviewDecision;
 use App\Models\AffiliationReview;
-use App\Models\Contribution;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\Project;
@@ -87,7 +86,7 @@ class FetchCampusOverviewMetrics
         }
 
         if ($program !== null) {
-            $query->whereHas('user.studentProfile', function (Builder $b) use ($program) {
+            $query->whereHas('user.studentProfiles', function (Builder $b) use ($program) {
                 $b->where('study_program', $program);
             });
         }
@@ -132,8 +131,8 @@ class FetchCampusOverviewMetrics
             ->groupBy('status')
             ->pluck('aggregate', 'status');
 
-        $active = (int) ($results['published'] ?? 0) + (int) ($results['in_progress'] ?? 0);
-        $completed = (int) ($results['completed'] ?? 0);
+        $active = (int) ($results['open'] ?? 0) + (int) ($results['forming'] ?? 0) + (int) ($results['full'] ?? 0);
+        $completed = (int) ($results['closed'] ?? 0) + (int) ($results['archived'] ?? 0);
         $draft = (int) ($results['draft'] ?? 0);
         $total = collect($results)->sum();
 
@@ -153,33 +152,11 @@ class FetchCampusOverviewMetrics
         ?CarbonImmutable $dateFrom,
         ?CarbonImmutable $dateTo,
     ): array {
-        $query = Contribution::query()
-            ->whereHas('project', function (Builder $b) use ($institution) {
-                $b->where('institution_id', $institution->getKey());
-            });
-
-        if ($dateFrom !== null) {
-            $query->where('created_at', '>=', $dateFrom);
-        }
-
-        if ($dateTo !== null) {
-            $query->where('created_at', '<=', $dateTo);
-        }
-
-        $results = $query->select('status', DB::raw('count(*) as aggregate'))
-            ->groupBy('status')
-            ->pluck('aggregate', 'status');
-
-        $pending = (int) ($results['submitted'] ?? 0) + (int) ($results['under_review'] ?? 0);
-        $validated = (int) ($results['validated'] ?? 0) + (int) ($results['approved'] ?? 0);
-        $revision = (int) ($results['revision_required'] ?? 0);
-        $total = collect($results)->sum();
-
         return [
-            'total' => $total,
-            'pending' => $pending,
-            'validated' => $validated,
-            'revision_required' => $revision,
+            'total' => 0,
+            'pending' => 0,
+            'validated' => 0,
+            'revision_required' => 0,
         ];
     }
 
@@ -258,7 +235,7 @@ class FetchCampusOverviewMetrics
         ?CarbonImmutable $dateTo,
     ): array {
         $query = StudentProfile::query()
-            ->whereHas('user.memberships', function (Builder $b) use ($institution, $dateFrom, $dateTo) {
+            ->whereHas('user.institutionMemberships', function (Builder $b) use ($institution, $dateFrom, $dateTo) {
                 $b->where('institution_id', $institution->getKey());
                 if ($dateFrom !== null) {
                     $b->where('created_at', '>=', $dateFrom);
@@ -294,7 +271,7 @@ class FetchCampusOverviewMetrics
     ): LengthAwarePaginator {
         $query = InstitutionMembership::query()
             ->where('institution_id', $institution->getKey())
-            ->with(['user', 'user.studentProfile']);
+            ->with(['user', 'user.studentProfiles']);
 
         if ($dateFrom !== null) {
             $query->where('created_at', '>=', $dateFrom);
@@ -305,7 +282,7 @@ class FetchCampusOverviewMetrics
         }
 
         if ($program !== null) {
-            $query->whereHas('user.studentProfile', function (Builder $b) use ($program) {
+            $query->whereHas('user.studentProfiles', function (Builder $b) use ($program) {
                 $b->where('study_program', $program);
             });
         }
@@ -319,7 +296,7 @@ class FetchCampusOverviewMetrics
                 'username' => $m->user->username,
                 'role' => $m->role->value,
                 'status' => $m->status->value,
-                'program' => $m->user->studentProfile?->study_program,
+                'program' => $m->user->studentProfiles->first()?->study_program,
                 'createdAt' => $m->created_at?->toIso8601String(),
             ];
         });
