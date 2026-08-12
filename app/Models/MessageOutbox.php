@@ -97,6 +97,40 @@ class MessageOutbox extends Model
         ]);
     }
 
+    /**
+     * Mark an outbox as failed without ever overwriting a successful send.
+     * The status history stays append-only so retries and recoveries are auditable.
+     */
+    public function recordFailure(?string $reason = null): void
+    {
+        $this->refresh();
+
+        if (in_array($this->status, [MessageStatus::Sent, MessageStatus::Delivered], true)) {
+            return;
+        }
+
+        $history = $this->status_history ?? [];
+        $history[] = [
+            'status' => MessageStatus::Failed->value,
+            'timestamp' => Carbon::now()->toIso8601String(),
+            'reason' => $reason,
+        ];
+
+        $this->update([
+            'status' => MessageStatus::Failed,
+            'status_history' => $history,
+        ]);
+    }
+
+    /**
+     * @param  Builder<MessageOutbox>  $query
+     */
+    public function scopeStaleProcessing(Builder $query, int $minutes = 3): void
+    {
+        $query->where('status', MessageStatus::Processing->value)
+            ->where('updated_at', '<', Carbon::now()->subMinutes($minutes));
+    }
+
     public function recordDelivered(): void
     {
         $this->update([
