@@ -66,10 +66,10 @@ it('verifies roster exact match auto-links campus affiliation while mismatch fla
         'number_hash' => PhoneIdentity::hash('+6281987654321'),
     ]);
 
-    $exactMembership = InstitutionMembership::create([
+    $exactMembership = InstitutionMembership::factory()->create([
         'institution_id' => $institution->id,
         'user_id' => $exactUser->id,
-        'nim' => '2201001',
+        'institutional_identifier' => '2201001',
         'status' => InstitutionMembershipStatus::Verified,
         'verified_at' => now(),
     ]);
@@ -77,10 +77,10 @@ it('verifies roster exact match auto-links campus affiliation while mismatch fla
     expect($exactMembership->status)->toBe(InstitutionMembershipStatus::Verified);
 
     $mismatchUser = User::factory()->create();
-    $pendingMembership = InstitutionMembership::create([
+    $pendingMembership = InstitutionMembership::factory()->create([
         'institution_id' => $institution->id,
         'user_id' => $mismatchUser->id,
-        'nim' => '9999999',
+        'institutional_identifier' => '9999999',
         'status' => InstitutionMembershipStatus::Pending,
     ]);
 
