@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Lock, Mail, Shield, XCircle } from 'lucide-react';
+import { CheckCircle2, Mail, Shield, XCircle } from 'lucide-react';
 import React, { useTransition } from 'react';
 import AppLayout from '@/layouts/app-layout';
 
