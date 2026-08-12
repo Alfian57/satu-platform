@@ -7,7 +7,7 @@ use App\Enums\MessagePurpose;
 use App\Enums\MessageStatus;
 use App\Enums\OtpChallengeStatus;
 use App\Enums\OtpPurpose;
-use App\Enums\PhoneStatus;
+use App\Enums\PhoneNumberStatus;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\InstitutionRoster;
@@ -30,10 +30,9 @@ it('enforces private username authentication without email exposure', function (
 
     PhoneNumber::factory()->create([
         'user_id' => $user->id,
-        'e164' => '+6281234567890',
-        'national_number' => '081234567890',
-        'status' => PhoneStatus::Verified,
-        'phone_hash' => PhoneIdentity::hash('+6281234567890'),
+        'number' => '+6281234567890',
+        'status' => PhoneNumberStatus::Verified,
+        'number_hash' => PhoneIdentity::hash('+6281234567890'),
     ]);
 
     $response = $this->post(route('login.store'), [
@@ -53,7 +52,7 @@ it('verifies roster exact match auto-links campus affiliation while mismatch fla
     ]);
 
     InstitutionRosterRow::factory()->create([
-        'institution_roster_id' => $roster->id,
+        'roster_id' => $roster->id,
         'nim' => '2201001',
         'phone_hash' => PhoneIdentity::hash('+6281987654321'),
         'full_name' => 'Budi Santoso',
@@ -62,9 +61,9 @@ it('verifies roster exact match auto-links campus affiliation while mismatch fla
     $exactUser = User::factory()->create();
     PhoneNumber::factory()->create([
         'user_id' => $exactUser->id,
-        'e164' => '+6281987654321',
-        'status' => PhoneStatus::Verified,
-        'phone_hash' => PhoneIdentity::hash('+6281987654321'),
+        'number' => '+6281987654321',
+        'status' => PhoneNumberStatus::Verified,
+        'number_hash' => PhoneIdentity::hash('+6281987654321'),
     ]);
 
     $exactMembership = InstitutionMembership::create([
@@ -125,12 +124,12 @@ it('sanitizes OTP challenges and outbox messages without exposing plain OTPs', f
 
 it('records outbox delivery status and handles delivery failures gracefully', function () {
     $outbox = MessageOutbox::create([
-        'purpose' => MessagePurpose::OtpRegistration,
+        'purpose' => MessagePurpose::Otp,
         'recipient' => PhoneIdentity::hash('+6287777666555'),
         'payload' => 'Outbox message payload',
         'status' => MessageStatus::Failed,
     ]);
 
     expect($outbox->status)->toBe(MessageStatus::Failed)
-        ->and($outbox->purpose)->toBe(MessagePurpose::OtpRegistration);
+        ->and($outbox->purpose)->toBe(MessagePurpose::Otp);
 });
