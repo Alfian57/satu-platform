@@ -40,6 +40,7 @@ return new class extends Migration
             $table->unique(['user_id', 'institution_id', 'role']);
             $table->index(['institution_id', 'status']);
             $table->index(['user_id', 'status']);
+            $table->index(['institution_id', 'status', 'requested_at'], 'institution_memberships_queue_order_idx');
         });
     }
 
