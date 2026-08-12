@@ -11,15 +11,6 @@ import {
     X,
 } from 'lucide-react';
 import { useState } from 'react';
-import {
-    download as attachmentDownload,
-    preview as attachmentPreview,
-    store as attachmentStore,
-} from '@/actions/App/Http/Controllers/ProjectAttachmentController';
-import {
-    index as discussionIndex,
-    store as discussionStore,
-} from '@/actions/App/Http/Controllers/ProjectDiscussionController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,6 +21,15 @@ import type {
     WorkspaceDiscussion,
     WorkspaceAttachmentPurpose,
 } from '@/types/task';
+import {
+    download as attachmentDownload,
+    preview as attachmentPreview,
+    store as attachmentStore,
+} from '@/actions/App/Http/Controllers/ProjectAttachmentController';
+import {
+    index as discussionIndex,
+    store as discussionStore,
+} from '@/actions/App/Http/Controllers/ProjectDiscussionController';
 
 type DiscussionFormData = {
     body: string;
