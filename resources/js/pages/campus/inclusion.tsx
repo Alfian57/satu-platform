@@ -449,8 +449,8 @@ export default function CampusInclusion({
                                         <span
                                             className={
                                                 selectedSignal.data_sufficiency_met
-                                                    ? 'font-medium text-emerald-600'
-                                                    : 'font-medium text-amber-600'
+                                                    ? 'font-medium text-emerald-700 dark:text-emerald-300'
+                                                    : 'font-medium text-amber-700 dark:text-amber-300'
                                             }
                                         >
                                             {selectedSignal.data_sufficiency_met
@@ -504,7 +504,7 @@ export default function CampusInclusion({
                                                             {rev.reason}
                                                         </p>
                                                         {rev.support_action && (
-                                                            <p className="text-[11px] font-medium text-emerald-600">
+                                                            <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
                                                                 Tindakan:{' '}
                                                                 {
                                                                     rev.support_action
