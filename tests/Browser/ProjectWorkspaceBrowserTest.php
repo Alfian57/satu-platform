@@ -60,6 +60,11 @@ test('team can operate the task workspace on desktop and mobile', function () {
         ->resize(1366, 900)
         ->assertSee('Workspace browser project')
         ->assertSee('Task awal untuk workspace')
+        ->assertSee('Realtime')
+        ->assertScript(
+            "document.querySelector('[data-test=workspace-realtime-status]') !== null",
+            true,
+        )
         ->click('@task-status-in_progress')
         ->waitForText('Status task menjadi Sedang dikerjakan')
         ->assertSee('Sedang dikerjakan')

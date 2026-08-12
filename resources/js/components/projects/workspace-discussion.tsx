@@ -10,7 +10,7 @@ import {
     Send,
     X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     download as attachmentDownload,
     preview as attachmentPreview,
@@ -277,6 +277,24 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
     const [discussionLoadError, setDiscussionLoadError] = useState<
         string | null
     >(null);
+
+    useEffect(() => {
+        let isActive = true;
+
+        queueMicrotask(() => {
+            if (!isActive) {
+                return;
+            }
+
+            setMessages(initialPage.data);
+            setCurrentPage(initialPage.meta.current_page);
+            setLastPage(initialPage.meta.last_page);
+        });
+
+        return () => {
+            isActive = false;
+        };
+    }, [initialPage]);
 
     const discussionForm = useHttp<DiscussionFormData, MessageResponse>({
         body: '',

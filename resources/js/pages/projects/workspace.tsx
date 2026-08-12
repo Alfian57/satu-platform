@@ -19,11 +19,12 @@ import {
     UserRound,
     X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ProjectWorkspaceController from '@/actions/App/Http/Controllers/ProjectWorkspaceController';
 import { AppPage } from '@/components/app-page';
 import InputError from '@/components/input-error';
 import { WorkspaceDiscussion } from '@/components/projects/workspace-discussion';
+import { WorkspaceRealtimeStatus } from '@/components/projects/workspace-realtime-status';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -36,6 +37,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
+import { useWorkspaceRealtime } from '@/hooks/use-workspace-realtime';
 import { cn } from '@/lib/utils';
 import { index as projectsIndex, show as projectShow } from '@/routes/projects';
 import type {
@@ -100,6 +102,8 @@ type WorkspaceProps = {
     filters: TaskWorkspaceFilters;
     permissions: TaskWorkspacePermissions;
 };
+
+type RealtimeReconciliationScope = 'tasks' | 'discussion';
 
 type ErrorMap = Record<string, unknown>;
 
@@ -611,9 +615,17 @@ export default function ProjectWorkspace({
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [actionMessage, setActionMessage] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
+    const [realtimeNotice, setRealtimeNotice] = useState<string | null>(null);
     const [pendingDelete, setPendingDelete] = useState<WorkspaceTask | null>(
         null,
     );
+    const reconciliationQueue = useRef<Set<RealtimeReconciliationScope>>(
+        new Set(),
+    );
+    const reconciliationInFlight = useRef<Set<RealtimeReconciliationScope>>(
+        new Set(),
+    );
+    const isWorkspaceMounted = useRef(true);
 
     const createForm = useHttp<CreateTaskData, TaskResponse>({
         title: '',
@@ -651,6 +663,78 @@ export default function ProjectWorkspace({
     const editErrors = editForm.errors as ErrorMap;
     const transitionErrors = transitionForm.errors as ErrorMap;
     const assignErrors = assignForm.errors as ErrorMap;
+
+    function requestRealtimeReconciliation(
+        scope: RealtimeReconciliationScope,
+    ): void {
+        reconciliationQueue.current.add(scope);
+
+        if (reconciliationInFlight.current.has(scope)) {
+            return;
+        }
+
+        reconciliationInFlight.current.add(scope);
+        reconciliationQueue.current.delete(scope);
+        setRealtimeNotice(
+            scope === 'tasks'
+                ? 'Perubahan task diterima. Menyinkronkan snapshot terbaru dari database...'
+                : 'Perubahan diskusi diterima. Menyinkronkan snapshot terbaru dari database...',
+        );
+
+        router.reload({
+            only: scope === 'tasks' ? ['tasks', 'members'] : ['discussion'],
+            onSuccess: () => {
+                if (!isWorkspaceMounted.current) {
+                    return;
+                }
+
+                setRealtimeNotice(
+                    scope === 'tasks'
+                        ? 'Snapshot task terbaru sudah disinkronkan dari database.'
+                        : 'Snapshot diskusi terbaru sudah disinkronkan dari database.',
+                );
+            },
+            onError: () => {
+                if (!isWorkspaceMounted.current) {
+                    return;
+                }
+
+                setActionError(
+                    'Realtime menerima perubahan, tetapi snapshot terbaru belum dapat dimuat. Gunakan Muat ulang untuk mencoba lagi.',
+                );
+            },
+            onFinish: () => {
+                reconciliationInFlight.current.delete(scope);
+
+                if (
+                    isWorkspaceMounted.current &&
+                    reconciliationQueue.current.has(scope)
+                ) {
+                    requestRealtimeReconciliation(scope);
+                }
+            },
+        });
+    }
+
+    const realtime = useWorkspaceRealtime({
+        institutionId: project.institution_id,
+        projectId: project.id,
+        onTaskDelta: () => requestRealtimeReconciliation('tasks'),
+        onDiscussionDelta: () => requestRealtimeReconciliation('discussion'),
+    });
+
+    useEffect(() => {
+        const queue = reconciliationQueue.current;
+        const inFlight = reconciliationInFlight.current;
+        isWorkspaceMounted.current = true;
+
+        return () => {
+            isWorkspaceMounted.current = false;
+            queue.clear();
+            inFlight.clear();
+        };
+    }, []);
+
     useEffect(() => {
         const removeStartListener = router.on('start', () =>
             setIsRefreshing(true),
@@ -989,6 +1073,11 @@ export default function ProjectWorkspace({
                                 <span className="border border-primary/30 bg-primary/5 px-2 py-1 text-xs font-semibold text-primary">
                                     Sumber data: database
                                 </span>
+                                <WorkspaceRealtimeStatus
+                                    status={realtime.connectionState}
+                                    presenceMembers={realtime.presenceMembers}
+                                    onRetry={realtime.retryConnection}
+                                />
                             </div>
                             <h1 className="max-w-[28ch] text-headline font-bold text-balance break-words">
                                 {project.title}
@@ -1061,6 +1150,17 @@ export default function ProjectWorkspace({
                             </span>
                         )}
                     </div>
+
+                    {realtimeNotice && (
+                        <p
+                            role="status"
+                            aria-live="polite"
+                            data-test="workspace-realtime-update"
+                            className="border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary"
+                        >
+                            {realtimeNotice}
+                        </p>
+                    )}
 
                     {actionMessage && (
                         <p

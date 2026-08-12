@@ -43,6 +43,7 @@ final class TaskWorkspaceSerializer
 
         return [
             'id' => $project->getKey(),
+            'institution_id' => $project->institution_id,
             'title' => $project->title,
             'status' => $project->status->value,
             'deadline' => $project->deadline->toIso8601String(),
