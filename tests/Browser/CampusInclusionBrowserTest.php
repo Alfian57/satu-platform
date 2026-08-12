@@ -82,7 +82,7 @@ test('reviewer selects a signal with the keyboard and submits a human review', f
             'document.querySelectorAll(\'[data-test="inclusion-detail"]\').length === 1',
             true,
         )
-        ->assertSee('Period / Versi')
+        ->assertSee('Periode / Versi')
         ->assertSee('Pola partisipasi membutuhkan tinjauan kesempatan.')
         ->assertNoAccessibilityIssues()
         ->click('@inclusion-reason')
