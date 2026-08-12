@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useState, useTransition } from 'react';
 import AppLayout from '@/layouts/app-layout';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface OverviewMetrics {
     memberships: {
@@ -257,11 +258,44 @@ export default function CampusOverview({
                         </div>
                     </div>
 
+                    {/* Turnaround Card */}
+                    <div className="rounded-xl border border-border bg-card p-6 shadow-xs">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                Rata-rata Turnaround SLA
+                            </span>
+                            <Clock className="size-5 text-amber-500" />
+                        </div>
+                        <div className="mt-4 flex items-baseline justify-between">
+                            <span className="text-3xl font-bold tracking-tight">
+                                {metrics.review_turnaround.average_hours}
+                                <span className="text-sm font-normal text-muted-foreground">
+                                    {' '}
+                                    jam
+                                </span>
+                            </span>
+                            <span className="text-xs font-semibold text-muted-foreground">
+                                {metrics.review_turnaround.total_reviewed}{' '}
+                                Ditinjau
+                            </span>
+                        </div>
+                        <div className="mt-4 flex justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
+                            <span>
+                                Setuju:{' '}
+                                {metrics.review_turnaround.approved_count}
+                            </span>
+                            <span>
+                                Tolak:{' '}
+                                {metrics.review_turnaround.rejected_count}
+                            </span>
+                        </div>
+                    </div>
+
                     {/* Contribution Card */}
                     <div className="rounded-xl border border-border bg-card p-6 shadow-xs">
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-muted-foreground">
-                                Kontribusi
+                                Validasi Kontribusi
                             </span>
                             <Award className="size-5 text-emerald-500" />
                         </div>
@@ -270,7 +304,7 @@ export default function CampusOverview({
                                 {metrics.contributions.total}
                             </span>
                             <span className="text-xs font-semibold text-emerald-600">
-                                {metrics.contributions.validated} Divalidasi
+                                {metrics.contributions.validated} Valid
                             </span>
                         </div>
                         <div className="mt-4 flex justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
@@ -283,100 +317,131 @@ export default function CampusOverview({
                             </span>
                         </div>
                     </div>
-
-                    {/* Review Turnaround Card */}
-                    <div className="rounded-xl border border-border bg-card p-6 shadow-xs">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted-foreground">
-                                Rata-rata Review SLA
-                            </span>
-                            <Clock className="size-5 text-amber-500" />
-                        </div>
-                        <div className="mt-4 flex items-baseline justify-between">
-                            <span className="text-3xl font-bold tracking-tight">
-                                {metrics.review_turnaround.average_hours}h
-                            </span>
-                            <span className="text-xs font-medium text-muted-foreground">
-                                {metrics.review_turnaround.total_reviewed}{' '}
-                                Ditinjau
-                            </span>
-                        </div>
-                        <div className="mt-4 flex justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
-                            <span>
-                                Disetujui:{' '}
-                                {metrics.review_turnaround.approved_count}
-                            </span>
-                            <span>
-                                Ditolak:{' '}
-                                {metrics.review_turnaround.rejected_count}
-                            </span>
-                        </div>
-                    </div>
                 </div>
 
-                {/* Main Content Grid: Program Distribution & Member Drilldown */}
+                {/* Data Grid: Program Distribution & Member List */}
                 <div className="grid gap-8 lg:grid-cols-3">
-                    {/* Program Distribution Table */}
-                    <div className="rounded-xl border border-border bg-card p-6 shadow-xs lg:col-span-1">
-                        <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
-                            <Activity className="size-4 text-primary" />
+                    {/* Program Distribution */}
+                    <div className="rounded-xl border border-border bg-card p-6 shadow-xs">
+                        <h2 className="text-lg font-bold tracking-tight text-foreground">
                             Distribusi Program Studi
                         </h2>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            Jumlah mahasiswa per prodi
+                            Jumlah mahasiswa terdaftar per program studi
                         </p>
 
-                        <div className="mt-4 divide-y divide-border">
-                            {programDistribution.length === 0 ? (
-                                <div className="py-8 text-center text-xs text-muted-foreground">
-                                    Belum ada data program studi
+                        <div className="mt-6" aria-busy={isPending}>
+                            {isPending && (
+                                <div className="sr-only" role="status">
+                                    Memuat distribusi program studi...
                                 </div>
+                            )}
+                            {programDistribution.length === 0 ? (
+                                <p className="py-8 text-center text-xs text-muted-foreground">
+                                    Belum ada data distribusi program studi
+                                </p>
                             ) : (
-                                programDistribution.map((item, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="flex items-center justify-between py-3 text-sm"
-                                    >
-                                        <span className="max-w-[180px] truncate font-medium text-foreground">
-                                            {item.program}
-                                        </span>
-                                        <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">
-                                            {item.count}
-                                        </span>
-                                    </div>
-                                ))
+                                <div className="space-y-4">
+                                    {programDistribution.map((item) => (
+                                        <div
+                                            key={item.program}
+                                            className="space-y-1.5"
+                                        >
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="font-medium text-foreground">
+                                                    {item.program}
+                                                </span>
+                                                <span className="font-semibold text-muted-foreground">
+                                                    {item.count} mahasiswa
+                                                </span>
+                                            </div>
+                                            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                                                <div
+                                                    className="h-full rounded-full bg-primary"
+                                                    style={{
+                                                        width: `${Math.min(
+                                                            100,
+                                                            (item.count /
+                                                                (metrics
+                                                                    .memberships
+                                                                    .total ||
+                                                                    1)) *
+                                                                100,
+                                                        )}%`,
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Member Drill-down Table */}
+                    {/* Member Directory */}
                     <div className="rounded-xl border border-border bg-card p-6 shadow-xs lg:col-span-2">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h2 className="text-base font-semibold text-foreground">
-                                    Daftar Keanggotaan Mahasiswa
+                                <h2 className="text-lg font-bold tracking-tight text-foreground">
+                                    Daftar Anggota Kampus
                                 </h2>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    Detail {members.pagination.total} mahasiswa
-                                    terdaftar
+                                    Mahasiswa dan operator terdaftar di kampus
+                                    ini
                                 </p>
                             </div>
+                            <span className="text-xs font-medium text-muted-foreground">
+                                Total: {members.pagination.total}
+                            </span>
                         </div>
 
-                        <div className="mt-4 overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                                <thead className="border-b border-border bg-muted/50 text-xs font-medium text-muted-foreground">
-                                    <tr>
-                                        <th className="px-4 py-3">Username</th>
-                                        <th className="px-4 py-3">
-                                            Program Studi
+                        <div
+                            className="mt-6 overflow-x-auto"
+                            aria-busy={isPending}
+                        >
+                            {isPending && (
+                                <div className="sr-only" role="status">
+                                    Memuat daftar anggota kampus...
+                                </div>
+                            )}
+                            <table className="w-full text-left text-xs">
+                                <thead>
+                                    <tr className="border-b border-border bg-muted/40 text-muted-foreground">
+                                        <th className="px-4 py-3 font-semibold">
+                                            Pengguna
                                         </th>
-                                        <th className="px-4 py-3">Peran</th>
-                                        <th className="px-4 py-3">Status</th>
+                                        <th className="px-4 py-3 font-semibold">
+                                            Prodi
+                                        </th>
+                                        <th className="px-4 py-3 font-semibold">
+                                            Peran
+                                        </th>
+                                        <th className="px-4 py-3 font-semibold">
+                                            Status
+                                        </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-border">
-                                    {members.items.length === 0 ? (
+                                <tbody className="divide-y divide-border/60">
+                                    {isPending ? (
+                                        Array.from({ length: 5 }).map(
+                                            (_, i) => (
+                                                <tr key={`skeleton-${i}`}>
+                                                    <td className="px-4 py-3">
+                                                        <Skeleton className="h-4 w-24" />
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <Skeleton className="h-4 w-32" />
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <Skeleton className="h-4 w-16" />
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <Skeleton className="h-4 w-20 rounded-full" />
+                                                    </td>
+                                                </tr>
+                                            ),
+                                        )
+                                    ) : members.items.length === 0 ? (
                                         <tr>
                                             <td
                                                 colSpan={4}
