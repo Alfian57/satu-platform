@@ -83,6 +83,38 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<TeamMembership, $this>
+     */
+    public function teamMemberships(): HasMany
+    {
+        return $this->hasMany(TeamMembership::class);
+    }
+
+    /**
+     * @return HasMany<TeamInvitation, $this>
+     */
+    public function receivedTeamInvitations(): HasMany
+    {
+        return $this->hasMany(TeamInvitation::class, 'invitee_id');
+    }
+
+    /**
+     * @return HasMany<TeamInvitation, $this>
+     */
+    public function sentTeamInvitations(): HasMany
+    {
+        return $this->hasMany(TeamInvitation::class, 'inviter_id');
+    }
+
+    /**
+     * @return HasMany<TeamJoinRequest, $this>
+     */
+    public function teamJoinRequests(): HasMany
+    {
+        return $this->hasMany(TeamJoinRequest::class, 'requester_id');
+    }
+
+    /**
      * @return HasMany<AuditLog, $this>
      */
     public function auditLogs(): HasMany

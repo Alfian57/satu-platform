@@ -41,10 +41,12 @@ Institution/recruiter organization, intended role, normalized phone, token hash,
 ## 3. Profile, Projects, dan Workspace
 
 - `student_profiles`, `skills`, `profile_skills`, `availability_windows`
-- `projects`, `project_roles`, `project_role_skills`, `team_memberships`
+- `projects`, `project_roles`, `project_role_skills`, `team_memberships`, `team_invitations`, `team_join_requests`, `team_membership_events`
 - `tasks`, `task_assignments`, `messages`, `attachments`
 
 Project, team, task, message, dan attachment selalu memiliki institution ownership. Attachment memakai private storage path dan authorized download.
+
+`team_memberships` menyimpan state peserta saat ini secara unik per project dan user. Invitation serta join request memakai state pending yang unik per pasangan project dan user, lalu transition history disimpan melalui audit append-only dan event membership. Perubahan yang memengaruhi capacity mengunci project row dalam transaction.
 
 ## 4. Matching
 

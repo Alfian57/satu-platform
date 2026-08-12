@@ -6,8 +6,10 @@ namespace App\Policies;
 
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\ProjectVisibility;
+use App\Enums\TeamMembershipStatus;
 use App\Models\Institution;
 use App\Models\Project;
+use App\Models\TeamMembership;
 use App\Models\User;
 
 final class ProjectPolicy
@@ -21,6 +23,11 @@ final class ProjectPolicy
         if (
             $project->visibility === ProjectVisibility::Private
             && $project->owner_id !== $user->getKey()
+            && ! TeamMembership::query()
+                ->where('project_id', $project->getKey())
+                ->where('user_id', $user->getKey())
+                ->where('status', TeamMembershipStatus::Active)
+                ->exists()
         ) {
             return false;
         }
@@ -84,6 +91,19 @@ final class ProjectPolicy
     public function archive(User $user, Project $project): bool
     {
         return $this->transition($user, $project);
+    }
+
+    public function invite(User $user, Project $project): bool
+    {
+        return $project->acceptsMembers() && $this->ownsProjectInActiveInstitution($user, $project);
+    }
+
+    public function requestJoin(User $user, Project $project): bool
+    {
+        return $project->visibility !== ProjectVisibility::Private
+            && $project->acceptsMembers()
+            && $this->hasActiveProjectContext($user, $project, [InstitutionMembershipRole::Student])
+            && $project->owner_id !== $user->getKey();
     }
 
     private function ownsProjectInActiveInstitution(User $user, Project $project): bool

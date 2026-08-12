@@ -71,6 +71,30 @@ class Project extends Model implements InstitutionOwned
         return $this->hasMany(ProjectRole::class);
     }
 
+    /**
+     * @return HasMany<TeamMembership, $this>
+     */
+    public function teamMemberships(): HasMany
+    {
+        return $this->hasMany(TeamMembership::class);
+    }
+
+    /**
+     * @return HasMany<TeamInvitation, $this>
+     */
+    public function teamInvitations(): HasMany
+    {
+        return $this->hasMany(TeamInvitation::class);
+    }
+
+    /**
+     * @return HasMany<TeamJoinRequest, $this>
+     */
+    public function teamJoinRequests(): HasMany
+    {
+        return $this->hasMany(TeamJoinRequest::class);
+    }
+
     public function institutionId(): int
     {
         return $this->institution_id;
