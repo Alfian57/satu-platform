@@ -147,6 +147,30 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<Contribution, $this>
+     */
+    public function contributions(): HasMany
+    {
+        return $this->hasMany(Contribution::class, 'owner_id');
+    }
+
+    /**
+     * @return HasMany<ContributionVersion, $this>
+     */
+    public function createdContributionVersions(): HasMany
+    {
+        return $this->hasMany(ContributionVersion::class, 'created_by_id');
+    }
+
+    /**
+     * @return HasMany<ContributionReview, $this>
+     */
+    public function contributionReviews(): HasMany
+    {
+        return $this->hasMany(ContributionReview::class, 'reviewer_id');
+    }
+
+    /**
      * @return HasMany<AuditLog, $this>
      */
     public function auditLogs(): HasMany

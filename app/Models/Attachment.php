@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -63,6 +64,14 @@ class Attachment extends Model implements InstitutionOwned
     public function uploadedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by_id');
+    }
+
+    /**
+     * @return HasMany<ContributionEvidence, $this>
+     */
+    public function contributionEvidence(): HasMany
+    {
+        return $this->hasMany(ContributionEvidence::class);
     }
 
     public function institutionId(): int
