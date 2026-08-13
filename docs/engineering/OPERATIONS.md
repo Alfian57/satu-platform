@@ -4,6 +4,12 @@
 
 Dokumen ini menetapkan kontrak runtime production SATU: environment contract, topologi proses, storage privat, mail, scheduler, secrets, health checks, startup ordering, graceful restart, serta runbook deploy dan recovery. Operator dapat memulai, memverifikasi, dan merestart seluruh service tanpa implicit knowledge. Dokumen ini hanya memuat kontrak yang sudah didukung oleh implementasi saat ini. Capability yang masih planned tidak dideskripsikan sebagai available.
 
+### 1.1 Referensi Dokumen Lain
+
+- [BACKUP_RECOVERY.md](./BACKUP_RECOVERY.md) - Procedures backup, restore, monitoring, dan incident response
+- [SECURITY_PRIVACY.md](./SECURITY_PRIVACY.md) - Security, privacy, dan release gates
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - System architecture dan data flow
+
 ## 2. Environment Contract
 
 ### 2.1 Required Variables
@@ -119,3 +125,23 @@ Jalankan satu scheduler daemon per environment (`schedule:work`) atau cron `* * 
 - [ ] `php artisan reverb:start` dapat di-bootstrap.
 - [ ] `tests/Feature/Platform/RuntimeContractTest.php` lulus.
 - [ ] Walkthrough runbook deploy tereksekusi tanpa langkah implisit.
+
+## 13. Backup dan Monitoring
+
+Untuk procedures backup, restore, monitoring, alerting, dan incident response, lihat [BACKUP_RECOVERY.md](./BACKUP_RECOVERY.md).
+
+### 13.1 Quick Reference
+
+- **Backup script**: `scripts/backup.sh [staging|production]`
+- **Health check**: `GET /up`
+- **Queue monitoring**: `php artisan queue:work` (see BACKUP_RECOVERY.md for alert thresholds)
+- **Reverb monitoring**: Process alive check via systemd/cron
+
+### 13.2 Incident Response
+
+Lihat [BACKUP_RECOVERY.md](./BACKUP_RECOVERY.md) untuk:
+
+- Incident classification (P1-P4)
+- Escalation procedures
+- Privacy incident response
+- Recovery objectives (RTO/RPO)
