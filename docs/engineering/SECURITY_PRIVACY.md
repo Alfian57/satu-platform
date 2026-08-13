@@ -55,6 +55,13 @@ Real-data inclusion activation membutuhkan DPIA, lawful basis, retention, notice
 
 XP hanya dari approved contribution dengan idempotent source. Reversal tidak menghapus ledger history. Badge rule version disimpan. Cohort di bawah lima disuppress. Individual ranking default off. Anti-abuse review mencakup duplicate evidence, repeated submission, collusion, inactive member manipulation, dan unauthorized reviewer.
 
+XP award memverifikasi status contribution, approved review, dan konsistensi
+institution dengan project sebelum menulis ledger. Unique idempotency key
+mencegah retry atau concurrent event menggandakan award. Consumer approval
+berjalan setelah commit dan retryable melalui queue. Ledger update/delete
+ditolak pada model serta database layer, sementara reversal memakai row baru
+dan audit reason code.
+
 ## 8. Talent Boundary
 
 Recruiter membutuhkan verified organization, membership, dan active entitlement. Search membaca allowlisted projection. Username, NIM, phone, private evidence, discussion, raw audit, matching input, dan inclusion data dilarang.
