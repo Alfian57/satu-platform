@@ -101,6 +101,30 @@ class Institution extends Model
     }
 
     /**
+     * @return HasMany<LeaderboardPeriod, $this>
+     */
+    public function leaderboardPeriods(): HasMany
+    {
+        return $this->hasMany(LeaderboardPeriod::class);
+    }
+
+    /**
+     * @return HasMany<LeaderboardPreference, $this>
+     */
+    public function leaderboardPreferences(): HasMany
+    {
+        return $this->hasMany(LeaderboardPreference::class);
+    }
+
+    /**
+     * @return HasMany<LeaderboardProjection, $this>
+     */
+    public function leaderboardProjections(): HasMany
+    {
+        return $this->hasMany(LeaderboardProjection::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

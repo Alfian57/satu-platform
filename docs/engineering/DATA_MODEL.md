@@ -104,6 +104,22 @@ menghapus atau menulis ulang award maupun rule history.
 
 Semester, scope type/id, rank, shared-rank group, score, verified XP total, active-member denominator, cohort size, suppressed flag, rule version, computed-at. Individual preference default off. Inclusion fields dilarang.
 
+Leaderboard rebuild memakai snapshot digest yang deterministic. \`leaderboard_periods\`
+menyimpan digest dan waktu komputasi terbaru agar snapshot kosong setelah withdrawal
+tetap dapat dibedakan dari snapshot sebelumnya. Row pada \`leaderboard_projections\`
+append-only dan retry dengan input yang sama tidak menggandakan row.
+
+Scope \`program\` memakai program studi dari active roster row, scope \`team\` memakai
+project team dengan active membership dan approved contribution, sedangkan scope
+\`individual\` hanya dibuat untuk student dengan preference opt-in aktif. Score group
+adalah average verified XP per active-member denominator. Cohort di bawah lima
+disimpan sebagai suppressed tanpa rank, dan tie memakai shared competition rank.
+Projection dapat dikenali stale dari \`computed_at\` dan threshold 24 jam.
+
+Rebuild dijalankan melalui queued job \`RebuildLeaderboardProjections\` dengan unique
+key per institution dan semester. Command \`gamification:rebuild-leaderboards\`
+mengambil active roster dan dijalankan scheduler secara berkala.
+
 ## 7. Notifications dan WhatsApp
 
 - Laravel database notifications atau equivalent canonical in-app records.
