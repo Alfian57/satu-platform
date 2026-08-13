@@ -6,6 +6,7 @@ namespace App\Actions\Profile;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Actions\Consent\ConsentRecorder;
+use App\Actions\Portfolio\RebuildTalentCandidateProjection;
 use App\Enums\PortfolioVisibility;
 use App\Models\Institution;
 use App\Models\StudentProfile;
@@ -20,6 +21,7 @@ final class UpdateStudentProfileVisibility
         private readonly ConsentRecorder $consent,
         private readonly AuditRecorder $audit,
         private readonly EnsureStudentProfileIsFresh $ensureFresh,
+        private readonly RebuildTalentCandidateProjection $rebuildProjection,
     ) {}
 
     /**
@@ -92,6 +94,7 @@ final class UpdateStudentProfileVisibility
             }
 
             if ($changes !== []) {
+                $institution = Institution::query()->findOrFail($profile->institution_id);
                 $after = [
                     'portfolio_visibility' => $profile->portfolio_visibility->value,
                     'recruiter_discoverable' => $profile->recruiter_discoverable,
@@ -100,10 +103,12 @@ final class UpdateStudentProfileVisibility
                     operation: 'profile.visibility_updated',
                     auditable: $profile,
                     actor: $actor,
-                    institution: Institution::query()->findOrFail($profile->institution_id),
+                    institution: $institution,
                     before: $before,
                     after: $after,
                 );
+
+                $this->rebuildProjection->handle($actor, $institution);
             }
 
             return $profile->refresh();

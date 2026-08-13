@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Actions\Recruiter\GrantRecruiterEntitlement;
 use App\Actions\Talent\SearchTalentCandidates;
-use App\Actions\Talent\UpdateTalentCandidateProjection;
 use App\Enums\RecruiterEntitlementScope;
 use App\Enums\RecruiterMembershipRole;
 use App\Enums\RecruiterMembershipStatus;
@@ -90,8 +89,9 @@ it('allows entitled recruiter to search and filter candidates deterministically'
     $candidate1 = User::factory()->create();
     $candidate2 = User::factory()->create();
 
-    $updateAction = app(UpdateTalentCandidateProjection::class);
-    $updateAction->execute($candidate1, $candidate1, $institution, [
+    TalentCandidateProjection::factory()->create([
+        'user_id' => $candidate1->id,
+        'institution_id' => $institution->id,
         'headline' => 'Senior Laravel Engineer',
         'skills' => ['PHP', 'Laravel', 'Vue.js'],
         'badges' => ['Top Contributor'],
@@ -99,7 +99,9 @@ it('allows entitled recruiter to search and filter candidates deterministically'
         'is_visible' => true,
     ]);
 
-    $updateAction->execute($candidate2, $candidate2, $institution, [
+    TalentCandidateProjection::factory()->create([
+        'user_id' => $candidate2->id,
+        'institution_id' => $institution->id,
         'headline' => 'Python Data Scientist',
         'skills' => ['Python', 'Pandas'],
         'badges' => ['AI Researcher'],
@@ -142,8 +144,9 @@ it('excludes withdrawn / hidden projections from search results', function () {
 
     $candidate = User::factory()->create();
 
-    $updateAction = app(UpdateTalentCandidateProjection::class);
-    $updateAction->execute($candidate, $candidate, $institution, [
+    TalentCandidateProjection::factory()->create([
+        'user_id' => $candidate->id,
+        'institution_id' => $institution->id,
         'headline' => 'Fullstack Developer',
         'is_visible' => false, // Hidden / withdrawn projection
     ]);

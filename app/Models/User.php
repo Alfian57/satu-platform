@@ -155,6 +155,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<PortfolioEntry, $this>
+     */
+    public function portfolioEntries(): HasMany
+    {
+        return $this->hasMany(PortfolioEntry::class);
+    }
+
+    /**
      * @return HasMany<ContributionVersion, $this>
      */
     public function createdContributionVersions(): HasMany
