@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Profile;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Actions\Portfolio\RebuildTalentCandidateProjection;
 use App\Models\AvailabilityWindow;
 use App\Models\Institution;
 use App\Models\StudentProfile;
@@ -20,6 +21,7 @@ final class ReplaceStudentProfileAvailability
     public function __construct(
         private readonly AuditRecorder $audit,
         private readonly EnsureStudentProfileIsFresh $ensureFresh,
+        private readonly RebuildTalentCandidateProjection $rebuildProjection,
     ) {}
 
     /**
@@ -56,11 +58,13 @@ final class ReplaceStudentProfileAvailability
                 ]);
             }
 
+            $institution = Institution::query()->findOrFail($profile->institution_id);
+
             $this->audit->record(
                 operation: 'profile.availability_updated',
                 auditable: $profile,
                 actor: $actor,
-                institution: Institution::query()->findOrFail($profile->institution_id),
+                institution: $institution,
                 before: [
                     'profile_id' => $profile->getKey(),
                     'availability_count' => $existingCount,
@@ -71,6 +75,8 @@ final class ReplaceStudentProfileAvailability
                     'days' => array_values(array_unique(array_column($windows, 'day_of_week'))),
                 ],
             );
+
+            $this->rebuildProjection->handle($actor, $institution);
 
             return $profile->refresh();
         }, attempts: 3);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Concerns\InstitutionOwned;
 use Database\Factories\TalentCandidateProjectionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -40,7 +41,7 @@ use Illuminate\Support\Carbon;
     'availability_status',
     'verified_at',
 ])]
-class TalentCandidateProjection extends Model
+class TalentCandidateProjection extends Model implements InstitutionOwned
 {
     /** @use HasFactory<TalentCandidateProjectionFactory> */
     use HasFactory;
@@ -59,6 +60,11 @@ class TalentCandidateProjection extends Model
     public function institution(): BelongsTo
     {
         return $this->belongsTo(Institution::class, 'institution_id');
+    }
+
+    public function institutionId(): int
+    {
+        return $this->institution_id;
     }
 
     /**

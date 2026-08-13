@@ -4,18 +4,24 @@ declare(strict_types=1);
 
 namespace App\Actions\Talent;
 
-use App\Actions\Audit\AuditRecorder;
+use App\Actions\Portfolio\RebuildTalentCandidateProjection;
+use App\Enums\InstitutionMembershipRole;
 use App\Models\Institution;
+use App\Models\StudentProfile;
 use App\Models\TalentCandidateProjection;
 use App\Models\User;
+use App\Policies\InstitutionContextResolver;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
+/**
+ * @deprecated Projections are derived from approved portfolio entries. Use the
+ * portfolio approval and visibility flows instead of supplying projection data.
+ */
 final class UpdateTalentCandidateProjection
 {
     public function __construct(
-        private readonly AuditRecorder $auditRecorder,
+        private readonly InstitutionContextResolver $institutionContextResolver,
+        private readonly RebuildTalentCandidateProjection $rebuildProjection,
     ) {}
 
     /**
@@ -31,47 +37,30 @@ final class UpdateTalentCandidateProjection
         Institution $institution,
         array $data,
     ): TalentCandidateProjection {
-        if ($actor->id !== $targetUser->id) {
-            $isCampusAdmin = $institution->memberships()
-                ->where('user_id', $actor->id)
-                ->where('role', 'campus_admin')
-                ->exists();
-
-            if (! $isCampusAdmin && ! $actor->is_platform_admin) {
-                throw new AuthorizationException('You are not authorized to update this candidate projection.');
-            }
+        if ($data !== []) {
+            throw new AuthorizationException(
+                'Candidate projections are derived from approved portfolio entries and cannot accept manual data.',
+            );
         }
 
-        return DB::transaction(function () use ($actor, $targetUser, $institution, $data) {
-            $projection = TalentCandidateProjection::query()->updateOrCreate(
-                ['user_id' => $targetUser->id],
-                [
-                    'institution_id' => $institution->id,
-                    'headline' => isset($data['headline']) ? (string) $data['headline'] : null,
-                    'bio' => isset($data['bio']) ? (string) $data['bio'] : null,
-                    'skills' => isset($data['skills']) && is_array($data['skills']) ? array_values($data['skills']) : [],
-                    'badges' => isset($data['badges']) && is_array($data['badges']) ? array_values($data['badges']) : [],
-                    'contributions' => isset($data['contributions']) && is_array($data['contributions']) ? array_values($data['contributions']) : [],
-                    'is_visible' => isset($data['is_visible']) ? (bool) $data['is_visible'] : true,
-                    'availability_status' => isset($data['availability_status']) ? (string) $data['availability_status'] : 'available',
-                    'verified_at' => isset($data['verified_at']) ? Carbon::parse((string) $data['verified_at']) : Carbon::now(),
-                ]
-            );
+        $profile = StudentProfile::query()
+            ->where('user_id', $targetUser->getKey())
+            ->where('institution_id', $institution->getKey())
+            ->first();
 
-            $this->auditRecorder->record(
-                operation: 'talent_candidate_projection.updated',
-                auditable: $projection,
-                actor: $actor,
-                institution: $institution,
-                before: [],
-                after: [
-                    'is_visible' => $projection->is_visible,
-                    'availability_status' => $projection->availability_status,
-                ],
-                reason: 'Talent candidate projection updated idempotently.',
-            );
+        $allowedRoles = $actor->getKey() === $targetUser->getKey()
+            ? [InstitutionMembershipRole::Student]
+            : [InstitutionMembershipRole::CampusAdmin];
 
-            return $projection;
-        });
+        if (
+            ! $actor->is_platform_admin
+            && ($profile === null
+                || $this->institutionContextResolver->resolve($actor, $profile, $allowedRoles) === null)
+        ) {
+            throw new AuthorizationException('You are not authorized to rebuild this candidate projection.');
+        }
+
+        return $this->rebuildProjection->handle($targetUser, $institution)
+            ?? throw new AuthorizationException('Student profile is required before rebuilding a projection.');
     }
 }

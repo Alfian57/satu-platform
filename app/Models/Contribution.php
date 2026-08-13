@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -103,6 +104,14 @@ class Contribution extends Model implements InstitutionOwned
             'contribution_id',
             'contribution_version_id',
         );
+    }
+
+    /**
+     * @return HasOne<PortfolioEntry, $this>
+     */
+    public function portfolioEntry(): HasOne
+    {
+        return $this->hasOne(PortfolioEntry::class);
     }
 
     public function institutionId(): int

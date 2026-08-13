@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\PortfolioEntryController;
 use App\Http\Controllers\ProjectAttachmentController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectDiscussionController;
@@ -306,6 +307,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('student-profiles')->name('student-profiles.')->group(function () {
         Route::post('/', [StudentProfileController::class, 'store'])
             ->name('store');
+        Route::scopeBindings()->prefix('/{studentProfile}/portfolio')->group(function () {
+            Route::get('/', [PortfolioEntryController::class, 'index'])
+                ->name('portfolio.index');
+            Route::get('/{portfolioEntry}', [PortfolioEntryController::class, 'show'])
+                ->name('portfolio.show');
+            Route::patch('/{portfolioEntry}/visibility', [PortfolioEntryController::class, 'updateVisibility'])
+                ->name('portfolio.visibility.update');
+        });
         Route::get('/{studentProfile}', [StudentProfileController::class, 'show'])
             ->name('show');
         Route::patch('/{studentProfile}', [StudentProfileController::class, 'update'])
