@@ -82,6 +82,7 @@ export type ContributionReview = {
         name: string;
     };
     decision: 'approved' | 'revision' | 'rejected';
+    policy_version: string;
     reason: string | null;
     note: string | null;
     reviewed_at: string;
@@ -105,6 +106,33 @@ export type ContributionDetail = {
     reviews: ContributionReview[];
     created_at: string;
     updated_at: string;
+};
+
+export type ContributionReviewQueueVersion = Omit<
+    ContributionVersion,
+    'task'
+> & {
+    task: {
+        id: number;
+        title: string;
+    } | null;
+};
+
+export type ContributionReviewQueueItem = {
+    id: number;
+    reference: string;
+    project: {
+        id: number;
+        title: string;
+    };
+    contributor: {
+        id: number;
+        name: string;
+    };
+    status: ContributionStatus;
+    updated_at: string;
+    current_version: ContributionReviewQueueVersion | null;
+    reviews: ContributionReview[];
 };
 
 export type ContributionComposerValues = {

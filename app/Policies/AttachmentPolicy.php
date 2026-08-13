@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\AttachmentPurpose;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\ProjectStatus;
 use App\Enums\TeamMembershipStatus;
@@ -22,7 +23,8 @@ final class AttachmentPolicy
 
     public function viewAny(User $user, Project $project): bool
     {
-        return $this->canAccessProject($user, $project);
+        return $this->canAccessProject($user, $project)
+            || $this->canReviewEvidence($user, $project);
     }
 
     public function view(User $user, Attachment $attachment): bool
@@ -31,7 +33,10 @@ final class AttachmentPolicy
 
         return $project !== null
             && $this->storage->isManagedPath($attachment)
-            && $this->canAccessProject($user, $project);
+            && (
+                $this->canAccessProject($user, $project)
+                || $this->canReviewEvidence($user, $project, $attachment)
+            );
     }
 
     public function create(User $user, Project $project): bool
@@ -104,5 +109,24 @@ final class AttachmentPolicy
                 ->where('user_id', $user->getKey())
                 ->where('status', TeamMembershipStatus::Active)
                 ->exists();
+    }
+
+    private function canReviewEvidence(
+        User $user,
+        Project $project,
+        ?Attachment $attachment = null,
+    ): bool {
+        if (
+            $attachment !== null
+            && $attachment->purpose !== AttachmentPurpose::Evidence
+        ) {
+            return false;
+        }
+
+        return $this->institutionContextResolver->resolve(
+            $user,
+            $project,
+            [InstitutionMembershipRole::CampusAdmin],
+        ) !== null;
     }
 }
