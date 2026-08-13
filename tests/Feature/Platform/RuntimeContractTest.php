@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Platform;
 
+use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Collection;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,9 +16,31 @@ use Illuminate\Console\Scheduling\Schedule;
 | - Health endpoint responds successfully
 | - Scheduler registers the required recurring commands with their cadence
 | - Private attachment disk is not publicly served
-| - The application fails fast when a required secret is missing
 |
 */
+
+/**
+ * @return Collection<int, Event>
+ */
+function scheduledEvents(): Collection
+{
+    return collect(app(Schedule::class)->events());
+}
+
+function scheduledEventFor(string $command): ?Event
+{
+    return scheduledEvents()->first(
+        fn ($event) => str_contains((string) $event->command, $command),
+    );
+}
+
+function scheduledCommands(): array
+{
+    return scheduledEvents()
+        ->map(fn ($event) => trim((string) $event->command))
+        ->values()
+        ->all();
+}
 
 test('health endpoint responds 200 on the up route', function () {
     $this->get('/up')
@@ -24,8 +48,7 @@ test('health endpoint responds 200 on the up route', function () {
 });
 
 test('scheduler registers message dispatch and anomaly alert commands', function () {
-    $commands = collect(app(Schedule::class)->events())
-        ->map(fn ($event) => trim((string) $event->command));
+    $commands = implode(' ', scheduledCommands());
 
     expect($commands)
         ->toContain('message:dispatch-due')
@@ -33,21 +56,14 @@ test('scheduler registers message dispatch and anomaly alert commands', function
 });
 
 test('message dispatch command runs every minute without overlapping', function () {
-    $event = collect(app(Schedule::class)->events())->first(
-        fn ($event) => str_contains((string) $event->command, 'message:dispatch-due'),
-    );
+    $event = scheduledEventFor('message:dispatch-due');
 
     expect($event)->not->toBeNull()
         ->and($event->expression)->toBe('* * * * *');
 });
 
 test('anomaly alert command is single-server and non-overlapping', function () {
-    $event = collect(app(Schedule::class)->events())->first(
-        fn ($event) => str_contains(
-            (string) $event->command,
-            'integration:alert-sync-anomalies',
-        ),
-    );
+    $event = scheduledEventFor('integration:alert-sync-anomalies');
 
     expect($event)->not->toBeNull()
         ->and($event->expression)->toBe('*/15 * * * *');
