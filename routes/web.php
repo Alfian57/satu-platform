@@ -70,6 +70,9 @@ Route::middleware('guest')->group(function () {
 Route::get('invitation/{token}', [AuthFlowController::class, 'showInvitation'])
     ->name('invitation.show');
 
+Route::get('p/{publicIdentifier}', [PortfolioPageController::class, 'share'])
+    ->name('portfolio.share');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('recruiter/talent')->name('recruiter.talent.')->group(function () {
         // Index page for saved candidates
