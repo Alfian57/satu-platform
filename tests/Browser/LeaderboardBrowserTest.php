@@ -45,6 +45,7 @@ test('leaderboard explains ties, protected cohorts, and score provenance', funct
         ->waitForText('Informatika')
         ->click('@leaderboard-explanation-trigger')
         ->waitForText('Penjelasan baris leaderboard')
+        ->wait(0.3)
         ->assertSee('XP terverifikasi')
         ->assertSee('Denominator aktif')
         ->assertNoJavaScriptErrors()
