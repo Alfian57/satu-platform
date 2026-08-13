@@ -93,6 +93,14 @@ class Institution extends Model
     }
 
     /**
+     * @return HasMany<BadgeAward, $this>
+     */
+    public function badgeAwards(): HasMany
+    {
+        return $this->hasMany(BadgeAward::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
