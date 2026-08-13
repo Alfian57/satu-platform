@@ -444,6 +444,7 @@ test('gives up after exhausting retries on transient failures', async () => {
     const github = {
         graphql: async () => {
             attempts += 1;
+
             throw new Error('socket hang up');
         },
     };
