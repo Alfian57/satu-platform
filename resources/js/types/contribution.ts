@@ -104,8 +104,44 @@ export type ContributionDetail = {
     current_version: ContributionVersion | null;
     versions: ContributionVersion[];
     reviews: ContributionReview[];
+    provenance: {
+        timeline: ContributionProvenanceEvent[];
+        portfolio: ContributionPortfolioOutcome | null;
+    };
     created_at: string;
     updated_at: string;
+};
+
+export type ContributionPortfolioOutcome = {
+    id: number;
+    title: string;
+    verification_level:
+        'self_reported' | 'team_confirmed' | 'institution_verified';
+    verification_label: string;
+    visibility: 'private' | 'institution' | 'recruiter' | 'public';
+    status: 'private' | 'published' | 'withdrawn' | 'source_unavailable';
+    published_at: string | null;
+    updated_at: string;
+    action_url: string;
+};
+
+export type ContributionProvenanceEvent = {
+    id: string;
+    type: 'version_created' | 'review_decision' | 'portfolio_projection';
+    label: string;
+    occurred_at: string;
+    version_number: number | null;
+    task?: {
+        id: number;
+        title: string;
+    };
+    decision?: 'approved' | 'revision' | 'rejected';
+    reviewer?: {
+        id: number;
+        name: string;
+    };
+    policy_version?: string;
+    portfolio?: ContributionPortfolioOutcome;
 };
 
 export type ContributionReviewQueueVersion = Omit<

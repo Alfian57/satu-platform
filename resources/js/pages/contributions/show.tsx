@@ -7,6 +7,7 @@ import {
     Clock3,
     FileCheck2,
     FileWarning,
+    ExternalLink,
     History,
     LockKeyhole,
     MessageSquareText,
@@ -21,12 +22,14 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { index as contributionsIndex } from '@/routes/contributions';
+import { show as portfolioShow } from '@/routes/portfolio';
 import type {
     ContributionApiResponse,
     ContributionComposerValues,
     ContributionDetail,
     ContributionPayload,
     ContributionProjectOption,
+    ContributionProvenanceEvent,
     ContributionReview,
     ContributionStatus,
 } from '@/types/contribution';
@@ -232,6 +235,134 @@ function ReviewFeedback({ reviews }: { reviews: ContributionReview[] }) {
                     );
                 })}
         </ol>
+    );
+}
+
+function provenanceDecisionLabel(
+    decision: ContributionProvenanceEvent['decision'],
+): string {
+    return {
+        approved: 'Disetujui',
+        revision: 'Perlu revisi',
+        rejected: 'Belum disetujui',
+    }[decision ?? 'rejected'];
+}
+
+function portfolioOutcomeLabel(
+    status: NonNullable<
+        ContributionDetail['provenance']['portfolio']
+    >['status'],
+): string {
+    return {
+        private: 'Tersimpan privat',
+        published: 'Terbit sesuai audience',
+        withdrawn: 'Ditarik sementara',
+        source_unavailable: 'Sumber perlu diperiksa',
+    }[status];
+}
+
+function ProvenanceTrace({
+    provenance,
+}: Pick<ContributionDetail, 'provenance'>) {
+    return (
+        <section
+            aria-labelledby="contribution-provenance-title"
+            className="grid gap-4 border-y border-border py-5"
+            data-test="contribution-provenance-chain"
+        >
+            <div>
+                <p className="font-label text-label text-primary">
+                    OUTCOME CHAIN
+                </p>
+                <h2
+                    id="contribution-provenance-title"
+                    className="mt-1 text-title font-semibold"
+                >
+                    Dari task ke portfolio
+                </h2>
+                <p className="mt-2 max-w-[68ch] text-sm leading-6 text-muted-foreground">
+                    Jejak ini menghubungkan task, versi contribution, keputusan
+                    reviewer, dan projection portfolio tanpa membuka evidence
+                    privat.
+                </p>
+            </div>
+
+            {provenance.timeline.length === 0 ? (
+                <p className="text-sm leading-6 text-muted-foreground">
+                    Belum ada jejak provenance yang dapat ditampilkan.
+                </p>
+            ) : (
+                <ol className="grid border-l-2 border-border pl-4">
+                    {provenance.timeline.map((event) => (
+                        <li
+                            key={event.id}
+                            className="relative grid gap-2 border-b border-border py-4 first:pt-1 last:border-b-0"
+                        >
+                            <span
+                                aria-hidden="true"
+                                className="absolute top-5 -left-[1.35rem] size-2 rounded-full bg-primary ring-4 ring-background"
+                            />
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="text-sm font-semibold">
+                                    {event.label}
+                                </p>
+                                <time
+                                    dateTime={event.occurred_at}
+                                    className="text-xs text-muted-foreground"
+                                >
+                                    {formatDate(event.occurred_at)}
+                                </time>
+                            </div>
+                            {event.task && (
+                                <p className="text-sm leading-6 text-muted-foreground">
+                                    Task: {event.task.title}
+                                    {event.version_number !== null
+                                        ? `, versi ${event.version_number}`
+                                        : ''}
+                                </p>
+                            )}
+                            {event.decision && (
+                                <p className="text-sm leading-6 text-muted-foreground">
+                                    {provenanceDecisionLabel(event.decision)}{' '}
+                                    oleh{' '}
+                                    {event.reviewer?.name ?? 'reviewer kampus'}
+                                </p>
+                            )}
+                            {event.portfolio && (
+                                <div className="flex flex-wrap items-center gap-3 text-sm">
+                                    <span className="font-semibold">
+                                        {event.portfolio.title}
+                                    </span>
+                                    <span className="border border-verified/30 bg-verified-subtle px-2 py-1 text-xs font-semibold text-verified-subtle-foreground">
+                                        {portfolioOutcomeLabel(
+                                            event.portfolio.status,
+                                        )}
+                                    </span>
+                                    <Link
+                                        href={portfolioShow(event.portfolio.id)}
+                                        className="inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                                        data-test="contribution-portfolio-link"
+                                    >
+                                        Buka portfolio
+                                        <ExternalLink
+                                            aria-hidden="true"
+                                            className="size-4"
+                                        />
+                                    </Link>
+                                </div>
+                            )}
+                        </li>
+                    ))}
+                </ol>
+            )}
+
+            {provenance.portfolio === null && (
+                <p className="border-t border-border pt-4 text-sm leading-6 text-muted-foreground">
+                    Entry portfolio dibuat setelah contribution divalidasi oleh
+                    reviewer kampus.
+                </p>
+            )}
+        </section>
     );
 }
 
@@ -794,6 +925,10 @@ export default function ContributionsShow({
                                     reviews={contribution.reviews}
                                 />
                             </section>
+
+                            <ProvenanceTrace
+                                provenance={contribution.provenance}
+                            />
 
                             <section
                                 aria-labelledby="contribution-history-title"
