@@ -32,11 +32,11 @@ All protected models have corresponding Policy classes in `app/Policies/`:
 ### Verification
 
 Existing feature tests verify Policy enforcement:
-- `tests/Feature/Affiliation/AffiliationReviewTest.php` — cross-tenant denial
-- `tests/Feature/Campus/CampusInclusionTest.php` — inclusion signal access restriction
-- `tests/Feature/ContributionDomainTest.php` — contribution tenant boundary
-- `tests/Feature/Task/TaskWorkspaceControllerTest.php` — workspace Policy checks
-- `tests/Feature/Workspace/WorkspaceRealtimeTest.php` — Reverb channel authorization
+- `tests/Feature/Affiliation/AffiliationReviewTest.php`: cross-tenant denial
+- `tests/Feature/Campus/CampusInclusionTest.php`: inclusion signal access restriction
+- `tests/Feature/ContributionDomainTest.php`: contribution tenant boundary
+- `tests/Feature/Task/TaskWorkspaceControllerTest.php`: workspace Policy checks
+- `tests/Feature/Workspace/WorkspaceRealtimeTest.php`: Reverb channel authorization
 
 ---
 
@@ -74,9 +74,9 @@ public function show(Project $project): Response
 - `app/Concerns/InstitutionOwned` ensures tenant boundary contract
 
 **Test Coverage:**
-- `tests/Feature/ContributionDomainTest.php:266-283` — cross-tenant contribution denial
-- `tests/Feature/Campus/CampusInclusionTest.php:80-96` — cross-tenant inclusion denial
-- `tests/Feature/Task/TaskWorkspaceControllerTest.php:38-52` — task cross-tenant denial
+- `tests/Feature/ContributionDomainTest.php:266-283`: cross-tenant contribution denial
+- `tests/Feature/Campus/CampusInclusionTest.php:80-96`: cross-tenant inclusion denial
+- `tests/Feature/Task/TaskWorkspaceControllerTest.php:38-52`: task cross-tenant denial
 
 ---
 
@@ -91,9 +91,9 @@ public function show(Project $project): Response
 - Platform admin not accessible via public flow
 
 **Evidence:**
-- `app/Actions/Identity/*` — registration limited to student
-- `app/Policies/InstitutionMembershipPolicy.php` — role-based access control
-- `app/Policies/RecruiterOrganizationPolicy.php` — recruiter verification gate
+- `app/Actions/Identity/*`: registration limited to student
+- `app/Policies/InstitutionMembershipPolicy.php`: role-based access control
+- `app/Policies/RecruiterOrganizationPolicy.php`: recruiter verification gate
 
 ### ✅ CSRF and Session Security
 
@@ -108,10 +108,10 @@ public function show(Project $project): Response
 ### ✅ Models Use Guarded or Fillable
 
 **Sample Audit:**
-- `app/Models/Contribution.php:32` — `#[Guarded(['id', 'institution_id', 'owner_id', ...])]`
-- `app/Models/Project.php` — uses `$guarded`
-- `app/Models/User.php` — uses `$fillable`
-- `app/Models/InclusionSignal.php:16` — `protected $guarded = [];` (acceptable for internal-only model)
+- `app/Models/Contribution.php:32`: `#[Guarded(['id', 'institution_id', 'owner_id', ...])]`
+- `app/Models/Project.php`: uses `$guarded`
+- `app/Models/User.php`: uses `$fillable`
+- `app/Models/InclusionSignal.php:16`: `protected $guarded = [];` (acceptable for internal-only model)
 
 **Recommendation:** Audit `InclusionSignal` to ensure it's never mass-assigned from user input. *(Low priority, model is restricted by InclusionSignalPolicy)*
 
@@ -123,18 +123,18 @@ public function show(Project $project): Response
 
 All serializers in `app/Support/` implement allowlist-based projections:
 
-- **RecruiterSafeCandidateSerializer** — allowlisted fields only, no phone/NIM/private evidence
-- **InclusionSignalSerializer** — restricted to campus admin, never exposed to student/recruiter
-- **ContributionSerializer** — version-aware, evidence metadata controlled
-- **NotificationSerializer** — sanitized, no raw phone/OTP
-- **AttachmentSerializer** — authorized download URLs only
+- **RecruiterSafeCandidateSerializer**: allowlisted fields only, no phone/NIM/private evidence
+- **InclusionSignalSerializer**: restricted to campus admin, never exposed to student/recruiter
+- **ContributionSerializer**: version-aware, evidence metadata controlled
+- **NotificationSerializer**: sanitized, no raw phone/OTP
+- **AttachmentSerializer**: authorized download URLs only
 
 **Evidence (app/Support/RecruiterSafeCandidateSerializer.php):**
 - Only public-safe fields: name, headline, skills, portfolio URL
 - Phone, NIM, institution_id, private evidence excluded
 
 **Test Coverage:**
-- `tests/Feature/Campus/InclusionQualityGateTest.php:55-70` — inclusion never serialized to student
+- `tests/Feature/Campus/InclusionQualityGateTest.php:55-70`: inclusion never serialized to student
 - Existing serialization tests in feature suites verify allowlist enforcement
 
 ---
@@ -159,8 +159,8 @@ Broadcast::channel('institutions.{institution}.projects.{project}.workspace',
 - Presence channel returns only `id` and `name`, no sensitive data
 
 **Test Coverage:**
-- `tests/Feature/Workspace/WorkspaceRealtimeTest.php:57-76` — channel authorization denial
-- Browser test: `tests/Browser/ProjectWorkspaceBrowserTest.php` — two-client reconnect flow
+- `tests/Feature/Workspace/WorkspaceRealtimeTest.php:57-76`: channel authorization denial
+- Browser test: `tests/Browser/ProjectWorkspaceBrowserTest.php`: two-client reconnect flow
 
 ---
 
@@ -178,11 +178,11 @@ Broadcast::channel('institutions.{institution}.projects.{project}.workspace',
 - MIME and size validation present
 
 **Evidence:**
-- `app/Support/Attachment/AttachmentStorage.php` — private storage, authorized retrieval
-- `app/Policies/AttachmentPolicy.php` — view/create/delete gated by team membership
+- `app/Support/Attachment/AttachmentStorage.php`: private storage, authorized retrieval
+- `app/Policies/AttachmentPolicy.php`: view/create/delete gated by team membership
 
 **Test Coverage:**
-- `tests/Feature/Attachment/AttachmentControllerTest.php` — upload/download authorization
+- `tests/Feature/Attachment/AttachmentControllerTest.php`: upload/download authorization
 
 **Recommendation:** Document malware scanning strategy before production. *(Gate: production readiness)*
 
@@ -199,8 +199,8 @@ Broadcast::channel('institutions.{institution}.projects.{project}.workspace',
 - Inclusion detail not logged to general log
 
 **Evidence:**
-- `app/Console/Commands/SendOutboxMessages.php:82` — masked phone in log
-- `app/Support/Notification/DeliveryPreferences.php` — no phone in preferences log
+- `app/Console/Commands/SendOutboxMessages.php:82`: masked phone in log
+- `app/Support/Notification/DeliveryPreferences.php`: no phone in preferences log
 
 **Audit Commands:**
 ```bash
@@ -221,8 +221,8 @@ grep -r "otp" app/ | grep -i log    # No OTP logging found
 - Visibility withdrawal stops new projection
 
 **Evidence:**
-- `app/Support/RecruiterSafeCandidateSerializer.php` — safe projection only
-- `app/Policies/RecruiterOrganizationPolicy.php:searchTalent()` — entitlement check
+- `app/Support/RecruiterSafeCandidateSerializer.php`: safe projection only
+- `app/Policies/RecruiterOrganizationPolicy.php:searchTalent()`: entitlement check
 - No username, NIM, phone, private evidence, discussion, audit, matching input, or inclusion exposed
 
 **Test Coverage:**
@@ -242,9 +242,9 @@ grep -r "otp" app/ | grep -i log    # No OTP logging found
 - No mental-health diagnosis claims
 
 **Evidence:**
-- `app/Support/Inclusion/` — graph-based, not content-based
-- `app/Policies/InclusionSignalPolicy.php` — restricted to campus admin
-- `app/Support/Gamification/` — XP ledger does not use inclusion data
+- `app/Support/Inclusion/`: graph-based, not content-based
+- `app/Policies/InclusionSignalPolicy.php`: restricted to campus admin
+- `app/Support/Gamification/`: XP ledger does not use inclusion data
 
 ---
 
@@ -308,21 +308,21 @@ vendor/bin/phpstan analyse --memory-limit=2G
 
 ## 15. Acceptance Criteria Check
 
-- [x] Audit policy coverage — **27 policies found, all protected models covered**
-- [x] Audit IDOR — **Policy + route binding prevent IDOR**
-- [x] Audit tenant scope — **InstitutionOwned + scoped queries enforced**
-- [x] Audit role assignment — **Open registration = student only**
-- [x] Audit CSRF/session — **Laravel default protection active**
-- [x] Audit upload/download — **Attachment Policy + private storage**
-- [x] Audit mass assignment — **Guarded/fillable present**
-- [x] Audit serialization — **Allowlist-based serializers implemented**
-- [x] Audit logs — **No phone/OTP/token logging**
-- [x] Audit broadcasts — **Channel authorization checks tenant + membership**
-- [x] Audit public portfolio — **Recruiter-safe projection only**
-- [x] Audit inclusion — **Restricted serialization, forbidden operations not implemented**
-- [x] Audit consent — **Contact request requires student accept**
-- [x] Audit deletion/export — **Data rights flow present (not fully implemented, out of current scope)**
-- [x] No known critical/high security or privacy issue — **CONFIRMED**
+- [x] Audit policy coverage: **27 policies found, all protected models covered**
+- [x] Audit IDOR: **Policy + route binding prevent IDOR**
+- [x] Audit tenant scope: **InstitutionOwned + scoped queries enforced**
+- [x] Audit role assignment: **Open registration = student only**
+- [x] Audit CSRF/session: **Laravel default protection active**
+- [x] Audit upload/download: **Attachment Policy + private storage**
+- [x] Audit mass assignment: **Guarded/fillable present**
+- [x] Audit serialization: **Allowlist-based serializers implemented**
+- [x] Audit logs: **No phone/OTP/token logging**
+- [x] Audit broadcasts: **Channel authorization checks tenant + membership**
+- [x] Audit public portfolio: **Recruiter-safe projection only**
+- [x] Audit inclusion: **Restricted serialization, forbidden operations not implemented**
+- [x] Audit consent: **Contact request requires student accept**
+- [x] Audit deletion/export: **Data rights flow present (not fully implemented, out of current scope)**
+- [x] No known critical/high security or privacy issue: **CONFIRMED**
 
 ---
 
@@ -347,8 +347,8 @@ vendor/bin/pint --test --format agent
 ```
 
 **Existing Test Suites:**
-- `vendor/bin/pest tests/Feature/ --compact` — All tenant/policy tests pass
-- `vendor/bin/pest tests/Browser/ --compact` — Realtime and UI security flows verified
+- `vendor/bin/pest tests/Feature/ --compact`: All tenant/policy tests pass
+- `vendor/bin/pest tests/Browser/ --compact`: Realtime and UI security flows verified
 
 ---
 
