@@ -28,9 +28,6 @@ commitlint.config.mjs
 phpstan.neon
 phpunit.xml
 pint.json
-tsconfig.json
-vite.config.ts
-components.json
 test-results
 *.log
 *.tmp
