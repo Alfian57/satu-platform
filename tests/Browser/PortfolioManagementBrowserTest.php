@@ -44,6 +44,18 @@ test('student can manage portfolio audiences with mobile and desktop evidence', 
             true,
         )
         ->screenshot(true, 'p48-portfolio-management-desktop-1366x900')
+        ->resize(768, 1024)
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(false, 'p48-portfolio-management-tablet-768x1024')
+        ->resize(1024, 768)
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(false, 'p48-portfolio-management-small-laptop-1024x768')
         ->assertNoJavaScriptErrors()
         ->assertNoConsoleLogs()
         ->assertNoAccessibilityIssues();
