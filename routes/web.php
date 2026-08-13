@@ -4,6 +4,7 @@ use App\Http\Controllers\AcademicCreditMappingController;
 use App\Http\Controllers\AcademicIntegrationController;
 use App\Http\Controllers\AffiliationReviewController;
 use App\Http\Controllers\Auth\AuthFlowController;
+use App\Http\Controllers\CampusContributionReviewController;
 use App\Http\Controllers\CampusInclusionController;
 use App\Http\Controllers\CampusOverviewController;
 use App\Http\Controllers\ContributionController;
@@ -251,6 +252,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('campus/{institution}/overview', [CampusOverviewController::class, 'show'])
         ->name('campus.overview.show');
+
+    Route::get('campus/{institution}/contributions', [CampusContributionReviewController::class, 'index'])
+        ->name('campus.contributions.index');
 
     Route::get('campus/{institution}/inclusion', [CampusInclusionController::class, 'index'])
         ->name('campus.inclusion.index');

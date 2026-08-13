@@ -8,6 +8,7 @@ use App\Enums\ContributionStatus;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\TeamMembershipStatus;
 use App\Models\Contribution;
+use App\Models\Institution;
 use App\Models\Project;
 use App\Models\TeamMembership;
 use App\Models\User;
@@ -18,10 +19,14 @@ final class ContributionPolicy
         private readonly InstitutionContextResolver $institutionContextResolver,
     ) {}
 
-    public function viewAny(User $user, Project $project): bool
+    public function viewAny(User $user, Institution|Project $source): bool
     {
-        return $this->canAccessProject($user, $project)
-            || $this->isCampusAdmin($user, $project);
+        if ($source instanceof Institution) {
+            return $this->isCampusAdmin($user, $source);
+        }
+
+        return $this->canAccessProject($user, $source)
+            || $this->isCampusAdmin($user, $source);
     }
 
     public function view(User $user, Contribution $contribution): bool
@@ -131,7 +136,7 @@ final class ContributionPolicy
         return $project->status->isActive() && $this->canAccessProject($user, $project);
     }
 
-    private function isCampusAdmin(User $user, Project|Contribution $source): bool
+    private function isCampusAdmin(User $user, Institution|Project|Contribution $source): bool
     {
         return $this->institutionContextResolver->resolve(
             $user,
