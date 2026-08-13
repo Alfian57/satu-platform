@@ -155,6 +155,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<PortfolioEntry, $this>
+     */
+    public function portfolioEntries(): HasMany
+    {
+        return $this->hasMany(PortfolioEntry::class);
+    }
+
+    /**
      * @return HasMany<ContributionVersion, $this>
      */
     public function createdContributionVersions(): HasMany
@@ -168,6 +176,14 @@ class User extends Authenticatable
     public function contributionReviews(): HasMany
     {
         return $this->hasMany(ContributionReview::class, 'reviewer_id');
+    }
+
+    /**
+     * @return HasMany<BadgeAward, $this>
+     */
+    public function badgeAwards(): HasMany
+    {
+        return $this->hasMany(BadgeAward::class);
     }
 
     /**

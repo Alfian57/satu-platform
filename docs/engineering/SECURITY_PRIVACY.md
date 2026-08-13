@@ -53,7 +53,18 @@ Real-data inclusion activation membutuhkan DPIA, lawful basis, retention, notice
 
 ## 7. Gamification Integrity
 
-XP hanya dari approved contribution dengan idempotent source. Reversal tidak menghapus ledger history. Badge rule version disimpan. Cohort di bawah lima disuppress. Individual ranking default off. Anti-abuse review mencakup duplicate evidence, repeated submission, collusion, inactive member manipulation, dan unauthorized reviewer.
+XP hanya dari approved contribution dengan idempotent source. Reversal tidak menghapus ledger history. Badge rule version disimpan dan perubahan rule tidak menulis ulang award history. Badge evaluation hanya memakai approved contribution dan approved review, tidak membaca message, private evidence, inclusion signal, atau connectivity opportunity. Award memiliki idempotency key per user, institution, definition, dan rule version. Source explanation hanya memuat reference contribution, version, dan safe label.
+
+Badge taxonomy dikelola melalui definition immutable dan rule version yang hanya dapat dibuat oleh platform admin. Automatic issuance memakai active rule, sedangkan manual issuance dan revocation memerlukan campus reviewer pada institution yang sama dengan reason yang diaudit. Revocation memiliki history append-only dan tidak menghapus award.
+
+Cohort di bawah lima disuppress. Individual ranking default off. Anti-abuse review mencakup duplicate evidence, repeated submission, collusion, inactive member manipulation, dan unauthorized reviewer.
+
+XP award memverifikasi status contribution, approved review, dan konsistensi
+institution dengan project sebelum menulis ledger. Unique idempotency key
+mencegah retry atau concurrent event menggandakan award. Consumer approval
+berjalan setelah commit dan retryable melalui queue. Ledger update/delete
+ditolak pada model serta database layer, sementara reversal memakai row baru
+dan audit reason code.
 
 ## 8. Talent Boundary
 

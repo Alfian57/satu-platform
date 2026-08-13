@@ -4,13 +4,17 @@ use App\Http\Controllers\AcademicCreditMappingController;
 use App\Http\Controllers\AcademicIntegrationController;
 use App\Http\Controllers\AffiliationReviewController;
 use App\Http\Controllers\Auth\AuthFlowController;
+use App\Http\Controllers\CampusContributionReviewController;
 use App\Http\Controllers\CampusInclusionController;
 use App\Http\Controllers\CampusOverviewController;
 use App\Http\Controllers\ContributionController;
+use App\Http\Controllers\ContributionPageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\PortfolioEntryController;
+use App\Http\Controllers\PortfolioPageController;
 use App\Http\Controllers\ProjectAttachmentController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectDiscussionController;
@@ -65,6 +69,9 @@ Route::middleware('guest')->group(function () {
 
 Route::get('invitation/{token}', [AuthFlowController::class, 'showInvitation'])
     ->name('invitation.show');
+
+Route::get('p/{publicIdentifier}', [PortfolioPageController::class, 'share'])
+    ->name('portfolio.share');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('recruiter/talent')->name('recruiter.talent.')->group(function () {
@@ -159,15 +166,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::prefix('contributions')->name('contributions.')->group(function () {
-        Route::get('{contribution}', [ContributionController::class, 'show'])
+        Route::get('/', [ContributionPageController::class, 'index'])
+            ->name('index');
+        Route::get('create', [ContributionPageController::class, 'create'])
+            ->name('create');
+        Route::get('{contribution}', [ContributionPageController::class, 'show'])
             ->name('show');
         Route::post('{contribution}/evidence', [ContributionController::class, 'linkEvidence'])
             ->name('evidence.store');
         Route::post('{contribution}/submit', [ContributionController::class, 'submit'])
             ->name('submit');
+        Route::post('{contribution}/review', [ContributionController::class, 'review'])
+            ->name('reviews.store');
         Route::post('{contribution}/revision', [ContributionController::class, 'revise'])
             ->name('revisions.store');
     });
+
+    Route::get('portfolio', [PortfolioPageController::class, 'index'])
+        ->name('portfolio.index');
+    Route::get('portfolio/{portfolioEntry}', [PortfolioPageController::class, 'show'])
+        ->name('portfolio.show');
 
     Route::post('team-invitations/{teamInvitation}/accept', [TeamTransitionController::class, 'acceptInvitation'])
         ->name('team.invitations.accept');
@@ -245,6 +263,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('campus/{institution}/overview', [CampusOverviewController::class, 'show'])
         ->name('campus.overview.show');
 
+    Route::get('campus/{institution}/contributions', [CampusContributionReviewController::class, 'index'])
+        ->name('campus.contributions.index');
+
     Route::get('campus/{institution}/inclusion', [CampusInclusionController::class, 'index'])
         ->name('campus.inclusion.index');
 
@@ -295,6 +316,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('student-profiles')->name('student-profiles.')->group(function () {
         Route::post('/', [StudentProfileController::class, 'store'])
             ->name('store');
+        Route::scopeBindings()->prefix('/{studentProfile}/portfolio')->group(function () {
+            Route::get('/', [PortfolioEntryController::class, 'index'])
+                ->name('portfolio.index');
+            Route::get('/{portfolioEntry}', [PortfolioEntryController::class, 'show'])
+                ->name('portfolio.show');
+            Route::patch('/{portfolioEntry}/visibility', [PortfolioEntryController::class, 'updateVisibility'])
+                ->name('portfolio.visibility.update');
+        });
         Route::get('/{studentProfile}', [StudentProfileController::class, 'show'])
             ->name('show');
         Route::patch('/{studentProfile}', [StudentProfileController::class, 'update'])

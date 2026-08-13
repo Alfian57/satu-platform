@@ -6,10 +6,14 @@ namespace App\Http\Controllers;
 
 use App\Actions\Contribution\CreateContribution;
 use App\Actions\Contribution\LinkContributionEvidence;
+use App\Actions\Contribution\ReviewContribution;
 use App\Actions\Contribution\ReviseContribution;
 use App\Actions\Contribution\SubmitContribution;
+use App\Enums\ContributionReviewDecision;
 use App\Exceptions\InvalidContributionTransition;
+use App\Exceptions\StaleContributionDecision;
 use App\Http\Requests\Contribution\LinkContributionEvidenceRequest;
+use App\Http\Requests\Contribution\ReviewContributionRequest;
 use App\Http\Requests\Contribution\ReviseContributionRequest;
 use App\Http\Requests\Contribution\ShowContributionRequest;
 use App\Http\Requests\Contribution\StoreContributionRequest;
@@ -90,6 +94,35 @@ final class ContributionController extends Controller
         }
 
         return response()->json(['data' => $serializer->contribution($contribution)]);
+    }
+
+    public function review(
+        ReviewContributionRequest $request,
+        Contribution $contribution,
+        ReviewContribution $reviewContribution,
+        ContributionSerializer $serializer,
+    ): JsonResponse {
+        /** @var User $user */
+        $user = $request->user();
+
+        try {
+            $reviewContribution->handle(
+                contribution: $contribution,
+                reviewer: $user,
+                decision: ContributionReviewDecision::from($request->string('decision')->toString()),
+                expectedVersion: $request->integer('expected_version'),
+                reason: $request->string('reason')->toString() ?: null,
+                note: $request->string('note')->toString() ?: null,
+            );
+        } catch (InvalidContributionTransition|StaleContributionDecision $exception) {
+            throw ValidationException::withMessages([
+                'status' => $exception->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'data' => $serializer->contribution($contribution->refresh()),
+        ]);
     }
 
     public function revise(

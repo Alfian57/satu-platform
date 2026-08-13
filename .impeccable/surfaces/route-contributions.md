@@ -2,7 +2,7 @@
 version: 1
 slug: 'route-contributions'
 primary_target: 'route:/contributions'
-related_targets: ['route:/portfolio']
+related_targets: ['route:/portfolio', 'route:/p/{publicIdentifier}']
 ---
 
 # Contributions, Validation, and Portfolio
@@ -36,7 +36,7 @@ Submit review menunjukkan audience dan data yang akan tersimpan. Timeline memper
 
 ## Constraints and Open Decisions
 
-Evidence private by default. Download authorized. Validation authority dan retention adalah open gates kampus. Public portfolio tidak dibuat sampai visibility model diuji.
+Evidence private by default. Download authorized. Validation authority dan retention adalah open gates kampus. Public portfolio memakai projection allowlist setelah visibility model diuji.
 
 ## Loading Contract
 

@@ -62,7 +62,7 @@ Supported dimension hanya `skill_fit`, `project_need`, `availability`, dan `conn
 - `contributions`: owner, project/team, lifecycle, current version pointer.
 - `contribution_versions`: immutable claim and summary.
 - `contribution_evidence`: private source metadata dan storage reference.
-- `contribution_reviews`: campus reviewer decision, reason, note, reviewed-at.
+- `contribution_reviews`: campus reviewer decision, required reason for non-approval, note, immutable policy version, and reviewed-at.
 - `portfolio_entries`: approved source, visible fields, visibility level, published/withdrawn-at.
 
 Team confirmation tidak menjadi state requirement. Approval campus reviewer adalah validation authority.
@@ -73,9 +73,32 @@ Team confirmation tidak menjadi state requirement. Approval campus reviewer adal
 
 User, institution, semester, amount, reason, source type/id, policy version, awarded-at, reversal reference, dan unique idempotency key.
 
-### `badge_definitions`, `badge_rule_versions`, `badge_awards`
+Setiap approved contribution menghasilkan tepat satu award dengan key
+`{contribution_id}:{version}`. Reversal menyimpan amount positif pada row baru
+dan mereferensikan row award melalui `reversal_reference_id`, sehingga net XP
+dapat dihitung tanpa mengubah atau menghapus history. Row ledger append-only
+dilindungi oleh model dan database trigger/check, serta seluruh mutasi award
+dan reversal dicatat pada audit log.
 
-Taxonomy, public description, rule version, evidence/source, award/revoke history.
+### `badge_definitions`, `badge_rule_versions`, `badge_awards`, `badge_revocations`
+
+`badge_definitions` menyimpan key taxonomy yang immutable, category, level, public
+name, dan public description. Perubahan taxonomy membuat definition baru agar
+public copy yang pernah dipakai tidak berubah diam-diam.
+
+`badge_rule_versions` menyimpan definition, version integer, rule type, criteria
+tervalidasi, policy version, author, dan active state. Hanya satu versi aktif
+untuk satu definition. Rule lama tetap tersimpan ketika versi baru diaktifkan.
+
+`badge_awards` menyimpan user, institution, definition, rule version, source
+contribution dan version, safe source label, reason, idempotency key,
+awarded-at, serta revoked-at. Automatic evaluation hanya membaca contribution
+yang approved dan review approved. Source provenance tidak menyimpan atau
+memuat private evidence, message, inclusion, atau connectivity fields.
+
+`badge_revocations` adalah history append-only yang menyimpan award, actor,
+reason, dan revoked-at. Revoke mengubah hanya revoked-at pada award dan tidak
+menghapus atau menulis ulang award maupun rule history.
 
 ### `leaderboard_periods`, `leaderboard_preferences`, `leaderboard_projections`
 

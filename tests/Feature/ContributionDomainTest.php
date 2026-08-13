@@ -53,6 +53,7 @@ test('contribution lifecycle schema stores versioned provenance with bounded ide
             'contribution_version_id',
             'reviewer_id',
             'decision',
+            'policy_version',
             'reason',
             'note',
             'reviewed_at',

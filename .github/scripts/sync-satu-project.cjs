@@ -177,11 +177,7 @@ function mapPullRequestDeliveryStatus(pullRequest) {
     return pullRequest.draft ? 'In progress' : 'In review';
 }
 
-function buildProjectStatusRecords({
-    issues,
-    pullRequests,
-    malformed = [],
-}) {
+function buildProjectStatusRecords({ issues, pullRequests, malformed = [] }) {
     const allIssues = issues.filter((issue) => !issue.pull_request);
     const allIssuesByNumber = new Map(
         allIssues.map((issue) => [issue.number, issue]),
@@ -277,18 +273,94 @@ function logWarning(core, message) {
     }
 }
 
-async function graphql(github, query, variables) {
-    try {
-        return await github.graphql(query, variables);
-    } catch (error) {
-        const detail = error?.errors
-            ?.map((entry) => entry.message)
-            .filter(Boolean)
-            .join('; ');
-        const message = detail || error?.message || String(error);
+const GRAPHQL_RETRY_DEFAULTS = {
+    maxRetries: 4,
+    baseDelayMs: 1000,
+    maxDelayMs: 16000,
+};
 
-        throw new Error(`GitHub Project GraphQL request failed: ${message}`);
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransientGraphqlError(error) {
+    const status = error?.status ?? null;
+
+    if (status !== null && status >= 500 && status <= 599) {
+        return true;
     }
+
+    if (error?.errors && error.errors.length > 0) {
+        return false;
+    }
+
+    if (status !== null && status < 500) {
+        return false;
+    }
+
+    const message = String(error?.message ?? '').toLowerCase();
+    const networkHints = [
+        'other side closed',
+        'socket hang up',
+        'econnreset',
+        'etimedout',
+        'eai_again',
+        'fetch failed',
+        'request failed',
+        'socket',
+        'network',
+        'timeout',
+    ];
+
+    return networkHints.some((hint) => message.includes(hint));
+}
+
+function backoffDelay(attempt, { baseDelayMs, maxDelayMs }) {
+    const exponential = baseDelayMs * 2 ** attempt;
+
+    return Math.min(exponential, maxDelayMs);
+}
+
+async function graphql(
+    github,
+    query,
+    variables,
+    { maxRetries, baseDelayMs, maxDelayMs } = GRAPHQL_RETRY_DEFAULTS,
+) {
+    const options = {
+        maxRetries: maxRetries ?? GRAPHQL_RETRY_DEFAULTS.maxRetries,
+        baseDelayMs: baseDelayMs ?? GRAPHQL_RETRY_DEFAULTS.baseDelayMs,
+        maxDelayMs: maxDelayMs ?? GRAPHQL_RETRY_DEFAULTS.maxDelayMs,
+    };
+    let lastError;
+
+    for (let attempt = 0; attempt <= options.maxRetries; attempt += 1) {
+        if (attempt > 0) {
+            const jitter = Math.floor(Math.random() * 250);
+            await sleep(backoffDelay(attempt - 1, options) + jitter);
+        }
+
+        try {
+            return await github.graphql(query, variables);
+        } catch (error) {
+            lastError = error;
+
+            if (
+                attempt >= options.maxRetries ||
+                !isTransientGraphqlError(error)
+            ) {
+                break;
+            }
+        }
+    }
+
+    const detail = lastError?.errors
+        ?.map((entry) => entry.message)
+        .filter(Boolean)
+        .join('; ');
+    const message = detail || lastError?.message || String(lastError);
+
+    throw new Error(`GitHub Project GraphQL request failed: ${message}`);
 }
 
 async function getProjectMetadata(github, owner, projectNumber) {
@@ -571,10 +643,7 @@ async function syncSatuProject({
                     { data: 'Issue', header: true },
                     { data: 'Error', header: true },
                 ],
-                ...malformed.map((entry) => [
-                    `#${entry.issue}`,
-                    entry.error,
-                ]),
+                ...malformed.map((entry) => [`#${entry.issue}`, entry.error]),
             ]);
         }
 
@@ -606,5 +675,8 @@ module.exports = {
     buildProjectStatusRecords,
     selectDeliveryStatusField,
     currentItemOptionId,
+    graphql,
+    isTransientGraphqlError,
+    backoffDelay,
     syncSatuProject,
 };

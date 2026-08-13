@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Profile;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Actions\Portfolio\RebuildTalentCandidateProjection;
 use App\Models\Institution;
 use App\Models\ProfileInterest;
 use App\Models\ProfileSkill;
@@ -19,6 +20,7 @@ final class UpdateStudentProfile
         private readonly SyncStudentProfileTaxonomies $syncTaxonomies,
         private readonly AuditRecorder $audit,
         private readonly EnsureStudentProfileIsFresh $ensureFresh,
+        private readonly RebuildTalentCandidateProjection $rebuildProjection,
     ) {}
 
     /**
@@ -75,11 +77,12 @@ final class UpdateStudentProfile
 
             if ($changedFields !== []) {
                 $after = $this->summary($profile);
+                $institution = Institution::query()->findOrFail($profile->institution_id);
                 $this->audit->record(
                     operation: 'profile.updated',
                     auditable: $profile,
                     actor: $actor,
-                    institution: Institution::query()->findOrFail($profile->institution_id),
+                    institution: $institution,
                     before: [
                         'profile_id' => $profile->getKey(),
                         'fields' => $changedFields,
@@ -93,6 +96,8 @@ final class UpdateStudentProfile
                         'interests_count' => $after['interests_count'],
                     ],
                 );
+
+                $this->rebuildProjection->handle($actor, $institution);
             }
 
             return $profile->refresh();

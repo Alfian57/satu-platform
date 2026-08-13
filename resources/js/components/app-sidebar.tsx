@@ -1,5 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BriefcaseBusiness, Building2, LayoutDashboard } from 'lucide-react';
+import {
+    BookOpenCheck,
+    BriefcaseBusiness,
+    Building2,
+    FileCheck2,
+    LayoutDashboard,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import {
@@ -10,7 +16,9 @@ import {
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { index as contributionsIndex } from '@/routes/contributions';
 import { show as onboarding } from '@/routes/onboarding';
+import { index as portfolioIndex } from '@/routes/portfolio';
 import { index as projectsIndex } from '@/routes/projects';
 import type {
     InstitutionMembershipStatus,
@@ -28,6 +36,16 @@ const mainNavItems: NavItem[] = [
         title: 'Project',
         href: projectsIndex(),
         icon: BriefcaseBusiness,
+    },
+    {
+        title: 'Contribution',
+        href: contributionsIndex(),
+        icon: FileCheck2,
+    },
+    {
+        title: 'Portfolio',
+        href: portfolioIndex(),
+        icon: BookOpenCheck,
     },
 ];
 
@@ -113,7 +131,12 @@ export function AppSidebar() {
     const visibleMainNavItems =
         shell.institutionMembership?.status === 'verified'
             ? mainNavItems
-            : mainNavItems.filter((item) => item.title !== 'Project');
+            : mainNavItems.filter(
+                  (item) =>
+                      !['Project', 'Contribution', 'Portfolio'].includes(
+                          item.title,
+                      ),
+              );
 
     return (
         <Sidebar collapsible="offcanvas" variant="sidebar">

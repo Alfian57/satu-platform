@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Contribution;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Actions\Portfolio\RebuildTalentCandidateProjection;
 use App\Enums\AttachmentPurpose;
 use App\Enums\ContributionStatus;
 use App\Exceptions\InvalidContributionTransition;
@@ -26,6 +27,7 @@ final class ReviseContribution
     public function __construct(
         private readonly AuditRecorder $audit,
         private readonly ContributionRequirements $requirements,
+        private readonly RebuildTalentCandidateProjection $rebuildProjection,
     ) {}
 
     /**
@@ -45,6 +47,7 @@ final class ReviseContribution
 
             $lockedContribution->load([
                 'currentVersion.evidence.attachment',
+                'owner',
                 'project',
             ]);
             Gate::forUser($actor)->authorize('update', $lockedContribution);
@@ -144,6 +147,8 @@ final class ReviseContribution
                 'status' => ContributionStatus::Draft,
                 'current_version_id' => $version->getKey(),
             ])->save();
+
+            $this->rebuildProjection->handle($lockedContribution->owner, $institution);
 
             $this->audit->record(
                 operation: 'contribution.revised',

@@ -24,6 +24,7 @@ class ContributionReviewFactory extends Factory
             'contribution_version_id' => ContributionVersion::factory(),
             'reviewer_id' => User::factory(),
             'decision' => ContributionReviewDecision::Approved,
+            'policy_version' => 'contribution-review-v1',
             'reason' => null,
             'note' => fake()->optional()->sentence(),
             'reviewed_at' => now(),

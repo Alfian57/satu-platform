@@ -21,6 +21,7 @@ use LogicException;
  * @property int $contribution_version_id
  * @property int $reviewer_id
  * @property ContributionReviewDecision $decision
+ * @property string $policy_version
  * @property string|null $reason
  * @property string|null $note
  * @property Carbon $reviewed_at
