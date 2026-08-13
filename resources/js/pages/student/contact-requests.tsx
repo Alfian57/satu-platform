@@ -1,7 +1,25 @@
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Lock, Mail, Shield, XCircle } from 'lucide-react';
-import React, { useTransition } from 'react';
-import AppLayout from '@/layouts/app-layout';
+import {
+    CheckCircle2,
+    LockKeyhole,
+    Mail,
+    ShieldCheck,
+    XCircle,
+} from 'lucide-react';
+import { useState } from 'react';
+import StudentContactRequestController from '@/actions/App/Http/Controllers/StudentContactRequestController';
+import { AppPage } from '@/components/app-page';
+import Heading from '@/components/heading';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/spinner';
 
 interface StudentContactRequestItem {
     id: number;
@@ -19,243 +37,295 @@ interface StudentContactRequestsProps {
     requests: StudentContactRequestItem[];
 }
 
+interface RequestDecision {
+    id: number;
+    kind: 'accept' | 'decline';
+    organizationName: string;
+}
+
+const statusMeta: Record<string, { label: string; className: string }> = {
+    accepted: {
+        label: 'Diterima',
+        className:
+            'border-verified/40 bg-verified-subtle text-verified-subtle-foreground',
+    },
+    declined: {
+        label: 'Ditolak',
+        className: 'border-destructive/40 bg-destructive/10 text-destructive',
+    },
+    pending: {
+        label: 'Menunggu respons',
+        className:
+            'border-pending/40 bg-pending-subtle text-pending-subtle-foreground',
+    },
+    expired: {
+        label: 'Kedaluwarsa',
+        className: 'border-border bg-muted text-muted-foreground',
+    },
+    canceled: {
+        label: 'Dibatalkan',
+        className: 'border-border bg-muted text-muted-foreground',
+    },
+};
+
 export default function StudentContactRequests({
     requests,
 }: StudentContactRequestsProps) {
-    const [isPending, startTransition] = useTransition();
+    const [decision, setDecision] = useState<RequestDecision | null>(null);
+    const [confirming, setConfirming] = useState(false);
+    const [confirmError, setConfirmError] = useState<string | null>(null);
+    const isAccept = decision?.kind === 'accept';
 
-    const handleAccept = (requestId: number) => {
-        startTransition(() => {
-            router.post(
-                `/student/contact-requests/${requestId}/accept`,
-                {},
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                },
-            );
-        });
-    };
+    const confirm = () => {
+        if (!decision) {
+            return;
+        }
 
-    const handleDecline = (requestId: number) => {
-        startTransition(() => {
-            router.post(
-                `/student/contact-requests/${requestId}/decline`,
-                {},
-                {
-                    preserveState: true,
-                    preserveScroll: true,
+        setConfirming(true);
+        setConfirmError(null);
+
+        const action =
+            decision.kind === 'accept'
+                ? StudentContactRequestController.accept
+                : StudentContactRequestController.decline;
+
+        router.post(
+            action(decision.id).url,
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onError: () => {
+                    setConfirmError(
+                        'Permintaan tidak dapat diproses. Periksa koneksi lalu coba lagi.',
+                    );
+                    setConfirming(false);
                 },
-            );
-        });
+                onFinish: () => setConfirming(false),
+            },
+        );
     };
 
     return (
-        <AppLayout>
-            <Head title="Recruiter Contact Requests - SATU Platform" />
+        <AppPage className="max-w-5xl">
+            <Head title="Permintaan Kontak Recruiter" />
 
-            <div className="mx-auto min-h-screen max-w-5xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
-                {/* Header */}
-                <div className="border-b border-slate-800 pb-6">
-                    <div className="flex items-center gap-3">
-                        <h1 className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-3xl font-extrabold tracking-tight text-transparent">
-                            Recruiter Outreach Requests
-                        </h1>
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-800/50 bg-emerald-950 px-3 py-1 text-xs font-semibold text-emerald-300">
-                            <Shield className="h-3.5 w-3.5 text-emerald-400" />{' '}
-                            Student Consent Privacy
-                        </span>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-400">
-                        Review purpose-bound contact requests from verified
-                        recruiter organizations. Your phone number is only
-                        shared upon explicit acceptance.
-                    </p>
-                </div>
+            <Heading
+                title="Permintaan kontak"
+                description="Tinjau permintaan kontak dari organization recruiter terverifikasi. Nomor WhatsApp hanya dibagikan saat kamu menerima permintaan."
+            />
 
-                {/* Privacy Safeguard Banner */}
-                <div className="flex items-start gap-4 rounded-2xl border border-blue-800/60 bg-blue-950/40 p-5 text-blue-200">
-                    <Lock className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" />
-                    <div className="space-y-1 text-xs">
-                        <h4 className="font-bold tracking-wider text-blue-300 uppercase">
-                            Consent & Privacy Guarantee
-                        </h4>
-                        <p className="leading-relaxed text-blue-200/80">
-                            Recruiters never receive your WhatsApp / phone
-                            number until you click Accept. Declining or ignoring
-                            a request preserves your private student
-                            credentials.
+            <div
+                role="region"
+                aria-labelledby="received-requests-title"
+                className="space-y-4"
+            >
+                <h2
+                    id="received-requests-title"
+                    className="text-sm font-semibold tracking-wider text-muted-foreground uppercase"
+                >
+                    Permintaan diterima ({requests.length})
+                </h2>
+
+                {requests.length === 0 && (
+                    <div className="grid gap-3 rounded-lg border border-border bg-muted/40 px-6 py-12 text-center">
+                        <Mail
+                            aria-hidden="true"
+                            className="mx-auto size-10 text-muted-foreground"
+                        />
+                        <p className="font-medium text-foreground">
+                            Belum ada permintaan kontak
+                        </p>
+                        <p className="mx-auto max-w-md text-sm leading-6 text-muted-foreground">
+                            Kamu belum memiliki permintaan kontak aktif dari
+                            recruiter. Jaga proyeksi portfolio tetap diperbarui
+                            untuk menarik peluang terverifikasi.
                         </p>
                     </div>
-                </div>
+                )}
 
-                {/* Requests List */}
-                <div
-                    role="region"
-                    aria-busy={isPending}
-                    aria-live="polite"
-                    className="space-y-4"
-                >
-                    <h2 className="text-sm font-semibold tracking-wider text-slate-400 uppercase">
-                        Received Requests ({requests.length})
-                    </h2>
+                {requests.length > 0 && (
+                    <ul className="grid gap-4">
+                        {requests.map((req) => {
+                            const meta =
+                                statusMeta[req.status] ?? statusMeta.expired;
 
-                    {requests.length === 0 && (
-                        <div className="space-y-4 rounded-2xl border border-slate-700/50 bg-slate-800/30 p-12 text-center">
-                            <Mail className="mx-auto h-12 w-12 text-slate-600" />
-                            <div className="space-y-1">
-                                <h3 className="text-lg font-semibold text-slate-300">
-                                    No Pending Contact Requests
-                                </h3>
-                                <p className="mx-auto max-w-md text-sm text-slate-500">
-                                    You have no active contact requests from
-                                    recruiters. Keep your portfolio projection
-                                    updated to attract verified opportunities.
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
-                    {requests.length > 0 && (
-                        <div className="space-y-4">
-                            {requests.map((req) => (
-                                <div
+                            return (
+                                <li
                                     key={req.id}
-                                    className="rounded-2xl border border-slate-700/60 bg-slate-800/60 p-6 shadow-md"
+                                    className="grid gap-4 rounded-lg border border-border bg-card p-5"
                                 >
-                                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                                        <div className="max-w-2xl space-y-2">
-                                            <div className="flex flex-wrap items-center gap-3">
-                                                <h3 className="text-base font-bold text-slate-100">
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div className="grid gap-1">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <h3 className="font-semibold text-foreground">
                                                     {req.organization_name}
                                                 </h3>
-                                                <span className="text-xs text-slate-400">
-                                                    (Recruiter:{' '}
-                                                    {req.recruiter_name})
-                                                </span>
-                                                <span
-                                                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
-                                                        req.status ===
-                                                        'accepted'
-                                                            ? 'border border-emerald-800 bg-emerald-950 text-emerald-400'
-                                                            : req.status ===
-                                                                'declined'
-                                                              ? 'border border-rose-900 bg-rose-950 text-rose-300'
-                                                              : req.status ===
-                                                                  'pending'
-                                                                ? 'border border-amber-800 bg-amber-950 text-amber-300'
-                                                                : 'border border-slate-700 bg-slate-900 text-slate-400'
-                                                    }`}
-                                                >
-                                                    {req.status}
+                                                <span className="text-xs text-muted-foreground">
+                                                    ({req.recruiter_name})
                                                 </span>
                                             </div>
-
-                                            <div className="space-y-1 rounded-xl border border-slate-700/40 bg-slate-900/40 p-4 text-xs text-slate-300">
-                                                <p className="font-semibold text-slate-200">
-                                                    Purpose: {req.purpose}
-                                                </p>
-                                                {req.message && (
-                                                    <p className="pt-1 text-slate-400">
-                                                        "{req.message}"
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            <div className="flex items-center gap-4 pt-1 text-xs text-slate-500">
-                                                <span>
-                                                    Received{' '}
-                                                    {new Date(
-                                                        req.created_at,
-                                                    ).toLocaleDateString()}
-                                                </span>
-                                                <span>
-                                                    Expires{' '}
-                                                    {new Date(
-                                                        req.expires_at,
-                                                    ).toLocaleDateString()}
-                                                </span>
-                                            </div>
+                                            <span
+                                                className={`w-fit rounded-full border px-2.5 py-0.5 text-xs font-semibold ${meta.className}`}
+                                            >
+                                                {meta.label}
+                                            </span>
                                         </div>
 
                                         {req.status === 'pending' && (
                                             <div className="flex shrink-0 items-center gap-2">
-                                                <button
+                                                <Button
                                                     onClick={() =>
-                                                        handleAccept(req.id)
+                                                        setDecision({
+                                                            id: req.id,
+                                                            kind: 'accept',
+                                                            organizationName:
+                                                                req.organization_name,
+                                                        })
                                                     }
-                                                    disabled={isPending}
-                                                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-wait disabled:opacity-50"
+                                                    data-test={`accept-request-${req.id}`}
                                                 >
-                                                    {isPending ? (
-                                                        <svg
-                                                            className="h-4 w-4 animate-spin"
-                                                            xmlns="http://www.w3.org/2000/svg"
-                                                            fill="none"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <circle
-                                                                className="opacity-25"
-                                                                cx="12"
-                                                                cy="12"
-                                                                r="10"
-                                                                stroke="currentColor"
-                                                                strokeWidth="4"
-                                                            ></circle>
-                                                            <path
-                                                                className="opacity-75"
-                                                                fill="currentColor"
-                                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                            ></path>
-                                                        </svg>
-                                                    ) : (
-                                                        <CheckCircle2 className="h-4 w-4" />
-                                                    )}
-                                                    Accept
-                                                </button>
-
-                                                <button
+                                                    <CheckCircle2 aria-hidden="true" />
+                                                    Terima
+                                                </Button>
+                                                <Button
+                                                    variant="secondary"
                                                     onClick={() =>
-                                                        handleDecline(req.id)
+                                                        setDecision({
+                                                            id: req.id,
+                                                            kind: 'decline',
+                                                            organizationName:
+                                                                req.organization_name,
+                                                        })
                                                     }
-                                                    disabled={isPending}
-                                                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-300 transition-colors hover:bg-slate-700 disabled:cursor-wait disabled:opacity-50"
+                                                    data-test={`decline-request-${req.id}`}
                                                 >
-                                                    {isPending ? (
-                                                        <svg
-                                                            className="h-4 w-4 animate-spin"
-                                                            xmlns="http://www.w3.org/2000/svg"
-                                                            fill="none"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <circle
-                                                                className="opacity-25"
-                                                                cx="12"
-                                                                cy="12"
-                                                                r="10"
-                                                                stroke="currentColor"
-                                                                strokeWidth="4"
-                                                            ></circle>
-                                                            <path
-                                                                className="opacity-75"
-                                                                fill="currentColor"
-                                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                            ></path>
-                                                        </svg>
-                                                    ) : (
-                                                        <XCircle className="h-4 w-4" />
-                                                    )}
-                                                    Decline
-                                                </button>
+                                                    <XCircle aria-hidden="true" />
+                                                    Tolak
+                                                </Button>
                                             </div>
                                         )}
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+
+                                    <div className="grid gap-1 rounded-lg border border-border bg-muted/40 p-4 text-sm">
+                                        <p className="font-medium text-foreground">
+                                            Tujuan: {req.purpose}
+                                        </p>
+                                        {req.message && (
+                                            <p className="text-muted-foreground">
+                                                "{req.message}"
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                        <span>
+                                            Diterima{' '}
+                                            {new Date(
+                                                req.created_at,
+                                            ).toLocaleDateString()}
+                                        </span>
+                                        <span>
+                                            Berakhir{' '}
+                                            {new Date(
+                                                req.expires_at,
+                                            ).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+            </div>
+
+            <div className="mt-6 flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-4">
+                <LockKeyhole
+                    aria-hidden="true"
+                    className="mt-0.5 size-5 shrink-0 text-muted-foreground"
+                />
+                <div className="grid gap-1 text-sm leading-6">
+                    <p className="font-medium text-foreground">
+                        Jaminan kerahasiaan
+                    </p>
+                    <p className="text-muted-foreground">
+                        Recruiter tidak pernah menerima nomor WhatsApp atau
+                        kontak langsung sampai kamu menerima permintaan. Menolak
+                        atau mengabaikan permintaan menjaga kredensial privatmu.
+                    </p>
                 </div>
             </div>
-        </AppLayout>
+
+            <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-4">
+                <ShieldCheck
+                    aria-hidden="true"
+                    className="mt-0.5 size-5 shrink-0 text-verified"
+                />
+                <div className="grid gap-1 text-sm leading-6">
+                    <p className="font-medium text-foreground">
+                        Persetujuan terverifikasi
+                    </p>
+                    <p className="text-muted-foreground">
+                        Menerima permintaan mencatat persetujuan (consent) yang
+                        mengontrol handoff kontak. Data yang telah dibagikan
+                        tetap mengikuti kebijakan retention.
+                    </p>
+                </div>
+            </div>
+
+            {decision && (
+                <Dialog
+                    open
+                    onOpenChange={(open) => !open && setDecision(null)}
+                >
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>
+                                {isAccept
+                                    ? 'Konfirmasi pembagian kontak'
+                                    : 'Konfirmasi penolakan'}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {isAccept
+                                    ? `Kamu akan membagikan nama dan nomor WhatsApp terverifikasimu ke ${decision.organizationName}. Tindakan ini tidak dapat dibatalkan melalui halaman ini.`
+                                    : `Kamu akan menolak permintaan dari ${decision.organizationName}. Menolak tidak membagikan kontakmu dan recruiter tidak menerima alasan penolakan.`}
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        {confirmError && (
+                            <p
+                                role="alert"
+                                className="border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                            >
+                                {confirmError}
+                            </p>
+                        )}
+
+                        <DialogFooter className="gap-2">
+                            <Button
+                                variant="secondary"
+                                disabled={confirming}
+                                onClick={() => setDecision(null)}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                variant={isAccept ? 'default' : 'destructive'}
+                                disabled={confirming}
+                                onClick={confirm}
+                                data-test={
+                                    isAccept
+                                        ? `confirm-share-${decision.id}`
+                                        : `confirm-decline-${decision.id}`
+                                }
+                            >
+                                {confirming && <Spinner aria-hidden="true" />}
+                                {isAccept ? 'Terima & bagikan kontak' : 'Tolak'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
+        </AppPage>
     );
 }
