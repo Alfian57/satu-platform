@@ -111,6 +111,7 @@ return new class extends Migration
             $table->foreignId('contribution_version_id');
             $table->foreignId('reviewer_id');
             $table->enum('decision', ['approved', 'revision', 'rejected']);
+            $table->string('policy_version', 100);
             $table->text('reason')->nullable();
             $table->text('note')->nullable();
             $table->timestamp('reviewed_at');
@@ -167,10 +168,14 @@ return new class extends Migration
             DB::unprepared(
                 "CREATE TRIGGER contribution_reviews_validate_insert
                 BEFORE INSERT ON contribution_reviews
-                WHEN NEW.decision <> 'approved'
-                    AND (NEW.reason IS NULL OR length(trim(NEW.reason)) = 0)
+                WHEN NEW.policy_version IS NULL
+                    OR length(trim(NEW.policy_version)) = 0
+                    OR (
+                        NEW.decision <> 'approved'
+                        AND (NEW.reason IS NULL OR length(trim(NEW.reason)) = 0)
+                    )
                 BEGIN
-                    SELECT RAISE(ABORT, 'Contribution review reason is required for non-approved decisions');
+                    SELECT RAISE(ABORT, 'Contribution review policy and reason are required');
                 END",
             );
         }
@@ -180,8 +185,11 @@ return new class extends Migration
                 'ALTER TABLE contribution_reviews
                 ADD CONSTRAINT contribution_reviews_reason_check
                 CHECK (
-                    decision = \'approved\'
-                    OR (reason IS NOT NULL AND CHAR_LENGTH(TRIM(reason)) > 0)
+                    CHAR_LENGTH(TRIM(policy_version)) > 0
+                    AND (
+                        decision = \'approved\'
+                        OR (reason IS NOT NULL AND CHAR_LENGTH(TRIM(reason)) > 0)
+                    )
                 )',
             );
         }

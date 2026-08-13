@@ -127,6 +127,7 @@ final class ContributionSerializer
                 'name' => $review->reviewer->name,
             ],
             'decision' => $review->decision->value,
+            'policy_version' => $review->policy_version,
             'reason' => $review->reason,
             'note' => $review->note,
             'reviewed_at' => $review->reviewed_at->toIso8601String(),
