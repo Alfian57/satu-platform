@@ -263,6 +263,7 @@ final class RebuildLeaderboardProjections
                 .'THEN amount ELSE -amount END) AS leaderboard_xp_total',
             )
             ->groupBy($ledgerTable.'.user_id')
+            ->having('leaderboard_xp_total', '>', 0)
             ->get();
 
         $result = [];
@@ -317,6 +318,7 @@ final class RebuildLeaderboardProjections
                 $ledgerTable.'.user_id',
                 $contributionTable.'.project_id',
             )
+            ->having('leaderboard_xp_total', '>', 0)
             ->get();
 
         $result = [];
