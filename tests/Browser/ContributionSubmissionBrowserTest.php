@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ContributionStatus;
+use App\Enums\PortfolioVisibility;
 use App\Models\Attachment;
 use App\Models\Contribution;
 use App\Models\ContributionEvidence;
@@ -8,6 +9,7 @@ use App\Models\ContributionReview;
 use App\Models\ContributionVersion;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
+use App\Models\PortfolioEntry;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
@@ -113,6 +115,54 @@ test('student can respond to revision feedback without losing version history', 
 
     expect($contribution->refresh()->status)->toBe(ContributionStatus::Draft)
         ->and($contribution->versions()->count())->toBe(2);
+});
+
+test('student can trace an approved contribution from task to portfolio', function () {
+    $context = contributionBrowserContext();
+    $contribution = contributionBrowserContribution($context, ContributionStatus::Approved);
+    ContributionReview::factory()
+        ->for($contribution->currentVersion, 'contributionVersion')
+        ->for($context['reviewer'], 'reviewer')
+        ->approved()
+        ->create();
+    $entry = PortfolioEntry::factory()->create([
+        'institution_id' => $context['institution']->getKey(),
+        'user_id' => $context['student']->getKey(),
+        'contribution_id' => $contribution->getKey(),
+        'contribution_version_id' => $contribution->current_version_id,
+        'title' => 'Portfolio provenance browser entry',
+        'visibility' => PortfolioVisibility::Private,
+    ]);
+
+    $this->actingAs($context['student']);
+
+    $page = visit(route('contributions.show', $contribution))
+        ->resize(390, 844)
+        ->assertSee('Dari task ke portfolio')
+        ->assertSee('Outcome portfolio tersedia')
+        ->assertSee($context['task']->title)
+        ->assertSee('Buka portfolio')
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(true, 'p50-contribution-provenance-mobile-390x844');
+
+    $page
+        ->resize(1366, 900)
+        ->assertSee('Portfolio provenance browser entry')
+        ->assertPresent('@contribution-portfolio-link')
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(true, 'p50-contribution-provenance-desktop-1366x900')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+
+    expect($entry->refresh()->contribution_version_id)
+        ->toBe($contribution->current_version_id);
 });
 
 test('contribution list exposes a stable refresh skeleton on a small laptop', function () {

@@ -22,6 +22,7 @@ use App\Models\StudentProfile;
 use App\Models\TalentCandidateProjection;
 use App\Models\Task;
 use App\Models\User;
+use App\Notifications\PortfolioEntryReadyNotification;
 use App\Support\Portfolio\PortfolioEntrySerializer;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -46,7 +47,10 @@ test('approved contribution creates one idempotent verified portfolio entry', fu
         ->and($entry->visibility)->toBe(PortfolioVisibility::Private)
         ->and($entry->withdrawn_at)->toBeNull()
         ->and($projection->is_visible)->toBeFalse()
-        ->and($projection->contributions)->toBe([]);
+        ->and($projection->contributions)->toBe([])
+        ->and($fixture['student']->notifications()
+            ->where('type', PortfolioEntryReadyNotification::class)
+            ->count())->toBe(1);
 });
 
 test('per-entry visibility and recruiter discoverability remain separate controls', function () {

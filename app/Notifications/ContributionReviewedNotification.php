@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\ContributionReview;
+use App\Notifications\Concerns\HasDatabaseNotificationIntent;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 final class ContributionReviewedNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use HasDatabaseNotificationIntent, Queueable;
 
     public function __construct(
         public readonly ContributionReview $review,
@@ -25,6 +26,14 @@ final class ContributionReviewedNotification extends Notification implements Sho
     public function via(object $notifiable): array
     {
         return ['database'];
+    }
+
+    public function notificationIntentKey(): string
+    {
+        return implode(':', [
+            'contribution_reviewed',
+            $this->review->getKey(),
+        ]);
     }
 
     /**
@@ -42,6 +51,7 @@ final class ContributionReviewedNotification extends Notification implements Sho
         };
 
         return [
+            'intent_key' => $this->notificationIntentKey(),
             'contribution_id' => $contribution->getKey(),
             'contribution_version_id' => $this->review->contribution_version_id,
             'review_id' => $this->review->getKey(),
@@ -53,6 +63,7 @@ final class ContributionReviewedNotification extends Notification implements Sho
             'action_url' => route('contributions.show', $contribution),
             'action_label' => 'Lihat hasil review',
             'purpose' => 'contribution_reviewed',
+            'category' => 'contribution',
         ];
     }
 }
