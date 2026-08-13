@@ -15,6 +15,7 @@ use App\Models\RecruiterMembership;
 use App\Models\RecruiterOrganization;
 use App\Models\TalentCandidateProjection;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
 test('student accept uses a confirmation that explains the shared contact data and records consent', function () {
     $context = contactRequestBrowserContext();
@@ -121,7 +122,7 @@ function contactRequestBrowserContext(): array
         issuer: $platformAdmin,
         organization: $organization,
         scope: RecruiterEntitlementScope::CandidateSearch,
-        startsAt: now()->subHour(),
+        startsAt: Carbon::now()->subHour(),
     );
 
     $candidate = TalentCandidateProjection::factory()->create([
