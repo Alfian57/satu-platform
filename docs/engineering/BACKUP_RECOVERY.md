@@ -9,6 +9,7 @@ Dokumen ini menetapkan kontrak backup, restore, dan monitoring untuk production 
 ### 2.1 Environment Variables Required
 
 Backup script memerlukan environment variables berikut:
+
 - `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` - Koneksi database
 - `BACKUP_DIR` - Direktori penyimpanan backup (default: `/var/backups/satu`)
 - `FILESYSTEM_DISK_PATH` - Path storage untuk file backup
@@ -45,6 +46,7 @@ mysqldump \
 ### 2.3 Backup Verification
 
 Setiap backup harus diverifikasi:
+
 1. Checksum file (SHA-256)
 2. Test restore ke environment terpisah (staging/minimal)
 3. Validasi database integrity (`mysqlcheck --check`)
@@ -107,6 +109,7 @@ chown -R www-data:www-data /path/to/storage/
 **Command**: `php artisan queue:work`
 
 **Checks**:
+
 - Queue length > 1000 items untuk > 15 menit → critical
 - Job failed count > 50 dalam 1 jam → warning
 - Queue worker tidak aktif > 5 menit → critical
@@ -118,6 +121,7 @@ chown -R www-data:www-data /path/to/storage/
 **Command**: `php artisan reverb:start`
 
 **Checks**:
+
 - WebSocket connection count stable (sudden drop/collapse → alert)
 - Reverb process alive (systemd/cron check)
 - Reverb logs tidak mengandung error berulang
@@ -127,6 +131,7 @@ chown -R www-data:www-data /path/to/storage/
 ### 4.3 Application Error Monitoring
 
 **Checks**:
+
 - `LOG_CHANNEL=single` untuk production
 - Error rate > 100/min → critical
 - Specific error patterns (database connection, Reverb, provider API)
@@ -138,6 +143,7 @@ chown -R www-data:www-data /path/to/storage/
 **Command**: `integration:alert-sync-anomalies` (jalan setiap 15 menit)
 
 **Checks**:
+
 - Sync failures > threshold dalam window tertentu
 - Data stale detection (no update > 24 jam)
 
@@ -146,6 +152,7 @@ chown -R www-data:www-data /path/to/storage/
 ### 4.5 Database Health
 
 **Checks**:
+
 - Connection pool available
 - Replication lag (jika menggunakan replica)
 - Slow query log > threshold
@@ -156,12 +163,12 @@ chown -R www-data:www-data /path/to/storage/
 
 ### 5.1 Incident Classification
 
-| Level | Deskripsi | Response Time |
-|-------|-----------|---------------|
-| P1 | Service down, data loss risk | Immediate |
-| P2 | Service degraded, major feature unavailable | 15 menit |
-| P3 | Minor issues, workaround available | 4 jam |
-| P4 | Questions, enhancements | Next business day |
+| Level | Deskripsi                                   | Response Time     |
+| ----- | ------------------------------------------- | ----------------- |
+| P1    | Service down, data loss risk                | Immediate         |
+| P2    | Service degraded, major feature unavailable | 15 menit          |
+| P3    | Minor issues, workaround available          | 4 jam             |
+| P4    | Questions, enhancements                     | Next business day |
 
 ### 5.2 Incident Response Procedure
 
@@ -173,12 +180,12 @@ chown -R www-data:www-data /path/to/storage/
 
 ### 5.3 Escalation Procedures
 
-| Level | Escalation Path |
-|-------|-----------------|
-| P1 | Incident owner → Tech lead → CTO |
-| P2 | Incident owner → Tech lead |
-| P3 | Incident owner (no automatic escalation) |
-| P4 | No escalation |
+| Level | Escalation Path                          |
+| ----- | ---------------------------------------- |
+| P1    | Incident owner → Tech lead → CTO         |
+| P2    | Incident owner → Tech lead               |
+| P3    | Incident owner (no automatic escalation) |
+| P4    | No escalation                            |
 
 ## 6. Privacy Incident Response
 
@@ -190,15 +197,16 @@ Privacy incident: unauthorized access, exposure, atau loss data pribadi (phone, 
 
 1. **Contain**: Immediately disable access, revoke tokens
 2. **Assess**: Identify scope, affected users, data types
-3. **Notify**: 
-   - Internal: Tech lead, legal, compliance
-   - External: Users terdampak (jika wajib hukum)
+3. **Notify**:
+    - Internal: Tech lead, legal, compliance
+    - External: Users terdampak (jika wajib hukum)
 4. **Remediate**: Fix root cause, implement additional controls
 5. **Report**: Document dalam 72 jam (sesuai GDPR if applicable)
 
 ### 6.3 Documentation
 
 Setiap privacy incident wajib didokumentasikan:
+
 - Timeline
 - Data types affected
 - Number of users
@@ -208,11 +216,11 @@ Setiap privacy incident wajib didokumentasikan:
 
 ## 7. Recovery Objectives
 
-| Objective | Target | Description |
-|-----------|--------|-------------|
-| RTO (Recovery Time Objective) | 1 jam | Waktu total恢复 dari incident |
-| RPO (Recovery Point Objective) | 24 jam | Data loss maximum (1 hari backup) |
-| MTD (Maximum Tolerable Downtime) | 4 jam | Waktu maximum service can be down |
+| Objective                        | Target | Description                       |
+| -------------------------------- | ------ | --------------------------------- |
+| RTO (Recovery Time Objective)    | 1 jam  | Waktu total恢复 dari incident     |
+| RPO (Recovery Point Objective)   | 24 jam | Data loss maximum (1 hari backup) |
+| MTD (Maximum Tolerable Downtime) | 4 jam  | Waktu maximum service can be down |
 
 ## 8. Verification Checklist
 
