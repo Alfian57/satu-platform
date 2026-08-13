@@ -115,6 +115,13 @@ final class ReviseContribution
                 ->merge($newAttachments)
                 ->unique(fn (Attachment $attachment): int => $attachment->getKey())
                 ->values();
+
+            if ($attachments->count() > 20) {
+                throw ValidationException::withMessages([
+                    'evidence' => 'Maksimal 20 evidence dapat dilampirkan pada satu versi.',
+                ]);
+            }
+
             $versionNumber = ((int) ContributionVersion::query()
                 ->where('contribution_id', $lockedContribution->getKey())
                 ->lockForUpdate()

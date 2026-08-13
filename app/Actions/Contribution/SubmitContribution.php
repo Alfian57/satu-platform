@@ -18,6 +18,7 @@ final class SubmitContribution
 {
     public function __construct(
         private readonly AuditRecorder $audit,
+        private readonly NotifyContributionReviewers $notifyReviewers,
     ) {}
 
     public function handle(User $actor, Contribution $contribution): Contribution
@@ -82,6 +83,8 @@ final class SubmitContribution
                     'evidence_count' => $evidenceCount,
                 ],
             );
+
+            $this->notifyReviewers->handle($lockedContribution);
 
             return $lockedContribution->refresh()->load([
                 'institution',

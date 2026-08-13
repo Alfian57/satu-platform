@@ -6,6 +6,7 @@ use App\Http\Controllers\AffiliationReviewController;
 use App\Http\Controllers\Auth\AuthFlowController;
 use App\Http\Controllers\CampusInclusionController;
 use App\Http\Controllers\CampusOverviewController;
+use App\Http\Controllers\ContributionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
@@ -101,6 +102,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [ProjectController::class, 'store'])
             ->name('store');
 
+        Route::scopeBindings()->prefix('{project}/contributions')->group(function () {
+            Route::post('/', [ContributionController::class, 'store'])
+                ->name('contributions.store');
+        });
+
         Route::scopeBindings()->prefix('{project}/workspace')->group(function () {
             Route::get('/', [ProjectWorkspaceController::class, 'show'])
                 ->name('workspace');
@@ -150,6 +156,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('invitations.store');
         Route::post('/{project}/join-requests', [TeamTransitionController::class, 'requestJoin'])
             ->name('join-requests.store');
+    });
+
+    Route::prefix('contributions')->name('contributions.')->group(function () {
+        Route::get('{contribution}', [ContributionController::class, 'show'])
+            ->name('show');
+        Route::post('{contribution}/evidence', [ContributionController::class, 'linkEvidence'])
+            ->name('evidence.store');
+        Route::post('{contribution}/submit', [ContributionController::class, 'submit'])
+            ->name('submit');
+        Route::post('{contribution}/revision', [ContributionController::class, 'revise'])
+            ->name('revisions.store');
     });
 
     Route::post('team-invitations/{teamInvitation}/accept', [TeamTransitionController::class, 'acceptInvitation'])
