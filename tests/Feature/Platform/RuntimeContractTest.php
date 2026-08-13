@@ -4,6 +4,7 @@ namespace Tests\Feature\Platform;
 
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Collection;
 
 /*
@@ -17,6 +18,10 @@ use Illuminate\Support\Collection;
 | - Scheduler registers the required recurring commands with their cadence
 | - Private attachment disk is not publicly served
 |
+| Scheduler events from bootstrap/app.php (withSchedule) only register once
+| the console kernel boots (Artisan::starting), so the schedule must be read
+| after booting the kernel.
+|
 */
 
 /**
@@ -24,6 +29,8 @@ use Illuminate\Support\Collection;
  */
 function scheduledEvents(): Collection
 {
+    app(Kernel::class)->bootstrap();
+
     return collect(app(Schedule::class)->events());
 }
 
