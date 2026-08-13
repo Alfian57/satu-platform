@@ -62,7 +62,7 @@ Supported dimension hanya `skill_fit`, `project_need`, `availability`, dan `conn
 - `contributions`: owner, project/team, lifecycle, current version pointer.
 - `contribution_versions`: immutable claim and summary.
 - `contribution_evidence`: private source metadata dan storage reference.
-- `contribution_reviews`: campus reviewer decision, reason, note, reviewed-at.
+- `contribution_reviews`: campus reviewer decision, required reason for non-approval, note, immutable policy version, and reviewed-at.
 - `portfolio_entries`: approved source, visible fields, visibility level, published/withdrawn-at.
 
 Team confirmation tidak menjadi state requirement. Approval campus reviewer adalah validation authority.

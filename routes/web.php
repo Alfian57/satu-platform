@@ -170,6 +170,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('evidence.store');
         Route::post('{contribution}/submit', [ContributionController::class, 'submit'])
             ->name('submit');
+        Route::post('{contribution}/review', [ContributionController::class, 'review'])
+            ->name('reviews.store');
         Route::post('{contribution}/revision', [ContributionController::class, 'revise'])
             ->name('revisions.store');
     });

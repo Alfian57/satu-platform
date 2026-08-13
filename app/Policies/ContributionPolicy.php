@@ -58,7 +58,7 @@ final class ContributionPolicy
 
     public function review(User $user, Contribution $contribution): bool
     {
-        return $contribution->exists
+        return $this->projectFor($contribution) !== null
             && $contribution->status === ContributionStatus::Pending
             && $this->isCampusAdmin($user, $contribution);
     }
