@@ -202,14 +202,32 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                                         'bg-pending-subtle/20',
                                 )}
                             >
-                                {row.getAllCells().map((cell) => (
-                                    <td
-                                        key={cell.id}
-                                        className="px-4 py-4 text-sm leading-6"
-                                    >
+                                {row.getAllCells().map((cell) => {
+                                    const content = (
                                         <table.FlexRender cell={cell} />
-                                    </td>
-                                ))}
+                                    );
+
+                                    if (cell.column.id === 'entity') {
+                                        return (
+                                            <th
+                                                key={cell.id}
+                                                scope="row"
+                                                className="px-4 py-4 text-left text-sm leading-6 font-normal"
+                                            >
+                                                {content}
+                                            </th>
+                                        );
+                                    }
+
+                                    return (
+                                        <td
+                                            key={cell.id}
+                                            className="px-4 py-4 text-sm leading-6"
+                                        >
+                                            {content}
+                                        </td>
+                                    );
+                                })}
                             </tr>
                         ))}
                     </tbody>

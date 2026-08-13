@@ -82,6 +82,8 @@ test('verified students receive a tenant-scoped leaderboard projection with safe
                 ->has('leaderboard.badges', 1)
                 ->missing('leaderboard.badges.0.reason')
                 ->missing('leaderboard.badges.0.privateEvidence')
+                ->missing('leaderboard.badges.0.inclusionSignal')
+                ->missing('leaderboard.badges.0.rawAudit')
                 ->loadDeferredProps(
                     fn (Assert $reload) => $reload
                         ->where('leaderboardRows.state', 'ready')
@@ -92,7 +94,10 @@ test('verified students receive a tenant-scoped leaderboard projection with safe
                         ->where('leaderboardRows.rows.2.suppressed', true)
                         ->where('leaderboardRows.rows.2.rank', null)
                         ->missing('leaderboardRows.rows.0.inclusionSignal')
-                        ->missing('leaderboardRows.rows.0.privateEvidence'),
+                        ->missing('leaderboardRows.rows.0.privateEvidence')
+                        ->missing('leaderboardRows.rows.0.connectivityOpportunity')
+                        ->missing('leaderboardRows.rows.0.rawAudit')
+                        ->missing('leaderboardRows.rows.0.messageContent'),
                 ),
         );
 });

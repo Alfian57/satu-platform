@@ -90,7 +90,7 @@ function LeaderboardLoading() {
                 Memuat papan peringkat.
             </p>
             <div className="grid gap-3">
-                {[1, 2, 3, 4].map((item) => (
+                {Array.from({ length: 10 }, (_, item) => item).map((item) => (
                     <Skeleton key={item} className="h-16 w-full rounded-none" />
                 ))}
             </div>
