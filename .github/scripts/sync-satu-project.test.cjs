@@ -3,8 +3,11 @@ const test = require('node:test');
 
 const {
     DELIVERY_STATUSES,
+    backoffDelay,
     buildProjectStatusRecords,
     currentItemOptionId,
+    graphql,
+    isTransientGraphqlError,
     mapIssueDeliveryStatus,
     mapPullRequestDeliveryStatus,
     selectDeliveryStatusField,
@@ -114,7 +117,10 @@ function fakeGithub({
             calls.push({ query, variables });
 
             if (failOn && query.includes(failOn)) {
-                throw new Error('simulated API failure');
+                const error = new Error('simulated API failure');
+                error.errors = [{ message: 'simulated API failure' }];
+
+                throw error;
             }
 
             if (query.includes('query ProjectMetadata')) {
@@ -411,4 +417,118 @@ test('buildProjectStatusRecords does not alter malformed when empty', () => {
 
     assert.equal(records.has('issue:1'), true);
     assert.equal(malformed.length, 0);
+});
+
+test('retries a transient network failure and succeeds', async () => {
+    let attempts = 0;
+    const github = {
+        graphql: async () => {
+            attempts += 1;
+
+            if (attempts < 3) {
+                throw new Error('other side closed');
+            }
+
+            return { ok: true };
+        },
+    };
+
+    const result = await graphql(github, 'query X', {}, { baseDelayMs: 1 });
+
+    assert.equal(result.ok, true);
+    assert.equal(attempts, 3);
+});
+
+test('gives up after exhausting retries on transient failures', async () => {
+    let attempts = 0;
+    const github = {
+        graphql: async () => {
+            attempts += 1;
+
+            throw new Error('socket hang up');
+        },
+    };
+
+    await assert.rejects(
+        () => graphql(github, 'query X', {}, { maxRetries: 2, baseDelayMs: 1 }),
+        /GitHub Project GraphQL request failed: socket hang up/,
+    );
+    assert.equal(attempts, 3);
+});
+
+test('does not retry permanent GraphQL errors', async () => {
+    let attempts = 0;
+    const github = {
+        graphql: async () => {
+            attempts += 1;
+            const error = new Error('simulated API failure');
+            error.errors = [{ message: 'simulated API failure' }];
+
+            throw error;
+        },
+    };
+
+    await assert.rejects(
+        () => graphql(github, 'query X', {}, { maxRetries: 4, baseDelayMs: 1 }),
+        /GitHub Project GraphQL request failed: simulated API failure/,
+    );
+    assert.equal(attempts, 1);
+});
+
+test('retries server 5xx responses', async () => {
+    let attempts = 0;
+    const github = {
+        graphql: async () => {
+            attempts += 1;
+            const error = new Error('upstream error');
+            error.status = 503;
+
+            if (attempts < 2) {
+                throw error;
+            }
+
+            return { ok: true };
+        },
+    };
+
+    const result = await graphql(github, 'query X', {}, { baseDelayMs: 1 });
+
+    assert.equal(result.ok, true);
+    assert.equal(attempts, 2);
+});
+
+test('classifies transient and permanent errors', () => {
+    const networkError = new Error('other side closed');
+    assert.equal(isTransientGraphqlError(networkError), true);
+
+    const serverError = new Error('upstream');
+    serverError.status = 502;
+    assert.equal(isTransientGraphqlError(serverError), true);
+
+    const authError = new Error('bad credentials');
+    authError.status = 401;
+    assert.equal(isTransientGraphqlError(authError), false);
+
+    const gqlError = new Error('validation');
+    gqlError.errors = [{ message: 'validation' }];
+    assert.equal(isTransientGraphqlError(gqlError), false);
+});
+
+test('backoff delay grows exponentially and is capped', () => {
+    assert.equal(
+        backoffDelay(0, { baseDelayMs: 1000, maxDelayMs: 16000 }),
+        1000,
+    );
+    assert.equal(
+        backoffDelay(1, { baseDelayMs: 1000, maxDelayMs: 16000 }),
+        2000,
+    );
+    assert.equal(
+        backoffDelay(2, { baseDelayMs: 1000, maxDelayMs: 16000 }),
+        4000,
+    );
+    assert.equal(
+        backoffDelay(10, { baseDelayMs: 1000, maxDelayMs: 16000 }),
+        16000,
+    );
 });

@@ -179,6 +179,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<BadgeAward, $this>
+     */
+    public function badgeAwards(): HasMany
+    {
+        return $this->hasMany(BadgeAward::class);
+    }
+
+    /**
      * @return HasMany<AuditLog, $this>
      */
     public function auditLogs(): HasMany

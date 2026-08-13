@@ -80,9 +80,25 @@ dapat dihitung tanpa mengubah atau menghapus history. Row ledger append-only
 dilindungi oleh model dan database trigger/check, serta seluruh mutasi award
 dan reversal dicatat pada audit log.
 
-### `badge_definitions`, `badge_rule_versions`, `badge_awards`
+### `badge_definitions`, `badge_rule_versions`, `badge_awards`, `badge_revocations`
 
-Taxonomy, public description, rule version, evidence/source, award/revoke history.
+`badge_definitions` menyimpan key taxonomy yang immutable, category, level, public
+name, dan public description. Perubahan taxonomy membuat definition baru agar
+public copy yang pernah dipakai tidak berubah diam-diam.
+
+`badge_rule_versions` menyimpan definition, version integer, rule type, criteria
+tervalidasi, policy version, author, dan active state. Hanya satu versi aktif
+untuk satu definition. Rule lama tetap tersimpan ketika versi baru diaktifkan.
+
+`badge_awards` menyimpan user, institution, definition, rule version, source
+contribution dan version, safe source label, reason, idempotency key,
+awarded-at, serta revoked-at. Automatic evaluation hanya membaca contribution
+yang approved dan review approved. Source provenance tidak menyimpan atau
+memuat private evidence, message, inclusion, atau connectivity fields.
+
+`badge_revocations` adalah history append-only yang menyimpan award, actor,
+reason, dan revoked-at. Revoke mengubah hanya revoked-at pada award dan tidak
+menghapus atau menulis ulang award maupun rule history.
 
 ### `leaderboard_periods`, `leaderboard_preferences`, `leaderboard_projections`
 
