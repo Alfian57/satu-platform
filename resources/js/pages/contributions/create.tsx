@@ -85,7 +85,7 @@ export default function ContributionsCreate({
                     <header className="grid gap-4 border-b border-border pb-6">
                         <Link
                             href={contributionsIndex()}
-                            className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                            className="inline-flex w-fit cursor-pointer items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
                             data-test="back-to-contributions"
                         >
                             <ArrowLeft aria-hidden="true" className="size-4" />
