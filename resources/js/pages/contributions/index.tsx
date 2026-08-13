@@ -14,14 +14,14 @@ import { AppPage } from '@/components/app-page';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import {
-    create as contributionsCreate,
-    show as contributionShow,
-} from '@/routes/contributions';
 import type {
     ContributionStatus,
     ContributionSummary,
 } from '@/types/contribution';
+import {
+    create as contributionsCreate,
+    show as contributionShow,
+} from '@/routes/contributions';
 
 type ContributionsIndexProps = {
     contributions: ContributionSummary[];

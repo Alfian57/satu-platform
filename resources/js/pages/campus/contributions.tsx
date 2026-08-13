@@ -19,14 +19,12 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import ContributionController from '@/actions/App/Http/Controllers/ContributionController';
 import { AppPage } from '@/components/app-page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import { index as campusContributionsIndex } from '@/routes/campus/contributions';
 import {
     download as downloadAttachment,
     preview as previewAttachment,
@@ -37,6 +35,8 @@ import type {
     ContributionReviewQueueItem,
     ContributionStatus,
 } from '@/types/contribution';
+import ContributionController from '@/actions/App/Http/Controllers/ContributionController';
+import { index as campusContributionsIndex } from '@/routes/campus/contributions';
 
 type ReviewDecision = 'approved' | 'revision' | 'rejected';
 
