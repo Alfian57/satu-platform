@@ -73,6 +73,13 @@ Team confirmation tidak menjadi state requirement. Approval campus reviewer adal
 
 User, institution, semester, amount, reason, source type/id, policy version, awarded-at, reversal reference, dan unique idempotency key.
 
+Setiap approved contribution menghasilkan tepat satu award dengan key
+`{contribution_id}:{version}`. Reversal menyimpan amount positif pada row baru
+dan mereferensikan row award melalui `reversal_reference_id`, sehingga net XP
+dapat dihitung tanpa mengubah atau menghapus history. Row ledger append-only
+dilindungi oleh model dan database trigger/check, serta seluruh mutasi award
+dan reversal dicatat pada audit log.
+
 ### `badge_definitions`, `badge_rule_versions`, `badge_awards`
 
 Taxonomy, public description, rule version, evidence/source, award/revoke history.
