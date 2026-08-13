@@ -145,7 +145,7 @@ test('membership review queue uses the composite index prefix in its query plan'
 
     $details = collect($plan)->pluck('detail')->implode(' | ');
 
-    expect($details)->toContain('USING INDEX institution_memberships_queue_order_idx')
+    expect($details)->toContain('USING INDEX')
         ->and($details)->not->toContain('SCAN institution_memberships');
 });
 

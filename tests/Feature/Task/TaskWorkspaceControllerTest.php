@@ -212,6 +212,37 @@ test('team can manage a task through the workspace commands', function () {
     expect(Task::query()->whereKey($task)->exists())->toBeFalse();
 });
 
+test('workspace rejects a stale task edit without changing the database state', function () {
+    ['owner' => $owner, 'project' => $project] = workspaceControllerContext();
+    $task = Task::factory()
+        ->for($project)
+        ->for($owner, 'createdBy')
+        ->create([
+            'title' => 'Judul dari snapshot lama',
+        ]);
+    $expectedUpdatedAt = $task->updated_at->toIso8601String();
+
+    $task->forceFill([
+        'title' => 'Judul yang sudah diperbarui sesi lain',
+        'updated_at' => now()->addMinute(),
+    ])->save();
+
+    $this->actingAs($owner)
+        ->patchJson(
+            route('projects.workspace.tasks.update', [
+                'project' => $project,
+                'task' => $task,
+            ]),
+            [
+                'title' => 'Draft lokal yang stale',
+                'expected_updated_at' => $expectedUpdatedAt,
+            ],
+        )
+        ->assertConflict();
+
+    expect($task->refresh()->title)->toBe('Judul yang sudah diperbarui sesi lain');
+});
+
 test('workspace query budget stays bounded as task and discussion volume grows', function () {
     ['owner' => $owner, 'project' => $project] = workspaceControllerContext();
 
@@ -241,7 +272,7 @@ test('workspace query budget stays bounded as task and discussion volume grows',
             ->assertSuccessful();
     });
 
-    collect(range(4, 27))->each(function (int $number) use ($project, $owner): void {
+    collect(range(4, 251))->each(function (int $number) use ($project, $owner): void {
         Task::factory()
             ->todo()
             ->for($project)
@@ -295,4 +326,46 @@ test('workspace filters and paginates tasks from the database snapshot', functio
             ->where('tasks.meta.per_page', 1)
             ->where('tasks.data.0.title', 'Task terblokir')
             ->where('filters.status', TaskStatus::Blocked->value));
+});
+
+test('workspace keeps large task and discussion ranges paginated', function () {
+    ['owner' => $owner, 'project' => $project] = workspaceControllerContext();
+
+    Task::factory()
+        ->count(250)
+        ->for($project)
+        ->for($owner, 'createdBy')
+        ->create();
+    Message::factory()
+        ->count(250)
+        ->for($project)
+        ->for($owner, 'author')
+        ->create();
+
+    $this->actingAs($owner)
+        ->get(route('projects.workspace', [
+            'project' => $project,
+            'per_page' => 50,
+        ]))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('tasks.meta.total', 250)
+            ->where('tasks.meta.per_page', 50)
+            ->where('tasks.meta.last_page', 5)
+            ->has('tasks.data', 50)
+            ->where('discussion.meta.total', 250)
+            ->where('discussion.meta.last_page', 13)
+            ->has('discussion.data', 20));
+
+    $this->actingAs($owner)
+        ->getJson(route('projects.workspace.discussions.index', [
+            'project' => $project,
+            'per_page' => 50,
+            'page' => 5,
+        ]))
+        ->assertSuccessful()
+        ->assertJsonCount(50, 'data')
+        ->assertJsonPath('meta.total', 250)
+        ->assertJsonPath('meta.current_page', 5)
+        ->assertJsonPath('meta.last_page', 5);
 });

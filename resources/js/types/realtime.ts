@@ -18,4 +18,5 @@ export type WorkspaceRealtimeStatus =
     | 'connecting'
     | 'reconnecting'
     | 'disconnected'
-    | 'unavailable';
+    | 'unavailable'
+    | 'offline';
