@@ -66,6 +66,15 @@ berjalan setelah commit dan retryable melalui queue. Ledger update/delete
 ditolak pada model serta database layer, sementara reversal memakai row baru
 dan audit reason code.
 
+Leaderboard projection hanya mengagregasi verified XP dari approved contribution
+source dalam institution dan semester yang sama. Active member harus memiliki
+verified membership, active roster row, dan verified contribution. Program dan
+team projection disuppress saat cohort kurang dari lima. Individual projection
+default off dan hanya membaca preference opt-in student pada tenant yang sama.
+Snapshot digest, unique job key, dan append-only projection rows menjaga rebuild
+tetap deterministic dan idempotent. Evaluasi tidak membaca message, evidence
+privat, inclusion signal, atau connectivity opportunity.
+
 ## 8. Talent Boundary
 
 Recruiter membutuhkan verified organization, membership, dan active entitlement. Search membaca allowlisted projection. Username, NIM, phone, private evidence, discussion, raw audit, matching input, dan inclusion data dilarang.

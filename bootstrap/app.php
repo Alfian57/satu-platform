@@ -31,6 +31,11 @@ return Application::configure(basePath: dirname(__DIR__))
             ->everyFifteenMinutes()
             ->withoutOverlapping()
             ->onOneServer();
+
+        $schedule->command('gamification:rebuild-leaderboards')
+            ->hourly()
+            ->withoutOverlapping()
+            ->onOneServer();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

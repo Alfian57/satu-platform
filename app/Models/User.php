@@ -187,6 +187,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<LeaderboardPreference, $this>
+     */
+    public function leaderboardPreferences(): HasMany
+    {
+        return $this->hasMany(LeaderboardPreference::class);
+    }
+
+    /**
      * @return HasMany<AuditLog, $this>
      */
     public function auditLogs(): HasMany
