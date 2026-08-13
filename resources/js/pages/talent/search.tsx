@@ -367,7 +367,10 @@ export default function TalentSearch({
                         <h2 className="text-sm font-semibold tracking-wider text-slate-400 uppercase">
                             Verified Candidates ({candidates.total})
                         </h2>
-                        <span role="status" className="text-xs text-slate-500">
+                        <span
+                            role="status"
+                            className="text-xs font-medium text-slate-300"
+                        >
                             Page {candidates.current_page} of{' '}
                             {candidates.last_page}
                         </span>
@@ -548,7 +551,7 @@ export default function TalentSearch({
                             >
                                 Previous
                             </button>
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs font-medium text-slate-300">
                                 Page {candidates.current_page} of{' '}
                                 {candidates.last_page}
                             </span>
