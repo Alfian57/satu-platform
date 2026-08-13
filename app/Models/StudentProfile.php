@@ -82,6 +82,15 @@ class StudentProfile extends Model implements InstitutionOwned
         return $this->hasMany(AvailabilityWindow::class);
     }
 
+    /**
+     * @return HasMany<PortfolioEntry, $this>
+     */
+    public function portfolioEntries(): HasMany
+    {
+        return $this->hasMany(PortfolioEntry::class, 'user_id', 'user_id')
+            ->where('institution_id', $this->institution_id);
+    }
+
     public function institutionId(): int
     {
         return $this->institution_id;
