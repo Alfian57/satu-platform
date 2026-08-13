@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { index as contributionsIndex } from '@/routes/contributions';
 import { show as onboarding } from '@/routes/onboarding';
 import { index as projectsIndex } from '@/routes/projects';
 import type {
@@ -22,7 +23,6 @@ import type {
     NavItem,
     ShellContext,
 } from '@/types';
-import { index as contributionsIndex } from '@/routes/contributions';
 
 const mainNavItems: NavItem[] = [
     {

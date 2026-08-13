@@ -14,11 +14,13 @@ import {
     ShieldCheck,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import ContributionController from '@/actions/App/Http/Controllers/ContributionController';
 import { AppPage } from '@/components/app-page';
 import { ContributionComposer } from '@/components/contributions/contribution-composer';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { index as contributionsIndex } from '@/routes/contributions';
 import type {
     ContributionApiResponse,
     ContributionComposerValues,
@@ -28,8 +30,6 @@ import type {
     ContributionReview,
     ContributionStatus,
 } from '@/types/contribution';
-import ContributionController from '@/actions/App/Http/Controllers/ContributionController';
-import { index as contributionsIndex } from '@/routes/contributions';
 
 type ContributionsShowProps = {
     contribution: ContributionDetail;
