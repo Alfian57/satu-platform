@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\Consent\ConsentRecorder;
 use App\Actions\Recruiter\GrantRecruiterEntitlement;
 use App\Actions\Talent\CancelContactRequest;
 use App\Actions\Talent\RespondContactRequest;
@@ -193,6 +194,86 @@ it('allows candidate to accept or decline contact request', function () {
 
     expect($updated->status)->toBe(ContactRequestStatus::Accepted)
         ->and($updated->responded_at)->not->toBeNull();
+});
+
+it('records an explicit consent grant when a candidate accepts a contact request', function () {
+    $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
+    $recruiter = User::factory()->create();
+    $studentUser = User::factory()->create();
+    $org = RecruiterOrganization::factory()->create(['status' => RecruiterOrganizationStatus::Verified]);
+    $institution = Institution::factory()->active()->create();
+
+    RecruiterMembership::factory()->create([
+        'recruiter_organization_id' => $org->id,
+        'user_id' => $recruiter->id,
+        'role' => RecruiterMembershipRole::Recruiter,
+        'status' => RecruiterMembershipStatus::Active,
+    ]);
+
+    app(GrantRecruiterEntitlement::class)->execute(
+        issuer: $platformAdmin,
+        organization: $org,
+        scope: RecruiterEntitlementScope::CandidateSearch,
+        startsAt: Carbon::now()->subHour(),
+    );
+
+    $candidate = TalentCandidateProjection::factory()->create([
+        'user_id' => $studentUser->id,
+        'institution_id' => $institution->id,
+        'is_visible' => true,
+    ]);
+
+    $contactRequest = app(SendContactRequest::class)->execute($recruiter, $org, $candidate->id, 'Outreach Purpose');
+
+    app(RespondContactRequest::class)->execute($studentUser, $contactRequest->id, accept: true);
+
+    $consent = app(ConsentRecorder::class)->current(
+        $studentUser,
+        RespondContactRequest::CONSENT_PURPOSE,
+    );
+
+    expect($consent)->not->toBeNull()
+        ->and($consent->isGrant())->toBeTrue()
+        ->and($consent->source)->toBe('student.contact_response');
+});
+
+it('does not record a consent grant when a candidate declines a contact request', function () {
+    $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
+    $recruiter = User::factory()->create();
+    $studentUser = User::factory()->create();
+    $org = RecruiterOrganization::factory()->create(['status' => RecruiterOrganizationStatus::Verified]);
+    $institution = Institution::factory()->active()->create();
+
+    RecruiterMembership::factory()->create([
+        'recruiter_organization_id' => $org->id,
+        'user_id' => $recruiter->id,
+        'role' => RecruiterMembershipRole::Recruiter,
+        'status' => RecruiterMembershipStatus::Active,
+    ]);
+
+    app(GrantRecruiterEntitlement::class)->execute(
+        issuer: $platformAdmin,
+        organization: $org,
+        scope: RecruiterEntitlementScope::CandidateSearch,
+        startsAt: Carbon::now()->subHour(),
+    );
+
+    $candidate = TalentCandidateProjection::factory()->create([
+        'user_id' => $studentUser->id,
+        'institution_id' => $institution->id,
+        'is_visible' => true,
+    ]);
+
+    $contactRequest = app(SendContactRequest::class)->execute($recruiter, $org, $candidate->id, 'Outreach Purpose');
+
+    app(RespondContactRequest::class)->execute($studentUser, $contactRequest->id, accept: false);
+
+    $consent = app(ConsentRecorder::class)->current(
+        $studentUser,
+        RespondContactRequest::CONSENT_PURPOSE,
+    );
+
+    expect($consent)->toBeNull();
 });
 
 it('allows recruiter to cancel pending contact request', function () {

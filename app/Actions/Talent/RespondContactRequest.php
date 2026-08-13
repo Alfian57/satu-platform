@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Talent;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Actions\Consent\ConsentRecorder;
 use App\Enums\ContactRequestStatus;
 use App\Models\RecruiterContactRequest;
 use App\Models\User;
@@ -15,8 +16,11 @@ use InvalidArgumentException;
 
 final class RespondContactRequest
 {
+    public const CONSENT_PURPOSE = 'contact.handoff';
+
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
+        private readonly ConsentRecorder $consentRecorder,
     ) {}
 
     /**
@@ -55,6 +59,15 @@ final class RespondContactRequest
                 'status' => $newStatus,
                 'responded_at' => Carbon::now(),
             ]);
+
+            if ($accept) {
+                $this->consentRecorder->grant(
+                    $candidateUser,
+                    self::CONSENT_PURPOSE,
+                    'v1',
+                    'student.contact_response',
+                );
+            }
 
             $this->auditRecorder->record(
                 operation: 'recruiter_contact_request.responded',
