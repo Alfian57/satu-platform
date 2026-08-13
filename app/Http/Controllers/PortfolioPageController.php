@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Portfolio\BuildPublicPortfolioProjection;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
 use App\Enums\InstitutionStatus;
@@ -16,9 +17,35 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 final class PortfolioPageController extends Controller
 {
+    public function share(
+        Request $request,
+        string $publicIdentifier,
+        BuildPublicPortfolioProjection $buildProjection,
+    ): SymfonyResponse {
+        $projection = $buildProjection->handle($publicIdentifier);
+
+        abort_if($projection === null, 404);
+
+        $isPublished = $projection['state'] === 'published';
+        $robots = $isPublished ? 'index, follow' : 'noindex, nofollow';
+        $response = Inertia::render('portfolio/public', [
+            ...$projection,
+            'canonical_url' => route('portfolio.share', [
+                'publicIdentifier' => $publicIdentifier,
+            ]),
+            'robots' => $robots,
+        ])->toResponse($request);
+
+        $response->setStatusCode($isPublished ? 200 : 410);
+        $response->headers->set('X-Robots-Tag', $robots);
+
+        return $response;
+    }
+
     public function index(Request $request, PortfolioEntrySerializer $serializer): Response
     {
         $user = $this->user($request);

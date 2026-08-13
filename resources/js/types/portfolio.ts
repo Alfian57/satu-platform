@@ -76,3 +76,27 @@ export type PortfolioProfileApiResponse = {
         'id' | 'portfolio_visibility' | 'recruiter_discoverable' | 'updated_at'
     >;
 };
+
+export type PublicPortfolioEntry = {
+    id: number;
+    title: string;
+    summary: string;
+    verification_level: PortfolioVerificationLevel;
+    verification_label: string;
+    published_at: string | null;
+};
+
+export type PublicPortfolioProfile = {
+    display_name: string;
+    study_program: string | null;
+    bio: string | null;
+    institution_name: string;
+};
+
+export type PublicPortfolioPageProps = {
+    state: 'published' | 'unavailable';
+    profile: PublicPortfolioProfile | null;
+    entries: PublicPortfolioEntry[];
+    canonical_url: string;
+    robots: 'index, follow' | 'noindex, nofollow';
+};

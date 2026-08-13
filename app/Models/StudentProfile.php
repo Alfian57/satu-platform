@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * Institution-scoped student profile and privacy preferences.
@@ -20,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property int $institution_id
+ * @property string $public_identifier
  * @property string|null $bio
  * @property string|null $study_program
  * @property int|null $study_year
@@ -28,7 +30,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  */
-#[Guarded(['id', 'user_id', 'institution_id', 'created_at', 'updated_at'])]
+#[Guarded(['id', 'user_id', 'institution_id', 'public_identifier', 'created_at', 'updated_at'])]
 class StudentProfile extends Model implements InstitutionOwned
 {
     /** @use HasFactory<StudentProfileFactory> */
@@ -41,6 +43,13 @@ class StudentProfile extends Model implements InstitutionOwned
         'portfolio_visibility' => PortfolioVisibility::Private->value,
         'recruiter_discoverable' => false,
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (StudentProfile $profile): void {
+            $profile->public_identifier ??= (string) Str::ulid();
+        });
+    }
 
     /**
      * @return BelongsTo<User, $this>
