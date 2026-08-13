@@ -5,6 +5,7 @@ import {
     Building2,
     FileCheck2,
     LayoutDashboard,
+    ListOrdered,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -17,6 +18,7 @@ import {
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as contributionsIndex } from '@/routes/contributions';
+import { index as leaderboardsIndex } from '@/routes/leaderboards';
 import { show as onboarding } from '@/routes/onboarding';
 import { index as portfolioIndex } from '@/routes/portfolio';
 import { index as projectsIndex } from '@/routes/projects';
@@ -46,6 +48,11 @@ const mainNavItems: NavItem[] = [
         title: 'Portfolio',
         href: portfolioIndex(),
         icon: BookOpenCheck,
+    },
+    {
+        title: 'Leaderboard',
+        href: leaderboardsIndex(),
+        icon: ListOrdered,
     },
 ];
 
@@ -133,9 +140,12 @@ export function AppSidebar() {
             ? mainNavItems
             : mainNavItems.filter(
                   (item) =>
-                      !['Project', 'Contribution', 'Portfolio'].includes(
-                          item.title,
-                      ),
+                      ![
+                          'Project',
+                          'Contribution',
+                          'Portfolio',
+                          'Leaderboard',
+                      ].includes(item.title),
               );
 
     return (
