@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\AuthFlowController;
 use App\Http\Controllers\CampusInclusionController;
 use App\Http\Controllers\CampusOverviewController;
 use App\Http\Controllers\ContributionController;
+use App\Http\Controllers\ContributionPageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
@@ -159,7 +160,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::prefix('contributions')->name('contributions.')->group(function () {
-        Route::get('{contribution}', [ContributionController::class, 'show'])
+        Route::get('/', [ContributionPageController::class, 'index'])
+            ->name('index');
+        Route::get('create', [ContributionPageController::class, 'create'])
+            ->name('create');
+        Route::get('{contribution}', [ContributionPageController::class, 'show'])
             ->name('show');
         Route::post('{contribution}/evidence', [ContributionController::class, 'linkEvidence'])
             ->name('evidence.store');
