@@ -7,3 +7,4 @@ export type * from './project';
 export type * from './realtime';
 export type * from './task';
 export type * from './ui';
+export type * from './leaderboard';

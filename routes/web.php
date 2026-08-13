@@ -11,6 +11,7 @@ use App\Http\Controllers\ContributionController;
 use App\Http\Controllers\ContributionPageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionMembershipController;
+use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PortfolioEntryController;
@@ -89,6 +90,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     Route::get('dashboard', DashboardController::class)
         ->name('dashboard');
+
+    Route::prefix('leaderboards')->name('leaderboards.')->group(function () {
+        Route::get('/', [LeaderboardController::class, 'index'])
+            ->name('index');
+        Route::post('preferences/individual', [LeaderboardController::class, 'updateIndividualPreference'])
+            ->name('preferences.individual');
+    });
 
     Route::prefix('dashboard/recommendations/{recommendation}')
         ->name('dashboard.recommendations.')
