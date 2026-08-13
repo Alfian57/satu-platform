@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Platform;
 
+use Illuminate\Console\Application;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Console\Kernel;
@@ -29,7 +30,16 @@ use Illuminate\Support\Collection;
  */
 function scheduledEvents(): Collection
 {
-    app(Kernel::class)->bootstrap();
+    $kernel = app(Kernel::class);
+    $kernel->bootstrap();
+
+    if (method_exists($kernel, 'setArtisan')) {
+        $kernel->setArtisan(new Application(
+            app(),
+            app('events'),
+            app()->version(),
+        ));
+    }
 
     return collect(app(Schedule::class)->events());
 }
