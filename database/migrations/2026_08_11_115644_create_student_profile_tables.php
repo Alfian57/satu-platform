@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id');
             $table->foreignId('institution_id');
+            $table->string('public_identifier', 26);
             $table->text('bio')->nullable();
             $table->string('study_program')->nullable();
             $table->unsignedTinyInteger('study_year')->nullable();
@@ -34,6 +35,7 @@ return new class extends Migration
                 ['institution_id', 'user_id'],
                 'student_profiles_institution_user_unique',
             );
+            $table->unique('public_identifier', 'student_profiles_public_identifier_unique');
             $table->index(
                 ['institution_id', 'recruiter_discoverable', 'portfolio_visibility'],
                 'student_profiles_discovery_idx',

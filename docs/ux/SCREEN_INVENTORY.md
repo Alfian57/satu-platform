@@ -2,22 +2,23 @@
 
 ## Inventory
 
-| Surface                   | Audience          | Mode     | Surface brief                                       | Status target                                     |
-| ------------------------- | ----------------- | -------- | --------------------------------------------------- | ------------------------------------------------- |
-| Landing                   | Public            | Persuade | `.impeccable/surfaces/route.md`                     | Release                                           |
-| Register, login, recovery | Student           | Operate  | `.impeccable/surfaces/route-login.md`               | Release                                           |
-| Onboarding                | Student           | Operate  | `.impeccable/surfaces/route-onboarding.md`          | Release                                           |
-| Notification center       | Authenticated     | Operate  | `.impeccable/surfaces/route-notifications.md`       | Release                                           |
-| Dashboard                 | Role-aware        | Operate  | dashboard brief dan LOADING_STATES.md               | Reference tersedia, role/data integration planned |
-| Project discovery/detail  | Student           | Operate  | `.impeccable/surfaces/route-projects.md`            | Release                                           |
-| Workspace                 | Team              | Operate  | `.impeccable/surfaces/route-projects-workspace.md`  | Release                                           |
-| Contribution/portfolio    | Student           | Operate  | `.impeccable/surfaces/route-contributions.md`       | Release                                           |
-| Leaderboard               | Student/campus    | Operate  | `.impeccable/surfaces/route-leaderboards.md`        | Release                                           |
-| Campus operations         | Campus            | Operate  | `.impeccable/surfaces/route-campus.md`              | Release                                           |
-| Inclusion review          | Authorized campus | Operate  | `.impeccable/surfaces/route-campus-inclusion.md`    | Gated                                             |
-| Academic operations       | Campus            | Operate  | `.impeccable/surfaces/route-campus-integrations.md` | Sandbox release                                   |
-| Platform operations       | Platform admin    | Operate  | `.impeccable/surfaces/route-platform.md`            | Release                                           |
-| Talent Portal             | Recruiter/student | Operate  | `.impeccable/surfaces/route-talent.md`              | Release                                           |
+| Surface                   | Audience          | Mode       | Surface brief                                       | Status target                                     |
+| ------------------------- | ----------------- | ---------- | --------------------------------------------------- | ------------------------------------------------- |
+| Landing                   | Public            | Persuade   | `.impeccable/surfaces/route.md`                     | Release                                           |
+| Register, login, recovery | Student           | Operate    | `.impeccable/surfaces/route-login.md`               | Release                                           |
+| Onboarding                | Student           | Operate    | `.impeccable/surfaces/route-onboarding.md`          | Release                                           |
+| Notification center       | Authenticated     | Operate    | `.impeccable/surfaces/route-notifications.md`       | Release                                           |
+| Dashboard                 | Role-aware        | Operate    | dashboard brief dan LOADING_STATES.md               | Reference tersedia, role/data integration planned |
+| Project discovery/detail  | Student           | Operate    | `.impeccable/surfaces/route-projects.md`            | Release                                           |
+| Workspace                 | Team              | Operate    | `.impeccable/surfaces/route-projects-workspace.md`  | Release                                           |
+| Contribution/portfolio    | Student           | Operate    | `.impeccable/surfaces/route-contributions.md`       | Release                                           |
+| Public portfolio          | Public            | Experience | `.impeccable/surfaces/route-p-publicidentifier.md`  | Release                                           |
+| Leaderboard               | Student/campus    | Operate    | `.impeccable/surfaces/route-leaderboards.md`        | Release                                           |
+| Campus operations         | Campus            | Operate    | `.impeccable/surfaces/route-campus.md`              | Release                                           |
+| Inclusion review          | Authorized campus | Operate    | `.impeccable/surfaces/route-campus-inclusion.md`    | Gated                                             |
+| Academic operations       | Campus            | Operate    | `.impeccable/surfaces/route-campus-integrations.md` | Sandbox release                                   |
+| Platform operations       | Platform admin    | Operate    | `.impeccable/surfaces/route-platform.md`            | Release                                           |
+| Talent Portal             | Recruiter/student | Operate    | `.impeccable/surfaces/route-talent.md`              | Release                                           |
 
 ## Shared State Matrix
 

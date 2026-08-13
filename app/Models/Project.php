@@ -68,7 +68,7 @@ class Project extends Model implements InstitutionOwned
      */
     public function roles(): HasMany
     {
-        return $this->hasMany(ProjectRole::class);
+        return $this->hasMany(ProjectRole::class)->orderBy('id');
     }
 
     /**

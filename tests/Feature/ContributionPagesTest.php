@@ -2,16 +2,23 @@
 
 declare(strict_types=1);
 
+use App\Enums\ContributionReviewDecision;
+use App\Enums\ContributionStatus;
+use App\Enums\PortfolioVisibility;
 use App\Models\Attachment;
 use App\Models\Contribution;
 use App\Models\ContributionEvidence;
+use App\Models\ContributionReview;
 use App\Models\ContributionVersion;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
+use App\Models\PortfolioEntry;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Support\Contribution\ContributionSerializer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
@@ -70,6 +77,59 @@ test('student can open a contribution docket with review feedback and immutable 
             ->has('contribution.reviews', 0));
 });
 
+test('student contribution docket exposes task to review to portfolio provenance', function () {
+    $reference = now();
+
+    try {
+        Carbon::setTestNow($reference->copy()->subMinutes(3));
+        $context = contributionPageContext();
+        $contribution = contributionPageContribution($context);
+        $reviewer = User::factory()->create(['name' => 'Reviewer Provenance']);
+
+        InstitutionMembership::factory()
+            ->campusAdmin()
+            ->verifiedByApprovedDomain()
+            ->for($reviewer)
+            ->for($context['institution'])
+            ->create();
+
+        $version = $contribution->currentVersion;
+        Carbon::setTestNow($reference->copy()->subMinute());
+        ContributionReview::factory()
+            ->for($version, 'contributionVersion')
+            ->for($reviewer, 'reviewer')
+            ->approved()
+            ->create();
+        $contribution->forceFill(['status' => ContributionStatus::Approved])->save();
+
+        Carbon::setTestNow($reference);
+        $entry = PortfolioEntry::factory()->create([
+            'institution_id' => $context['institution']->getKey(),
+            'user_id' => $context['student']->getKey(),
+            'contribution_id' => $contribution->getKey(),
+            'contribution_version_id' => $version->getKey(),
+            'visibility' => PortfolioVisibility::Private,
+        ]);
+    } finally {
+        Carbon::setTestNow();
+    }
+
+    $this->actingAs($context['student'])
+        ->get(route('contributions.show', $contribution))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('contribution.provenance.timeline', 3)
+            ->where('contribution.provenance.timeline.0.type', 'version_created')
+            ->where('contribution.provenance.timeline.1.type', 'review_decision')
+            ->where('contribution.provenance.timeline.1.decision', ContributionReviewDecision::Approved->value)
+            ->where('contribution.provenance.timeline.1.reviewer.name', $reviewer->name)
+            ->where('contribution.provenance.timeline.2.type', 'portfolio_projection')
+            ->where('contribution.provenance.portfolio.id', $entry->getKey())
+            ->where('contribution.provenance.portfolio.status', 'private')
+            ->missing('contribution.provenance.timeline.1.reason')
+            ->missing('contribution.provenance.timeline.1.note'));
+});
+
 test('detail keeps a deleted evidence reference visible as a recoverable missing file', function () {
     $context = contributionPageContext();
     $contribution = contributionPageContribution($context);
@@ -82,6 +142,33 @@ test('detail keeps a deleted evidence reference visible as a recoverable missing
             ->component('contributions/show')
             ->where('contribution.current_version.evidence.0.available', false)
             ->where('contribution.current_version.evidence.0.attachment.original_name', 'catatan-validasi.pdf'));
+});
+
+test('contribution serialization keeps private storage metadata out of the docket projection', function () {
+    $context = contributionPageContext();
+    $contribution = contributionPageContribution($context);
+    $serialized = app(ContributionSerializer::class)->contribution($contribution);
+
+    expect($serialized)->not->toHaveKeys([
+        'path',
+        'disk',
+        'sha256',
+        'private_evidence',
+        'raw_audit',
+        'phone',
+        'username',
+    ])
+        ->and($serialized['current_version']['evidence'][0])->toHaveKeys([
+            'id',
+            'attachment_id',
+            'source_label',
+            'available',
+        ])->not->toHaveKeys([
+            'path',
+            'disk',
+            'sha256',
+            'private_evidence',
+        ]);
 });
 
 test('student without a verified affiliation receives a safe empty contribution boundary', function () {

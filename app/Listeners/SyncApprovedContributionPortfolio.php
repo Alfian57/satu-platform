@@ -9,6 +9,7 @@ use App\Actions\Portfolio\SyncApprovedPortfolioEntry;
 use App\Events\ContributionApproved;
 use App\Models\Institution;
 use App\Models\User;
+use App\Notifications\PortfolioEntryReadyNotification;
 
 final class SyncApprovedContributionPortfolio
 {
@@ -25,9 +26,13 @@ final class SyncApprovedContributionPortfolio
             return;
         }
 
+        $owner = User::query()->findOrFail($entry->user_id);
+
         $this->rebuildProjection->handle(
-            User::query()->findOrFail($entry->user_id),
+            $owner,
             Institution::query()->findOrFail($entry->institution_id),
         );
+
+        $owner->notify(new PortfolioEntryReadyNotification($entry));
     }
 }

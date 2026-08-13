@@ -39,20 +39,26 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $isPublicPortfolio = $request->routeIs('portfolio.share');
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user()?->only([
-                    'id',
-                    'name',
-                    'username',
-                    'created_at',
-                    'updated_at',
-                ]),
+                'user' => $isPublicPortfolio
+                    ? null
+                    : $request->user()?->only([
+                        'id',
+                        'name',
+                        'username',
+                        'created_at',
+                        'updated_at',
+                    ]),
             ],
             'shell' => [
-                'institutionMembership' => fn (): ?array => $this->institutionMembershipSummary($request),
+                'institutionMembership' => $isPublicPortfolio
+                    ? null
+                    : fn (): ?array => $this->institutionMembershipSummary($request),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

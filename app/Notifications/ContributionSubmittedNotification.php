@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\Contribution;
+use App\Notifications\Concerns\HasDatabaseNotificationIntent;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 final class ContributionSubmittedNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use HasDatabaseNotificationIntent, Queueable;
 
     public function __construct(
         public readonly Contribution $contribution,
@@ -27,6 +28,15 @@ final class ContributionSubmittedNotification extends Notification implements Sh
         return ['database'];
     }
 
+    public function notificationIntentKey(): string
+    {
+        return implode(':', [
+            'contribution_submitted',
+            $this->contribution->getKey(),
+            $this->contribution->current_version_id,
+        ]);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -35,6 +45,7 @@ final class ContributionSubmittedNotification extends Notification implements Sh
         $this->contribution->loadMissing('currentVersion');
 
         return [
+            'intent_key' => $this->notificationIntentKey(),
             'contribution_id' => $this->contribution->getKey(),
             'project_id' => $this->contribution->project_id,
             'version_id' => $this->contribution->currentVersion?->getKey(),
@@ -43,6 +54,7 @@ final class ContributionSubmittedNotification extends Notification implements Sh
             'action_url' => route('contributions.show', $this->contribution),
             'action_label' => 'Tinjau kontribusi',
             'purpose' => 'contribution_submitted',
+            'category' => 'contribution',
         ];
     }
 }

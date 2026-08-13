@@ -2,11 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MessagePurpose;
 use App\Models\NotificationPreference;
+use App\Models\User;
+use App\Support\Notification\NotificationCatalog;
 use App\Support\Notification\NotificationSerializer;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -19,6 +27,12 @@ class NotificationController extends Controller
     public function index(Request $request): Response
     {
         $filter = $request->query('filter', 'all');
+        $filter = in_array($filter, ['all', 'unread', 'read'], true)
+            ? $filter
+            : 'all';
+        $category = NotificationCatalog::normalizeCategory(
+            $request->query('category'),
+        );
 
         $query = $request->user()->notifications();
 
@@ -28,19 +42,25 @@ class NotificationController extends Controller
             $query->whereNotNull('read_at');
         }
 
+        $this->applyCategoryFilter($query, $category);
+
         $notifications = $query->orderBy('created_at', 'desc')
             ->paginate(20)
             ->through(fn ($n) => NotificationSerializer::toArray($n));
 
-        $preferences = NotificationPreference::query()
-            ->where('user_id', $request->user()->id)
-            ->get()
-            ->groupBy('purpose');
+        $savedPreferences = NotificationPreference::query()
+            ->whereBelongsTo($request->user())
+            ->where('channel', 'whatsapp')
+            ->pluck('enabled', 'purpose')
+            ->map(static fn (mixed $enabled): bool => (bool) $enabled)
+            ->all();
 
         return Inertia::render('notifications/index', [
             'notifications' => $notifications,
-            'preferences' => $preferences,
+            'categories' => NotificationCatalog::categories(),
+            'preferences' => NotificationCatalog::whatsappPreferences($savedPreferences),
             'filter' => $filter,
+            'category' => $category,
             'unreadCount' => $request->user()->unreadNotifications()->count(),
         ]);
     }
@@ -61,7 +81,13 @@ class NotificationController extends Controller
      */
     public function markAllRead(Request $request): RedirectResponse
     {
-        $request->user()->unreadNotifications()->update(['read_at' => now()]);
+        $category = NotificationCatalog::normalizeCategory(
+            $request->input('category'),
+        );
+        $query = $request->user()->unreadNotifications();
+
+        $this->applyCategoryFilter($query, $category);
+        $query->update(['read_at' => now()]);
 
         return back();
     }
@@ -74,7 +100,10 @@ class NotificationController extends Controller
         $notification = $request->user()->notifications()->findOrFail($id);
         $notification->markAsRead();
 
-        $actionUrl = $notification->data['action_url'] ?? null;
+        $actionUrl = $this->safeInternalActionUrl(
+            $request,
+            $notification->data['action_url'] ?? null,
+        );
 
         if ($actionUrl === null) {
             return back();
@@ -89,10 +118,26 @@ class NotificationController extends Controller
     public function updatePreference(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'purpose' => ['required', 'string'],
+            'purpose' => [
+                'required',
+                'string',
+                Rule::in(array_map(
+                    static fn (MessagePurpose $purpose): string => $purpose->value,
+                    MessagePurpose::cases(),
+                )),
+            ],
             'channel' => ['required', 'string', 'in:in_app,whatsapp'],
             'enabled' => ['required', 'boolean'],
         ]);
+
+        if (
+            $validated['channel'] === 'in_app'
+            && $validated['enabled'] === false
+        ) {
+            throw ValidationException::withMessages([
+                'enabled' => 'Notification in-app adalah history canonical dan tidak dapat dimatikan.',
+            ]);
+        }
 
         DB::transaction(function () use ($request, $validated) {
             NotificationPreference::query()->updateOrCreate(
@@ -106,5 +151,47 @@ class NotificationController extends Controller
         });
 
         return back();
+    }
+
+    /**
+     * @param  Builder<DatabaseNotification>|MorphMany<DatabaseNotification, User>  $query
+     */
+    private function applyCategoryFilter(Builder|MorphMany $query, string $category): void
+    {
+        $purposes = NotificationCatalog::purposesForCategory($category);
+
+        if ($purposes !== []) {
+            $query->where(function (Builder $query) use ($purposes): void {
+                foreach ($purposes as $purpose) {
+                    $query->orWhereJsonContains('data->purpose', $purpose);
+                }
+            });
+        }
+    }
+
+    private function safeInternalActionUrl(Request $request, mixed $actionUrl): ?string
+    {
+        if (! is_string($actionUrl) || trim($actionUrl) === '') {
+            return null;
+        }
+
+        $parts = parse_url($actionUrl);
+
+        if ($parts === false) {
+            return null;
+        }
+
+        if (
+            isset($parts['scheme'])
+            && ! in_array($parts['scheme'], ['http', 'https'], true)
+        ) {
+            return null;
+        }
+
+        if (isset($parts['host']) && ! hash_equals($request->getHost(), $parts['host'])) {
+            return null;
+        }
+
+        return $actionUrl;
     }
 }

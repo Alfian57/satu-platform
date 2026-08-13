@@ -45,7 +45,7 @@ final class InclusionSignalDetail
 
         $signal->loadMissing([
             'subject:id,name',
-            'version:id,name',
+            'version:id,version',
             'reviews.reviewer:id,name',
         ]);
 
