@@ -340,7 +340,7 @@ function ProvenanceTrace({
                                     </span>
                                     <Link
                                         href={portfolioShow(event.portfolio.id)}
-                                        className="inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                                        className="inline-flex min-h-11 cursor-pointer items-center gap-2 font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                                         data-test="contribution-portfolio-link"
                                     >
                                         Buka portfolio
@@ -622,7 +622,7 @@ export default function ContributionsShow({
                     <header className="grid gap-4 border-b border-border pb-6">
                         <Link
                             href={contributionsIndex()}
-                            className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                            className="inline-flex w-fit cursor-pointer items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
                             data-test="back-to-contributions"
                         >
                             <ArrowLeft aria-hidden="true" className="size-4" />

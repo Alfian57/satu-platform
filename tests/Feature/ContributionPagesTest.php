@@ -16,6 +16,7 @@ use App\Models\PortfolioEntry;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Support\Contribution\ContributionSerializer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -141,6 +142,33 @@ test('detail keeps a deleted evidence reference visible as a recoverable missing
             ->component('contributions/show')
             ->where('contribution.current_version.evidence.0.available', false)
             ->where('contribution.current_version.evidence.0.attachment.original_name', 'catatan-validasi.pdf'));
+});
+
+test('contribution serialization keeps private storage metadata out of the docket projection', function () {
+    $context = contributionPageContext();
+    $contribution = contributionPageContribution($context);
+    $serialized = app(ContributionSerializer::class)->contribution($contribution);
+
+    expect($serialized)->not->toHaveKeys([
+        'path',
+        'disk',
+        'sha256',
+        'private_evidence',
+        'raw_audit',
+        'phone',
+        'username',
+    ])
+        ->and($serialized['current_version']['evidence'][0])->toHaveKeys([
+            'id',
+            'attachment_id',
+            'source_label',
+            'available',
+        ])->not->toHaveKeys([
+            'path',
+            'disk',
+            'sha256',
+            'private_evidence',
+        ]);
 });
 
 test('student without a verified affiliation receives a safe empty contribution boundary', function () {

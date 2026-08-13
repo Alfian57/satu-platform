@@ -110,6 +110,61 @@ test('campus contribution review stays contained at tablet and small laptop widt
         ->assertNoAccessibilityIssues();
 });
 
+test('campus review refresh keeps the current queue visible while loading', function () {
+    $context = campusContributionBrowserContext();
+    $contribution = campusBrowserPendingContribution($context);
+
+    $this->actingAs($context['reviewer']);
+
+    $page = visit(route('campus.contributions.index', $context['institution']))
+        ->resize(1366, 900)
+        ->waitForText('Antrean validasi')
+        ->assertPresent("@campus-contribution-row-{$contribution->getKey()}");
+
+    $page->script(<<<'JS'
+        (() => {
+            let delayed = false;
+            const originalOpen = XMLHttpRequest.prototype.open;
+            const originalSend = XMLHttpRequest.prototype.send;
+
+            XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+                this.__pestCampusContributionRequest = String(url).includes('/campus/');
+
+                return originalOpen.call(this, method, url, ...rest);
+            };
+
+            XMLHttpRequest.prototype.send = function (...args) {
+                if (!delayed && this.__pestCampusContributionRequest) {
+                    delayed = true;
+                    window.setTimeout(() => originalSend.apply(this, args), 1200);
+
+                    return;
+                }
+
+                return originalSend.apply(this, args);
+            };
+        })();
+        JS);
+
+    $page
+        ->click('@campus-contribution-refresh')
+        ->wait(0.3)
+        ->assertPresent("@campus-contribution-row-{$contribution->getKey()}")
+        ->assertScript(
+            "document.querySelector('[aria-labelledby=contribution-review-queue-title]')?.getAttribute('aria-busy') === 'true' && document.querySelectorAll('[data-test=campus-contribution-queue-refreshing][role=status]').length === 1",
+            true,
+        )
+        ->screenshot(true, 'p51-campus-review-refresh-loading-desktop-1366x900')
+        ->wait(1.6)
+        ->assertScript(
+            "document.querySelector('[data-test=campus-contribution-queue-refreshing]') === null",
+            true,
+        )
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
 /**
  * @return array{institution: Institution, reviewer: User, student: User, project: Project, task: Task, attachment: Attachment}
  */

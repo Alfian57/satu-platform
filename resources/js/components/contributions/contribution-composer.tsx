@@ -288,7 +288,7 @@ export function ContributionComposer({
                         {selectedProject !== null && (
                             <Link
                                 href={projectWorkspace(selectedProject.id).url}
-                                className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                                className="inline-flex w-fit cursor-pointer items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
                                 data-test="contribution-open-workspace"
                             >
                                 <FolderOpen

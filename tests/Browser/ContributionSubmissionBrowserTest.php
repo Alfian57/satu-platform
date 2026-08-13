@@ -232,6 +232,85 @@ test('contribution list exposes a stable refresh skeleton on a small laptop', fu
         ->assertNoAccessibilityIssues();
 });
 
+test('contribution refresh failure preserves the ledger and offers recovery', function () {
+    $context = contributionBrowserContext();
+    $contribution = contributionBrowserContribution($context, ContributionStatus::Draft);
+
+    $this->actingAs($context['student']);
+
+    $page = visit(route('contributions.index'))
+        ->resize(1366, 768)
+        ->assertSee('Project browser contribution');
+
+    $page->script(<<<'JS'
+        (() => {
+            let failed = false;
+            const originalOpen = XMLHttpRequest.prototype.open;
+            const originalSend = XMLHttpRequest.prototype.send;
+
+            XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+                this.__pestContributionRequest = String(url).includes('/contributions');
+
+                return originalOpen.call(this, method, url, ...rest);
+            };
+
+            XMLHttpRequest.prototype.send = function (...args) {
+                if (!failed && this.__pestContributionRequest) {
+                    failed = true;
+                    window.setTimeout(() => {
+                        const error = new ProgressEvent('error');
+
+                        if (typeof this.onerror === 'function') {
+                            this.onerror(error);
+                        } else {
+                            this.dispatchEvent(error);
+                        }
+                    }, 40);
+
+                    return;
+                }
+
+                return originalSend.apply(this, args);
+            };
+        })();
+        JS);
+
+    $page
+        ->click('@contributions-refresh')
+        ->waitForText('Periksa koneksi lalu coba lagi.')
+        ->assertPresent("@contribution-row-{$contribution->getKey()}")
+        ->assertScript(
+            "document.querySelector('[data-test=contributions-ledger]')?.getAttribute('aria-busy') === 'false'",
+            true,
+        )
+        ->assertEnabled('@contributions-refresh')
+        ->screenshot(true, 'p51-contribution-refresh-error-desktop-1366x768')
+        ->click('@contributions-refresh')
+        ->waitForText('Contribution milikmu')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
+test('empty contribution state stays usable on mobile', function () {
+    $context = contributionBrowserContext();
+
+    $this->actingAs($context['student']);
+
+    visit(route('contributions.index'))
+        ->resize(390, 844)
+        ->waitForText('Belum ada contribution')
+        ->assertSee('Susun contribution pertama')
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(true, 'p51-contribution-empty-mobile-390x844')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
 /**
  * @return array{institution: Institution, student: User, reviewer: User, project: Project, task: Task, attachment: Attachment}
  */

@@ -242,6 +242,40 @@ function QueueSkeleton() {
     );
 }
 
+function QueueRefreshState() {
+    return (
+        <div
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+            className="grid gap-3 border-y border-border px-4 py-4"
+            data-test="campus-contribution-queue-refreshing"
+        >
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <RefreshCw
+                    aria-hidden="true"
+                    className="size-4 animate-spin motion-reduce:animate-none"
+                />
+                <span>
+                    Menyegarkan antrean tanpa menghapus contribution yang sedang
+                    terlihat.
+                </span>
+            </div>
+            <div
+                aria-hidden="true"
+                className="grid gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_10rem] sm:items-center"
+            >
+                <div className="grid gap-2">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-5 w-4/5" />
+                </div>
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-control-md w-full" />
+            </div>
+        </div>
+    );
+}
+
 function SummaryFact({ label, value }: { label: string; value: string }) {
     return (
         <div className="grid gap-1 py-3">
@@ -389,13 +423,16 @@ function ReviewWorkspace({
     institution,
     filters,
     reviewQueue,
+    isFilterLoading,
 }: {
     institution: Props['institution'];
     filters: ReviewFilters;
     reviewQueue: ReviewQueue;
+    isFilterLoading: boolean;
 }) {
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isQueueLoading, setQueueLoading] = useState(false);
+    const [queueError, setQueueError] = useState<string | null>(null);
     const [actionMessage, setActionMessage] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
     const reviewForm = useHttp<ReviewPayload, ContributionApiResponse>({
@@ -414,6 +451,7 @@ function ReviewWorkspace({
     const reasonError = firstError(formErrors, 'reason');
     const noteError = firstError(formErrors, 'note');
     const selectedDecision = reviewForm.data.decision;
+    const isLoading = isQueueLoading || isFilterLoading;
 
     useEffect(() => {
         function closeDocket(event: KeyboardEvent): void {
@@ -446,6 +484,7 @@ function ReviewWorkspace({
         const merged = { ...filters, ...next };
 
         setQueueLoading(true);
+        setQueueError(null);
         setSelectedId(null);
         router.get(
             campusContributionsIndex({ institution: institution.id }),
@@ -459,6 +498,26 @@ function ReviewWorkspace({
                 preserveScroll: true,
                 preserveState: true,
                 replace: true,
+                onSuccess: () => setQueueError(null),
+                onError: () => {
+                    setQueueError(
+                        'Antrean belum diperbarui. Data yang sedang terlihat tetap aman. Coba lagi.',
+                    );
+                },
+                onHttpException: () => {
+                    setQueueError(
+                        'Antrean belum diperbarui. Data yang sedang terlihat tetap aman. Coba lagi.',
+                    );
+
+                    return false;
+                },
+                onNetworkError: () => {
+                    setQueueError(
+                        'Antrean belum diperbarui. Data yang sedang terlihat tetap aman. Periksa koneksi lalu coba lagi.',
+                    );
+
+                    return false;
+                },
                 onFinish: () => setQueueLoading(false),
             },
         );
@@ -466,8 +525,29 @@ function ReviewWorkspace({
 
     function refreshQueue(): void {
         setQueueLoading(true);
+        setQueueError(null);
         router.reload({
             only: ['reviewQueue'],
+            onSuccess: () => setQueueError(null),
+            onError: () => {
+                setQueueError(
+                    'Antrean belum diperbarui. Data yang sedang terlihat tetap aman. Coba lagi.',
+                );
+            },
+            onHttpException: () => {
+                setQueueError(
+                    'Antrean belum diperbarui. Data yang sedang terlihat tetap aman. Coba lagi.',
+                );
+
+                return false;
+            },
+            onNetworkError: () => {
+                setQueueError(
+                    'Antrean belum diperbarui. Data yang sedang terlihat tetap aman. Periksa koneksi lalu coba lagi.',
+                );
+
+                return false;
+            },
             onFinish: () => setQueueLoading(false),
         });
     }
@@ -568,9 +648,31 @@ function ReviewWorkspace({
                 </div>
             )}
 
+            {queueError && (
+                <div
+                    role="alert"
+                    className="flex flex-wrap items-start justify-between gap-3 border border-correction/40 bg-correction-subtle px-3 py-3 text-sm leading-6 text-correction-subtle-foreground"
+                    data-test="campus-contribution-queue-error"
+                >
+                    <span>{queueError}</span>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="cursor-pointer disabled:cursor-not-allowed"
+                        disabled={isLoading}
+                        onClick={refreshQueue}
+                        data-test="campus-contribution-queue-error-retry"
+                    >
+                        {isLoading ? <Spinner /> : <RefreshCw />}
+                        Coba lagi
+                    </Button>
+                </div>
+            )}
+
             <div className="grid gap-8 2xl:grid-cols-[minmax(0,1fr)_27rem]">
                 <section
                     aria-labelledby="contribution-review-queue-title"
+                    aria-busy={isLoading}
                     className="min-w-0"
                 >
                     <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
@@ -590,157 +692,160 @@ function ReviewWorkspace({
                             type="button"
                             variant="outline"
                             className="cursor-pointer disabled:cursor-not-allowed"
-                            disabled={isQueueLoading}
+                            disabled={isLoading}
                             onClick={refreshQueue}
                             data-test="campus-contribution-refresh"
                         >
-                            {isQueueLoading ? <Spinner /> : <RefreshCw />}
+                            {isLoading ? <Spinner /> : <RefreshCw />}
                             Muat ulang
                         </Button>
                     </div>
 
-                    {isQueueLoading ? (
-                        <QueueSkeleton />
-                    ) : reviewQueue.items.length === 0 ? (
-                        <div
-                            className="border-y border-border px-4 py-14 text-center"
-                            data-test="campus-contribution-queue-empty"
-                        >
-                            <CheckCircle2
-                                aria-hidden="true"
-                                className="mx-auto size-9 text-verified"
-                            />
-                            <h3 className="mt-4 text-lg font-bold">
-                                Antrean kosong
-                            </h3>
-                            <p className="mx-auto mt-2 max-w-[55ch] text-sm leading-relaxed text-muted-foreground">
-                                Semua contribution pada filter ini sudah
-                                memiliki status yang tercatat. Ubah filter untuk
-                                melihat riwayat lain.
-                            </p>
-                        </div>
+                    {reviewQueue.items.length === 0 ? (
+                        <>
+                            {isLoading && <QueueRefreshState />}
+                            <div
+                                className="border-y border-border px-4 py-14 text-center"
+                                data-test="campus-contribution-queue-empty"
+                            >
+                                <CheckCircle2
+                                    aria-hidden="true"
+                                    className="mx-auto size-9 text-verified"
+                                />
+                                <h3 className="mt-4 text-lg font-bold">
+                                    Antrean kosong
+                                </h3>
+                                <p className="mx-auto mt-2 max-w-[55ch] text-sm leading-relaxed text-muted-foreground">
+                                    Semua contribution pada filter ini sudah
+                                    memiliki status yang tercatat. Ubah filter
+                                    untuk melihat riwayat lain.
+                                </p>
+                            </div>
+                        </>
                     ) : (
-                        <div className="border-y border-border">
-                            {reviewQueue.items.map((item) => {
-                                const itemStatus = statusMeta[item.status];
+                        <div className="grid gap-3">
+                            {isLoading && <QueueRefreshState />}
+                            <div className="border-y border-border">
+                                {reviewQueue.items.map((item) => {
+                                    const itemStatus = statusMeta[item.status];
 
-                                return (
-                                    <article
-                                        key={item.id}
-                                        className={cn(
-                                            'border-b border-border last:border-b-0',
-                                            selectedId === item.id &&
-                                                'bg-primary/5',
-                                        )}
-                                        data-test={`campus-contribution-row-${item.id}`}
-                                    >
-                                        <button
-                                            type="button"
-                                            className="grid w-full cursor-pointer gap-4 px-4 py-4 text-left transition-colors duration-fast hover:bg-muted/50 focus-visible:bg-muted/50 motion-reduce:transition-none sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_10rem] sm:items-center"
-                                            aria-pressed={
-                                                selectedId === item.id
-                                            }
-                                            onClick={() => selectItem(item)}
-                                            data-test={`campus-contribution-select-${item.id}`}
+                                    return (
+                                        <article
+                                            key={item.id}
+                                            className={cn(
+                                                'border-b border-border last:border-b-0',
+                                                selectedId === item.id &&
+                                                    'bg-primary/5',
+                                            )}
+                                            data-test={`campus-contribution-row-${item.id}`}
                                         >
-                                            <span className="min-w-0">
-                                                <span className="block font-label text-label text-primary">
-                                                    {item.reference}
+                                            <button
+                                                type="button"
+                                                className="grid w-full cursor-pointer gap-4 px-4 py-4 text-left transition-colors duration-fast hover:bg-muted/50 focus-visible:bg-muted/50 motion-reduce:transition-none sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_10rem] sm:items-center"
+                                                aria-pressed={
+                                                    selectedId === item.id
+                                                }
+                                                onClick={() => selectItem(item)}
+                                                data-test={`campus-contribution-select-${item.id}`}
+                                            >
+                                                <span className="min-w-0">
+                                                    <span className="block font-label text-label text-primary">
+                                                        {item.reference}
+                                                    </span>
+                                                    <span className="mt-1 block text-base font-semibold break-words">
+                                                        {item.project.title}
+                                                    </span>
+                                                    <span className="mt-1 block text-sm break-words text-muted-foreground">
+                                                        {item.contributor.name}
+                                                    </span>
                                                 </span>
-                                                <span className="mt-1 block text-base font-semibold break-words">
-                                                    {item.project.title}
+                                                <span className="min-w-0 text-sm">
+                                                    <span className="block font-medium break-words">
+                                                        {item.current_version
+                                                            ?.task?.title ??
+                                                            'Task belum tersedia'}
+                                                    </span>
+                                                    <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                                                        {item.current_version
+                                                            ? `Versi ${item.current_version.version_number}`
+                                                            : 'Versi belum tersedia'}{' '}
+                                                        ·{' '}
+                                                        {formatDate(
+                                                            item.updated_at,
+                                                        )}
+                                                    </span>
+                                                    <span className="mt-2 block text-xs text-muted-foreground">
+                                                        {itemStatus.description}
+                                                    </span>
                                                 </span>
-                                                <span className="mt-1 block text-sm break-words text-muted-foreground">
-                                                    {item.contributor.name}
+                                                <span className="flex items-center justify-between gap-3 sm:grid sm:justify-items-start">
+                                                    <StatusChip
+                                                        status={item.status}
+                                                    />
+                                                    <span className="font-label text-label text-primary underline-offset-4 group-hover:underline">
+                                                        {selectedId === item.id
+                                                            ? 'Dibuka'
+                                                            : 'Tinjau'}
+                                                    </span>
                                                 </span>
-                                            </span>
-                                            <span className="min-w-0 text-sm">
-                                                <span className="block font-medium break-words">
-                                                    {item.current_version?.task
-                                                        ?.title ??
-                                                        'Task belum tersedia'}
-                                                </span>
-                                                <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
-                                                    {item.current_version
-                                                        ? `Versi ${item.current_version.version_number}`
-                                                        : 'Versi belum tersedia'}{' '}
-                                                    ·{' '}
-                                                    {formatDate(
-                                                        item.updated_at,
-                                                    )}
-                                                </span>
-                                                <span className="mt-2 block text-xs text-muted-foreground">
-                                                    {itemStatus.description}
-                                                </span>
-                                            </span>
-                                            <span className="flex items-center justify-between gap-3 sm:grid sm:justify-items-start">
-                                                <StatusChip
-                                                    status={item.status}
-                                                />
-                                                <span className="font-label text-label text-primary underline-offset-4 group-hover:underline">
-                                                    {selectedId === item.id
-                                                        ? 'Dibuka'
-                                                        : 'Tinjau'}
-                                                </span>
-                                            </span>
-                                        </button>
-                                    </article>
-                                );
-                            })}
+                                            </button>
+                                        </article>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
 
-                    {!isQueueLoading &&
-                        reviewQueue.pagination.last_page > 1 && (
-                            <nav
-                                aria-label="Paginasi antrean validasi contribution"
-                                className="mt-4 flex items-center justify-between gap-4"
+                    {reviewQueue.pagination.last_page > 1 && (
+                        <nav
+                            aria-label="Paginasi antrean validasi contribution"
+                            className="mt-4 flex items-center justify-between gap-4"
+                        >
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="cursor-pointer disabled:cursor-not-allowed"
+                                disabled={
+                                    isLoading ||
+                                    reviewQueue.pagination.current_page === 1
+                                }
+                                onClick={() =>
+                                    updateFilters({
+                                        page:
+                                            reviewQueue.pagination
+                                                .current_page - 1,
+                                    })
+                                }
                             >
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="cursor-pointer disabled:cursor-not-allowed"
-                                    disabled={
-                                        reviewQueue.pagination.current_page ===
-                                        1
-                                    }
-                                    onClick={() =>
-                                        updateFilters({
-                                            page:
-                                                reviewQueue.pagination
-                                                    .current_page - 1,
-                                        })
-                                    }
-                                >
-                                    <ChevronLeft />
-                                    Sebelumnya
-                                </Button>
-                                <p className="font-label text-label text-muted-foreground">
-                                    Halaman{' '}
-                                    {reviewQueue.pagination.current_page} dari{' '}
-                                    {reviewQueue.pagination.last_page}
-                                </p>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="cursor-pointer disabled:cursor-not-allowed"
-                                    disabled={
-                                        reviewQueue.pagination.current_page ===
+                                <ChevronLeft />
+                                Sebelumnya
+                            </Button>
+                            <p className="font-label text-label text-muted-foreground">
+                                Halaman {reviewQueue.pagination.current_page}{' '}
+                                dari {reviewQueue.pagination.last_page}
+                            </p>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="cursor-pointer disabled:cursor-not-allowed"
+                                disabled={
+                                    isLoading ||
+                                    reviewQueue.pagination.current_page ===
                                         reviewQueue.pagination.last_page
-                                    }
-                                    onClick={() =>
-                                        updateFilters({
-                                            page:
-                                                reviewQueue.pagination
-                                                    .current_page + 1,
-                                        })
-                                    }
-                                >
-                                    Berikutnya
-                                    <ChevronRight />
-                                </Button>
-                            </nav>
-                        )}
+                                }
+                                onClick={() =>
+                                    updateFilters({
+                                        page:
+                                            reviewQueue.pagination
+                                                .current_page + 1,
+                                    })
+                                }
+                            >
+                                Berikutnya
+                                <ChevronRight />
+                            </Button>
+                        </nav>
+                    )}
                 </section>
 
                 <aside
@@ -1255,11 +1360,13 @@ export default function CampusContributions({
     reviewQueue,
 }: Props) {
     const [isFilterLoading, setFilterLoading] = useState(false);
+    const [filterError, setFilterError] = useState<string | null>(null);
 
     function updateFilters(next: Partial<ReviewFilters>): void {
         const merged = { ...filters, ...next };
 
         setFilterLoading(true);
+        setFilterError(null);
         router.get(
             campusContributionsIndex({ institution: institution.id }),
             {
@@ -1271,6 +1378,26 @@ export default function CampusContributions({
                 preserveScroll: true,
                 preserveState: true,
                 replace: true,
+                onSuccess: () => setFilterError(null),
+                onError: () => {
+                    setFilterError(
+                        'Filter belum diterapkan. Data antrean yang terlihat tetap aman. Coba lagi.',
+                    );
+                },
+                onHttpException: () => {
+                    setFilterError(
+                        'Filter belum diterapkan. Data antrean yang terlihat tetap aman. Coba lagi.',
+                    );
+
+                    return false;
+                },
+                onNetworkError: () => {
+                    setFilterError(
+                        'Filter belum diterapkan. Data antrean yang terlihat tetap aman. Periksa koneksi lalu coba lagi.',
+                    );
+
+                    return false;
+                },
                 onFinish: () => setFilterLoading(false),
             },
         );
@@ -1345,6 +1472,27 @@ export default function CampusContributions({
                         </div>
                     </header>
 
+                    {filterError && (
+                        <div
+                            role="alert"
+                            className="mb-7 flex flex-wrap items-start justify-between gap-3 border border-correction/40 bg-correction-subtle px-3 py-3 text-sm leading-6 text-correction-subtle-foreground"
+                            data-test="campus-contribution-filter-error"
+                        >
+                            <span>{filterError}</span>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="cursor-pointer disabled:cursor-not-allowed"
+                                disabled={isFilterLoading}
+                                onClick={() => updateFilters({})}
+                                data-test="campus-contribution-filter-error-retry"
+                            >
+                                {isFilterLoading ? <Spinner /> : <RefreshCw />}
+                                Coba lagi
+                            </Button>
+                        </div>
+                    )}
+
                     <section
                         aria-label="Filter antrean validasi contribution"
                         aria-busy={isFilterLoading}
@@ -1400,6 +1548,7 @@ export default function CampusContributions({
                             institution={institution}
                             filters={filters}
                             reviewQueue={reviewQueue!}
+                            isFilterLoading={isFilterLoading}
                         />
                     </Deferred>
                 </div>

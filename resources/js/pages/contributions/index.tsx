@@ -9,7 +9,7 @@ import {
     RefreshCw,
     ShieldCheck,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AppPage } from '@/components/app-page';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -85,37 +85,35 @@ function verificationLabel(status: ContributionStatus): string {
     return status === 'approved' ? 'Institution-verified' : 'Self-reported';
 }
 
-function ContributionsSkeleton() {
+function ContributionsRefreshState() {
     return (
         <div
-            role="region"
+            role="status"
+            aria-live="polite"
             aria-busy="true"
-            aria-label="Daftar contribution sedang dimuat"
             data-test="contributions-loading"
-            className="grid gap-0 border-y border-border"
+            className="grid gap-3 border-t border-border px-4 py-4 md:px-6"
         >
-            <p role="status" className="sr-only">
-                Memuat daftar contribution.
-            </p>
-            <div aria-hidden="true" className="grid gap-4 px-4 py-5 md:px-6">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-7 w-3/5 max-w-xl" />
-                <Skeleton className="h-4 w-4/5 max-w-2xl" />
-            </div>
-            {[1, 2, 3].map((row) => (
-                <div
-                    key={row}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <RefreshCw
                     aria-hidden="true"
-                    className="grid gap-3 border-t border-border px-4 py-5 md:grid-cols-[minmax(0,1fr)_10rem_8rem] md:items-center md:px-6"
-                >
-                    <div className="grid gap-2">
-                        <Skeleton className="h-5 w-3/5" />
-                        <Skeleton className="h-4 w-2/5" />
-                    </div>
-                    <Skeleton className="h-6 w-28" />
-                    <Skeleton className="h-4 w-24" />
+                    className="size-4 animate-spin motion-reduce:animate-none"
+                />
+                <span>
+                    Menyegarkan daftar tanpa menghapus data yang terlihat.
+                </span>
+            </div>
+            <div
+                aria-hidden="true"
+                className="grid gap-2 md:grid-cols-[minmax(0,1fr)_12rem_9rem] md:items-center"
+            >
+                <div className="grid gap-2">
+                    <Skeleton className="h-4 w-3/5" />
+                    <Skeleton className="h-3 w-2/5" />
                 </div>
-            ))}
+                <Skeleton className="h-6 w-28" />
+                <Skeleton className="h-4 w-24" />
+            </div>
         </div>
     );
 }
@@ -166,25 +164,33 @@ export default function ContributionsIndex({
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [refreshError, setRefreshError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const removeStart = router.on('start', () => setIsRefreshing(true));
-        const removeFinish = router.on('finish', () => setIsRefreshing(false));
-
-        return () => {
-            removeStart();
-            removeFinish();
-        };
-    }, []);
-
     function refresh(): void {
         setRefreshError(null);
+        setIsRefreshing(true);
+
         router.reload({
             only: ['contributions', 'can_create'],
+            onSuccess: () => setRefreshError(null),
             onError: () => {
                 setRefreshError(
                     'Daftar belum diperbarui. Data yang sedang terlihat tetap aman. Coba muat ulang lagi.',
                 );
             },
+            onHttpException: () => {
+                setRefreshError(
+                    'Daftar belum diperbarui. Data yang sedang terlihat tetap aman. Coba muat ulang lagi.',
+                );
+
+                return false;
+            },
+            onNetworkError: () => {
+                setRefreshError(
+                    'Daftar belum diperbarui. Data yang sedang terlihat tetap aman. Periksa koneksi lalu coba lagi.',
+                );
+
+                return false;
+            },
+            onFinish: () => setIsRefreshing(false),
         });
     }
 
@@ -270,13 +276,18 @@ export default function ContributionsIndex({
                         </div>
                     )}
 
-                    {isRefreshing ? (
-                        <ContributionsSkeleton />
-                    ) : contributions.length === 0 ? (
-                        <EmptyContributions canCreate={canCreate} />
+                    {contributions.length === 0 ? (
+                        <div
+                            aria-busy={isRefreshing}
+                            data-test="contributions-state"
+                        >
+                            {isRefreshing && <ContributionsRefreshState />}
+                            <EmptyContributions canCreate={canCreate} />
+                        </div>
                     ) : (
                         <section
                             aria-labelledby="contributions-ledger-title"
+                            aria-busy={isRefreshing}
                             data-test="contributions-ledger"
                             className="grid gap-0 border-y border-border"
                         >
@@ -299,6 +310,7 @@ export default function ContributionsIndex({
                                     </p>
                                 </div>
                             </div>
+                            {isRefreshing && <ContributionsRefreshState />}
                             <ol className="grid">
                                 {contributions.map((contribution, index) => {
                                     const meta =
@@ -315,7 +327,7 @@ export default function ContributionsIndex({
                                                 href={contributionShow(
                                                     contribution.id,
                                                 )}
-                                                className="grid gap-4 px-4 py-5 transition-colors duration-fast hover:bg-muted/50 md:grid-cols-[2rem_minmax(0,1fr)_12rem_9rem] md:items-center md:px-6"
+                                                className="grid cursor-pointer gap-4 px-4 py-5 transition-colors duration-fast hover:bg-muted/50 md:grid-cols-[2rem_minmax(0,1fr)_12rem_9rem] md:items-center md:px-6"
                                                 data-test={`contribution-row-${contribution.id}`}
                                             >
                                                 <span className="font-label text-label text-muted-foreground">
