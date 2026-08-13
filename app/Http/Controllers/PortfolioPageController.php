@@ -75,20 +75,22 @@ final class PortfolioPageController extends Controller
             return [];
         }
 
-        return PortfolioEntry::query()
-            ->where('user_id', $profile->user_id)
-            ->where('institution_id', $profile->institution_id)
-            ->with([
-                'contribution:id,institution_id,owner_id,status,current_version_id',
-                'sourceVersion:id,contribution_id,version_number',
-            ])
-            ->latest('updated_at')
-            ->latest('id')
-            ->limit(100)
-            ->get()
-            ->map(fn (PortfolioEntry $entry): array => $serializer->toArray($entry))
-            ->values()
-            ->all();
+        return array_values(
+            PortfolioEntry::query()
+                ->where('user_id', $profile->user_id)
+                ->where('institution_id', $profile->institution_id)
+                ->with([
+                    'contribution:id,institution_id,owner_id,status,current_version_id',
+                    'sourceVersion:id,contribution_id,version_number',
+                ])
+                ->latest('updated_at')
+                ->latest('id')
+                ->limit(100)
+                ->get()
+                ->map(fn (PortfolioEntry $entry): array => $serializer->toArray($entry))
+                ->values()
+                ->all(),
+        );
     }
 
     /**
