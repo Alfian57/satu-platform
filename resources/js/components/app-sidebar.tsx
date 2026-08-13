@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    BookOpenCheck,
     BriefcaseBusiness,
     Building2,
     FileCheck2,
@@ -17,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as contributionsIndex } from '@/routes/contributions';
 import { show as onboarding } from '@/routes/onboarding';
+import { index as portfolioIndex } from '@/routes/portfolio';
 import { index as projectsIndex } from '@/routes/projects';
 import type {
     InstitutionMembershipStatus,
@@ -39,6 +41,11 @@ const mainNavItems: NavItem[] = [
         title: 'Contribution',
         href: contributionsIndex(),
         icon: FileCheck2,
+    },
+    {
+        title: 'Portfolio',
+        href: portfolioIndex(),
+        icon: BookOpenCheck,
     },
 ];
 
@@ -125,7 +132,10 @@ export function AppSidebar() {
         shell.institutionMembership?.status === 'verified'
             ? mainNavItems
             : mainNavItems.filter(
-                  (item) => !['Project', 'Contribution'].includes(item.title),
+                  (item) =>
+                      !['Project', 'Contribution', 'Portfolio'].includes(
+                          item.title,
+                      ),
               );
 
     return (

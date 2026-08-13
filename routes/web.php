@@ -14,6 +14,7 @@ use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PortfolioEntryController;
+use App\Http\Controllers\PortfolioPageController;
 use App\Http\Controllers\ProjectAttachmentController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectDiscussionController;
@@ -177,6 +178,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('{contribution}/revision', [ContributionController::class, 'revise'])
             ->name('revisions.store');
     });
+
+    Route::get('portfolio', [PortfolioPageController::class, 'index'])
+        ->name('portfolio.index');
+    Route::get('portfolio/{portfolioEntry}', [PortfolioPageController::class, 'show'])
+        ->name('portfolio.show');
 
     Route::post('team-invitations/{teamInvitation}/accept', [TeamTransitionController::class, 'acceptInvitation'])
         ->name('team.invitations.accept');
