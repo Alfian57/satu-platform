@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use LogicException;
 
@@ -73,6 +74,14 @@ class ContributionVersion extends Model implements InstitutionOwned
     public function reviews(): HasMany
     {
         return $this->hasMany(ContributionReview::class);
+    }
+
+    /**
+     * @return HasOne<PortfolioEntry, $this>
+     */
+    public function portfolioEntry(): HasOne
+    {
+        return $this->hasOne(PortfolioEntry::class, 'contribution_version_id');
     }
 
     public function institutionId(): int

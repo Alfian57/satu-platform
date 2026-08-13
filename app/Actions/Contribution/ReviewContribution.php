@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Contribution;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Actions\Portfolio\RebuildTalentCandidateProjection;
 use App\Enums\ContributionReviewDecision;
 use App\Enums\ContributionStatus;
 use App\Events\ContributionApproved;
@@ -26,6 +27,7 @@ final class ReviewContribution
 
     public function __construct(
         private readonly AuditRecorder $audit,
+        private readonly RebuildTalentCandidateProjection $rebuildProjection,
     ) {}
 
     public function handle(
@@ -107,6 +109,8 @@ final class ReviewContribution
             $lockedContribution->forceFill([
                 'status' => $newStatus,
             ])->save();
+
+            $this->rebuildProjection->handle($lockedContribution->owner, $institution);
 
             $this->audit->record(
                 operation: 'contribution.reviewed',
