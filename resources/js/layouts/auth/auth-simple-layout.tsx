@@ -177,7 +177,7 @@ export default function AuthSimpleLayout({
                     </div>
 
                     {/* Footer */}
-                    <p className="mt-8 text-center text-xs text-slate-400">
+                    <p className="mt-8 text-center text-xs text-slate-600">
                         &copy; {new Date().getFullYear()} SATU Platform. Semua
                         hak cipta dilindungi.
                     </p>

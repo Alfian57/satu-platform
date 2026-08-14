@@ -319,7 +319,7 @@ export default function LandingFlowLedger({
                                     {stage.label}
                                 </span>
 
-                                <span className="font-label text-[0.55rem] font-semibold tracking-wider text-slate-300">
+                                <span className="font-label text-[0.55rem] font-semibold tracking-wider text-slate-500">
                                     0{i + 1}
                                 </span>
                             </button>
@@ -560,7 +560,7 @@ export default function LandingFlowLedger({
                                 </div>
                                 <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[0.65rem] text-slate-500">
                                     <span>Status: Validasi Permanen</span>
-                                    <span className="font-bold text-emerald-600">
+                                    <span className="font-bold text-emerald-700">
                                         Hash: #A7F9-88E2
                                     </span>
                                 </div>

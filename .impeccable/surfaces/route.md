@@ -65,7 +65,7 @@ Layout responsif: pada mobile CTA tetap berada dekat offer tanpa hidden overflow
 
 Canvas atau SVG memiliki text alternative dan equivalent list/table. Keyboard tidak dipaksa menavigasi setiap decorative edge. Semua target interaktif memiliki pointer cursor; disabled target menunjukkan not-allowed cursor.
 
-Performance boundary: Target Core Web Vitals LCP maksimal 2.5 detik, INP maksimal 200ms, dan CLS maksimal 0.1. Graph demo dilazy-load di bawah critical content. Total asset grafis landing maksimal 300 KB (compressed), termasuk mascot hero. Static first viewport tetap rendering penuh meskipun graph tertunda.
+Performance boundary: Target Core Web Vitals LCP maksimal 2.5 detik, INP maksimal 200ms, dan CLS maksimal 0.1. Graph demo dilazy-load di bawah critical content. Asset budget grafis maksimal 300 KB (compressed). Total asset landing termasuk mascot hero tetap berada di dalam budget tersebut. Static first viewport tetap rendering penuh meskipun graph tertunda.
 
 Font menggunakan Familjen Grotesk dengan fallback system-ui, sans-serif; label teknis memakai Azeret Mono dengan fallback ui-monospace, monospace. Theme light dan dark didukung, dengan pasangan canvas yang sama untuk mencegah flash.
 

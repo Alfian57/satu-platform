@@ -115,7 +115,7 @@ function RegistrationOtpStep({
             {/* Receipt section */}
             <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
                 <p className="font-label text-[0.65rem] font-semibold tracking-wider text-blue-600">
-                    VERIFIKASI WHATSAPP
+                    Receipt verifikasi
                 </p>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">
                     Masukkan kode 6 digit yang dikirim ke{' '}
@@ -152,7 +152,7 @@ function RegistrationOtpStep({
                             />
                             <p
                                 id="registration-otp-help"
-                                className="text-xs leading-relaxed text-slate-400"
+                                className="text-xs leading-relaxed text-slate-600"
                             >
                                 Anda dapat menempelkan seluruh kode sekaligus.
                             </p>
@@ -188,7 +188,7 @@ function RegistrationOtpStep({
                     {({ processing }) => (
                         <div className="grid gap-3">
                             {secondsLeft > 0 ? (
-                                <p className="text-center text-sm text-slate-400">
+                                <p className="text-center text-sm text-slate-600">
                                     Kirim ulang tersedia dalam{' '}
                                     <span className="font-semibold text-slate-600 tabular-nums">
                                         {secondsLeft} detik
@@ -409,7 +409,7 @@ export default function Register({ passwordRules, registration }: Props) {
                                 <div className="absolute inset-0 flex items-center">
                                     <div className="w-full border-t border-slate-200" />
                                 </div>
-                                <span className="relative bg-white px-4 text-xs text-slate-400">
+                                <span className="relative bg-white px-4 text-xs text-slate-600">
                                     atau
                                 </span>
                             </div>
