@@ -1,18 +1,4 @@
-FROM node:22-alpine AS node-builder
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
-COPY resources ./resources
-COPY public ./public
-COPY tsconfig.json vite.config.ts ./
-COPY components.json ./
-
-RUN npm run build
-
-FROM php:8.3-fpm-alpine AS php-base
+FROM php:8.5-fpm-alpine AS php-base
 
 RUN apk add --no-cache \
     libpng-dev \
@@ -44,10 +30,28 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 COPY . .
 RUN composer dump-autoload --optimize --no-dev
 
+FROM php-base AS node-builder
+
+RUN apk add --no-cache nodejs npm
+
+COPY --from=app-dependencies /var/www/html /var/www/html
+
+COPY package*.json ./
+RUN npm ci
+
+COPY resources ./resources
+COPY public ./public
+COPY tsconfig.json vite.config.ts ./
+COPY components.json ./
+
+RUN cp .env.example .env \
+    && php artisan wayfinder:generate --with-form \
+    && npm run build
+
 FROM php-base AS runtime
 
 COPY --from=app-dependencies /var/www/html /var/www/html
-COPY --from=node-builder /app/public/build /var/www/html/public/build
+COPY --from=node-builder /var/www/html/public/build /var/www/html/public/build
 
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
