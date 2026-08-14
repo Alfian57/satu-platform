@@ -27,7 +27,6 @@ Jika brief belum ada, jalankan Impeccable `shape`, konfirmasi direction, dan sim
 - Wayfinder dipakai untuk backend route.
 - WCAG 2.2 AA, keyboard, focus, reduced motion, responsive, dan semantic state diperiksa.
 - UI issue menyertakan screenshot atau rekaman state penting.
-- Test mencakup critical flow dan JavaScript recovery yang relevan.
 - Impeccable audit, harden, dan polish dilakukan sebelum release gate.
 
 ## Asset Gambar

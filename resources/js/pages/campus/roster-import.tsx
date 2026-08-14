@@ -114,7 +114,10 @@ function RosterHistoryTable({ rosters }: { rosters: RosterHistoryItem[] }) {
     }
 
     return (
-        <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-xs">
+        <div
+            className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-xs"
+            tabIndex={0}
+        >
             <table className="w-full min-w-[42rem] text-left text-xs">
                 <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/60 text-slate-600">
@@ -235,7 +238,7 @@ function PreviewLedger({ preview }: { preview: RosterPreview }) {
             </div>
 
             {preview.preview.length > 0 && (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" tabIndex={0}>
                     <table className="w-full min-w-[38rem] text-left text-xs">
                         <thead>
                             <tr className="border-b border-slate-100 bg-slate-50/60 text-slate-600">
@@ -636,7 +639,7 @@ export default function RosterImport({
                                         type="button"
                                         onClick={commitRoster}
                                         disabled={isCommitting}
-                                        className="h-10 cursor-pointer rounded-xl bg-emerald-600 px-5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-700"
+                                        className="h-10 cursor-pointer rounded-xl bg-emerald-700 px-5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-800"
                                     >
                                         {isCommitting ? (
                                             <LoaderCircle

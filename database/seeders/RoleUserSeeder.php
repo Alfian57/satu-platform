@@ -42,13 +42,12 @@ class RoleUserSeeder extends Seeder
             [
                 'name' => 'Universitas SATU',
                 'status' => InstitutionStatus::Active,
-                'verified_at' => now(),
             ]
         );
 
         // 2. Platform Admin
         $admin = User::firstOrCreate(
-            ['username' => 'admin_satu'],
+            ['username' => 'admin'],
             [
                 'name' => 'Admin Platform SATU',
                 'password' => $password,
@@ -84,7 +83,7 @@ class RoleUserSeeder extends Seeder
                 'status' => InstitutionMembershipStatus::Verified,
                 'verification_method' => InstitutionMembershipVerificationMethod::ApprovedDomain,
                 'verified_at' => now(),
-                'verified_by' => $admin->id,
+                'reviewed_by_id' => $admin->id,
             ]
         );
 
@@ -112,7 +111,7 @@ class RoleUserSeeder extends Seeder
                 'status' => InstitutionMembershipStatus::Verified,
                 'verification_method' => InstitutionMembershipVerificationMethod::RosterExactMatch,
                 'verified_at' => now(),
-                'verified_by' => $campusVerifier->id,
+                'reviewed_by_id' => $campusVerifier->id,
             ]
         );
 
@@ -122,9 +121,9 @@ class RoleUserSeeder extends Seeder
                 'institution_id' => $institution->id,
             ],
             [
-                'nim' => '2024001',
+                'public_identifier' => 'SID-2024001-SATU',
                 'study_program' => 'Teknik Informatika',
-                'academic_year' => 2024,
+                'study_year' => 2,
                 'bio' => 'Mahasiswa aktif Teknik Informatika yang passionate di bidang Web Development dan Cloud Computing.',
                 'portfolio_visibility' => PortfolioVisibility::Recruiter,
                 'recruiter_discoverable' => true,

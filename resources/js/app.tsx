@@ -25,8 +25,18 @@ function isStudentPage(name: string): boolean {
 }
 
 if (typeof document !== 'undefined') {
-    document.documentElement.classList.remove('dark');
-    document.documentElement.style.colorScheme = 'light';
+    const isOnboardingPage = window.location.pathname === '/onboarding';
+    const prefersDark = window.matchMedia(
+        '(prefers-color-scheme: dark)',
+    ).matches;
+
+    if (isOnboardingPage && prefersDark) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.colorScheme = 'dark';
+    } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.style.colorScheme = 'light';
+    }
 }
 
 createInertiaApp({

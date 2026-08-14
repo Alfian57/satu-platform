@@ -21,7 +21,7 @@ import {
     Users,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { AppPage } from '@/components/app-page';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -254,24 +254,24 @@ export default function CampusOverview({
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
     const [program, setProgram] = useState(filters.program || '');
-    const [isPending, startTransition] = useTransition();
+    const [isPending, setIsPending] = useState(false);
 
     const visitOverview = (page?: number) => {
-        startTransition(() => {
-            router.get(
-                campusOverview({ institution: institution.id }),
-                {
-                    date_from: dateFrom || undefined,
-                    date_to: dateTo || undefined,
-                    program: program || undefined,
-                    page,
-                },
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                },
-            );
-        });
+        setIsPending(true);
+        router.get(
+            campusOverview({ institution: institution.id }),
+            {
+                date_from: dateFrom || undefined,
+                date_to: dateTo || undefined,
+                program: program || undefined,
+                page,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onFinish: () => setIsPending(false),
+            },
+        );
     };
 
     const handleFilterSubmit = (event: FormEvent) => {
@@ -283,16 +283,16 @@ export default function CampusOverview({
         setDateFrom('');
         setDateTo('');
         setProgram('');
-        startTransition(() => {
-            router.get(
-                campusOverview({ institution: institution.id }),
-                {},
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                },
-            );
-        });
+        setIsPending(true);
+        router.get(
+            campusOverview({ institution: institution.id }),
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onFinish: () => setIsPending(false),
+            },
+        );
     };
 
     const handlePageChange = (newPage: number) => {
@@ -685,6 +685,7 @@ export default function CampusOverview({
                             <div
                                 className="mt-5 overflow-x-auto"
                                 aria-busy={isPending}
+                                tabIndex={0}
                             >
                                 <table className="w-full text-left text-xs">
                                     <thead>

@@ -174,7 +174,7 @@ function QueueSkeleton() {
             <p className="sr-only" role="status">
                 Memuat antrean afiliasi.
             </p>
-            {Array.from({ length: 5 }, (_, index) => (
+            {Array.from({ length: 10 }, (_, index) => (
                 <div
                     key={index}
                     aria-hidden="true"
@@ -747,7 +747,7 @@ function ReviewQueueRegion({
                         <div className="border-b border-slate-100 pb-4">
                             <div className="flex items-center gap-2">
                                 <span className="font-mono text-xs font-bold text-blue-600">
-                                    AF-{selected.id}
+                                    Berkas AF-{selected.id}
                                 </span>
                                 <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[0.6875rem] font-bold text-blue-700">
                                     Kunci Aktif
@@ -888,9 +888,9 @@ function ReviewQueueRegion({
                                 }
                                 className={`h-10 cursor-pointer rounded-xl text-xs font-semibold text-white shadow-xs ${
                                     decision === 'approve'
-                                        ? 'bg-emerald-600 hover:bg-emerald-700'
+                                        ? 'bg-emerald-700 hover:bg-emerald-800'
                                         : decision === 'request_revision'
-                                          ? 'bg-amber-600 hover:bg-amber-700'
+                                          ? 'bg-amber-700 hover:bg-amber-800'
                                           : 'bg-rose-600 hover:bg-rose-700'
                                 }`}
                                 disabled={processingId === selected.id}

@@ -16,13 +16,13 @@ Jangan menghapus atau mengganti urutan section berikut tanpa memperbarui dokumen
 | `Issue`                        | `Closes #<issue>` untuk satu issue yang dikerjakan.                                                               |
 | `Dependency Stack`             | `Stacked on`, contract checkpoint, dan bukti ownership issue bila PR tidak langsung menargetkan `main`.           |
 | `Perubahan`                    | Daftar perubahan nyata pada code, konfigurasi, data, atau dokumentasi.                                            |
-| `Verifikasi`                   | Test dan check yang dijalankan beserta hasilnya.                                                                  |
+| `Verifikasi`                   | Check yang dijalankan beserta hasilnya.                                                                           |
 | `UI Evidence`                  | Screenshot atau rekaman mobile/desktop dan state penting. Tulis `N/A` bila non-UI.                                |
 | `Data, Security, dan Recovery` | Migration, tenant/Policy, sensitive projection, provider, rollback, dan recovery. Tulis `N/A` bila tidak relevan. |
 | `Handoff`                      | Dependency yang terbuka, gate, follow-up issue, dan consumer berikutnya.                                          |
 | `Merge Readiness`              | Required CI, conversation resolution, approval, dan metode merge.                                                 |
 
-Product context ditulis dalam bahasa Indonesia. Technical term tetap menggunakan nama canonical seperti `Pest`, `Policy`, `Wayfinder`, `required CI`, dan **Squash and merge**.
+Product context ditulis dalam bahasa Indonesia. Technical term tetap menggunakan nama canonical seperti `Policy`, `Wayfinder`, `required CI`, dan **Squash and merge**.
 
 Aturan format commit dan hook lokal dijelaskan pada [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md). Gunakan Conventional Commit untuk setiap commit yang masuk ke Pull Request.
 
@@ -37,7 +37,7 @@ Aturan format commit dan hook lokal dijelaskan pada [COMMIT_CONVENTION.md](./COM
 - Nyatakan perubahan yang belum dilakukan sebagai handoff atau out of scope, bukan sebagai implemented capability.
 - Untuk frontend, sertakan screenshot atau recording initial/deferred skeleton,
   empty state, dan transition recovery yang relevan.
-- Sertakan evidence yang dapat diperiksa. Jangan menulis klaim seperti "sudah diuji" tanpa nama command, suite, atau link CI.
+- Sertakan evidence yang dapat diperiksa. Jangan menulis klaim seperti "sudah dicek" tanpa nama command atau link CI.
 - Jangan memasukkan password, token, phone, NIM, private evidence, atau provider payload ke body atau screenshot.
 - Jangan gunakan Unicode em dash pada template atau dokumentasi first-party.
 
@@ -45,15 +45,15 @@ Aturan format commit dan hook lokal dijelaskan pada [COMMIT_CONVENTION.md](./COM
 
 Pilih check sesuai scope Pull Request.
 
-| Scope                       | Evidence minimum                                                                                                            |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Laravel/PHP                 | Affected Pest test, `vendor/bin/pint --dirty --format agent`, dan static check yang relevan.                                |
-| React/Inertia               | Affected browser or component flow, `npm run lint:check`, dan `npm run types:check`. Gunakan Wayfinder untuk route backend. |
-| UI/UX                       | Keyboard/focus, responsive state, skeleton loading, reduced motion, accessibility, dan screenshot atau recording.           |
-| Documentation/configuration | Prettier pada changed Markdown/YAML, internal-link review, surface-brief resolution, dan `git diff --check`.                |
-| Security/data/provider      | Authorization atau tenant test, sensitive projection review, migration impact, rollback, dan recovery note.                 |
+| Scope                       | Evidence minimum                                                                                                  |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Laravel/PHP                 | `vendor/bin/pint --dirty --format agent` dan static check yang relevan.                                           |
+| React/Inertia               | `npm run lint:check`, `npm run types:check`, dan review responsive/a11y. Gunakan Wayfinder untuk route backend.   |
+| UI/UX                       | Keyboard/focus, responsive state, skeleton loading, reduced motion, accessibility, dan screenshot atau recording. |
+| Documentation/configuration | Prettier pada changed Markdown/YAML, internal-link review, surface-brief resolution, dan `git diff --check`.      |
+| Security/data/provider      | Authorization atau tenant review, sensitive projection review, migration impact, rollback, dan recovery note.     |
 
-Jalankan narrowest affected test terlebih dahulu. Production build dijalankan oleh CI, atau lokal hanya jika diperlukan untuk diagnosis Vite atau diminta pengguna.
+Production build dijalankan oleh CI, atau lokal hanya jika diperlukan untuk diagnosis Vite atau diminta pengguna.
 
 ## Merge Readiness
 
@@ -70,9 +70,8 @@ Force-push dan branch deletion pada `main` dilarang oleh branch protection. Jang
 
 1. Perbarui [`.github/PULL_REQUEST_TEMPLATE.md`](../../.github/PULL_REQUEST_TEMPLATE.md) dan section terkait pada dokumen ini secara bersamaan.
 2. Perbarui [workflow implementation](./README.md) atau [START_HERE.md](../../START_HERE.md) jika aturan delivery berubah.
-3. Jalankan verification matrix yang terdampak dan `git diff --check`.
-4. Buat Pull Request draft yang menautkan issue governance terkait dan jelaskan migration kontrak template.
-5. Setelah review, gunakan **Squash and merge** ke `main` dan verifikasi ulang branch protection.
+3. Jalankan verification matrix yang terdampak dan `git diff --check`.4. Buat Pull Request draft yang menautkan issue governance terkait dan jelaskan migration kontrak template.
+4. Setelah review, gunakan **Squash and merge** ke `main` dan verifikasi ulang branch protection.
 
 ## Handoff untuk AI Agent
 

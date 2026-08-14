@@ -186,7 +186,7 @@ function SubmissionRecovery({
                         <Button
                             asChild
                             size="sm"
-                            className="cursor-pointer rounded-xl bg-amber-600 text-xs font-semibold text-white hover:bg-amber-700"
+                            className="cursor-pointer rounded-xl bg-amber-700 text-xs font-semibold text-white hover:bg-amber-800"
                         >
                             <Link href={login()}>
                                 <LogIn className="mr-1.5 size-3.5" />
@@ -197,7 +197,7 @@ function SubmissionRecovery({
                         <Button
                             type="button"
                             size="sm"
-                            className="cursor-pointer rounded-xl bg-amber-600 text-xs font-semibold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="cursor-pointer rounded-xl bg-amber-700 text-xs font-semibold text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={processing}
                             onClick={
                                 issue === 'forbidden' ||

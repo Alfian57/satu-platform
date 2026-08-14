@@ -322,6 +322,9 @@ export function DashboardContextRail({
                 <h2 className="mt-1 text-title font-bold tracking-[-0.025em] text-slate-950">
                     Minggu ini
                 </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    Ringkasan ini memakai data akun dan konteks institusi kamu.
+                </p>
             </div>
 
             <section aria-labelledby="review-queue-heading" className="min-w-0">

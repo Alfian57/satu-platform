@@ -48,7 +48,7 @@ mysqldump \
 Setiap backup harus diverifikasi:
 
 1. Checksum file (SHA-256)
-2. Test restore ke environment terpisah (staging/minimal)
+2. Verifikasi restore ke environment terpisah (staging/minimal)
 3. Validasi database integrity (`mysqlcheck --check`)
 
 ### 2.4 Monitoring Backup Health
@@ -92,8 +92,8 @@ chown -R www-data:www-data /path/to/storage/
 
 - [ ] Run `php artisan migrate:status` (cek schema)
 - [ ] Run `php artisan about` (cek config)
-- [ ] Test endpoint `/up`
-- [ ] Test sample read/write query
+- [ ] Verifikasi endpoint `/up`
+- [ ] Verifikasi sample read/write query
 - [ ] Verify queue worker dan scheduler aktif
 
 ### 3.5 Recovery Time Objective (RTO)
@@ -229,19 +229,19 @@ Setiap privacy incident wajib didokumentasikan:
 - [ ] Backup script berjalan setiap hari
 - [ ] Backup file tersimpan di location aman
 - [ ] Backup checksum valid
-- [ ] Test restore berhasil ke staging
+- [ ] Verifikasi restore berhasil ke staging
 
 ### 8.2 Restore Drill (quarterly)
 
 - [ ] Simulasi database restore
 - [ ] Verifikasi data integrity
-- [ ] Test application functionality
+- [ ] Verifikasi application functionality
 - [ ] Document lessons learned
 
 ### 8.3 Monitoring Verification
 
 - [ ] Alert channel aktif (Slack/email/pager)
-- [ ] Test alert manual trigger
+- [ ] Verifikasi alert manual trigger
 - [ ] Verify alert threshold sesuai RTO/RPO
 
 ## 9. External Dependencies

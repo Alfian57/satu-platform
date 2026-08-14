@@ -14,7 +14,6 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const workspace = getWorkspaceContext(
         auth.user?.workspace.role ?? 'student',
     );
-    const currentPageTitle = breadcrumbs.at(-1)?.title ?? workspace.mobileTitle;
 
     return (
         <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-sidebar-border bg-background px-3 md:px-5 lg:px-6">
@@ -32,7 +31,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                         className="mt-1 truncate text-sm leading-none font-medium"
                         data-test="app-workspace-title"
                     >
-                        {currentPageTitle}
+                        {workspace.mobileTitle}
                     </p>
                 </div>
 

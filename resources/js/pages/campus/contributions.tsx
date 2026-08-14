@@ -763,7 +763,7 @@ function ReviewWorkspace({
                                     />
                                 </div>
                                 <h3 className="text-base font-bold text-slate-900">
-                                    Antrean validasi kosong
+                                    Antrean kosong
                                 </h3>
                                 <p className="mx-auto max-w-[50ch] text-xs leading-relaxed text-slate-500">
                                     Semua contribution pada filter ini sudah
@@ -1352,10 +1352,10 @@ function ReviewWorkspace({
                                             }
                                             className={`h-10 cursor-pointer rounded-xl text-xs font-semibold text-white shadow-xs ${
                                                 selectedDecision === 'approved'
-                                                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                                                    ? 'bg-emerald-700 hover:bg-emerald-800'
                                                     : selectedDecision ===
                                                         'revision'
-                                                      ? 'bg-amber-600 hover:bg-amber-700'
+                                                      ? 'bg-amber-700 hover:bg-amber-800'
                                                       : 'bg-rose-600 hover:bg-rose-700'
                                             }`}
                                             disabled={reviewForm.processing}
@@ -1509,7 +1509,7 @@ export default function CampusContributions({
                                 </div>
 
                                 <h1 className="mt-3 text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
-                                    Validasi Kontribusi Mahasiswa
+                                    Validasi Kontribusi {institution.name}
                                 </h1>
 
                                 <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-slate-600">

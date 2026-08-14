@@ -4,13 +4,17 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        {{-- Match the light design tokens before Vite CSS loads. --}}
+        {{-- Match the design tokens before Vite CSS loads. --}}
         <style>
             html {
                 color-scheme: light;
                 background-color: #f7f9fc;
             }
 
+            html[data-appearance='dark'] {
+                color-scheme: dark;
+                background-color: #0d1422;
+            }
         </style>
 
         <link rel="icon" href="/favicon.png" type="image/png">

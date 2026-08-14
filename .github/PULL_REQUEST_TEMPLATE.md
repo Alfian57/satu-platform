@@ -20,7 +20,6 @@ Closes #
 
 ## Verifikasi
 
-- [ ] Affected Pest tests lulus
 - [ ] PHP formatting lulus bila ada perubahan PHP
 - [ ] Frontend lint/typecheck lulus bila ada perubahan frontend
 - [ ] Accessibility dan browser flow diperiksa bila relevan

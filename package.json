@@ -10,8 +10,6 @@
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
-        "test:satu-project": "node .github/scripts/sync-satu-project.test.cjs",
-        "test:issue-status": "node .github/scripts/sync-issue-status.test.cjs",
         "types:check": "php artisan wayfinder:generate && tsc --noEmit",
         "prepare": "husky"
     },
@@ -31,7 +29,6 @@
         "eslint-plugin-react": "^7.37.3",
         "eslint-plugin-react-hooks": "^7.0.0",
         "husky": "^9.1.7",
-        "playwright": "^1.61.1",
         "prettier": "^3.4.2",
         "prettier-plugin-tailwindcss": "^0.6.11",
         "typescript-eslint": "^8.23.0"

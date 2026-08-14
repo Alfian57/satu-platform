@@ -141,6 +141,6 @@ Setiap handoff harus menyebut:
 - parent atau consumer berikutnya;
 - dependency yang masih open;
 - gate yang masih menunggu keputusan;
-- test dan CI evidence yang sudah lulus.
+- CI evidence yang sudah lulus.
 
 AI agent tidak boleh memindahkan assignment untuk mengatasi blocker. Ownership conflict harus dilaporkan kepada project owner.

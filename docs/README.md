@@ -18,7 +18,7 @@
 | 3      | `DESIGN.md`                            | Global visual authority                |
 | 4      | `docs/ux/` dan `.impeccable/surfaces/` | Route behavior, content, accessibility |
 | 5      | `docs/engineering/`                    | Architecture, data, security, privacy  |
-| 6      | GitHub issues, roadmap, test strategy  | Execution dan verification             |
+| 6      | GitHub issues dan roadmap              | Execution dan verification             |
 | 7      | `docs/governance/DECISIONS.md`         | Accepted decisions dan open gates      |
 | 8      | `docs/reference/proposal_lomba.md`     | Historical input                       |
 
@@ -30,7 +30,7 @@ docs/
 ├── ux/               # IA, flows, copy, accessibility, inventory
 ├── engineering/      # architecture, data, security/privacy
 ├── governance/       # accepted decisions dan open gates
-├── implementation/   # issue workflow, roadmap, test strategy
+├── implementation/   # issue workflow dan roadmap
 └── reference/        # historical source material
 ```
 

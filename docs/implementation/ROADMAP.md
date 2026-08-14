@@ -35,7 +35,7 @@ Competition release mencakup target PRD untuk satu institution tenant. Multi-ins
 
 - M0: repository workflow and decision ownership.
 - M1: human approval visual reference.
-- M2: identity threat model, OTP abuse test, roster and invitation recovery.
+- M2: identity threat model, OTP abuse review, roster and invitation recovery.
 - M4: explainable/versioned matching and cross-tenant denial.
 - M5: channel authorization and reconnect recovery.
 - M6: contribution integrity and gamification fairness.

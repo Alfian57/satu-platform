@@ -16,7 +16,7 @@ Immediately after this file, read `START_HERE.md`, then the selected GitHub issu
 3. `DESIGN.md` for global visual authority.
 4. `docs/ux/` and the matching `.impeccable/surfaces/*.md` brief for UI behavior.
 5. `docs/engineering/` for architecture, data, security, and privacy contracts.
-6. The selected GitHub issue, `docs/implementation/ROADMAP.md`, and `docs/implementation/TEST_STRATEGY.md` for execution and verification.
+6. The selected GitHub issue and `docs/implementation/ROADMAP.md` for execution and verification.
 7. `docs/governance/DECISIONS.md` for accepted decisions and open gates.
 8. `docs/reference/proposal_lomba.md` is historical input, not a runtime specification.
 
@@ -32,23 +32,25 @@ When documents conflict, the earlier source wins. Update the owning source inste
 - At `gate:human`, `gate:external`, or `gate:conditional`, present inspectable evidence and stop until the gate is resolved.
 - Issue state, milestone, labels, linked pull request, and comments are the only task-status source. Documentation describes contracts, not task progress.
 - Saat seluruh pekerjaan selesai dan PR siap direview:
-  1. Konversi PR dari draft ke **Ready for review**.
-  2. Komentar di PR dengan tag `@Alfian57` yang menyatakan PR siap direview.
-  3. Pastikan CI hijau, label `needs-review` terpasang, dan body PR lengkap (evidence, screenshot jika UI).
+    1. Konversi PR dari draft ke **Ready for review**.
+    2. Komentar di PR dengan tag `@Alfian57` yang menyatakan PR siap direview.
+    3. Pastikan CI hijau, label `needs-review` terpasang, dan body PR lengkap (evidence, screenshot jika UI).
 - Setelah menyelesaikan revisi yang diminta reviewer:
-  1. Tag `@Alfian57` di komentar PR bahwa revisi sudah selesai.
-  2. Pastikan CI tetap hijau setelah perubahan terbaru.
+    1. Tag `@Alfian57` di komentar PR bahwa revisi sudah selesai.
+    2. Pastikan CI tetap hijau setelah perubahan terbaru.
 
 ## PR Review Workflow
 
 Saat berperan sebagai project manager yang mereview pull request di remote repository:
 
 ### Inspeksi Awal
+
 - Gunakan `gh pr list --state open` untuk melihat semua PR terbuka, lalu `gh pr view <number>` per PR untuk detail (body, files, commits, CI, reviews, merge state).
 - Baca issue GitHub yang dirujuk oleh PR dan bandingkan acceptance criteria, labels, gate, prerequisite, dan metadata-nya secara diam-diam. Hanya sebutkan ketidaksesuaian jika ditemukan.
 - Reviewer default adalah **Alfian57**. Gunakan `gh pr edit <number> --add-reviewer Alfian57`.
 
 ### Proses Review
+
 1. **Status merge**: Jika `BEHIND`, minta author rebase/update terhadap `main` dengan kalimat kasual. Jangan pernah meng-update branch milik contributor lain terhadap `main` (tanpa rebase/merge/push ke branch mereka). Bantuan yang boleh diberikan hanya pada label dan status PR, misalnya menambahkan atau menghapus label seperti `needs-review`, atau mengubah draft/ready state.
 2. **CI checks**: Harus SUCCESS semua. Jika ada yang gagal, laporkan.
 3. **Draft PR**: Issue biasanya meminta PR dibuka sebagai draft. Jika PR langsung open atau masih berlabel `in-progress`, tanyakan apakah pekerjaan sudah benar-benar selesai dan siap review penuh.
@@ -57,6 +59,7 @@ Saat berperan sebagai project manager yang mereview pull request di remote repos
 6. **Preview komentar**: Sebelum mengirim komentar ke PR, tampilkan dulu preview komentar tersebut di chat untuk dikonfirmasi oleh user.
 
 ### Gaya Bahasa Komentar
+
 - Gunakan **Bahasa Indonesia kasual** dan natural.
 - Tag author dengan `@username` di awal komentar.
 - Hindari karakter **em dash (Unicode U+2014)** di semua komentar PR. Gunakan koma, titik, atau bullet list sebagai gantinya.
@@ -64,17 +67,18 @@ Saat berperan sebagai project manager yang mereview pull request di remote repos
 - Jangan gunakan kata "ganjalan" atau "kece" di komentar PR. Pakai alternatif seperti "hal yang perlu dirapikan", "poin", "catatan", dan apresiasi netral seperti "udah solid".
 - Jangan berikan perbandingan panjang dengan issue. Langsung sebutkan kesalahan atau ketidaksesuaian saja jika ada.
 - Contoh gaya komentar:
-  > @dzakyard, tolong update branch ini terhadap `main` terbaru dulu ya, soalnya status merge saat ini **BEHIND**. Ada beberapa hal yang perlu dirapikan:
-  >
-  > - Issue minta PR dibuka sebagai **draft**, ini langsung open.
-  > - Belum ada screenshot mobile/desktop di body PR.
-  >
-  > Selain itu implementasi-nya udah solid. LGTM buat kontennya.
+    > @dzakyard, tolong update branch ini terhadap `main` terbaru dulu ya, soalnya status merge saat ini **BEHIND**. Ada beberapa hal yang perlu dirapikan:
+    >
+    > - Issue minta PR dibuka sebagai **draft**, ini langsung open.
+    > - Belum ada screenshot mobile/desktop di body PR.
+    >
+    > Selain itu implementasi-nya udah solid. LGTM buat kontennya.
 
 ### Keputusan Akhir
+
 - Jika PR memiliki CI hijau, semua AC terpenuhi, tidak ada ketidaksesuaian dengan issue, dan tidak ada hal lain yang perlu diperbaiki:
-  1. Tulis komentar review dengan `gh pr review <number> --approve --body "..."` berisi apresiasi.
-  2. Merge dengan `gh pr merge <number> --squash --delete-branch`.
+    1. Tulis komentar review dengan `gh pr review <number> --approve --body "..."` berisi apresiasi.
+    2. Merge dengan `gh pr merge <number> --squash --delete-branch`.
 - Jika ada ketidaksesuaian yang perlu diperbaiki, gunakan `gh pr review <number> --request-changes --body "..."` dan jangan merge.
 
 ## Product Invariants
@@ -139,13 +143,11 @@ Do not close an `open` decision in `docs/governance/DECISIONS.md` by assumption.
 
 ## Verification
 
-- Every runtime change requires programmatic tests.
-- Use Pest feature tests by default, unit tests for pure calculations, and browser tests for critical JavaScript/user flows.
-- Test cross-tenant denial, policies, score version/explanation, Reverb channel authorization, restricted serialization, and recovery states where relevant.
-- Run the narrowest affected test first, then formatting/static/frontend checks warranted by the change.
-- Jangan menjalankan `npm run build` kecuali pengguna memintanya secara eksplisit atau build diperlukan untuk mendiagnosis error Vite. Untuk perubahan biasa, lint, typecheck yang relevan, dan test yang terdampak sudah cukup.
+- Every runtime change is verified through static checks and inspection before it is considered complete.
+- Use `vendor/bin/pint --dirty --format agent` for PHP formatting, `npm run lint:check` and `npm run format:check` for frontend checks, and `npm run types:check` (Wayfinder + TypeScript) and PHPStan for static analysis.
+- Jangan menjalankan `npm run build` kecuali pengguna memintanya secara eksplisit atau build diperlukan untuk mendiagnosis error Vite. Untuk perubahan biasa, lint dan typecheck yang relevan sudah cukup.
 - Documentation changes must pass Prettier, internal-link review, surface-brief resolution, and `git diff --check`.
-- An issue is not complete until every verification and acceptance criterion in its body passes.
+- An issue is not complete until every acceptance criterion in its body passes.
 
 </satu-project-context>
 
@@ -172,8 +174,6 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - laravel/pail (PAIL) - v1
 - laravel/pint (PINT) - v1
 - laravel/sail (SAIL) - v1
-- pestphp/pest (PEST) - v4
-- phpunit/phpunit (PHPUNIT) - v12
 - @inertiajs/react (INERTIA_REACT) - v3
 - react (REACT) - v19
 - tailwindcss (TAILWINDCSS) - v4
@@ -190,10 +190,6 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
-
-## Verification Scripts
-
-- Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.
 
 ## Application Structure & Architecture
 
@@ -246,7 +242,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 ## Tinker
 
-- Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
+- Execute PHP in app context for debugging and testing code. Do not create models without user approval; prefer seeders or factories instead. Prefer existing Artisan commands over custom tinker code.
 - Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
     - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
 
@@ -266,13 +262,6 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 # Deployment
 
 - Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
-
-=== tests rules ===
-
-# Test Enforcement
-
-- Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
-- Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test --compact` with a specific filename or filter.
 
 === inertia-laravel/core rules ===
 
@@ -317,12 +306,6 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - When generating links to other pages, prefer named routes and the `route()` function.
 
-## Testing
-
-- When creating models for tests, use the factories for the models. Check if the factory has custom states that can be used before manually setting up the model.
-- Faker: Use methods such as `$this->faker->word()` or `fake()->randomDigit()`. Follow existing conventions whether to use `$this->faker` or `fake()`.
-- When creating tests, make use of `php artisan make:test [options] {name}` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
-
 ## Vite Error
 
 - If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
@@ -339,15 +322,6 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 
 - If you have modified any PHP files, you must run `vendor/bin/pint --dirty --format agent` before finalizing changes to ensure your code matches the project's expected style.
 - Do not run `vendor/bin/pint --test --format agent`, simply run `vendor/bin/pint --format agent` to fix any formatting issues.
-
-=== pest/core rules ===
-
-## Pest
-
-- This project uses Pest for testing. Create tests: `php artisan make:test --pest {name}`.
-- The `{name}` argument should not include the test suite directory. Use `php artisan make:test --pest SomeFeatureTest` instead of `php artisan make:test --pest Feature/SomeFeatureTest`.
-- Run tests: `php artisan test --compact` or filter: `php artisan test --compact --filter=testName`.
-- Do NOT delete tests without approval.
 
 === inertia-react/core rules ===
 
