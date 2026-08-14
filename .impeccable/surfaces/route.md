@@ -26,6 +26,16 @@ Live record of opportunity-to-proof dalam visual world **Buku Besar Kolaborasi**
 
 Landing disusun sebagai lembaran yang dapat digulir: first viewport membawa offer, mechanism cue, dan primary CTA yang langsung menunjukkan cara kerja SATU. Scrolling mengungkap lifecycle evidence: satu node contribution tumbuh menjadi hubungan kolaborasi dan berakhir sebagai portfolio dengan stamp validasi. Graph demo interaktif memungkinkan pengunjung memilih node, melihat hubungan, dan membandingkan lewat table equivalent. Setiap demo record memiliki label synthetic.
 
+### Implemented Direction Contract
+
+- First viewport memakai **SATU collaboration mascot**: offer dan CTA berada di working column kiri, sedangkan maskot buku besar transparan dengan node kolaborasi, kartu validasi, token check, dan lencana validasi berada di kanan sebagai konteks mekanisme.
+- Maskot tidak ditempatkan di dalam panel ber-background. Aura biru, teal, indigo, dan gold yang lembut memberi fokus visual tanpa menghilangkan transparansi asset. Container utama memakai lebar maksimum 110rem agar komposisi terasa lapang di desktop.
+- Visual landing memakai Blue Current Ledger: seluruh page memiliki gradasi biru berlapis yang airy, sedangkan surface dan penanda tahap memakai skala putih-biru yang konsisten.
+- Motion thesis adalah blue wash satu kali saat hero masuk, lalu flow ledger menulis lima tahap secara berurutan di bagian Cara Kerja. Hover, selection, dan filter memberi feedback terhadap hubungan yang berubah, dengan reduced-motion fallback.
+- Rounded index, validation stamp, dan custom SVG lifecycle glyph mempertahankan material SATU dalam komposisi yang lebih ringan dan kontemporer.
+- Copy dirapikan dalam bahasa Indonesia tanpa mengubah product boundary. CTA mahasiswa memakai route registration yang ada; CTA kampus dan recruiter memakai anchor ke privacy boundary karena belum ada public discussion endpoint.
+- Hero memakai satu mascot bitmap asset yang bersifat ilustratif, tanpa text, logo, atau data. Asset transparan dengan aksesoris kontekstual dikompresi WebP di bawah 300 KB agar tidak mengaburkan provenance dan batas data.
+
 ## Scope and Boundaries
 
 Offer, mechanism, role value, interactive synthetic graph, privacy promise yang dapat dibuktikan, limitation copy, dan role-specific CTA. Tidak mencakup invented customer, price, testimonial, pilot statistic, impact result, atau partner logo.
@@ -55,7 +65,7 @@ Layout responsif: pada mobile CTA tetap berada dekat offer tanpa hidden overflow
 
 Canvas atau SVG memiliki text alternative dan equivalent list/table. Keyboard tidak dipaksa menavigasi setiap decorative edge. Semua target interaktif memiliki pointer cursor; disabled target menunjukkan not-allowed cursor.
 
-Performance boundary: Target Core Web Vitals LCP maksimal 2.5 detik, INP maksimal 200ms, dan CLS maksimal 0.1. Graph demo dilazy-load di bawah critical content. Asset budget grafis maksimal 300 KB (compressed). Static first viewport tetap rendering penuh meskipun graph tertunda.
+Performance boundary: Target Core Web Vitals LCP maksimal 2.5 detik, INP maksimal 200ms, dan CLS maksimal 0.1. Graph demo dilazy-load di bawah critical content. Asset budget grafis maksimal 300 KB (compressed). Total asset landing termasuk mascot hero tetap berada di dalam budget tersebut. Static first viewport tetap rendering penuh meskipun graph tertunda.
 
 Font menggunakan Familjen Grotesk dengan fallback system-ui, sans-serif; label teknis memakai Azeret Mono dengan fallback ui-monospace, monospace. Theme light dan dark didukung, dengan pasangan canvas yang sama untuk mencegah flash.
 

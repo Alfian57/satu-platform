@@ -7,23 +7,20 @@ type Props = {
     ruleClassName?: string;
 };
 
-export default function AppLogo({
-    className,
-    compact = false,
-    ruleClassName,
-}: Props) {
+export default function AppLogo({ className, compact = false }: Props) {
     const { name } = usePage().props;
 
     return (
         <div
             className={cn(
-                'flex min-w-0 items-stretch gap-3 text-foreground',
+                'flex min-w-0 items-center gap-2.5 text-foreground',
                 className,
             )}
         >
-            <span
-                aria-hidden="true"
-                className={cn('w-1 shrink-0 bg-primary', ruleClassName)}
+            <img
+                src="/images/logo.png"
+                alt="Logo SATU"
+                className="size-8 shrink-0 rounded-lg object-contain shadow-2xs"
             />
             <span className="flex min-w-0 flex-col justify-center">
                 <span className="truncate text-xl leading-none font-bold tracking-[-0.025em]">
