@@ -14,6 +14,7 @@ use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\PlatformAffiliationController;
 use App\Http\Controllers\PortfolioEntryController;
 use App\Http\Controllers\PortfolioPageController;
 use App\Http\Controllers\ProjectAttachmentController;
@@ -237,6 +238,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('notifications/{id}/navigate', [NotificationController::class, 'navigate'])
         ->name('notifications.navigate');
+
+    Route::get('platform/affiliations', PlatformAffiliationController::class)
+        ->name('platform.affiliations.index');
 
     Route::post('notification-preferences', [NotificationController::class, 'updatePreference'])
         ->name('notification-preferences.update');

@@ -21,6 +21,7 @@ test('dashboard reads server application props instead of a client fixture', fun
     expect($page)
         ->toContain('usePage<DashboardPageProps>()')
         ->toContain('data-dashboard-source="application"')
+        ->toContain('data-dashboard-surface="active-docket"')
         ->toContain('<Deferred')
         ->not->toContain('dashboardReference')
         ->not->toContain('Data demo sintetis')

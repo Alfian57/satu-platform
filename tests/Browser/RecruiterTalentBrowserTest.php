@@ -6,6 +6,7 @@ use App\Enums\RecruiterMembershipRole;
 use App\Enums\RecruiterMembershipStatus;
 use App\Enums\RecruiterOrganizationStatus;
 use App\Models\Institution;
+use App\Models\InstitutionMembership;
 use App\Models\RecruiterMembership;
 use App\Models\RecruiterOrganization;
 use App\Models\TalentCandidateProjection;
@@ -17,11 +18,12 @@ test('entitled recruiter can search and view recruiter-safe candidate projection
 
     $this->actingAs($context['recruiter']);
 
-    visit(route('recruiter.talent.search'))
+    visit(route('dashboard'))
         ->resize(390, 844)
-        ->waitForText('Talent Search')
-        ->assertSee('Verified Safe Projection')
-        ->assertSee('Entitlement Active')
+        ->waitForText('Cari talenta')
+        ->assertSee('Ruang perekrut')
+        ->assertSee('Talent Portal')
+        ->assertSee('Hak akses aktif')
         ->assertSee('Senior Laravel Engineer')
         ->assertDontSee('+62812')
         ->assertDontSee('nim')
@@ -33,7 +35,12 @@ test('entitled recruiter can search and view recruiter-safe candidate projection
 
     $page = visit(route('recruiter.talent.search'))
         ->resize(1366, 900)
-        ->waitForText('Talent Search')
+        ->waitForText('Cari talenta')
+        ->assertSee('Cari talenta')
+        ->assertSee('Kandidat tersimpan')
+        ->assertSee('Permintaan kontak')
+        ->assertSee('Browser Talent Recruiter')
+        ->assertDontSee('Hubungkan kampus')
         ->assertSee('Senior Laravel Engineer')
         ->assertSee('PHP')
         ->assertSee('Universitas Browser Talent')
@@ -56,9 +63,9 @@ test('recruiter without entitlement sees the entitlement required state with no 
 
     $page = visit(route('recruiter.talent.search'))
         ->resize(1366, 900)
-        ->waitForText('Candidate Search Entitlement Required')
-        ->assertSee('Talent Entitlement grant')
-        ->assertSee('No Candidates Found')
+        ->waitForText('Hak akses pencarian diperlukan')
+        ->assertSee('Hak akses pencarian')
+        ->assertSee('Belum ada kandidat yang sesuai')
         ->assertDontSee('Senior Laravel Engineer')
         ->assertDontSee('+62812')
         ->assertScript(
@@ -70,6 +77,34 @@ test('recruiter without entitlement sees the entitlement required state with no 
         ->assertNoConsoleLogs();
 });
 
+test('a dual-role user sees the recruiter shell on recruiter routes', function () {
+    $context = recruiterTalentGateBrowserContext();
+    InstitutionMembership::factory()
+        ->campusAdmin()
+        ->verifiedByApprovedDomain()
+        ->for($context['recruiter'])
+        ->for($context['institution'])
+        ->create();
+
+    $this->actingAs($context['recruiter']);
+
+    visit(route('recruiter.talent.search'))
+        ->resize(1366, 900)
+        ->waitForText('Cari talenta')
+        ->assertSee('Perekrut')
+        ->assertSee('Ruang perekrut')
+        ->assertSee('Browser Talent Recruiter')
+        ->assertDontSee('Operasi kampus')
+        ->assertDontSee('Admin kampus')
+        ->assertScript(
+            'document.querySelectorAll(\'[data-slot="sidebar-wrapper"]\').length',
+            1,
+        )
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
 test('withdrawn candidate projection is absent from recruiter search', function () {
     $context = recruiterTalentGateBrowserContext(['visible' => false]);
 
@@ -77,8 +112,8 @@ test('withdrawn candidate projection is absent from recruiter search', function 
 
     visit(route('recruiter.talent.search'))
         ->resize(390, 844)
-        ->waitForText('Talent Search')
-        ->assertSee('No Candidates Found')
+        ->waitForText('Cari talenta')
+        ->assertSee('Belum ada kandidat yang sesuai')
         ->assertDontSee('Senior Laravel Engineer')
         ->assertNoJavaScriptErrors()
         ->assertNoConsoleLogs();

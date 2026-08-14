@@ -1,7 +1,7 @@
 import { Form, Head } from '@inertiajs/react';
+import { KeyRound, Save } from 'lucide-react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
-import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
@@ -20,15 +20,28 @@ export default function Security(props: Props) {
         <>
             <Head title="Pengaturan keamanan" />
 
-            <h1 className="sr-only">Pengaturan keamanan</h1>
-
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Perbarui password"
-                    description="Gunakan password yang panjang dan acak agar akunmu tetap aman"
-                />
-
+            <section
+                aria-labelledby="security-settings-title"
+                className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+                data-test="security-settings-card"
+            >
+                <header className="flex items-start gap-3">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+                        <KeyRound aria-hidden="true" className="size-5" />
+                    </span>
+                    <div className="grid gap-1">
+                        <h2
+                            id="security-settings-title"
+                            className="text-title font-bold tracking-[-0.02em] text-slate-950"
+                        >
+                            Password dan keamanan
+                        </h2>
+                        <p className="text-sm leading-6 text-slate-600">
+                            Gunakan password yang panjang dan unik untuk menjaga
+                            akunmu tetap aman.
+                        </p>
+                    </div>
+                </header>
                 <Form
                     action={SecurityController.update.url()}
                     method="put"
@@ -50,9 +63,9 @@ export default function Security(props: Props) {
                             currentPasswordInput.current?.focus();
                         }
                     }}
-                    className="space-y-6"
+                    className="grid gap-5 border-t border-slate-100 pt-6"
                 >
-                    {({ errors, processing }) => (
+                    {({ errors, processing, recentlySuccessful }) => (
                         <>
                             <div className="grid gap-2">
                                 <Label htmlFor="current_password">
@@ -63,7 +76,7 @@ export default function Security(props: Props) {
                                     id="current_password"
                                     ref={currentPasswordInput}
                                     name="current_password"
-                                    className="mt-1 block w-full"
+                                    className="w-full bg-slate-50"
                                     autoComplete="current-password"
                                     placeholder="Password saat ini"
                                 />
@@ -78,7 +91,7 @@ export default function Security(props: Props) {
                                     id="password"
                                     ref={passwordInput}
                                     name="password"
-                                    className="mt-1 block w-full"
+                                    className="w-full bg-slate-50"
                                     autoComplete="new-password"
                                     placeholder="Password baru"
                                     passwordrules={props.passwordRules}
@@ -95,7 +108,7 @@ export default function Security(props: Props) {
                                 <PasswordInput
                                     id="password_confirmation"
                                     name="password_confirmation"
-                                    className="mt-1 block w-full"
+                                    className="w-full bg-slate-50"
                                     autoComplete="new-password"
                                     placeholder="Konfirmasi password"
                                     passwordrules={props.passwordRules}
@@ -106,18 +119,32 @@ export default function Security(props: Props) {
                                 />
                             </div>
 
-                            <div className="flex items-center gap-4">
+                            <div className="flex flex-wrap items-center gap-3">
                                 <Button
                                     disabled={processing}
+                                    className="cursor-pointer disabled:cursor-not-allowed"
                                     data-test="update-password-button"
                                 >
-                                    Simpan
+                                    {processing ? null : (
+                                        <Save aria-hidden="true" />
+                                    )}
+                                    {processing
+                                        ? 'Memperbarui password'
+                                        : 'Perbarui password'}
                                 </Button>
+                                {recentlySuccessful && (
+                                    <p
+                                        role="status"
+                                        className="text-sm font-medium text-verified"
+                                    >
+                                        Password sudah diperbarui.
+                                    </p>
+                                )}
                             </div>
                         </>
                     )}
                 </Form>
-            </div>
+            </section>
         </>
     );
 }

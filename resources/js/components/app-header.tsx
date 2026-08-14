@@ -1,7 +1,8 @@
+import { usePage } from '@inertiajs/react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { NavUser } from '@/components/nav-user';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { getWorkspaceContext } from '@/lib/workspace-context';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {
@@ -9,8 +10,11 @@ type Props = {
 };
 
 export function AppHeader({ breadcrumbs = [] }: Props) {
-    const currentPageTitle =
-        breadcrumbs.at(-1)?.title ?? 'Ruang kerja mahasiswa';
+    const { auth } = usePage().props;
+    const workspace = getWorkspaceContext(
+        auth.user?.workspace.role ?? 'student',
+    );
+    const currentPageTitle = breadcrumbs.at(-1)?.title ?? workspace.mobileTitle;
 
     return (
         <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-sidebar-border bg-background px-3 md:px-5 lg:px-6">
@@ -24,7 +28,10 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     <p className="text-xs leading-none font-semibold text-primary">
                         SATU
                     </p>
-                    <p className="mt-1 truncate text-sm leading-none font-medium">
+                    <p
+                        className="mt-1 truncate text-sm leading-none font-medium"
+                        data-test="app-workspace-title"
+                    >
                         {currentPageTitle}
                     </p>
                 </div>
@@ -35,7 +42,6 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
             </div>
 
             <div className="flex shrink-0 items-center gap-1 md:gap-2">
-                <ThemeToggle />
                 <NavUser />
             </div>
         </header>

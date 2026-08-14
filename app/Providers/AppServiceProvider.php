@@ -23,7 +23,11 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(WhatsAppGateway::class, function () {
-            return new FonnteGateway(config('services.fonnte.token', ''));
+            return new FonnteGateway(
+                config('services.fonnte.token', ''),
+                config('services.fonnte.base_url', 'https://api.fonnte.com'),
+                config('services.fonnte.country_code', '62'),
+            );
         });
 
         $this->app->bind(AcademicGateway::class, SandboxGateway::class);

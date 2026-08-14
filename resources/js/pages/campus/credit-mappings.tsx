@@ -1,7 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { Award, CheckCircle2, Plus, Shield, XCircle } from 'lucide-react';
 import React, { useState, useTransition } from 'react';
-import AppLayout from '@/layouts/app-layout';
 
 interface CreditMappingItem {
     id: number;
@@ -78,7 +77,7 @@ export default function CampusCreditMappings({
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Academic Credit Mappings - SATU Platform" />
 
             <div className="mx-auto min-h-screen max-w-7xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
@@ -86,7 +85,7 @@ export default function CampusCreditMappings({
                 <div className="flex flex-col gap-4 border-b border-slate-800 pb-6 md:flex-row md:items-center md:justify-between">
                     <div>
                         <div className="flex items-center gap-3">
-                            <h1 className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-3xl font-extrabold tracking-tight text-transparent">
+                            <h1 className="text-3xl font-extrabold tracking-tight text-blue-100">
                                 Academic Credit Mapping Engine
                             </h1>
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-800/50 bg-blue-950 px-3 py-1 text-xs font-semibold text-blue-300">
@@ -303,6 +302,6 @@ export default function CampusCreditMappings({
                     )}
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }

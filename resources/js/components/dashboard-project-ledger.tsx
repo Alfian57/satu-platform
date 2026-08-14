@@ -28,7 +28,7 @@ type Props = {
 function MobileProjectFacts({ project }: { project: DashboardActiveProject }) {
     return (
         <span
-            className="grid min-w-0 gap-2 border-l border-border px-4 py-3 md:hidden"
+            className="grid min-w-0 gap-2 border-l border-slate-100 bg-slate-50/55 px-4 py-3 md:hidden"
             data-test="dashboard-project-mobile-facts"
         >
             <span className="grid min-w-0 gap-1 sm:grid-cols-[4.75rem_minmax(0,1fr)] sm:gap-3">
@@ -74,10 +74,10 @@ function ProjectRow({ project }: { project: DashboardActiveProject }) {
         <li data-test="dashboard-project-row">
             <Link
                 href={projectShow(project.id)}
-                className="group grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)] items-stretch px-3 py-0 transition-colors hover:bg-accent/40 motion-reduce:transition-none md:grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem] md:items-center md:py-3"
+                className="group grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)] items-stretch px-3 py-0 transition-colors hover:bg-blue-50/70 motion-reduce:transition-none md:grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem] md:items-center md:py-3.5"
                 aria-label={`Buka project ${project.name}`}
             >
-                <span className="flex items-center justify-center font-label text-label font-semibold text-muted-foreground md:justify-start">
+                <span className="my-3 flex size-7 items-center justify-center self-start rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 font-label text-label font-bold text-white shadow-sm md:my-0 md:size-8 md:self-auto">
                     {project.index}
                 </span>
                 <span className="hidden min-w-0 border-l border-border px-4 py-1 font-semibold wrap-anywhere md:block">
@@ -128,7 +128,7 @@ function RegionAction({
                 asChild
                 variant="outline"
                 size="lg"
-                className="w-full shrink-0 border-primary/40 text-primary transition-all hover:bg-primary hover:text-white sm:w-auto"
+                className="w-full shrink-0 rounded-xl border-blue-200 text-blue-700 transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white sm:w-auto"
             >
                 <Link href={href}>
                     {action.label}
@@ -143,7 +143,7 @@ function RegionAction({
             type="button"
             variant="outline"
             size="lg"
-            className="w-full shrink-0 border-primary/40 text-primary transition-all hover:bg-primary hover:text-white sm:w-auto"
+            className="w-full shrink-0 rounded-xl border-blue-200 text-blue-700 transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white sm:w-auto"
             onClick={() => onAction(action)}
         >
             {action.label}
@@ -168,12 +168,12 @@ function ProjectRegionState({
 
     return (
         <div
-            className="flex flex-col gap-4 rounded-xl border border-border/80 bg-card px-5 py-6 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-[0_16px_38px_-34px_rgba(30,64,175,0.45)] sm:flex-row sm:items-center sm:justify-between"
             data-test={`dashboard-projects-${region.state}`}
             role={region.state === 'error' ? 'alert' : undefined}
         >
             <div className="flex min-w-0 items-start gap-3.5">
-                <span className="shrink-0 rounded-lg bg-accent p-2.5 text-primary">
+                <span className="shrink-0 rounded-xl border border-blue-100 bg-blue-50 p-2.5 text-blue-700">
                     <Icon
                         aria-hidden="true"
                         className={cn(
@@ -207,7 +207,7 @@ function ProjectLoading({ announcement }: { announcement: string }) {
         <div
             aria-busy="true"
             aria-live="polite"
-            className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm"
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
             data-test="dashboard-projects-loading"
             role="status"
         >
@@ -246,20 +246,25 @@ export function DashboardProjectLedger({
             aria-labelledby="active-projects-heading"
             data-test="dashboard-ledger"
         >
-            <div className="mb-3 flex items-center gap-2.5">
-                <h2
-                    id="active-projects-heading"
-                    className="text-title font-bold"
-                >
-                    Project aktif
-                </h2>
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3 xl:mb-2">
+                <div>
+                    <p className="text-xs font-bold tracking-[0.13em] text-blue-700 uppercase xl:hidden">
+                        Yang sedang berjalan
+                    </p>
+                    <h2
+                        id="active-projects-heading"
+                        className="mt-1 text-title font-bold tracking-[-0.025em] text-slate-950 xl:mt-0"
+                    >
+                        Project aktif
+                    </h2>
+                </div>
                 {totalCount !== undefined && (
                     <span
                         aria-label={`${totalCount} project`}
-                        className="inline-flex items-center rounded-full border border-primary/20 bg-accent px-2.5 py-0.5 font-label text-label font-bold text-accent-foreground"
+                        className="inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700"
                         data-test="dashboard-project-count"
                     >
-                        {totalCount}
+                        {totalCount} project
                     </span>
                 )}
             </div>
@@ -279,10 +284,10 @@ export function DashboardProjectLedger({
             )}
 
             {region.state === 'ready' && (
-                <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_38px_-34px_rgba(30,64,175,0.45)]">
                     <div
                         aria-hidden="true"
-                        className="hidden grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem] border-b border-border/80 bg-muted/50 font-label text-[11px] font-semibold tracking-wider text-muted-foreground uppercase md:grid"
+                        className="hidden grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem] border-b border-slate-100 bg-slate-50 font-label text-[11px] font-semibold tracking-wider text-slate-500 uppercase md:grid"
                     >
                         <span />
                         <span className="border-l border-border/80 px-4 py-2.5">
@@ -304,7 +309,7 @@ export function DashboardProjectLedger({
                     </ol>
 
                     {region.remainingActionLabel && (
-                        <div className="border-t border-border/80 bg-muted/20 px-2 py-2">
+                        <div className="border-t border-slate-100 bg-slate-50 px-3 py-3">
                             <RegionAction
                                 action={{
                                     key: 'projects',

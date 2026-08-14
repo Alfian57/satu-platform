@@ -133,6 +133,7 @@ test('dashboard renders application data and safe recommendation reasons', funct
     visit(route('dashboard'))
         ->resize(1366, 900)
         ->assertDataAttribute('@dashboard-root', 'dashboard-source', 'application')
+        ->assertSee('Mahasiswa')
         ->assertSee('Project Recommendation Nyata')
         ->assertSee('Kebutuhan project cocok dengan profilmu.')
         ->assertSee('Skill riset pengguna dibutuhkan tim.')
@@ -213,6 +214,29 @@ JS,
         ->assertNoJavaScriptErrors();
 });
 
+test('dashboard presents the wide-screen work prompt without a filled blue card', function () {
+    $context = dashboardBrowserContext();
+    $this->actingAs($context['candidate']);
+
+    visit(route('dashboard'))
+        ->resize(1600, 900)
+        ->assertSee('Ritme hari ini')
+        ->assertScript(
+            <<<'JS'
+function() {
+    const workNote = document.querySelector('[data-test="dashboard-work-note"]');
+
+    return workNote !== null
+        && getComputedStyle(workNote).display !== 'none'
+        && getComputedStyle(workNote).backgroundImage === 'none';
+}
+JS,
+            true,
+        )
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});
+
 test('dashboard controls expose pointer targets and keyboard navigation', function () {
     $context = dashboardBrowserContext();
     $this->actingAs($context['candidate']);
@@ -223,7 +247,6 @@ test('dashboard controls expose pointer targets and keyboard navigation', functi
             <<<'JS'
 function() {
     const selectors = [
-        '[data-test="theme-toggle"]',
         '[data-test="sidebar-trigger"]',
         '[data-test="user-menu-button"]',
         '[data-test="dashboard-primary-action"]',
@@ -247,6 +270,27 @@ JS,
         );
 });
 
+test('student shell opens the mobile navigation drawer', function () {
+    $context = dashboardBrowserContext();
+    $this->actingAs($context['candidate']);
+
+    visit(route('dashboard'))
+        ->resize(390, 844)
+        ->click('@sidebar-trigger')
+        ->assertScript(
+            <<<'JS'
+function() {
+    const navigation = document.querySelector('[data-slot="sidebar"][data-mobile="true"]');
+
+    return navigation !== null && navigation.textContent.includes('Project');
+}
+JS,
+            true,
+        )
+        ->assertNoJavaScriptErrors()
+        ->assertNoAccessibilityIssues();
+});
+
 test('dashboard hides a recommendation through the real feedback command', function () {
     $context = dashboardBrowserContext();
     $this->actingAs($context['candidate']);
@@ -260,13 +304,16 @@ test('dashboard hides a recommendation through the real feedback command', funct
         ->assertNoAccessibilityIssues();
 });
 
-test('dashboard respects dark mode and reduced motion-safe regions', function () {
+test('dashboard keeps the official light appearance and responsive regions', function () {
     $context = dashboardBrowserContext();
     $this->actingAs($context['candidate']);
 
     visit(route('dashboard'))
-        ->inDarkMode()
-        ->assertScript('document.documentElement.classList.contains(\'dark\')', true)
+        ->resize(768, 1024)
+        ->assertScript(
+            'document.documentElement.style.colorScheme === \'light\' && !document.documentElement.classList.contains(\'dark\')',
+            true,
+        )
         ->assertScript(
             'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
             true,
@@ -278,18 +325,13 @@ test('dashboard respects dark mode and reduced motion-safe regions', function ()
 test('dashboard screenshot evidence covers real desktop and mobile data', function (
     int $width,
     int $height,
-    bool $darkMode,
     bool $fullPage,
     string $filename,
 ) {
     $context = dashboardBrowserContext();
     $this->actingAs($context['candidate']);
 
-    $page = $darkMode
-        ? visit(route('dashboard'))->inDarkMode()
-        : visit(route('dashboard'));
-
-    $page
+    visit(route('dashboard'))
         ->resize($width, $height)
         ->assertDataAttribute('@dashboard-root', 'dashboard-source', 'application')
         ->assertNoJavaScriptErrors()
@@ -301,14 +343,18 @@ test('dashboard screenshot evidence covers real desktop and mobile data', functi
         1366,
         900,
         false,
-        false,
         'p28-dashboard-real-light-1366x900',
     ],
-    'real dark mobile' => [
+    'real wide desktop' => [
+        1600,
+        900,
+        false,
+        'p28-dashboard-real-light-1600x900',
+    ],
+    'real light mobile' => [
         390,
         844,
         true,
-        true,
-        'p28-dashboard-real-dark-390x844-full',
+        'p28-dashboard-real-light-390x844-full',
     ],
 ]);

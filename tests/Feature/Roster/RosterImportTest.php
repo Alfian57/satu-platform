@@ -4,12 +4,15 @@ use App\Actions\Roster\ImportRoster;
 use App\Enums\InstitutionRosterStatus;
 use App\Enums\InstitutionStatus;
 use App\Models\Institution;
+use App\Models\InstitutionMembership;
 use App\Models\InstitutionRoster;
 use App\Models\InstitutionRosterRow;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
@@ -216,4 +219,73 @@ test('file not found throws exception', function () {
 
     expect(fn () => $action->preview($institution, 'nonexistent.csv', '2025/2026'))
         ->toThrow(RuntimeException::class, 'File not found');
+});
+
+test('verified campus operator can open only their institution roster workspace', function () {
+    $institution = Institution::factory()->active()->create([
+        'name' => 'Universitas Roster SATU',
+    ]);
+    $operator = User::factory()->create();
+    InstitutionMembership::factory()
+        ->campusAdmin()
+        ->verifiedByApprovedDomain()
+        ->for($operator)
+        ->for($institution)
+        ->create();
+    InstitutionRoster::factory()->for($institution)->create([
+        'source_filename' => 'mahasiswa-aktif.csv',
+    ]);
+
+    $this->withoutVite()
+        ->actingAs($operator)
+        ->get(route('campus.roster.show', $institution))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('campus/roster-import')
+            ->where('institution.id', $institution->getKey())
+            ->where('institution.name', 'Universitas Roster SATU')
+            ->where('rosters.0.sourceFilename', 'mahasiswa-aktif.csv')
+        );
+
+    $otherInstitution = Institution::factory()->active()->create();
+
+    $this->get(route('campus.roster.show', $otherInstitution))
+        ->assertForbidden();
+});
+
+test('verified campus operator previews then imports a roster through their own session', function () {
+    $institution = Institution::factory()->active()->create();
+    $operator = User::factory()->create();
+    InstitutionMembership::factory()
+        ->campusAdmin()
+        ->verifiedByApprovedDomain()
+        ->for($operator)
+        ->for($institution)
+        ->create();
+    $csv = implode("\n", [
+        'nim,nama,program_studi,angkatan,semester,phone,status_aktif',
+        '2401001,Anisa Putri,Teknik Informatika,2024,2026/2027 Ganjil,+6281234567890,Aktif',
+    ]);
+
+    $this->withoutVite()
+        ->actingAs($operator)
+        ->post(route('campus.roster.preview', $institution), [
+            'file' => UploadedFile::fake()->createWithContent('roster.csv', $csv),
+            'semester' => '2026/2027 Ganjil',
+        ])
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('campus/roster-import')
+            ->where('preview.valid_rows', 1)
+            ->where('preview.error_rows', 0)
+        );
+
+    $this->post(route('campus.roster.store', $institution))
+        ->assertRedirect(route('campus.roster.show', $institution));
+
+    expect(InstitutionRoster::query()
+        ->whereBelongsTo($institution)
+        ->where('semester', '2026/2027 Ganjil')
+        ->first())
+        ->not->toBeNull();
 });

@@ -102,7 +102,7 @@ function PortfolioAccessNote() {
                 <h2 className="font-semibold">Batas akses</h2>
             </div>
             <p className="text-sm leading-6 text-muted-foreground">
-                Detail ini hanya memuat data portfolio yang diizinkan. Evidence
+                Detail ini hanya memuat data portofolio yang diizinkan. Evidence
                 private, sinyal inclusion, dan audit mentah tetap berada di
                 boundary masing-masing.
             </p>
@@ -216,7 +216,7 @@ export default function PortfolioShow({
 
     return (
         <>
-            <Head title={`Portfolio ${entry.id}`} />
+            <Head title={`Portofolio ${entry.id}`} />
             <AppPage
                 contextRail={
                     profile && permissions.can_manage_profile ? (
@@ -225,7 +225,7 @@ export default function PortfolioShow({
                         <PortfolioAccessNote />
                     )
                 }
-                contextRailLabel="Pengaturan privacy portfolio"
+                contextRailLabel="Pengaturan portofolio"
             >
                 <div className="mx-auto grid max-w-5xl min-w-0 gap-8">
                     <header className="grid gap-4 border-b border-border pb-6">
@@ -235,11 +235,11 @@ export default function PortfolioShow({
                             data-test="back-to-portfolio"
                         >
                             <ArrowLeft aria-hidden="true" className="size-4" />
-                            Kembali ke portfolio
+                            Kembali ke portofolio
                         </Link>
                         <div className="grid gap-3">
                             <p className="font-label text-label text-primary">
-                                PORTFOLIO / ENTRY-{entry.id}
+                                PORTOFOLIO / ENTRY-{entry.id}
                             </p>
                             <h1 className="max-w-[28ch] text-headline font-bold text-balance break-words">
                                 {entry.title}
@@ -314,7 +314,7 @@ export default function PortfolioShow({
 PortfolioShow.layout = {
     breadcrumbs: [
         {
-            title: 'Portfolio',
+            title: 'Portofolio',
             href: portfolioIndex(),
         },
         {

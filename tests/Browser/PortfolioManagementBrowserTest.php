@@ -21,7 +21,7 @@ test('student can manage portfolio audiences with mobile and desktop evidence', 
         ->resize(390, 844)
         ->waitForText('Portfolio page entry')
         ->assertSee('Institution-verified')
-        ->assertSee('Kendali publikasi')
+        ->assertSee('Kendali visibilitas')
         ->assertScript(
             'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
             true,
@@ -35,10 +35,10 @@ test('student can manage portfolio audiences with mobile and desktop evidence', 
         ->assertSee('Terbit sesuai audience')
         ->select('[data-test=portfolio-profile-visibility]', 'recruiter')
         ->click('@portfolio-profile-save')
-        ->waitForText('Pengaturan portfolio sudah tersimpan.')
+        ->waitForText('Pengaturan portofolio sudah tersimpan.')
         ->resize(1366, 900)
-        ->assertSee('PROYEKSI RECRUITER')
-        ->assertSee('TENANT: Universitas Browser Portfolio')
+        ->assertSee('Akses yang jelas')
+        ->assertSee('Kampus: Universitas Browser Portfolio')
         ->assertScript(
             'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
             true,
@@ -77,7 +77,7 @@ test('student can inspect the portfolio provenance detail on mobile', function (
         ->assertSee('Jejak sumber')
         ->assertSee('Contribution #')
         ->assertSee('Institution-verified')
-        ->assertSee('Kendali publikasi')
+        ->assertSee('Kendali visibilitas')
         ->assertScript(
             'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
             true,
@@ -95,13 +95,54 @@ test('portfolio empty state remains usable on desktop', function () {
 
     visit(route('portfolio.index'))
         ->resize(1366, 900)
-        ->waitForText('Belum ada entry portfolio')
+        ->waitForText('Belum ada karya di portofolio')
         ->assertSee('Lihat contribution')
         ->assertScript(
             'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
             true,
         )
         ->screenshot(true, 'p48-portfolio-empty-desktop-1366x900')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
+test('portfolio index uses a calm and scannable work record hierarchy', function () {
+    $context = portfolioBrowserContext();
+    $entry = portfolioBrowserEntry($context);
+
+    $this->actingAs($context['student']);
+
+    $page = visit(route('portfolio.index'))
+        ->resize(1366, 900)
+        ->waitForText('Portfolio page entry')
+        ->assertSee('Portofolio mahasiswa')
+        ->assertSee('Karyamu, siap dibaca sebagai rekam jejak.')
+        ->assertSee('Akses yang jelas')
+        ->assertSee('Karya yang siap kamu kelola')
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(true, 'portfolio-index-modern-desktop-1366x900');
+
+    $page
+        ->resize(390, 844)
+        ->assertSee('Portofolio mahasiswa')
+        ->assertSee('Kendali visibilitas')
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(true, 'portfolio-index-modern-mobile-390x844');
+
+    $page
+        ->select("[data-test=portfolio-entry-{$entry->getKey()}-visibility]", 'recruiter')
+        ->click("@portfolio-entry-{$entry->getKey()}-visibility-save")
+        ->waitForText('Audience entry sudah diperbarui.')
+        ->select('[data-test=portfolio-profile-visibility]', 'recruiter')
+        ->click('@portfolio-profile-save')
+        ->waitForText('Pengaturan portofolio sudah tersimpan.')
         ->assertNoJavaScriptErrors()
         ->assertNoConsoleLogs()
         ->assertNoAccessibilityIssues();

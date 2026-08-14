@@ -3,9 +3,25 @@
     name: string;
     username: string;
     avatar?: string;
+    is_platform_admin?: boolean;
+    workspace: UserWorkspace;
     created_at: string;
     updated_at: string;
     [key: string]: unknown;
+};
+
+export type WorkspaceRole =
+    'platform_admin' | 'campus_admin' | 'recruiter' | 'student';
+
+export type WorkspaceEntity = {
+    id: number;
+    name: string;
+};
+
+export type UserWorkspace = {
+    role: WorkspaceRole;
+    institution: WorkspaceEntity | null;
+    recruiterOrganization: WorkspaceEntity | null;
 };
 
 export type Auth = {

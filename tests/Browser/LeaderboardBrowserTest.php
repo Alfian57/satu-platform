@@ -54,6 +54,41 @@ test('leaderboard explains ties, protected cohorts, and score provenance', funct
         ->screenshot(false, 'p97-leaderboard-explanation-desktop-1366x900');
 });
 
+test('leaderboard presents a calm and scannable verified activity record', function () {
+    $context = leaderboardBrowserContext();
+    $this->actingAs($context['user']);
+
+    $page = visit(route('leaderboards.index'))
+        ->resize(1366, 900)
+        ->waitForText('Informatika')
+        ->assertSee('Aktivitas terverifikasi')
+        ->assertSee('Lihat pola kontribusi, tanpa kehilangan konteks.')
+        ->assertSee('Dasar peringkat')
+        ->assertSee('Rekam peringkat')
+        ->assertSee('Cara membaca')
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(true, 'leaderboard-modern-desktop-1366x900');
+
+    $page
+        ->resize(390, 844)
+        ->assertSee('Aktivitas terverifikasi')
+        ->assertSee('Pilih scope')
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(true, 'leaderboard-modern-mobile-390x844')
+        ->click('@leaderboard-mobile-explanation-trigger')
+        ->waitForText('Penjelasan baris leaderboard')
+        ->wait(0.3)
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
 test('stale leaderboard data explains recovery without hiding the last snapshot', function () {
     $context = leaderboardBrowserContext();
     LeaderboardPeriod::query()

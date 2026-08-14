@@ -63,10 +63,33 @@ test('student can filter project discovery and move through paginated results', 
         'per_page' => 1,
     ]))
         ->resize(1366, 900)
+        ->assertSee('Cari project yang sesuai')
         ->assertSee('Laravel Platform')
         ->assertSee('Backend Engineer')
         ->assertSee('Laravel')
         ->assertValue('#project-search', 'Laravel')
+        ->assertScript(
+            <<<'JS'
+function() {
+    const header = document.querySelector('[data-test="project-discovery-header"]');
+    const filters = document.querySelector('[data-test="project-filters"]');
+    const results = document.querySelector('[data-test="projects-results"]');
+    const firstRow = document.querySelector('[data-test="project-row"]');
+
+    return Boolean(
+        header
+        && filters
+        && results
+        && firstRow
+        && header.getBoundingClientRect().top < filters.getBoundingClientRect().top
+        && filters.getBoundingClientRect().top < results.getBoundingClientRect().top
+        && filters.classList.contains('rounded-2xl')
+        && firstRow.closest('[data-test="project-ledger"]')?.classList.contains('rounded-2xl')
+    );
+}
+JS,
+            true,
+        )
         ->screenshot(true, 'p25-project-discovery-desktop-1366x900')
         ->click('button[aria-label="Halaman berikutnya"]')
         ->wait(0.3)

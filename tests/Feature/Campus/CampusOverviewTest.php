@@ -5,6 +5,7 @@ use App\Models\InstitutionMembership;
 use App\Models\Project;
 use App\Models\StudentProfile;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Inertia\Testing\AssertableInertia as Assert;
 
 function campusAdminUser(Institution $institution): User
@@ -26,7 +27,10 @@ test('authorized campus admin can view institution scoped overview metrics', fun
 
     // Create memberships
     $student = User::factory()->create();
-    StudentProfile::factory()->for($student)->create(['study_program' => 'Teknik Informatika']);
+    StudentProfile::factory()
+        ->for($student)
+        ->for($institution)
+        ->create(['study_program' => 'Teknik Informatika']);
     InstitutionMembership::factory()->verifiedByApprovedDomain()->for($student)->for($institution)->create();
 
     // Create project
@@ -82,16 +86,80 @@ test('unverified students cannot access campus overview', function () {
         ->assertForbidden();
 });
 
+test('suspended institutions cannot expose the campus overview', function () {
+    $institution = Institution::factory()->active()->create();
+    $admin = campusAdminUser($institution);
+    $institution->update(['status' => 'suspended']);
+
+    $this->actingAs($admin)
+        ->get(route('campus.overview.show', $institution))
+        ->assertForbidden();
+});
+
+test('overview never uses a student profile from another institution', function () {
+    $institution = Institution::factory()->active()->create();
+    $otherInstitution = Institution::factory()->active()->create();
+    $admin = campusAdminUser($institution);
+    $student = User::factory()->create();
+
+    InstitutionMembership::factory()
+        ->verifiedByApprovedDomain()
+        ->for($student)
+        ->for($institution)
+        ->create();
+    InstitutionMembership::factory()
+        ->verifiedByApprovedDomain()
+        ->for($student)
+        ->for($otherInstitution)
+        ->create();
+    StudentProfile::factory()
+        ->for($student)
+        ->for($institution)
+        ->create(['study_program' => 'Teknik Informatika']);
+    StudentProfile::factory()
+        ->for($student)
+        ->for($otherInstitution)
+        ->create(['study_program' => 'Program Rahasia Lintas Tenant']);
+
+    $this->withoutVite()
+        ->actingAs($admin)
+        ->get(route('campus.overview.show', $institution))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('programDistribution', [
+                ['program' => 'Teknik Informatika', 'count' => 1],
+            ])
+            ->where('members.items', fn (Collection $items): bool => $items
+                ->contains(fn (array $item): bool => $item['program'] === 'Teknik Informatika'))
+            ->missing('programDistribution.1')
+        );
+
+    $this->get(route('campus.overview.show', [
+        $institution,
+        'program' => 'Program Rahasia Lintas Tenant',
+    ]))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('members.pagination.total', 0)
+        );
+});
+
 test('overview supports date and program filtering', function () {
     $institution = Institution::factory()->active()->create();
     $admin = campusAdminUser($institution);
 
     $studentIT = User::factory()->create();
-    StudentProfile::factory()->for($studentIT)->create(['study_program' => 'Teknik Informatika']);
+    StudentProfile::factory()
+        ->for($studentIT)
+        ->for($institution)
+        ->create(['study_program' => 'Teknik Informatika']);
     InstitutionMembership::factory()->verifiedByApprovedDomain()->for($studentIT)->for($institution)->create();
 
     $studentSI = User::factory()->create();
-    StudentProfile::factory()->for($studentSI)->create(['study_program' => 'Sistem Informasi']);
+    StudentProfile::factory()
+        ->for($studentSI)
+        ->for($institution)
+        ->create(['study_program' => 'Sistem Informasi']);
     InstitutionMembership::factory()->verifiedByApprovedDomain()->for($studentSI)->for($institution)->create();
 
     $this->withoutVite()

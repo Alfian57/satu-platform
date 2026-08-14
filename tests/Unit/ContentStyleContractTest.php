@@ -110,13 +110,12 @@ test('dashboard auth and settings use the approved copy contract', function () {
             'resources/js/components/delete-user.tsx',
             'resources/js/components/password-input.tsx',
             'resources/js/components/alert-error.tsx',
-            'resources/js/components/appearance-tabs.tsx',
         ],
     ));
 
     expect($dashboard)
         ->toContain('Ringkasan ini memakai data akun dan konteks')
-        ->toContain('Recommendation untukmu')
+        ->toContain('Rekomendasi untukmu')
         ->toContain('Perbarui profil')
         ->toContain('Tidak relevan')
         ->not->toContain('Data demo sintetis')

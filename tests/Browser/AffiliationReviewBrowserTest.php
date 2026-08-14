@@ -48,6 +48,9 @@ test('campus reviewer can lock and approve an affiliation from the docket', func
 
     visit(route('campus.affiliations.index', $institution))
         ->assertSee('Review afiliasi Universitas SATU')
+        ->assertSee('Operasi kampus')
+        ->assertSee('Afiliasi kampus')
+        ->assertSee('Admin kampus')
         ->assertSee('@'.$request->user->username)
         ->press('Tinjau')
         ->assertSee('Berkas AF-'.$request->getKey())
@@ -61,6 +64,80 @@ test('campus reviewer can lock and approve an affiliation from the docket', func
         ->assertNoAccessibilityIssues();
 
     expect($request->membership->refresh()->status->value)->toBe('verified');
+});
+
+test('platform admin identity takes precedence in the affiliation review navbar', function () {
+    $institution = Institution::factory()->active()->create();
+    $platformAdmin = browserAffiliationReviewer($institution);
+    $platformAdmin->update(['is_platform_admin' => true]);
+    $this->actingAs($platformAdmin);
+
+    visit(route('campus.affiliations.index', $institution))
+        ->assertSee('Admin platform')
+        ->resize(390, 844)
+        ->assertPresent('@app-workspace-title')
+        ->assertSee('Ruang admin platform')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs();
+});
+
+test('platform admin opens the real platform affiliation workspace from the dashboard shell', function () {
+    $institution = Institution::factory()->active()->create([
+        'name' => 'Universitas SATU',
+    ]);
+    browserPendingAffiliation($institution);
+    $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
+    $this->actingAs($platformAdmin);
+
+    visit(route('dashboard'))
+        ->assertSee('Operasi platform')
+        ->assertSee('Afiliasi kampus')
+        ->assertDontSee('Hubungkan kampus')
+        ->click('Afiliasi kampus')
+        ->assertPresent('@platform-affiliation-root')
+        ->assertSee('Afiliasi kampus dalam satu pandangan')
+        ->assertSee('Universitas SATU')
+        ->assertSee('Admin platform')
+        ->screenshot(true, 'platform-affiliation-desktop-1280x720')
+        ->resize(390, 844)
+        ->assertSee('Afiliasi kampus dalam satu pandangan')
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(true, 'platform-affiliation-mobile-390x844')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
+test('campus reviewer enters the campus workspace from the dashboard', function () {
+    $institution = Institution::factory()->active()->create([
+        'name' => 'Universitas Workspace SATU',
+    ]);
+    $reviewer = browserAffiliationReviewer($institution);
+    $this->actingAs($reviewer);
+
+    visit(route('dashboard'))
+        ->resize(390, 844)
+        ->waitForText('Ringkasan Operasional Kampus')
+        ->assertPresent('@app-workspace-title')
+        ->assertSee('Operasi kampus')
+        ->resize(1280, 720)
+        ->assertSee('Admin kampus')
+        ->assertSee('Ringkasan')
+        ->assertSee('Afiliasi kampus')
+        ->assertSee('Roster mahasiswa')
+        ->assertSee('Validasi kontribusi')
+        ->assertSee('Universitas Workspace SATU')
+        ->assertDontSee('Hubungkan kampus')
+        ->assertScript(
+            'document.querySelectorAll(\'[data-slot="sidebar-wrapper"]\').length',
+            1,
+        )
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
 });
 
 test('campus review distinguishes empty and concurrent lock states', function () {

@@ -79,6 +79,68 @@ test('student can send a draft for validation and see the pending boundary on de
     expect($contribution->refresh()->status)->toBe(ContributionStatus::Pending);
 });
 
+test('contribution index presents a scan-friendly protected ledger', function () {
+    $context = contributionBrowserContext();
+    $contribution = contributionBrowserContribution(
+        $context,
+        ContributionStatus::Draft,
+    );
+
+    $this->actingAs($context['student']);
+
+    visit(route('contributions.index'))
+        ->resize(1366, 900)
+        ->assertSee('Buku besar kontribusi')
+        ->assertSee('Ruang terlindungi')
+        ->assertPresent("@contribution-row-{$contribution->getKey()}")
+        ->assertScript(
+            <<<'JS'
+function() {
+    const header = document.querySelector('[data-test="contributions-header"]');
+    const ledger = document.querySelector('[data-test="contributions-ledger"]');
+    const row = document.querySelector('[data-test^="contribution-row-"]');
+
+    return Boolean(
+        header
+        && ledger
+        && row
+        && header.getBoundingClientRect().top < ledger.getBoundingClientRect().top
+        && ledger.classList.contains('rounded-2xl')
+        && getComputedStyle(row).cursor === 'pointer'
+    );
+}
+JS,
+            true,
+        )
+        ->screenshot(true, 'contribution-index-modern-desktop-1366x900')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
+test('contribution index keeps the protected ledger readable on mobile', function () {
+    $context = contributionBrowserContext();
+    $contribution = contributionBrowserContribution(
+        $context,
+        ContributionStatus::Approved,
+    );
+
+    $this->actingAs($context['student']);
+
+    visit(route('contributions.index'))
+        ->resize(390, 844)
+        ->assertSee('Contribution milikmu')
+        ->assertPresent("@contribution-row-{$contribution->getKey()}")
+        ->assertScript(
+            'document.documentElement.scrollWidth <= document.documentElement.clientWidth',
+            true,
+        )
+        ->screenshot(true, 'contribution-index-modern-mobile-390x844')
+        ->assertNoJavaScriptErrors()
+        ->assertNoConsoleLogs()
+        ->assertNoAccessibilityIssues();
+});
+
 test('student can respond to revision feedback without losing version history', function () {
     $context = contributionBrowserContext();
     $contribution = contributionBrowserContribution($context, ContributionStatus::Revision);

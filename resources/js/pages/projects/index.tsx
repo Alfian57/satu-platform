@@ -160,7 +160,7 @@ const statusClasses: Record<ProjectStatus, string> = {
 };
 
 const selectClassName =
-    'h-control-md w-full cursor-pointer rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger hover:border-ring focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50';
+    'h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger hover:border-blue-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50';
 
 const dateFormatter = new Intl.DateTimeFormat('id-ID', {
     day: 'numeric',
@@ -245,12 +245,12 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
         <li
             data-project-id={project.id}
             data-test="project-row"
-            className="min-w-0 border-b border-border/80 first:border-t"
+            className="min-w-0 border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50/70"
         >
-            <article className="grid min-w-0 gap-5 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(15rem,0.42fr)] lg:gap-8">
+            <article className="grid min-w-0 gap-5 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,0.42fr)] lg:gap-8">
                 <div className="min-w-0 space-y-4">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        <span className="font-label text-label text-muted-foreground">
+                        <span className="font-label text-label text-slate-500">
                             PROJECT {String(project.id).padStart(4, '0')}
                         </span>
                         <ProjectStatusBadge status={project.status} />
@@ -264,25 +264,25 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                     </div>
 
                     <div className="min-w-0 space-y-2">
-                        <h3 className="text-title font-semibold break-words">
+                        <h3 className="text-xl font-bold tracking-[-0.025em] break-words">
                             <Link
                                 href={projectShow(project.id)}
-                                className="cursor-pointer underline-offset-4 hover:underline"
+                                className="cursor-pointer text-slate-950 underline-offset-4 transition-colors hover:text-blue-700 hover:underline"
                                 data-test="project-detail-link"
                             >
                                 {project.title}
                             </Link>
                         </h3>
                         {project.description && (
-                            <p className="max-w-[75ch] text-sm leading-6 break-words whitespace-pre-line text-muted-foreground">
+                            <p className="max-w-[70ch] text-sm leading-6 break-words whitespace-pre-line text-slate-600">
                                 {project.description}
                             </p>
                         )}
                     </div>
 
-                    <div className="grid min-w-0 gap-4 border-t border-border/70 pt-4 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
+                    <div className="grid min-w-0 gap-5 border-t border-slate-100 pt-4 sm:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
                         <div className="min-w-0 space-y-2">
-                            <p className="font-label text-label text-muted-foreground">
+                            <p className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
                                 PERAN YANG DIBUTUHKAN
                             </p>
                             {project.roles.length > 0 ? (
@@ -290,7 +290,7 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                                     {project.roles.map((role) => (
                                         <li
                                             key={role.id}
-                                            className="flex min-w-0 items-start justify-between gap-3"
+                                            className="flex min-w-0 items-start justify-between gap-3 text-slate-800"
                                         >
                                             <span className="min-w-0 font-medium break-words">
                                                 {role.title}
@@ -309,7 +309,7 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                         </div>
 
                         <div className="min-w-0 space-y-2">
-                            <p className="font-label text-label text-muted-foreground">
+                            <p className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
                                 SKILL YANG DIBUTUHKAN
                             </p>
                             {skills.length > 0 ? (
@@ -317,7 +317,7 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                                     {skills.map((skill) => (
                                         <li
                                             key={skill.name}
-                                            className="inline-flex max-w-full items-center gap-1.5 rounded-sm border border-border bg-muted/60 px-2 py-1 text-xs text-foreground"
+                                            className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700"
                                         >
                                             <span className="break-words">
                                                 {skill.name}
@@ -339,9 +339,9 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                     </div>
                 </div>
 
-                <dl className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-4 border-t border-border/70 pt-4 lg:grid-cols-1 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+                <dl className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-4 border-t border-slate-100 pt-4 lg:grid-cols-1 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
                     <div className="min-w-0 space-y-1">
-                        <dt className="font-label text-label text-muted-foreground">
+                        <dt className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
                             DEADLINE
                         </dt>
                         <dd className="flex min-w-0 items-start gap-2 text-sm font-medium">
@@ -356,7 +356,7 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                     </div>
 
                     <div className="min-w-0 space-y-1">
-                        <dt className="font-label text-label text-muted-foreground">
+                        <dt className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
                             KAPASITAS TIM
                         </dt>
                         <dd className="flex min-w-0 items-start gap-2 text-sm font-medium">
@@ -370,8 +370,8 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                         </dd>
                     </div>
 
-                    <div className="col-span-2 min-w-0 space-y-1 border-t border-border/70 pt-4 lg:col-span-1">
-                        <dt className="font-label text-label text-muted-foreground">
+                    <div className="col-span-2 min-w-0 space-y-1 border-t border-slate-100 pt-4 lg:col-span-1">
+                        <dt className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
                             PEMILIK PROJECT
                         </dt>
                         <dd className="text-sm font-medium break-words">
@@ -420,7 +420,7 @@ function ProjectEmptyState({ onReset }: { onReset: () => void }) {
     return (
         <section
             data-test="projects-empty"
-            className="grid justify-items-center gap-4 border-y border-border/80 bg-card/50 px-6 py-14 text-center"
+            className="grid justify-items-center gap-4 rounded-2xl border border-slate-200 bg-white px-6 py-14 text-center shadow-[0_14px_32px_-30px_rgba(30,64,175,0.34)]"
         >
             <div className="grid size-12 place-items-center rounded-md border border-border bg-muted text-primary">
                 <FolderSearch aria-hidden="true" className="size-6" />
@@ -451,7 +451,7 @@ function ProjectErrorState({ onRetry }: { onRetry: () => void }) {
         <section
             role="alert"
             data-test="projects-error"
-            className="flex flex-col gap-4 border border-correction/40 bg-correction-subtle px-5 py-5 text-correction-subtle-foreground sm:flex-row sm:items-start sm:justify-between"
+            className="flex flex-col gap-4 rounded-2xl border border-correction/40 bg-correction-subtle px-5 py-5 text-correction-subtle-foreground sm:flex-row sm:items-start sm:justify-between"
         >
             <div className="flex min-w-0 items-start gap-3">
                 <AlertCircle
@@ -624,84 +624,102 @@ export default function ProjectIndex({
             <AppPage className="min-w-0">
                 <div
                     data-test="projects-root"
-                    className="mx-auto max-w-7xl min-w-0 space-y-7"
+                    className="mx-auto max-w-7xl min-w-0 space-y-6"
                 >
-                    <header className="grid gap-5 border-b border-border pb-6 xl:grid-cols-[minmax(0,1fr)_minmax(17rem,0.34fr)] xl:items-end xl:gap-10">
-                        <div className="min-w-0 space-y-3">
-                            <p className="font-label text-label text-primary">
-                                INDEX PROJECT / {institution.name}
-                            </p>
-                            <h1 className="max-w-[24ch] text-headline font-bold text-balance">
-                                Temukan project yang bisa kamu kerjakan bersama.
-                            </h1>
-                            <p className="max-w-[68ch] text-body text-muted-foreground">
-                                Jelajahi kebutuhan peran, skill, kapasitas, dan
-                                deadline dalam satu daftar yang bisa dibagikan
-                                melalui URL.
-                            </p>
-                        </div>
-
-                        <div className="grid gap-2 border border-border bg-card/60 px-4 py-3 text-sm">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <ShieldCheck
-                                    aria-hidden="true"
-                                    className="size-4 shrink-0 text-verified"
-                                />
-                                <span className="font-label text-label">
-                                    KONTEKS TERPILIH
-                                </span>
+                    <header
+                        className="relative isolate overflow-hidden rounded-2xl border border-blue-100 bg-white px-5 py-6 shadow-[0_18px_50px_-40px_rgba(30,64,175,0.42)] sm:px-7 sm:py-7"
+                        data-test="project-discovery-header"
+                    >
+                        <div
+                            aria-hidden="true"
+                            className="absolute -top-24 -right-20 size-72 rounded-full bg-blue-100/70 blur-3xl"
+                        />
+                        <div className="relative grid gap-7 xl:grid-cols-[minmax(0,1fr)_minmax(17rem,0.48fr)] xl:items-stretch xl:gap-10">
+                            <div className="min-w-0">
+                                <p className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold tracking-[0.12em] text-blue-700 uppercase">
+                                    <span className="size-1.5 rounded-full bg-blue-600" />
+                                    Ruang discovery project
+                                </p>
+                                <h1 className="mt-4 max-w-[24ch] text-headline font-bold tracking-[-0.035em] text-balance text-slate-950">
+                                    Temukan project yang bisa kamu kerjakan
+                                    bersama.
+                                </h1>
+                                <p className="mt-3 max-w-[66ch] text-sm leading-6 text-slate-600">
+                                    Telusuri peran, skill, kapasitas, dan
+                                    deadline dalam satu daftar peluang
+                                    kolaborasi.
+                                </p>
                             </div>
-                            <p className="font-semibold break-words">
-                                {institution.name}
-                            </p>
-                            <p className="text-xs leading-5 text-muted-foreground">
-                                Daftar ini mengikuti afiliasi kampus yang sedang
-                                aktif pada akunmu.
-                            </p>
-                            <Button
-                                asChild
-                                className="mt-2 w-full cursor-pointer"
-                                data-test="create-project-link"
-                            >
-                                <Link
-                                    href={projectsCreate({
-                                        query: {
-                                            institution_id: institution.id,
-                                        },
-                                    })}
+
+                            <div className="flex flex-col justify-end border-t border-slate-200 pt-6 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-8">
+                                <div className="flex items-center gap-2 text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
+                                    <ShieldCheck
+                                        aria-hidden="true"
+                                        className="size-4 shrink-0 text-verified"
+                                    />
+                                    Konteks aktif
+                                </div>
+                                <p className="mt-2 text-base font-bold break-words text-slate-950">
+                                    {institution.name}
+                                </p>
+                                <p className="mt-2 text-sm leading-5 text-slate-500">
+                                    Peluang yang ditampilkan mengikuti afiliasi
+                                    kampus pada akunmu.
+                                </p>
+                                <Button
+                                    asChild
+                                    className="mt-5 w-full self-start xl:w-auto"
+                                    data-test="create-project-link"
                                 >
-                                    <Plus aria-hidden="true" />
-                                    Buat project baru
-                                </Link>
-                            </Button>
+                                    <Link
+                                        href={projectsCreate({
+                                            query: {
+                                                institution_id: institution.id,
+                                            },
+                                        })}
+                                    >
+                                        <Plus aria-hidden="true" />
+                                        Buat project baru
+                                    </Link>
+                                </Button>
+                            </div>
                         </div>
                     </header>
 
                     <section
                         aria-labelledby="project-filters-title"
                         data-test="project-filters"
-                        className="border-y border-border bg-card/40"
+                        className="rounded-2xl border border-slate-200 bg-white shadow-[0_14px_32px_-30px_rgba(30,64,175,0.34)]"
                     >
                         <form
-                            className="grid gap-6 p-4 md:p-6"
+                            className="grid gap-5 p-5 sm:p-6"
                             onSubmit={(event) => {
                                 event.preventDefault();
                                 visitDiscovery();
                             }}
                         >
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
-                                <div className="min-w-0 flex-1 space-y-2">
-                                    <Label
-                                        htmlFor="project-search"
-                                        id="project-filters-title"
-                                        className="font-label text-label text-muted-foreground"
-                                    >
-                                        CARI PROJECT
-                                    </Label>
-                                    <div className="relative">
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                                        <div>
+                                            <p className="text-xs font-bold tracking-[0.13em] text-blue-700 uppercase">
+                                                Temukan peluang
+                                            </p>
+                                            <h2
+                                                id="project-filters-title"
+                                                className="mt-1 text-title font-bold tracking-[-0.02em] text-slate-950"
+                                            >
+                                                Cari project yang sesuai
+                                            </h2>
+                                        </div>
+                                        <p className="text-xs text-slate-500">
+                                            Filter tersimpan di URL
+                                        </p>
+                                    </div>
+                                    <div className="relative mt-4">
                                         <Search
                                             aria-hidden="true"
-                                            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                                            className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400"
                                         />
                                         <Input
                                             id="project-search"
@@ -711,8 +729,8 @@ export default function ProjectIndex({
                                                     event.target.value,
                                                 )
                                             }
-                                            placeholder="Cari judul, deskripsi, peran, atau skill"
-                                            className="pl-10"
+                                            placeholder="Cari judul, peran, atau skill"
+                                            className="h-12 border-slate-200 bg-slate-50 pl-11 shadow-none hover:border-blue-300"
                                             autoComplete="off"
                                         />
                                     </div>
@@ -720,7 +738,7 @@ export default function ProjectIndex({
                                 <Button
                                     type="submit"
                                     disabled={isPending}
-                                    className="w-full shrink-0 lg:w-auto"
+                                    className="h-12 w-full shrink-0 px-5 lg:w-auto"
                                     data-test="project-apply-filters"
                                 >
                                     <Filter aria-hidden="true" />
@@ -728,192 +746,196 @@ export default function ProjectIndex({
                                 </Button>
                             </div>
 
-                            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
-                                <div className="grid gap-6 md:grid-cols-2">
-                                    <fieldset className="min-w-0 space-y-3">
-                                        <legend className="font-label text-label text-muted-foreground">
-                                            STATUS PROJECT
-                                        </legend>
-                                        <div className="flex flex-wrap gap-x-5 gap-y-3">
-                                            {filterOptions.status.map(
-                                                (status) => (
-                                                    <div
-                                                        key={status}
-                                                        className="flex min-h-10 items-center gap-2 text-sm"
-                                                    >
-                                                        <Checkbox
-                                                            id={`status-${status}`}
-                                                            checked={selectedStatuses.includes(
-                                                                status,
-                                                            )}
-                                                            onCheckedChange={(
-                                                                checked,
-                                                            ) =>
-                                                                toggleStatus(
-                                                                    status,
-                                                                    checked ===
-                                                                        true,
-                                                                )
-                                                            }
-                                                        />
-                                                        <Label
-                                                            htmlFor={`status-${status}`}
-                                                            className="cursor-pointer"
-                                                        >
-                                                            {displayStatus(
-                                                                status,
-                                                            )}
-                                                        </Label>
-                                                    </div>
-                                                ),
-                                            )}
-                                        </div>
-                                        <p className="text-xs leading-5 text-muted-foreground">
-                                            Pilih minimal satu status.
-                                        </p>
-                                    </fieldset>
+                            <div className="grid gap-5 border-t border-slate-100 pt-5 lg:grid-cols-2">
+                                <fieldset className="min-w-0 space-y-3">
+                                    <legend className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
+                                        Status project
+                                    </legend>
+                                    <div className="flex flex-wrap gap-2">
+                                        {filterOptions.status.map((status) => (
+                                            <div
+                                                key={status}
+                                                className={cn(
+                                                    'flex min-h-10 items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors duration-fast motion-reduce:transition-none',
+                                                    selectedStatuses.includes(
+                                                        status,
+                                                    )
+                                                        ? 'border-blue-200 bg-blue-50 text-blue-800'
+                                                        : 'border-slate-200 bg-white text-slate-600',
+                                                )}
+                                            >
+                                                <Checkbox
+                                                    id={`status-${status}`}
+                                                    checked={selectedStatuses.includes(
+                                                        status,
+                                                    )}
+                                                    onCheckedChange={(
+                                                        checked,
+                                                    ) =>
+                                                        toggleStatus(
+                                                            status,
+                                                            checked === true,
+                                                        )
+                                                    }
+                                                />
+                                                <Label
+                                                    htmlFor={`status-${status}`}
+                                                    className="cursor-pointer text-sm font-medium"
+                                                >
+                                                    {displayStatus(status)}
+                                                </Label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs leading-5 text-slate-500">
+                                        Pilih minimal satu status.
+                                    </p>
+                                </fieldset>
 
-                                    <fieldset className="min-w-0 space-y-3">
-                                        <legend className="font-label text-label text-muted-foreground">
-                                            VISIBILITAS
-                                        </legend>
-                                        <div className="flex flex-wrap gap-x-5 gap-y-3">
-                                            {filterOptions.visibility.map(
-                                                (visibility) => (
-                                                    <div
-                                                        key={visibility}
-                                                        className="flex min-h-10 items-center gap-2 text-sm"
+                                <fieldset className="min-w-0 space-y-3">
+                                    <legend className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
+                                        Visibilitas
+                                    </legend>
+                                    <div className="flex flex-wrap gap-2">
+                                        {filterOptions.visibility.map(
+                                            (visibility) => (
+                                                <div
+                                                    key={visibility}
+                                                    className={cn(
+                                                        'flex min-h-10 items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors duration-fast motion-reduce:transition-none',
+                                                        selectedVisibilities.includes(
+                                                            visibility,
+                                                        )
+                                                            ? 'border-blue-200 bg-blue-50 text-blue-800'
+                                                            : 'border-slate-200 bg-white text-slate-600',
+                                                    )}
+                                                >
+                                                    <Checkbox
+                                                        id={`visibility-${visibility}`}
+                                                        checked={selectedVisibilities.includes(
+                                                            visibility,
+                                                        )}
+                                                        onCheckedChange={(
+                                                            checked,
+                                                        ) =>
+                                                            toggleVisibility(
+                                                                visibility,
+                                                                checked ===
+                                                                    true,
+                                                            )
+                                                        }
+                                                    />
+                                                    <Label
+                                                        htmlFor={`visibility-${visibility}`}
+                                                        className="cursor-pointer text-sm font-medium"
                                                     >
-                                                        <Checkbox
-                                                            id={`visibility-${visibility}`}
-                                                            checked={selectedVisibilities.includes(
-                                                                visibility,
-                                                            )}
-                                                            onCheckedChange={(
-                                                                checked,
-                                                            ) =>
-                                                                toggleVisibility(
-                                                                    visibility,
-                                                                    checked ===
-                                                                        true,
-                                                                )
-                                                            }
-                                                        />
-                                                        <Label
-                                                            htmlFor={`visibility-${visibility}`}
-                                                            className="cursor-pointer"
-                                                        >
-                                                            {displayVisibility(
-                                                                visibility,
-                                                            )}
-                                                        </Label>
-                                                    </div>
-                                                ),
-                                            )}
-                                        </div>
-                                        <p className="text-xs leading-5 text-muted-foreground">
-                                            Project pribadi hanya muncul jika
-                                            kamu pemiliknya.
-                                        </p>
-                                    </fieldset>
+                                                        {displayVisibility(
+                                                            visibility,
+                                                        )}
+                                                    </Label>
+                                                </div>
+                                            ),
+                                        )}
+                                    </div>
+                                    <p className="text-xs leading-5 text-slate-500">
+                                        Project pribadi hanya muncul jika kamu
+                                        pemiliknya.
+                                    </p>
+                                </fieldset>
+                            </div>
+
+                            <div className="grid gap-4 border-t border-slate-100 pt-5 sm:grid-cols-3">
+                                <div className="min-w-0 space-y-2">
+                                    <Label
+                                        htmlFor="project-sort"
+                                        className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase"
+                                    >
+                                        Urutkan berdasarkan
+                                    </Label>
+                                    <select
+                                        id="project-sort"
+                                        className={selectClassName}
+                                        value={selectedSort}
+                                        onChange={(event) =>
+                                            setSelectedSort(event.target.value)
+                                        }
+                                    >
+                                        {filterOptions.sort.map((sort) => (
+                                            <option key={sort} value={sort}>
+                                                {sort === 'deadline'
+                                                    ? 'Deadline'
+                                                    : sort === 'newest'
+                                                      ? 'Project terbaru'
+                                                      : sort === 'title'
+                                                        ? 'Judul project'
+                                                        : sort}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
-
-                                <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
-                                    <div className="min-w-0 space-y-2">
-                                        <Label
-                                            htmlFor="project-sort"
-                                            className="font-label text-label text-muted-foreground"
-                                        >
-                                            URUTKAN BERDASARKAN
-                                        </Label>
-                                        <select
-                                            id="project-sort"
-                                            className={selectClassName}
-                                            value={selectedSort}
-                                            onChange={(event) =>
-                                                setSelectedSort(
-                                                    event.target.value,
-                                                )
-                                            }
-                                        >
-                                            {filterOptions.sort.map((sort) => (
-                                                <option key={sort} value={sort}>
-                                                    {sort === 'deadline'
-                                                        ? 'Deadline'
-                                                        : sort === 'newest'
-                                                          ? 'Project terbaru'
-                                                          : sort === 'title'
-                                                            ? 'Judul project'
-                                                            : sort}
+                                <div className="min-w-0 space-y-2">
+                                    <Label
+                                        htmlFor="project-direction"
+                                        className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase"
+                                    >
+                                        Arah urutan
+                                    </Label>
+                                    <select
+                                        id="project-direction"
+                                        className={selectClassName}
+                                        value={selectedDirection}
+                                        onChange={(event) =>
+                                            setSelectedDirection(
+                                                event.target.value,
+                                            )
+                                        }
+                                    >
+                                        {filterOptions.direction.map(
+                                            (direction) => (
+                                                <option
+                                                    key={direction}
+                                                    value={direction}
+                                                >
+                                                    {direction === 'asc'
+                                                        ? 'Naik'
+                                                        : 'Turun'}
+                                                </option>
+                                            ),
+                                        )}
+                                    </select>
+                                </div>
+                                <div className="min-w-0 space-y-2">
+                                    <Label
+                                        htmlFor="project-per-page"
+                                        className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase"
+                                    >
+                                        Hasil per halaman
+                                    </Label>
+                                    <select
+                                        id="project-per-page"
+                                        className={selectClassName}
+                                        value={selectedPerPage}
+                                        onChange={(event) =>
+                                            setSelectedPerPage(
+                                                Number(event.target.value),
+                                            )
+                                        }
+                                    >
+                                        {[10, 20, 50]
+                                            .filter(
+                                                (amount) =>
+                                                    amount <=
+                                                    filterOptions.per_page.max,
+                                            )
+                                            .map((amount) => (
+                                                <option
+                                                    key={amount}
+                                                    value={amount}
+                                                >
+                                                    {amount} project
                                                 </option>
                                             ))}
-                                        </select>
-                                    </div>
-                                    <div className="min-w-0 space-y-2">
-                                        <Label
-                                            htmlFor="project-direction"
-                                            className="font-label text-label text-muted-foreground"
-                                        >
-                                            ARAH URUTAN
-                                        </Label>
-                                        <select
-                                            id="project-direction"
-                                            className={selectClassName}
-                                            value={selectedDirection}
-                                            onChange={(event) =>
-                                                setSelectedDirection(
-                                                    event.target.value,
-                                                )
-                                            }
-                                        >
-                                            {filterOptions.direction.map(
-                                                (direction) => (
-                                                    <option
-                                                        key={direction}
-                                                        value={direction}
-                                                    >
-                                                        {direction === 'asc'
-                                                            ? 'Naik'
-                                                            : 'Turun'}
-                                                    </option>
-                                                ),
-                                            )}
-                                        </select>
-                                    </div>
-                                    <div className="min-w-0 space-y-2">
-                                        <Label
-                                            htmlFor="project-per-page"
-                                            className="font-label text-label text-muted-foreground"
-                                        >
-                                            HASIL PER HALAMAN
-                                        </Label>
-                                        <select
-                                            id="project-per-page"
-                                            className={selectClassName}
-                                            value={selectedPerPage}
-                                            onChange={(event) =>
-                                                setSelectedPerPage(
-                                                    Number(event.target.value),
-                                                )
-                                            }
-                                        >
-                                            {[10, 20, 50]
-                                                .filter(
-                                                    (amount) =>
-                                                        amount <=
-                                                        filterOptions.per_page
-                                                            .max,
-                                                )
-                                                .map((amount) => (
-                                                    <option
-                                                        key={amount}
-                                                        value={amount}
-                                                    >
-                                                        {amount} project
-                                                    </option>
-                                                ))}
-                                        </select>
-                                    </div>
+                                    </select>
                                 </div>
                             </div>
                         </form>
@@ -925,15 +947,18 @@ export default function ProjectIndex({
                         data-test="projects-results"
                         className="min-w-0 space-y-4"
                     >
-                        <div className="flex flex-col gap-2 border-b border-border pb-3 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
                             <div className="min-w-0 space-y-1">
+                                <p className="text-xs font-bold tracking-[0.13em] text-blue-700 uppercase">
+                                    Daftar peluang
+                                </p>
                                 <h2
                                     id="project-results-title"
-                                    className="text-title font-semibold"
+                                    className="text-title font-bold tracking-[-0.02em] text-slate-950"
                                 >
                                     Peluang project
                                 </h2>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-slate-500">
                                     Hasil discovery dalam konteks{' '}
                                     {institution.name}.
                                 </p>
@@ -941,7 +966,7 @@ export default function ProjectIndex({
                             <div
                                 role="status"
                                 aria-live="polite"
-                                className="shrink-0 text-sm text-muted-foreground"
+                                className="shrink-0 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-800"
                             >
                                 {resultSummary}
                             </div>
@@ -958,7 +983,7 @@ export default function ProjectIndex({
                         {isPending && (
                             <div
                                 data-test="projects-refresh-skeleton"
-                                className="border-y border-border/80"
+                                className="overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 sm:px-6"
                             >
                                 <p className="sr-only">
                                     Memuat project terbaru.
@@ -978,7 +1003,7 @@ export default function ProjectIndex({
                         {!hasError && projects.data.length > 0 && (
                             <ul
                                 data-test="project-ledger"
-                                className="min-w-0 bg-card/20"
+                                className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 shadow-[0_14px_32px_-30px_rgba(30,64,175,0.34)] sm:px-6"
                             >
                                 {projects.data.map((project) => (
                                     <ProjectLedgerRow
@@ -993,7 +1018,7 @@ export default function ProjectIndex({
                             <nav
                                 aria-label="Navigasi halaman project"
                                 data-test="project-pagination"
-                                className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between"
+                                className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <p className="text-sm text-muted-foreground">
                                     Halaman {projects.meta.current_page} dari{' '}

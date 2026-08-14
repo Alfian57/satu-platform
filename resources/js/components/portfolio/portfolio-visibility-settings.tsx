@@ -21,7 +21,7 @@ const visibilityOptions: Array<{
     {
         value: 'private',
         label: 'Hanya saya',
-        description: 'Entry tidak dipublikasikan ke audience portfolio.',
+        description: 'Karya tidak dibagikan ke audience portofolio.',
     },
     {
         value: 'institution',
@@ -36,7 +36,7 @@ const visibilityOptions: Array<{
     {
         value: 'public',
         label: 'Publik',
-        description: 'Dapat dilihat melalui proyeksi portfolio publik.',
+        description: 'Dapat dilihat melalui proyeksi portofolio publik.',
     },
 ];
 
@@ -121,7 +121,7 @@ export function PortfolioVisibilitySettings({
                         response.data.recruiter_discoverable,
                     updated_at: response.data.updated_at,
                 }));
-                setActionMessage('Pengaturan portfolio sudah tersimpan.');
+                setActionMessage('Pengaturan portofolio sudah tersimpan.');
             })
             .catch(() => undefined);
     }
@@ -130,24 +130,23 @@ export function PortfolioVisibilitySettings({
         <section
             aria-labelledby={`${dataTestPrefix}-title`}
             aria-busy={form.processing}
-            className="grid gap-5 border-y border-border py-5"
+            className="grid gap-5 rounded-2xl border border-slate-200 bg-white p-5"
             data-test={`${dataTestPrefix}-settings`}
         >
             <div className="flex items-start gap-3">
-                <ShieldCheck
-                    aria-hidden="true"
-                    className="mt-0.5 size-5 shrink-0 text-primary"
-                />
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+                    <ShieldCheck aria-hidden="true" className="size-4" />
+                </span>
                 <div className="grid gap-1">
                     <h2
                         id={`${dataTestPrefix}-title`}
                         className="text-title font-bold"
                     >
-                        Kendali publikasi
+                        Kendali visibilitas
                     </h2>
                     <p className="text-sm leading-6 text-muted-foreground">
-                        Kamu menentukan audience portfolio. Recruiter
-                        discoverability adalah pilihan terpisah.
+                        Tentukan siapa yang dapat menemukan karya. Kehadiran di
+                        pencarian recruiter adalah pilihan terpisah.
                     </p>
                 </div>
             </div>
@@ -155,11 +154,11 @@ export function PortfolioVisibilitySettings({
             <form className="grid gap-5" onSubmit={submit}>
                 <div className="grid gap-2">
                     <Label htmlFor={`${dataTestPrefix}-visibility`}>
-                        Audience portfolio
+                        Audience portofolio
                     </Label>
                     <select
                         id={`${dataTestPrefix}-visibility`}
-                        className="min-h-control-md w-full cursor-pointer rounded-md border border-input bg-background px-3 text-sm outline-hidden focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                        className="min-h-control-md w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-hidden transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger hover:border-blue-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
                         value={form.data.portfolio_visibility}
                         onChange={(event) =>
                             form.setData(
@@ -251,7 +250,7 @@ export function PortfolioVisibilitySettings({
 
             <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
                 <Eye aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
-                Audience setiap entry tetap dapat diatur secara terpisah di
+                Jangkauan setiap karya tetap dapat diatur secara terpisah di
                 bawah.
             </p>
         </section>

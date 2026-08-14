@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Auth\ResolveUserWorkspace;
 use App\Actions\Matching\RecommendationQuery;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
 use App\Enums\InstitutionStatus;
 use App\Enums\ProjectStatus;
+use App\Enums\WorkspaceRole;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\MatchScoreVersion;
@@ -19,6 +21,7 @@ use App\Models\User;
 use App\Support\Matching\RecommendationSerializer;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,14 +31,21 @@ final class DashboardController extends Controller
     public function __construct(
         private readonly RecommendationQuery $recommendationQuery,
         private readonly RecommendationSerializer $recommendationSerializer,
+        private readonly ResolveUserWorkspace $resolveUserWorkspace,
     ) {}
 
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
 
         if (! $user instanceof User) {
             abort(401);
+        }
+
+        $workspace = $this->resolveUserWorkspace->handle($user);
+
+        if ($workspace->role !== WorkspaceRole::Student) {
+            return to_route($workspace->routeName(), $workspace->routeParameters());
         }
 
         $membership = $this->activeMembership($user);

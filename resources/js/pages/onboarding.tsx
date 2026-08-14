@@ -4,17 +4,24 @@ import {
     Building2,
     Check,
     CheckCircle2,
+    ChevronRight,
     CircleAlert,
     CircleDashed,
     Clock3,
     Eye,
+    GraduationCap,
     LockKeyhole,
     LogIn,
+    Phone,
     RefreshCw,
     RotateCcw,
+    Shield,
     ShieldCheck,
+    Sparkles,
+    User,
     WifiOff,
 } from 'lucide-react';
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import AlertError from '@/components/alert-error';
 import { AppPage } from '@/components/app-page';
@@ -43,6 +50,7 @@ const statusCopy: Record<
         description: string;
         icon: typeof CheckCircle2;
         className: string;
+        badgeClassName: string;
     }
 > = {
     unverified: {
@@ -51,8 +59,8 @@ const statusCopy: Record<
         description:
             'Pilih kampus yang sesuai untuk mengirim permintaan afiliasi baru.',
         icon: CircleAlert,
-        className:
-            'border-correction/35 bg-correction-subtle text-correction-subtle-foreground',
+        className: 'border-rose-200 bg-rose-50/70 text-rose-900',
+        badgeClassName: 'border-rose-200 bg-rose-50 text-rose-800',
     },
     pending: {
         label: 'Menunggu tinjauan',
@@ -60,8 +68,8 @@ const statusCopy: Record<
         description:
             'Admin kampus akan memeriksa afiliasimu. Fitur akun tetap dapat dipakai, tetapi rekam kontribusi belum dapat diverifikasi institusi sampai afiliasi disetujui.',
         icon: Clock3,
-        className:
-            'border-pending/35 bg-pending-subtle text-pending-subtle-foreground',
+        className: 'border-amber-200 bg-amber-50/70 text-amber-900',
+        badgeClassName: 'border-amber-200 bg-amber-50 text-amber-800',
     },
     verified: {
         label: 'Terverifikasi',
@@ -69,8 +77,8 @@ const statusCopy: Record<
         description:
             'Identitas kampusmu sudah terhubung dan dapat menjadi dasar rekam kontribusi terverifikasi.',
         icon: CheckCircle2,
-        className:
-            'border-verified/35 bg-verified-subtle text-verified-subtle-foreground',
+        className: 'border-emerald-200 bg-emerald-50/70 text-emerald-900',
+        badgeClassName: 'border-emerald-200 bg-emerald-50 text-emerald-800',
     },
     suspended: {
         label: 'Akses ditangguhkan',
@@ -78,8 +86,8 @@ const statusCopy: Record<
         description:
             'Permintaan baru tidak dapat dikirim dari halaman ini. Hubungi pengelola kampus untuk tindak lanjut.',
         icon: LockKeyhole,
-        className:
-            'border-correction/35 bg-correction-subtle text-correction-subtle-foreground',
+        className: 'border-slate-200 bg-slate-100 text-slate-900',
+        badgeClassName: 'border-slate-200 bg-slate-100 text-slate-800',
     },
 };
 
@@ -165,18 +173,24 @@ function SubmissionRecovery({
 
     return (
         <Alert
-            className="border-pending/40 bg-pending-subtle text-pending-subtle-foreground"
+            className="rounded-2xl border-amber-200 bg-amber-50/80 p-4.5 text-amber-900 shadow-xs"
             data-test="onboarding-submission-recovery"
         >
-            <IssueIcon aria-hidden="true" />
-            <AlertTitle className="line-clamp-none">{copy.title}</AlertTitle>
-            <AlertDescription className="text-current">
+            <IssueIcon className="size-5 text-amber-600" aria-hidden="true" />
+            <AlertTitle className="text-sm font-bold text-amber-950">
+                {copy.title}
+            </AlertTitle>
+            <AlertDescription className="mt-1 text-xs leading-relaxed text-amber-900">
                 <p>{copy.description}</p>
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap items-center gap-2.5">
                     {issue === 'session_expired' ? (
-                        <Button asChild size="sm" className="cursor-pointer">
+                        <Button
+                            asChild
+                            size="sm"
+                            className="cursor-pointer rounded-xl bg-amber-600 text-xs font-semibold text-white hover:bg-amber-700"
+                        >
                             <Link href={login()}>
-                                <LogIn />
+                                <LogIn className="mr-1.5 size-3.5" />
                                 {copy.action}
                             </Link>
                         </Button>
@@ -184,7 +198,7 @@ function SubmissionRecovery({
                         <Button
                             type="button"
                             size="sm"
-                            className="cursor-pointer disabled:cursor-not-allowed"
+                            className="cursor-pointer rounded-xl bg-amber-600 text-xs font-semibold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={processing}
                             onClick={
                                 issue === 'forbidden' ||
@@ -193,15 +207,15 @@ function SubmissionRecovery({
                                     : onRetry
                             }
                         >
-                            <RefreshCw />
+                            <RefreshCw className="mr-1.5 size-3.5" />
                             {copy.action}
                         </Button>
                     )}
                     <Button
                         asChild
-                        variant="link"
+                        variant="ghost"
                         size="sm"
-                        className="cursor-pointer text-current"
+                        className="cursor-pointer rounded-xl text-xs font-semibold text-amber-900 hover:bg-amber-100/60"
                     >
                         <Link href={dashboard()}>Lanjutkan ke dashboard</Link>
                     </Button>
@@ -223,18 +237,34 @@ function ProgressRail({
     const totalCount = 4;
 
     return (
-        <div className="grid gap-8">
-            <section aria-labelledby="progress-title">
-                <p className="font-label text-label text-muted-foreground">
-                    Progres onboarding
-                </p>
-                <div className="mt-2 flex items-end justify-between gap-4">
-                    <h2 id="progress-title" className="text-title font-bold">
+        <div className="grid gap-6">
+            {/* Card 1: Progres Onboarding */}
+            <section
+                aria-labelledby="progress-title"
+                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs"
+            >
+                <div className="flex items-center gap-2">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <GraduationCap
+                            className="size-3.5"
+                            aria-hidden="true"
+                        />
+                    </span>
+                    <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
+                        PROGRES ONBOARDING
+                    </p>
+                </div>
+
+                <div className="mt-3 flex items-baseline justify-between gap-4">
+                    <h2
+                        id="progress-title"
+                        className="text-base font-bold tracking-tight text-slate-950"
+                    >
                         {completedCount} dari {totalCount} selesai
                     </h2>
                     <span
                         aria-hidden="true"
-                        className="font-label text-sm text-muted-foreground"
+                        className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-0.5 font-mono text-xs font-bold text-blue-700"
                     >
                         {Math.round((completedCount / totalCount) * 100)}%
                     </span>
@@ -242,7 +272,7 @@ function ProgressRail({
 
                 <div
                     aria-label={`${completedCount} dari ${totalCount} tahap onboarding selesai`}
-                    className="mt-4 grid grid-cols-4 gap-1"
+                    className="mt-3.5 grid grid-cols-4 gap-1.5"
                     role="progressbar"
                     aria-valuemin={0}
                     aria-valuemax={totalCount}
@@ -255,16 +285,16 @@ function ProgressRail({
                         <span
                             key={step}
                             className={cn(
-                                'h-1.5',
+                                'h-2 rounded-full transition-all duration-300',
                                 step <= completedCount
-                                    ? 'bg-primary'
-                                    : 'bg-border',
+                                    ? 'bg-blue-600 shadow-xs'
+                                    : 'bg-slate-100',
                             )}
                         />
                     ))}
                 </div>
 
-                <ol className="mt-5 divide-y divide-border border-y border-border">
+                <ol className="mt-5 divide-y divide-slate-100 border-t border-slate-100 text-xs">
                     <ProgressRow
                         complete
                         label="Akun SATU"
@@ -296,36 +326,47 @@ function ProgressRail({
                 </ol>
             </section>
 
-            <section aria-labelledby="privacy-title">
-                <div className="flex items-center gap-2">
+            {/* Card 2: Keamanan & Privasi */}
+            <section
+                aria-labelledby="privacy-title"
+                className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/80 to-indigo-50/40 p-4.5"
+            >
+                <div className="flex items-start gap-3">
                     <ShieldCheck
                         aria-hidden="true"
-                        className="size-4 text-primary"
+                        className="mt-0.5 size-4.5 shrink-0 text-blue-600"
                     />
-                    <h2 id="privacy-title" className="font-semibold">
-                        Kendali tetap padamu
-                    </h2>
-                </div>
-                <div className="mt-4 divide-y divide-border border-y border-border text-sm">
-                    <div className="flex gap-3 py-4">
-                        <LockKeyhole
-                            aria-hidden="true"
-                            className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-                        />
-                        <p className="leading-relaxed text-muted-foreground">
-                            Permintaan ini hanya menghubungkan akun dengan
-                            kampus. Data portofolio belum dibagikan.
-                        </p>
-                    </div>
-                    <div className="flex gap-3 py-4">
-                        <Eye
-                            aria-hidden="true"
-                            className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-                        />
-                        <p className="leading-relaxed text-muted-foreground">
-                            Pengaturan visibilitas dan persetujuan akan
-                            dijelaskan saat data profil mulai dilengkapi.
-                        </p>
+                    <div>
+                        <h2
+                            id="privacy-title"
+                            className="text-xs font-bold text-blue-900"
+                        >
+                            Kendali tetap padamu
+                        </h2>
+                        <div className="mt-2 space-y-2 text-xs leading-relaxed text-blue-800/80">
+                            <div className="flex items-start gap-2">
+                                <LockKeyhole
+                                    aria-hidden="true"
+                                    className="mt-0.5 size-3.5 shrink-0 text-blue-600"
+                                />
+                                <p className="leading-relaxed">
+                                    Permintaan ini hanya menghubungkan akun
+                                    dengan kampus.{' '}
+                                    {'Data portofolio belum dibagikan.'}
+                                </p>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <Eye
+                                    aria-hidden="true"
+                                    className="mt-0.5 size-3.5 shrink-0 text-blue-600"
+                                />
+                                <p className="leading-relaxed">
+                                    {'Pengaturan visibilitas dan persetujuan'}{' '}
+                                    akan dijelaskan saat data profil mulai
+                                    dilengkapi.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -343,21 +384,26 @@ function ProgressRow({
     detail: string;
 }) {
     return (
-        <li className="grid grid-cols-[1.25rem_minmax(0,1fr)] gap-3 py-3">
+        <li className="flex items-start gap-3 py-3">
             {complete ? (
-                <Check
-                    aria-hidden="true"
-                    className="mt-0.5 size-4 text-verified"
-                />
+                <span className="mt-0.5 flex size-4.5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                    <Check aria-hidden="true" className="size-3" />
+                </span>
             ) : (
-                <CircleDashed
-                    aria-hidden="true"
-                    className="mt-0.5 size-4 text-muted-foreground"
-                />
+                <span className="mt-0.5 flex size-4.5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                    <CircleDashed aria-hidden="true" className="size-3" />
+                </span>
             )}
-            <div>
-                <p className="text-sm font-semibold">{label}</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            <div className="min-w-0">
+                <p
+                    className={cn(
+                        'text-xs font-bold',
+                        complete ? 'text-slate-900' : 'text-slate-600',
+                    )}
+                >
+                    {label}
+                </p>
+                <p className="mt-0.5 text-[0.6875rem] leading-relaxed text-slate-500">
                     {detail}
                 </p>
             </div>
@@ -377,45 +423,87 @@ function MembershipFacts({
     affiliation: OnboardingAffiliation | null;
 }) {
     return (
-        <dl className="divide-y divide-border border-y border-border">
-            <div className="grid gap-1 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-5">
-                <dt className="font-label text-label text-muted-foreground">
-                    Username
-                </dt>
-                <dd className="min-w-0 text-sm font-medium break-all">
-                    {username}
-                </dd>
+        <div className="grid gap-3 sm:grid-cols-2">
+            {/* Box 1: Username */}
+            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 transition-all duration-200 hover:border-blue-200">
+                <div className="flex items-center gap-2">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <User className="size-3.5" />
+                    </span>
+                    <span className="font-label text-[0.6875rem] font-bold tracking-wider text-slate-500 uppercase">
+                        Username
+                    </span>
+                </div>
+                <p className="mt-2.5 font-mono text-sm font-bold break-all text-slate-900">
+                    @{username}
+                </p>
             </div>
-            <div className="grid gap-1 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-5">
-                <dt className="font-label text-label text-muted-foreground">
-                    Nomor WhatsApp
-                </dt>
-                <dd className="min-w-0 text-sm font-medium">
-                    {phone?.verified
-                        ? `${phone.masked} (terverifikasi)`
-                        : 'Belum terverifikasi'}
-                </dd>
+
+            {/* Box 2: Nomor WhatsApp */}
+            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 transition-all duration-200 hover:border-blue-200">
+                <div className="flex items-center gap-2">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                        <Phone className="size-3.5" />
+                    </span>
+                    <span className="font-label text-[0.6875rem] font-bold tracking-wider text-slate-500 uppercase">
+                        Nomor WhatsApp
+                    </span>
+                </div>
+                <div className="mt-2.5 flex items-center gap-2">
+                    <p className="font-mono text-sm font-bold text-slate-900">
+                        {phone?.verified
+                            ? `${phone.masked} (terverifikasi)`
+                            : 'Belum terverifikasi'}
+                    </p>
+                </div>
             </div>
-            <div className="grid gap-1 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-5">
-                <dt className="font-label text-label text-muted-foreground">
-                    Kampus
-                </dt>
-                <dd className="min-w-0 text-sm font-medium [overflow-wrap:anywhere]">
+
+            {/* Box 3: Kampus */}
+            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 transition-all duration-200 hover:border-blue-200">
+                <div className="flex items-center gap-2">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                        <Building2 className="size-3.5" />
+                    </span>
+                    <span className="font-label text-[0.6875rem] font-bold tracking-wider text-slate-500 uppercase">
+                        Kampus
+                    </span>
+                </div>
+                <p className="mt-2.5 text-sm font-bold [overflow-wrap:anywhere] text-slate-900">
                     {membership?.institutionName ?? 'Belum dipilih'}
-                </dd>
+                </p>
             </div>
-            <div className="grid gap-1 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-5">
-                <dt className="font-label text-label text-muted-foreground">
-                    Verifikasi
-                </dt>
-                <dd className="text-sm font-medium">
-                    {membership
-                        ? statusCopy[membership.status].label
-                        : 'Belum diajukan'}
-                    {affiliation?.needsRefresh ? ' (perlu diperbarui)' : ''}
-                </dd>
+
+            {/* Box 4: Status Verifikasi */}
+            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 transition-all duration-200 hover:border-blue-200">
+                <div className="flex items-center gap-2">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+                        <Shield className="size-3.5" />
+                    </span>
+                    <span className="font-label text-[0.6875rem] font-bold tracking-wider text-slate-500 uppercase">
+                        Verifikasi
+                    </span>
+                </div>
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                    <span
+                        className={cn(
+                            'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold',
+                            membership
+                                ? statusCopy[membership.status].badgeClassName
+                                : 'border-slate-200 bg-slate-100 text-slate-700',
+                        )}
+                    >
+                        {membership
+                            ? statusCopy[membership.status].label
+                            : 'Belum diajukan'}
+                    </span>
+                    {affiliation?.needsRefresh && (
+                        <span className="text-xs font-semibold text-rose-600">
+                            (perlu diperbarui)
+                        </span>
+                    )}
+                </div>
             </div>
-        </dl>
+        </div>
     );
 }
 
@@ -572,7 +660,7 @@ export default function Onboarding({
                 contextRailLabel="Progres dan privasi onboarding"
             >
                 <div
-                    className="mx-auto w-full max-w-4xl"
+                    className="mx-auto w-full max-w-4xl space-y-6"
                     data-membership-state={membership?.status ?? 'empty'}
                     data-test="onboarding-root"
                 >
@@ -598,59 +686,106 @@ export default function Onboarding({
                             ? 'Permintaan afiliasi sedang dikirim.'
                             : ''}
                     </p>
-                    <header className="mb-6">
-                        <p className="font-label text-label text-primary">
-                            Catatan pendaftaran
-                        </p>
-                        <h1 className="mt-2 max-w-[24ch] text-headline font-bold text-balance">
-                            Hubungkan akunmu dengan kampus
-                        </h1>
-                        <p className="mt-3 max-w-[65ch] text-body text-muted-foreground">
-                            Afiliasi kampus terpisah dari akun SATU. Kampus yang
-                            terverifikasi dapat menjadi sumber validasi untuk
-                            kontribusimu nanti.
-                        </p>
-                    </header>
 
-                    <section
-                        aria-labelledby="affiliation-title"
-                        className="border border-border bg-card"
-                    >
-                        <div className="grid md:grid-cols-[10.5rem_minmax(0,1fr)]">
-                            <div
-                                className={cn(
-                                    'flex items-center gap-3 border-b border-border px-5 py-4 md:flex-col md:items-start md:border-r md:border-b-0 md:px-5 md:py-6',
-                                    status?.className ??
-                                        'bg-muted text-muted-foreground',
-                                )}
-                            >
-                                <StatusIcon
-                                    aria-hidden="true"
-                                    className="size-6 shrink-0"
-                                />
-                                <p className="font-label text-label font-semibold">
-                                    {status?.label ?? 'Belum terhubung'}
+                    {/* Header Banner */}
+                    <header className="relative isolate overflow-hidden rounded-2xl border border-blue-100 bg-white px-6 py-6 shadow-[0_18px_50px_-36px_rgba(30,64,175,0.35)] sm:px-8 sm:py-7">
+                        <div
+                            aria-hidden="true"
+                            className="absolute -top-28 -right-24 size-80 rounded-full bg-blue-100/75 blur-3xl sm:-right-12"
+                        />
+                        <div
+                            aria-hidden="true"
+                            className="absolute right-14 bottom-0 hidden h-24 w-24 rounded-tl-[2.5rem] border-t border-l border-blue-100 sm:block"
+                        />
+
+                        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800">
+                                    <Sparkles className="size-3 text-blue-600" />
+                                    Catatan pendaftaran
+                                </div>
+
+                                <h1 className="mt-3 text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
+                                    Hubungkan akunmu dengan kampus
+                                </h1>
+
+                                <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-slate-600">
+                                    Afiliasi kampus terpisah dari akun SATU.
+                                    Kampus yang terverifikasi dapat menjadi
+                                    sumber validasi untuk kontribusimu nanti.
                                 </p>
                             </div>
 
-                            <div className="min-w-0">
-                                <div className="border-b border-border px-5 py-3 sm:px-6">
-                                    <p className="font-label text-label text-muted-foreground">
-                                        Afiliasi / AF-ACCOUNT
+                            {membership && (
+                                <div
+                                    className={cn(
+                                        'flex shrink-0 items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold',
+                                        status?.badgeClassName ??
+                                            'border-slate-200 bg-slate-50 text-slate-700',
+                                    )}
+                                >
+                                    <StatusIcon className="size-4" />
+                                    <span>{status?.label}</span>
+                                </div>
+                            )}
+                        </div>
+                    </header>
+
+                    {/* Main Bento Section: Afiliasi Kampus */}
+                    <section
+                        aria-labelledby="affiliation-title"
+                        className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs"
+                    >
+                        <div className="grid md:grid-cols-[14rem_minmax(0,1fr)]">
+                            {/* Left Status Pillar */}
+                            <div
+                                className={cn(
+                                    'flex items-center gap-3.5 border-b p-6 md:flex-col md:items-start md:border-r md:border-b-0 md:p-7',
+                                    status?.className ??
+                                        'border-slate-100 bg-slate-50/60 text-slate-700',
+                                )}
+                            >
+                                <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white/80 shadow-xs ring-1 ring-black/5">
+                                    <StatusIcon
+                                        aria-hidden="true"
+                                        className="size-5.5 text-current"
+                                    />
+                                </div>
+                                <div>
+                                    <p className="font-label text-[0.6875rem] font-bold tracking-wider text-slate-500 uppercase">
+                                        Status Afiliasi
+                                    </p>
+                                    <p className="mt-0.5 text-sm font-bold text-slate-950">
+                                        {status?.label ?? 'Belum terhubung'}
                                     </p>
                                 </div>
+                            </div>
 
-                                <div className="px-5 py-6 sm:px-6">
+                            {/* Right Content */}
+                            <div className="min-w-0">
+                                <div className="border-b border-slate-100 px-6 py-4 sm:px-7">
+                                    <div className="flex items-center justify-between">
+                                        <p className="font-mono text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                                            Afiliasi / AF-ACCOUNT
+                                        </p>
+                                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600">
+                                            <Building2 className="size-3.5" />
+                                            Perguruan Tinggi
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="px-6 py-6 sm:px-7">
                                     <h2
                                         id="affiliation-title"
-                                        className="text-title font-bold sm:text-[1.75rem] sm:leading-tight"
+                                        className="text-lg font-bold text-slate-950 sm:text-xl"
                                     >
                                         {canRetry
                                             ? 'Ajukan kembali afiliasimu'
                                             : (status?.title ??
                                               'Pilih kampus untuk melanjutkan')}
                                     </h2>
-                                    <p className="mt-2 max-w-[62ch] text-sm leading-relaxed text-muted-foreground sm:text-base">
+                                    <p className="mt-1.5 max-w-[62ch] text-xs leading-relaxed text-slate-600 sm:text-sm">
                                         {canRetry
                                             ? 'Data afiliasimu perlu diperbarui. Periksa kampus, masukkan ulang NIM, lalu kirim permintaan terbaru.'
                                             : (status?.description ??
@@ -658,7 +793,7 @@ export default function Onboarding({
                                     </p>
                                 </div>
 
-                                <div className="px-5 sm:px-6">
+                                <div className="px-6 pb-6 sm:px-7">
                                     <MembershipFacts
                                         username={account.username}
                                         membership={membership}
@@ -672,7 +807,7 @@ export default function Onboarding({
                                         ref={recoverySummary}
                                         tabIndex={-1}
                                         data-test="onboarding-recovery-focus"
-                                        className="px-5 pt-6 sm:px-6"
+                                        className="px-6 pb-6 sm:px-7"
                                     >
                                         <SubmissionRecovery
                                             issue={submissionIssue}
@@ -684,7 +819,7 @@ export default function Onboarding({
 
                                 {showRequestForm && (
                                     <form
-                                        className="grid gap-4 px-5 py-6 sm:px-6"
+                                        className="grid gap-5 border-t border-slate-100 bg-slate-50/30 px-6 py-6 sm:px-7"
                                         onSubmit={submitMembership}
                                     >
                                         {hasErrors && (
@@ -704,7 +839,7 @@ export default function Onboarding({
 
                                         <div className="grid gap-2">
                                             <label
-                                                className="text-sm font-semibold"
+                                                className="text-xs font-bold text-slate-700"
                                                 htmlFor="institution_id"
                                             >
                                                 Kampus
@@ -739,7 +874,7 @@ export default function Onboarding({
                                                         ? 'institution-error'
                                                         : 'institution-help'
                                                 }
-                                                className="h-control-lg w-full cursor-pointer rounded-md border border-input bg-background px-3 text-sm text-foreground transition-colors duration-fast ease-ledger disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+                                                className="h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition-colors focus:border-blue-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                             >
                                                 <option value="">
                                                     Pilih kampus
@@ -759,7 +894,7 @@ export default function Onboarding({
                                             </select>
                                             <p
                                                 id="institution-help"
-                                                className="text-xs leading-relaxed text-muted-foreground"
+                                                className="text-[0.6875rem] leading-relaxed text-slate-500"
                                             >
                                                 Pastikan pilihan sesuai dengan
                                                 kampus tempatmu terdaftar.
@@ -774,7 +909,7 @@ export default function Onboarding({
 
                                         <div className="grid gap-2">
                                             <label
-                                                className="text-sm font-semibold"
+                                                className="text-xs font-bold text-slate-700"
                                                 htmlFor="nim"
                                             >
                                                 NIM
@@ -802,11 +937,11 @@ export default function Onboarding({
                                                         ? 'nim-error'
                                                         : 'nim-help'
                                                 }
-                                                className="h-control-lg w-full rounded-md border border-input bg-background px-3 text-sm text-foreground transition-colors duration-fast ease-ledger outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+                                                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                             />
                                             <p
                                                 id="nim-help"
-                                                className="text-xs leading-relaxed text-muted-foreground"
+                                                className="text-[0.6875rem] leading-relaxed text-slate-500"
                                             >
                                                 Masukkan NIM yang tercatat di
                                                 kampus. SATU mencocokkannya
@@ -820,13 +955,13 @@ export default function Onboarding({
                                         </div>
 
                                         {institutions.length === 0 ? (
-                                            <div className="grid gap-4 border-y border-border py-4">
+                                            <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4">
                                                 <div role="status">
-                                                    <p className="font-semibold">
+                                                    <p className="text-xs font-bold text-slate-900">
                                                         Belum ada kampus yang
                                                         dapat dipilih
                                                     </p>
-                                                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                                                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
                                                         Kamu tetap dapat memakai
                                                         akun SATU. Daftar kampus
                                                         akan muncul setelah
@@ -836,26 +971,26 @@ export default function Onboarding({
                                                 <Button
                                                     asChild
                                                     variant="outline"
-                                                    className="w-fit cursor-pointer"
+                                                    className="w-fit cursor-pointer rounded-xl text-xs font-semibold"
                                                 >
                                                     <Link href={dashboard()}>
                                                         Lanjutkan ke dashboard
-                                                        <ArrowRight />
+                                                        <ArrowRight className="ml-1.5 size-3.5" />
                                                     </Link>
                                                 </Button>
                                             </div>
                                         ) : (
-                                            <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+                                            <div className="flex flex-col-reverse gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
                                                 <Link
-                                                    className="inline-flex min-h-control-md cursor-pointer items-center justify-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                                                    className="inline-flex min-h-10 cursor-pointer items-center justify-center text-xs font-semibold text-blue-600 hover:text-blue-700"
                                                     href={dashboard()}
                                                 >
                                                     Lanjutkan nanti
                                                 </Link>
                                                 <Button
                                                     type="submit"
-                                                    size="lg"
-                                                    className="cursor-pointer disabled:cursor-not-allowed"
+                                                    size="default"
+                                                    className="h-10 cursor-pointer rounded-xl bg-blue-600 px-5 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                                                     data-test="onboarding-submit"
                                                     disabled={
                                                         form.processing ||
@@ -873,13 +1008,13 @@ export default function Onboarding({
                                                         </>
                                                     ) : canRetry ? (
                                                         <>
-                                                            <RotateCcw />
+                                                            <RotateCcw className="mr-1.5 size-3.5" />
                                                             Ajukan kembali
                                                         </>
                                                     ) : (
                                                         <>
                                                             Kirim permintaan
-                                                            <ArrowRight />
+                                                            <ArrowRight className="ml-1.5 size-3.5" />
                                                         </>
                                                     )}
                                                 </Button>
@@ -889,7 +1024,7 @@ export default function Onboarding({
                                 )}
 
                                 {!canRequest && (
-                                    <div className="flex flex-col gap-3 border-t border-border px-5 py-5 sm:flex-row sm:items-center sm:justify-end sm:px-6">
+                                    <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/40 px-6 py-5 sm:flex-row sm:items-center sm:justify-end sm:px-7">
                                         <Button
                                             asChild
                                             variant={
@@ -897,12 +1032,17 @@ export default function Onboarding({
                                                     ? 'default'
                                                     : 'outline'
                                             }
-                                            size="lg"
-                                            className="cursor-pointer"
+                                            size="default"
+                                            className={cn(
+                                                'h-10 cursor-pointer rounded-xl text-xs font-semibold',
+                                                isVerified
+                                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                    : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50',
+                                            )}
                                         >
                                             <Link href={dashboard()}>
                                                 Lanjutkan ke dashboard
-                                                <ArrowRight />
+                                                <ArrowRight className="ml-1.5 size-3.5" />
                                             </Link>
                                         </Button>
                                     </div>
@@ -911,6 +1051,7 @@ export default function Onboarding({
                         </div>
                     </section>
 
+                    {/* Section Profil Mahasiswa */}
                     <OnboardingProfile
                         key={`${isVerified}-${studentProfileId ?? 'new'}`}
                         affiliationVerified={isVerified}

@@ -1,19 +1,27 @@
-import { Deferred, Head, router } from '@inertiajs/react';
+import { Deferred, Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
+    Building2,
     CheckCircle2,
     ChevronLeft,
     ChevronRight,
     ClipboardCheck,
+    FileSpreadsheet,
     FileWarning,
+    Lock,
     LockKeyhole,
     RefreshCw,
     RotateCcw,
+    Shield,
     ShieldCheck,
     UnlockKeyhole,
+    UserCheck,
+    UserRound,
     UserRoundCheck,
+    Users,
     XCircle,
 } from 'lucide-react';
+import type React from 'react';
 import { useMemo, useState } from 'react';
 import { AppPage } from '@/components/app-page';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -28,6 +36,8 @@ import {
     destroy as releaseLock,
     store as acquireLock,
 } from '@/routes/campus/affiliations/locks';
+import { show as campusOverview } from '@/routes/campus/overview';
+import { show as campusRoster } from '@/routes/campus/roster';
 
 type MatchResult =
     | 'exact'
@@ -110,6 +120,15 @@ const matchCopy: Record<MatchResult, string> = {
     stale_roster: 'Roster berubah',
 };
 
+const matchClassName: Record<MatchResult, string> = {
+    exact: 'border-emerald-200/80 bg-emerald-50 text-emerald-800',
+    no_match: 'border-rose-200/80 bg-rose-50 text-rose-800',
+    ambiguous: 'border-amber-200/80 bg-amber-50 text-amber-800',
+    inactive: 'border-rose-200/80 bg-rose-50 text-rose-800',
+    roster_unavailable: 'border-slate-200 bg-slate-50 text-slate-700',
+    stale_roster: 'border-rose-200/80 bg-rose-50 text-rose-800',
+};
+
 const decisionCopy: Record<Decision, string> = {
     approve: 'Setujui afiliasi',
     request_revision: 'Minta perbaikan',
@@ -156,27 +175,30 @@ function QueueSkeleton() {
     return (
         <div
             aria-busy="true"
-            className="border-y border-border"
+            className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white"
             data-test="affiliation-queue-skeleton"
         >
             <p className="sr-only" role="status">
                 Memuat antrean afiliasi.
             </p>
-            {Array.from({ length: 10 }, (_, index) => (
+            {Array.from({ length: 5 }, (_, index) => (
                 <div
                     key={index}
                     aria-hidden="true"
-                    className="grid min-h-24 gap-4 border-b border-border px-4 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_9rem] sm:items-center"
+                    className="grid min-h-24 gap-4 border-b border-slate-100 p-6 last:border-b-0 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_9rem] sm:items-center"
                 >
-                    <div className="grid gap-2">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-44" />
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="size-10 rounded-xl bg-slate-100" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-32 bg-slate-100" />
+                            <Skeleton className="h-3 w-44 bg-slate-100" />
+                        </div>
                     </div>
-                    <div className="grid gap-2">
-                        <Skeleton className="h-4 w-28" />
-                        <Skeleton className="h-3 w-36" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-28 bg-slate-100" />
+                        <Skeleton className="h-3 w-36 bg-slate-100" />
                     </div>
-                    <Skeleton className="h-control-md w-full" />
+                    <Skeleton className="h-10 w-full rounded-xl bg-slate-100" />
                 </div>
             ))}
         </div>
@@ -185,100 +207,124 @@ function QueueSkeleton() {
 
 function SummaryRail({ reviewQueue }: { reviewQueue: ReviewQueue }) {
     return (
-        <div className="grid gap-8">
-            <section aria-labelledby="queue-summary-title">
-                <p className="font-label text-label text-muted-foreground">
-                    Ringkasan antrean
-                </p>
+        <div className="grid gap-6">
+            {/* Card 1: Ringkasan Antrean */}
+            <section
+                aria-labelledby="queue-summary-title"
+                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs"
+            >
+                <div className="flex items-center gap-2">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <ClipboardCheck
+                            className="size-3.5"
+                            aria-hidden="true"
+                        />
+                    </span>
+                    <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
+                        RINGKASAN ANTREAN
+                    </p>
+                </div>
+
                 <h2
                     id="queue-summary-title"
-                    className="mt-2 text-title font-bold"
+                    className="mt-3 text-base font-bold tracking-tight text-slate-950"
                 >
-                    {reviewQueue.summary.total} berkas menunggu
+                    {reviewQueue.summary.total} Berkas Menunggu
                 </h2>
-                <dl className="mt-5 divide-y divide-border border-y border-border">
-                    <SummaryRow
-                        label="Perlu pemeriksaan"
-                        value={reviewQueue.summary.mismatch}
-                    />
-                    <SummaryRow
-                        label="Roster berubah"
-                        value={reviewQueue.summary.stale}
-                    />
-                    <SummaryRow
-                        label="Cocok persis"
-                        value={reviewQueue.summary.exact}
-                    />
+
+                <dl className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
+                    <div className="flex items-center justify-between py-3">
+                        <dt className="text-xs text-slate-600">
+                            Perlu pemeriksaan
+                        </dt>
+                        <dd className="font-mono text-xs font-bold text-amber-700">
+                            {reviewQueue.summary.mismatch}
+                        </dd>
+                    </div>
+                    <div className="flex items-center justify-between py-3">
+                        <dt className="text-xs text-slate-600">
+                            Roster berubah
+                        </dt>
+                        <dd className="font-mono text-xs font-bold text-rose-700">
+                            {reviewQueue.summary.stale}
+                        </dd>
+                    </div>
+                    <div className="flex items-center justify-between py-3">
+                        <dt className="text-xs text-slate-600">Cocok persis</dt>
+                        <dd className="font-mono text-xs font-bold text-emerald-700">
+                            {reviewQueue.summary.exact}
+                        </dd>
+                    </div>
                 </dl>
             </section>
 
-            <section aria-labelledby="roster-context-title">
+            {/* Card 2: Roster Aktif */}
+            <section
+                aria-labelledby="roster-context-title"
+                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs"
+            >
                 <div className="flex items-center gap-2">
-                    <ClipboardCheck
-                        aria-hidden="true"
-                        className="size-4 text-primary"
-                    />
-                    <h2 id="roster-context-title" className="font-semibold">
-                        Roster aktif
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                        <FileSpreadsheet
+                            aria-hidden="true"
+                            className="size-3.5"
+                        />
+                    </span>
+                    <h2
+                        id="roster-context-title"
+                        className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase"
+                    >
+                        ROSTER AKTIF
                     </h2>
                 </div>
+
                 {reviewQueue.activeRoster ? (
-                    <dl className="mt-4 divide-y divide-border border-y border-border text-sm">
-                        <SummaryFact
-                            label="Semester"
-                            value={reviewQueue.activeRoster.semester}
-                        />
-                        <SummaryFact
-                            label="Diaktifkan"
-                            value={formatDate(
-                                reviewQueue.activeRoster.activatedAt,
-                            )}
-                        />
+                    <dl className="mt-4 divide-y divide-slate-100 border-t border-slate-100 text-xs">
+                        <div className="flex items-center justify-between py-3">
+                            <dt className="text-slate-600">Semester</dt>
+                            <dd className="font-semibold text-slate-900">
+                                {reviewQueue.activeRoster.semester}
+                            </dd>
+                        </div>
+                        <div className="flex items-center justify-between py-3">
+                            <dt className="text-slate-600">Diaktifkan</dt>
+                            <dd className="text-slate-700">
+                                {formatDate(
+                                    reviewQueue.activeRoster.activatedAt,
+                                )}
+                            </dd>
+                        </div>
                     </dl>
                 ) : (
-                    <p className="mt-4 border-y border-border py-4 text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-3 text-xs leading-relaxed text-slate-500">
                         Belum ada roster aktif. Permintaan tetap tercatat untuk
                         pemeriksaan manual.
                     </p>
                 )}
             </section>
 
-            <section aria-labelledby="lock-guidance-title">
-                <div className="flex items-center gap-2">
-                    <LockKeyhole
-                        aria-hidden="true"
-                        className="size-4 text-primary"
-                    />
-                    <h2 id="lock-guidance-title" className="font-semibold">
-                        Kendali review
-                    </h2>
+            {/* Card 3: Kendali Review */}
+            <section
+                aria-labelledby="lock-guidance-title"
+                className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/80 to-indigo-50/40 p-4.5"
+            >
+                <div className="flex items-start gap-3">
+                    <Lock className="mt-0.5 size-4.5 shrink-0 text-blue-600" />
+                    <div>
+                        <h2
+                            id="lock-guidance-title"
+                            className="text-xs font-bold text-blue-900"
+                        >
+                            Kendali Kunci Berkas
+                        </h2>
+                        <p className="mt-1 text-xs leading-relaxed text-blue-800/80">
+                            Ambil kunci sebelum menyimpan keputusan. Kunci
+                            berlaku 30 menit untuk mencegah benturan keputusan
+                            antar operator.
+                        </p>
+                    </div>
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                    Ambil kunci sebelum menyimpan keputusan. Kunci berlaku 30
-                    menit dan keputusan lama ditolak jika roster atau versi
-                    berkas berubah.
-                </p>
             </section>
-        </div>
-    );
-}
-
-function SummaryRow({ label, value }: { label: string; value: number }) {
-    return (
-        <div className="flex items-baseline justify-between gap-4 py-3">
-            <dt className="text-sm text-muted-foreground">{label}</dt>
-            <dd className="font-label text-lg font-semibold">{value}</dd>
-        </div>
-    );
-}
-
-function SummaryFact({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="grid gap-1 py-3">
-            <dt className="font-label text-label text-muted-foreground">
-                {label}
-            </dt>
-            <dd className="font-medium [overflow-wrap:anywhere]">{value}</dd>
         </div>
     );
 }
@@ -431,150 +477,215 @@ function ReviewQueueRegion({
     }
 
     return (
-        <div className="grid gap-8 2xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_24rem]">
             <section aria-labelledby="queue-title" className="min-w-0">
-                <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+                {/* Queue Header Meta */}
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-6 py-5 shadow-xs">
                     <div>
-                        <h2 id="queue-title" className="text-title font-bold">
-                            Antrean pemeriksaan
-                        </h2>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            {reviewQueue.pagination.total} berkas sesuai filter
+                        <div className="flex items-center gap-2">
+                            <ClipboardCheck className="size-4.5 text-blue-600" />
+                            <h2
+                                id="queue-title"
+                                className="text-base font-bold text-slate-900"
+                            >
+                                Antrean Pemeriksaan
+                            </h2>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500">
+                            {reviewQueue.pagination.total} berkas terdaftar
+                            sesuai filter
                         </p>
                     </div>
                     <Button
                         type="button"
                         variant="outline"
-                        className="cursor-pointer disabled:cursor-not-allowed"
+                        className="h-9 cursor-pointer rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed"
                         disabled={isQueueLoading}
                         onClick={refreshQueue}
                     >
-                        {isQueueLoading ? <Spinner /> : <RefreshCw />}
+                        {isQueueLoading ? (
+                            <Spinner className="mr-1.5 size-3.5" />
+                        ) : (
+                            <RefreshCw className="mr-1.5 size-3.5 text-slate-500" />
+                        )}
                         Muat ulang
                     </Button>
                 </div>
 
-                {isQueueLoading ? (
-                    <QueueSkeleton />
-                ) : reviewQueue.items.length === 0 ? (
-                    <div className="border-y border-border px-4 py-14 text-center">
-                        <CheckCircle2
-                            aria-hidden="true"
-                            className="mx-auto size-9 text-verified"
-                        />
-                        <h3 className="mt-4 text-lg font-bold">
-                            Tidak ada berkas pada filter ini
-                        </h3>
-                        <p className="mx-auto mt-2 max-w-[55ch] text-sm leading-relaxed text-muted-foreground">
-                            Ubah filter untuk melihat antrean lain atau muat
-                            ulang jika ada permintaan yang baru masuk.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="border-y border-border">
-                        {reviewQueue.items.map((item) => {
-                            const lockedByOther =
-                                item.lock !== null &&
-                                !item.lock.ownedByCurrentUser;
+                {/* Queue Body */}
+                <div className="mt-4">
+                    {isQueueLoading ? (
+                        <QueueSkeleton />
+                    ) : reviewQueue.items.length === 0 ? (
+                        <div className="grid justify-items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-6 py-16 text-center shadow-xs">
+                            <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/50">
+                                <CheckCircle2
+                                    aria-hidden="true"
+                                    className="size-7"
+                                />
+                            </div>
+                            <h3 className="text-base font-bold text-slate-900">
+                                Tidak ada berkas pada filter ini
+                            </h3>
+                            <p className="mx-auto max-w-[50ch] text-xs leading-relaxed text-slate-500">
+                                Ubah filter untuk melihat antrean lain atau muat
+                                ulang jika ada permohonan yang baru masuk.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-3">
+                            {reviewQueue.items.map((item) => {
+                                const lockedByOther =
+                                    item.lock !== null &&
+                                    !item.lock.ownedByCurrentUser;
 
-                            return (
-                                <article
-                                    key={item.id}
-                                    className={cn(
-                                        'grid gap-4 border-b border-border px-4 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_9rem] sm:items-center',
-                                        selectedId === item.id &&
-                                            'bg-primary/5',
-                                    )}
-                                    data-test="affiliation-queue-row"
-                                >
-                                    <div className="min-w-0">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <h3 className="font-semibold break-all">
-                                                @{item.username}
-                                            </h3>
-                                            {item.isStale && (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="border-correction/40 bg-correction-subtle text-correction-subtle-foreground"
-                                                >
-                                                    <RotateCcw />
-                                                    Perlu diajukan ulang
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <p className="mt-1 font-label text-xs text-muted-foreground">
-                                            NIM {item.maskedNim} · WhatsApp{' '}
-                                            {item.maskedPhone ??
-                                                'belum tersedia'}
-                                        </p>
-                                    </div>
-
-                                    <div className="min-w-0 text-sm">
-                                        <p className="font-medium">
-                                            {matchCopy[item.matchResult]}
-                                        </p>
-                                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                                            {item.rosterSemester
-                                                ? `Roster ${item.rosterSemester}`
-                                                : 'Tanpa roster aktif'}
-                                            {' · '}
-                                            {formatDate(item.submittedAt)}
-                                        </p>
-                                        {item.lock && (
-                                            <p className="mt-2 flex items-center gap-1.5 text-xs text-pending-subtle-foreground">
-                                                <LockKeyhole className="size-3.5" />
-                                                {item.lock.ownedByCurrentUser
-                                                    ? 'Dikunci olehmu'
-                                                    : `Sedang ditinjau @${item.lock.owner ?? 'reviewer lain'}`}
-                                            </p>
+                                return (
+                                    <article
+                                        key={item.id}
+                                        className={cn(
+                                            'group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md sm:p-6',
+                                            selectedId === item.id &&
+                                                'border-blue-500 bg-blue-50/20 shadow-md ring-2 ring-blue-500/20',
                                         )}
-                                    </div>
-
-                                    <Button
-                                        type="button"
-                                        variant={
-                                            selectedId === item.id
-                                                ? 'secondary'
-                                                : 'outline'
-                                        }
-                                        className="w-full cursor-pointer disabled:cursor-not-allowed"
-                                        disabled={
-                                            item.isStale ||
-                                            lockedByOther ||
-                                            processingId === item.id
-                                        }
-                                        onClick={() => beginReview(item)}
+                                        data-test="affiliation-queue-row"
                                     >
-                                        {processingId === item.id ? (
-                                            <Spinner />
-                                        ) : item.lock?.ownedByCurrentUser ? (
-                                            <UnlockKeyhole />
-                                        ) : (
-                                            <ClipboardCheck />
-                                        )}
-                                        {item.isStale
-                                            ? 'Data berubah'
-                                            : item.lock?.ownedByCurrentUser
-                                              ? 'Lanjutkan'
-                                              : lockedByOther
-                                                ? 'Sedang ditinjau'
-                                                : 'Tinjau'}
-                                    </Button>
-                                </article>
-                            );
-                        })}
-                    </div>
-                )}
+                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                            <div className="flex items-start gap-4">
+                                                {/* Monogram Avatar */}
+                                                <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-xs">
+                                                    <UserRound className="size-5" />
+                                                </div>
 
+                                                <div>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="font-mono text-xs font-bold text-slate-400">
+                                                            AF-{item.id}
+                                                        </span>
+                                                        <h3 className="text-base font-bold text-slate-900">
+                                                            @{item.username}
+                                                        </h3>
+                                                        {item.isStale && (
+                                                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[0.6875rem] font-semibold text-rose-800">
+                                                                <RotateCcw className="size-3 text-rose-600" />
+                                                                Perlu diajukan
+                                                                ulang
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                                                        <span>
+                                                            NIM:{' '}
+                                                            <strong className="font-semibold text-slate-700">
+                                                                {item.maskedNim}
+                                                            </strong>
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span>
+                                                            WhatsApp:{' '}
+                                                            <strong className="font-semibold text-slate-700">
+                                                                {item.maskedPhone ??
+                                                                    'belum tersedia'}
+                                                            </strong>
+                                                        </span>
+                                                    </p>
+
+                                                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                                                        <span
+                                                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.6875rem] font-semibold ${matchClassName[item.matchResult]}`}
+                                                        >
+                                                            {
+                                                                matchCopy[
+                                                                    item
+                                                                        .matchResult
+                                                                ]
+                                                            }
+                                                        </span>
+                                                        <span className="text-[0.6875rem] text-slate-400">
+                                                            {item.rosterSemester
+                                                                ? `Roster ${item.rosterSemester}`
+                                                                : 'Tanpa roster aktif'}{' '}
+                                                            •{' '}
+                                                            {formatDate(
+                                                                item.submittedAt,
+                                                            )}
+                                                        </span>
+                                                    </div>
+
+                                                    {item.lock && (
+                                                        <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-amber-700">
+                                                            <LockKeyhole className="size-3.5" />
+                                                            <span>
+                                                                {item.lock
+                                                                    .ownedByCurrentUser
+                                                                    ? 'Sedang kamu tinjau (Kunci aktif)'
+                                                                    : `Sedang ditinjau @${item.lock.owner ?? 'operator lain'}`}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Action button */}
+                                            <div className="shrink-0 sm:self-center">
+                                                <Button
+                                                    type="button"
+                                                    variant={
+                                                        selectedId === item.id
+                                                            ? 'default'
+                                                            : 'outline'
+                                                    }
+                                                    className={`h-10 w-full cursor-pointer rounded-xl px-5 text-xs font-semibold sm:w-auto ${
+                                                        selectedId === item.id
+                                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                            : 'text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-900'
+                                                    }`}
+                                                    disabled={
+                                                        item.isStale ||
+                                                        lockedByOther ||
+                                                        processingId === item.id
+                                                    }
+                                                    onClick={() =>
+                                                        beginReview(item)
+                                                    }
+                                                >
+                                                    {processingId ===
+                                                    item.id ? (
+                                                        <Spinner className="mr-1.5 size-3.5" />
+                                                    ) : item.lock
+                                                          ?.ownedByCurrentUser ? (
+                                                        <UnlockKeyhole className="mr-1.5 size-3.5 text-blue-600" />
+                                                    ) : (
+                                                        <ClipboardCheck className="mr-1.5 size-3.5" />
+                                                    )}
+                                                    {item.isStale
+                                                        ? 'Data berubah'
+                                                        : item.lock
+                                                                ?.ownedByCurrentUser
+                                                          ? 'Lanjutkan Review'
+                                                          : lockedByOther
+                                                            ? 'Sedang ditinjau'
+                                                            : 'Tinjau Berkas'}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </article>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* Pagination */}
                 {!isQueueLoading && reviewQueue.pagination.lastPage > 1 && (
                     <nav
                         aria-label="Paginasi antrean afiliasi"
-                        className="mt-4 flex items-center justify-between gap-4"
+                        className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs"
                     >
                         <Button
                             type="button"
                             variant="outline"
-                            className="cursor-pointer disabled:cursor-not-allowed"
+                            className="cursor-pointer rounded-xl text-xs font-semibold disabled:cursor-not-allowed"
                             disabled={reviewQueue.pagination.currentPage === 1}
                             onClick={() =>
                                 updateFilters({
@@ -583,17 +694,17 @@ function ReviewQueueRegion({
                                 })
                             }
                         >
-                            <ChevronLeft />
+                            <ChevronLeft className="mr-1 size-3.5" />
                             Sebelumnya
                         </Button>
-                        <p className="font-label text-xs text-muted-foreground">
+                        <p className="font-mono text-xs font-semibold text-slate-600">
                             Halaman {reviewQueue.pagination.currentPage} dari{' '}
                             {reviewQueue.pagination.lastPage}
                         </p>
                         <Button
                             type="button"
                             variant="outline"
-                            className="cursor-pointer disabled:cursor-not-allowed"
+                            className="cursor-pointer rounded-xl text-xs font-semibold disabled:cursor-not-allowed"
                             disabled={
                                 reviewQueue.pagination.currentPage ===
                                 reviewQueue.pagination.lastPage
@@ -606,75 +717,99 @@ function ReviewQueueRegion({
                             }
                         >
                             Berikutnya
-                            <ChevronRight />
+                            <ChevronRight className="ml-1 size-3.5" />
                         </Button>
                     </nav>
                 )}
             </section>
 
-            <aside
-                aria-labelledby="decision-title"
-                className="min-w-0 border-t border-border pt-6 2xl:border-t-0 2xl:border-l 2xl:pt-0 2xl:pl-6"
-            >
+            {/* Sticky Review Drawer / Aside */}
+            <aside aria-labelledby="decision-title" className="min-w-0">
                 {selected === null ? (
-                    <div className="sticky top-6 border-y border-border py-8 text-center">
-                        <UserRoundCheck
-                            aria-hidden="true"
-                            className="mx-auto size-8 text-muted-foreground"
-                        />
-                        <h2 id="decision-title" className="mt-3 font-bold">
-                            Pilih berkas untuk ditinjau
+                    <div className="sticky top-6 grid justify-items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-8 text-center shadow-xs">
+                        <div className="flex size-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                            <UserRoundCheck
+                                aria-hidden="true"
+                                className="size-6"
+                            />
+                        </div>
+                        <h2
+                            id="decision-title"
+                            className="text-base font-bold text-slate-900"
+                        >
+                            Pilih Berkas untuk Ditinjau
                         </h2>
-                        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                            SATU akan mengunci satu berkas selama 30 menit agar
-                            keputusan tidak saling menimpa.
+                        <p className="text-xs leading-relaxed text-slate-500">
+                            Klik tombol <strong>Tinjau Berkas</strong> pada
+                            salah satu permohonan. Sistem akan mengunci berkas
+                            selama 30 menit agar keputusan tidak saling
+                            bertabrakan.
                         </p>
                     </div>
                 ) : (
                     <form
-                        className="sticky top-6 grid gap-5"
+                        className="sticky top-6 grid gap-5 rounded-2xl border border-blue-200 bg-white p-6 shadow-md"
                         onSubmit={submitDecision}
                     >
-                        <div className="border-y border-border py-4">
-                            <p className="font-label text-label text-primary">
-                                Berkas AF-{selected.id}
-                            </p>
+                        <div className="border-b border-slate-100 pb-4">
+                            <div className="flex items-center gap-2">
+                                <span className="font-mono text-xs font-bold text-blue-600">
+                                    AF-{selected.id}
+                                </span>
+                                <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[0.6875rem] font-bold text-blue-700">
+                                    Kunci Aktif
+                                </span>
+                            </div>
                             <h2
                                 id="decision-title"
-                                className="mt-2 text-title font-bold break-all"
+                                className="mt-2 text-lg font-bold text-slate-950"
                             >
                                 @{selected.username}
                             </h2>
-                            <dl className="mt-4 divide-y divide-border text-sm">
-                                <SummaryFact
-                                    label="NIM"
-                                    value={selected.maskedNim}
-                                />
-                                <SummaryFact
-                                    label="WhatsApp"
-                                    value={
-                                        selected.maskedPhone ?? 'Belum tersedia'
-                                    }
-                                />
-                                <SummaryFact
-                                    label="Hasil awal"
-                                    value={matchCopy[selected.matchResult]}
-                                />
+
+                            <dl className="mt-3 space-y-1.5 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs">
+                                <div className="flex items-center justify-between">
+                                    <dt className="text-slate-500">NIM</dt>
+                                    <dd className="font-semibold text-slate-900">
+                                        {selected.maskedNim}
+                                    </dd>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <dt className="text-slate-500">WhatsApp</dt>
+                                    <dd className="font-semibold text-slate-900">
+                                        {selected.maskedPhone ??
+                                            'Belum tersedia'}
+                                    </dd>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <dt className="text-slate-500">
+                                        Hasil Roster
+                                    </dt>
+                                    <dd className="font-semibold text-slate-900">
+                                        {matchCopy[selected.matchResult]}
+                                    </dd>
+                                </div>
                             </dl>
                         </div>
 
+                        {/* Keputusan Radio */}
                         <fieldset className="grid gap-2">
-                            <legend className="text-sm font-semibold">
-                                Keputusan
+                            <legend className="text-xs font-bold tracking-wider text-slate-700 uppercase">
+                                Keputusan Review
                             </legend>
                             {(Object.keys(decisionCopy) as Decision[]).map(
                                 (value) => (
                                     <label
                                         key={value}
                                         className={cn(
-                                            'flex min-h-control-lg cursor-pointer items-center gap-3 rounded-md border border-input px-3 py-2 text-sm font-medium transition-colors duration-fast ease-ledger hover:bg-accent motion-reduce:transition-none',
+                                            'flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-xs font-semibold transition-all hover:bg-slate-50',
                                             decision === value &&
-                                                'border-primary bg-primary/5',
+                                                (value === 'approve'
+                                                    ? 'border-emerald-500 bg-emerald-50/40 text-emerald-950'
+                                                    : value ===
+                                                        'request_revision'
+                                                      ? 'border-amber-500 bg-amber-50/40 text-amber-950'
+                                                      : 'border-rose-500 bg-rose-50/40 text-rose-950'),
                                         )}
                                     >
                                         <input
@@ -685,7 +820,7 @@ function ReviewQueueRegion({
                                             onChange={() =>
                                                 changeDecision(value)
                                             }
-                                            className="size-4 cursor-pointer accent-primary"
+                                            className="size-4 cursor-pointer accent-blue-600"
                                         />
                                         {decisionCopy[value]}
                                     </label>
@@ -693,12 +828,13 @@ function ReviewQueueRegion({
                             )}
                         </fieldset>
 
-                        <div className="grid gap-2">
+                        {/* Alasan */}
+                        <div className="grid gap-1.5">
                             <label
                                 htmlFor="reason_code"
-                                className="text-sm font-semibold"
+                                className="text-xs font-bold text-slate-700"
                             >
-                                Alasan
+                                Alasan Keputusan
                             </label>
                             <select
                                 id="reason_code"
@@ -709,7 +845,7 @@ function ReviewQueueRegion({
                                         event.target.value as ReasonCode,
                                     )
                                 }
-                                className="h-control-lg w-full cursor-pointer rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                                className="h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-900 outline-none focus:border-blue-600 focus:bg-white"
                             >
                                 {reasonsByDecision[decision].map((reason) => (
                                     <option
@@ -722,31 +858,33 @@ function ReviewQueueRegion({
                             </select>
                         </div>
 
-                        <div className="grid gap-2">
+                        {/* Catatan */}
+                        <div className="grid gap-1.5">
                             <label
                                 htmlFor="review_note"
-                                className="text-sm font-semibold"
+                                className="text-xs font-bold text-slate-700"
                             >
-                                Catatan (opsional)
+                                Catatan Tambahan (Opsional)
                             </label>
                             <textarea
                                 id="review_note"
                                 name="note"
                                 value={note}
                                 maxLength={1000}
-                                rows={4}
+                                rows={3}
                                 onChange={(event) =>
                                     setNote(event.target.value)
                                 }
-                                className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                                placeholder="Tambahkan konteks yang membantu tindak lanjut."
+                                className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-xs font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-600 focus:bg-white"
+                                placeholder="Tambahkan konteks penjelasan..."
                             />
-                            <p className="text-right font-label text-xs text-muted-foreground">
+                            <p className="text-right font-mono text-[0.6875rem] text-slate-400">
                                 {note.length}/1.000
                             </p>
                         </div>
 
-                        <div className="grid gap-2 border-t border-border pt-4">
+                        {/* Action Buttons */}
+                        <div className="grid gap-2 border-t border-slate-100 pt-4">
                             <Button
                                 type="submit"
                                 data-test="affiliation-decision-submit"
@@ -755,24 +893,31 @@ function ReviewQueueRegion({
                                         ? 'destructive'
                                         : 'default'
                                 }
-                                className="cursor-pointer disabled:cursor-not-allowed"
+                                className={`h-10 cursor-pointer rounded-xl text-xs font-semibold text-white shadow-xs ${
+                                    decision === 'approve'
+                                        ? 'bg-emerald-600 hover:bg-emerald-700'
+                                        : decision === 'request_revision'
+                                          ? 'bg-amber-600 hover:bg-amber-700'
+                                          : 'bg-rose-600 hover:bg-rose-700'
+                                }`}
                                 disabled={processingId === selected.id}
                             >
                                 {processingId === selected.id ? (
-                                    <Spinner />
+                                    <Spinner className="mr-1.5 size-3.5" />
                                 ) : decision === 'approve' ? (
-                                    <ShieldCheck />
+                                    <ShieldCheck className="mr-1.5 size-3.5" />
                                 ) : decision === 'request_revision' ? (
-                                    <FileWarning />
+                                    <FileWarning className="mr-1.5 size-3.5" />
                                 ) : (
-                                    <XCircle />
+                                    <XCircle className="mr-1.5 size-3.5" />
                                 )}
-                                {decisionCopy[decision]}
+                                Simpan {decisionCopy[decision]}
                             </Button>
+
                             <Button
                                 type="button"
                                 variant="ghost"
-                                className="cursor-pointer disabled:cursor-not-allowed"
+                                className="h-9 cursor-pointer rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
                                 disabled={processingId === selected.id}
                                 onClick={abandonReview}
                             >
@@ -828,20 +973,20 @@ export default function CampusAffiliations({
 
     return (
         <>
-            <Head title="Review afiliasi kampus" />
+            <Head
+                title={`Review Afiliasi Kampus - ${institution.name} | SATU`}
+            />
+
             <AppPage
                 contextRail={
                     <Deferred
                         data="reviewQueue"
                         fallback={
                             <div aria-busy="true" className="grid gap-4">
-                                <span className="sr-only" role="status">
-                                    Memuat ringkasan antrean.
-                                </span>
-                                <Skeleton className="h-3 w-28" />
-                                <Skeleton className="h-8 w-48" />
-                                <Skeleton className="h-36 w-full" />
-                                <Skeleton className="h-28 w-full" />
+                                <Skeleton className="h-4 w-28 bg-slate-100" />
+                                <Skeleton className="h-8 w-48 bg-slate-100" />
+                                <Skeleton className="h-36 w-full rounded-2xl bg-slate-100" />
+                                <Skeleton className="h-28 w-full rounded-2xl bg-slate-100" />
                             </div>
                         }
                     >
@@ -850,55 +995,66 @@ export default function CampusAffiliations({
                 }
                 contextRailLabel="Ringkasan dan kendali antrean"
             >
-                <div
-                    className="mx-auto w-full max-w-6xl"
-                    data-test="affiliation-review-root"
-                >
-                    <header className="mb-7">
-                        <p className="font-label text-label text-primary">
-                            Meja verifikasi kampus
-                        </p>
-                        <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
+                <div className="space-y-6" data-test="affiliation-review-root">
+                    {/* Header Banner */}
+                    <header className="relative isolate overflow-hidden rounded-2xl border border-blue-100 bg-white px-6 py-6 shadow-[0_18px_50px_-36px_rgba(30,64,175,0.35)] sm:px-8 sm:py-7">
+                        <div
+                            aria-hidden="true"
+                            className="absolute -top-28 -right-24 size-80 rounded-full bg-blue-100/75 blur-3xl sm:-right-12"
+                        />
+                        <div
+                            aria-hidden="true"
+                            className="absolute right-14 bottom-0 hidden h-24 w-24 rounded-tl-[2.5rem] border-t border-l border-indigo-100 sm:block"
+                        />
+
+                        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <h1 className="max-w-[24ch] text-headline font-bold text-balance">
-                                    Review afiliasi {institution.name}
+                                <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                                    <ClipboardCheck className="size-3 text-blue-600" />
+                                    Verifikasi Kampus
+                                </div>
+
+                                <h1 className="mt-3 text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
+                                    Review Afiliasi {institution.name}
                                 </h1>
-                                <p className="mt-3 max-w-[68ch] text-body text-muted-foreground">
-                                    Periksa ketidaksesuaian secara terarah.
-                                    Detail mahasiswa lain tidak ditampilkan dan
-                                    setiap keputusan dicatat sebagai riwayat
-                                    audit.
+
+                                <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-slate-600">
+                                    Periksa ketidaksesuaian data mahasiswa
+                                    secara terarah dan aman. Setiap keputusan
+                                    pemeriksaan tercatat permanen pada riwayat
+                                    audit ledger institusi.
                                 </p>
                             </div>
-                            <Badge
-                                variant="outline"
-                                className="border-primary/30 bg-primary/5 px-3 py-1 text-primary"
-                            >
-                                <ShieldCheck />
-                                Akses admin kampus
-                            </Badge>
+
+                            <div className="flex shrink-0 items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-2.5 text-xs font-semibold text-blue-800">
+                                <ShieldCheck className="size-4 text-blue-600" />
+                                <span>Akses Admin Kampus</span>
+                            </div>
                         </div>
                     </header>
 
+                    {/* Alerts (Outcome & Issue) */}
                     {reviewOutcome && (
-                        <Alert className="mb-5 border-verified/40 bg-verified-subtle text-verified-subtle-foreground">
-                            <CheckCircle2 />
-                            <AlertTitle>Perubahan tersimpan</AlertTitle>
-                            <AlertDescription className="text-current">
+                        <Alert className="rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-950 shadow-xs">
+                            <CheckCircle2 className="size-4 text-emerald-600" />
+                            <AlertTitle className="font-bold">
+                                Perubahan tersimpan
+                            </AlertTitle>
+                            <AlertDescription className="text-xs text-emerald-800">
                                 {outcomeCopy[reviewOutcome]}
                             </AlertDescription>
                         </Alert>
                     )}
 
                     {reviewIssue && (
-                        <Alert className="mb-5 border-correction/40 bg-correction-subtle text-correction-subtle-foreground">
-                            <AlertTriangle />
-                            <AlertTitle>
+                        <Alert className="rounded-2xl border-amber-200 bg-amber-50 text-amber-950 shadow-xs">
+                            <AlertTriangle className="size-4 text-amber-600" />
+                            <AlertTitle className="font-bold">
                                 {reviewIssue === 'stale_decision'
                                     ? 'Berkas sudah berubah'
                                     : 'Berkas sedang ditinjau'}
                             </AlertTitle>
-                            <AlertDescription className="text-current">
+                            <AlertDescription className="text-xs text-amber-800">
                                 {reviewIssue === 'stale_decision'
                                     ? 'Keputusan tidak disimpan. Muat ulang antrean dan periksa versi terbaru.'
                                     : 'Reviewer lain sedang memegang kunci aktif. Pilih berkas lain atau coba lagi setelah kunci dilepas.'}
@@ -906,19 +1062,26 @@ export default function CampusAffiliations({
                         </Alert>
                     )}
 
+                    {/* Filter Card */}
                     <section
                         aria-label="Filter antrean"
-                        className="mb-7 grid gap-4 border-y border-border py-4 sm:grid-cols-3"
+                        className="grid gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:grid-cols-3"
                     >
-                        <label className="grid gap-2 text-sm font-semibold">
-                            Hasil awal
+                        <div className="space-y-1.5">
+                            <label
+                                htmlFor="filter-match"
+                                className="text-xs font-bold text-slate-700"
+                            >
+                                Hasil Awal Roster
+                            </label>
                             <select
+                                id="filter-match"
                                 value={filters.match ?? 'all'}
                                 disabled={isQueueLoading}
                                 onChange={(event) =>
                                     changeFilter('match', event.target.value)
                                 }
-                                className="h-control-md cursor-pointer rounded-md border border-input bg-background px-3 text-sm font-normal outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-900 outline-none focus:border-blue-600 focus:bg-white disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <option value="all">Semua hasil</option>
                                 {(Object.keys(matchCopy) as MatchResult[]).map(
@@ -929,10 +1092,17 @@ export default function CampusAffiliations({
                                     ),
                                 )}
                             </select>
-                        </label>
-                        <label className="grid gap-2 text-sm font-semibold">
-                            Kesegaran data
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label
+                                htmlFor="filter-stale"
+                                className="text-xs font-bold text-slate-700"
+                            >
+                                Kesegaran Data
+                            </label>
                             <select
+                                id="filter-stale"
                                 value={
                                     filters.stale === null
                                         ? 'all'
@@ -942,7 +1112,7 @@ export default function CampusAffiliations({
                                 onChange={(event) =>
                                     changeFilter('stale', event.target.value)
                                 }
-                                className="h-control-md cursor-pointer rounded-md border border-input bg-background px-3 text-sm font-normal outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-900 outline-none focus:border-blue-600 focus:bg-white disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <option value="all">Semua berkas</option>
                                 <option value="false">Data terkini</option>
@@ -950,23 +1120,31 @@ export default function CampusAffiliations({
                                     Perlu diajukan ulang
                                 </option>
                             </select>
-                        </label>
-                        <label className="grid gap-2 text-sm font-semibold">
-                            Urutan
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label
+                                htmlFor="filter-sort"
+                                className="text-xs font-bold text-slate-700"
+                            >
+                                Urutan Pengajuan
+                            </label>
                             <select
+                                id="filter-sort"
                                 value={filters.sort}
                                 disabled={isQueueLoading}
                                 onChange={(event) =>
                                     changeFilter('sort', event.target.value)
                                 }
-                                className="h-control-md cursor-pointer rounded-md border border-input bg-background px-3 text-sm font-normal outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-900 outline-none focus:border-blue-600 focus:bg-white disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <option value="oldest">Paling lama</option>
                                 <option value="newest">Paling baru</option>
                             </select>
-                        </label>
+                        </div>
                     </section>
 
+                    {/* Main Queue and Decision Drawer */}
                     <Deferred data="reviewQueue" fallback={<QueueSkeleton />}>
                         <ReviewQueueRegion
                             institution={institution}
@@ -981,3 +1159,16 @@ export default function CampusAffiliations({
         </>
     );
 }
+
+CampusAffiliations.layout = {
+    breadcrumbs: [
+        {
+            title: 'Operasi Kampus',
+            href: '#',
+        },
+        {
+            title: 'Afiliasi & Verifikasi',
+            href: '#',
+        },
+    ],
+};

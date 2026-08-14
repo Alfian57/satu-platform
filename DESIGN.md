@@ -169,10 +169,10 @@ Keyboard focus memakai outline 2px dengan offset 2px. Jangan menghapusnya kecual
 diganti treatment yang setara atau lebih terlihat. Invalid state boleh mengubah
 warna outline menjadi destructive, tetapi label dan pesan pemulihan tetap wajib.
 
-Light, Dark, dan System adalah pilihan resmi. Theme mengubah semantic tokens,
-bukan menukar class warna per komponen. Bootstrap Blade dan runtime appearance
-hook harus tetap memakai pasangan canvas yang sama agar tidak terjadi theme
-flash.
+Mode terang adalah tampilan resmi SATU saat ini. Canvas, surface, dan semantic
+token dipasang untuk pengalaman terang yang konsisten di authenticated shell,
+dashboard, pengaturan, dan autentikasi. Jangan menambahkan kontrol pergantian
+tema sebelum ada keputusan visual baru yang memperbarui authority ini.
 
 ## Do's and Don'ts
 

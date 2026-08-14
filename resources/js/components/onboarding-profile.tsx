@@ -389,26 +389,26 @@ function ProfileLockedState() {
     return (
         <section
             aria-labelledby="profile-locked-title"
-            className="border border-border bg-card p-5 sm:p-6"
+            className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs"
             data-test="profile-locked"
             id="profile"
         >
             <div className="flex items-start gap-3">
                 <LockKeyhole
                     aria-hidden="true"
-                    className="mt-0.5 size-5 shrink-0 text-muted-foreground"
+                    className="mt-0.5 size-5 shrink-0 text-slate-400"
                 />
                 <div>
-                    <p className="font-label text-label text-muted-foreground">
+                    <p className="font-label text-xs font-bold tracking-wider text-slate-500 uppercase">
                         Profil mahasiswa
                     </p>
                     <h2
                         id="profile-locked-title"
-                        className="mt-2 text-title font-bold"
+                        className="mt-2 text-base font-bold text-slate-950 sm:text-lg"
                     >
                         Profil terbuka setelah afiliasi terverifikasi
                     </h2>
-                    <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-1.5 max-w-[65ch] text-xs leading-relaxed text-slate-600 sm:text-sm">
                         Selesaikan verifikasi kampus terlebih dahulu. Setelah
                         itu, kamu bisa mengisi profil secara bertahap dan
                         memilih siapa yang boleh melihat proyeksinya.
@@ -450,17 +450,19 @@ function ProfileSectionIndex({
     return (
         <nav
             aria-label="Bagian profil mahasiswa"
-            className="border-y border-border"
+            className="rounded-2xl border border-slate-200/80 bg-white p-2 shadow-xs"
             data-test="profile-section-index"
         >
-            <ol className="grid divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+            <ol className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                 {sections.map((section) => (
                     <li key={section.id} className="min-w-0">
                         <a
                             href={`#${section.anchor}`}
                             className={cn(
-                                'flex min-h-control-lg cursor-pointer items-center gap-3 px-3 py-3 text-left text-sm transition-colors duration-fast ease-ledger hover:bg-muted motion-reduce:transition-none',
-                                activeSection === section.id && 'bg-muted',
+                                'flex items-center gap-3 rounded-xl p-3 text-left transition-all duration-200 hover:bg-slate-50',
+                                activeSection === section.id
+                                    ? 'border border-blue-200 bg-blue-50/70 text-blue-900 shadow-xs'
+                                    : 'border border-transparent text-slate-700',
                             )}
                             aria-current={
                                 activeSection === section.id
@@ -470,21 +472,25 @@ function ProfileSectionIndex({
                             onClick={() => onNavigate(section.id)}
                         >
                             {statuses[section.id] ? (
-                                <Check
-                                    aria-hidden="true"
-                                    className="size-4 shrink-0 text-verified"
-                                />
+                                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                                    <Check
+                                        aria-hidden="true"
+                                        className="size-3.5"
+                                    />
+                                </span>
                             ) : (
-                                <CircleDashed
-                                    aria-hidden="true"
-                                    className="size-4 shrink-0 text-muted-foreground"
-                                />
+                                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                                    <CircleDashed
+                                        aria-hidden="true"
+                                        className="size-3.5"
+                                    />
+                                </span>
                             )}
                             <span className="min-w-0">
-                                <span className="block font-semibold">
+                                <span className="block truncate text-xs font-bold">
                                     {section.label}
                                 </span>
-                                <span className="block text-xs text-muted-foreground">
+                                <span className="block text-[0.6875rem] text-slate-500">
                                     {statuses[section.id]
                                         ? 'Sudah tersimpan'
                                         : 'Masih bisa dilengkapi'}
@@ -1258,26 +1264,33 @@ export function OnboardingProfile({
                 </p>
             </header>
 
-            <div className="grid gap-4 border border-border bg-muted/40 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:p-5">
+            <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <p className="flex items-center gap-2 font-semibold">
+                    <p className="flex items-center gap-2 text-sm font-bold text-slate-900">
                         <ShieldCheck
                             aria-hidden="true"
-                            className="size-4 text-primary"
+                            className="size-4.5 text-blue-600"
                         />
                         Bagian yang masih perlu kamu lengkapi
                     </p>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-1 text-xs leading-relaxed text-slate-600">
                         {missingPieces.length > 0
                             ? `Saat ini yang belum diisi: ${missingPieces.join(', ')}. Tidak ada fitur yang terkunci hanya karena profil belum lengkap.`
                             : 'Profil inti dan bagian pendukungmu sudah terisi. Kamu tetap bisa mengubahnya kapan saja.'}
                     </p>
                 </div>
-                <Badge variant="outline" className="w-fit">
+                <span
+                    className={cn(
+                        'inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs font-semibold',
+                        profile === null
+                            ? 'border-slate-200 bg-slate-100 text-slate-700'
+                            : 'border-emerald-200 bg-emerald-50 text-emerald-800',
+                    )}
+                >
                     {profile === null
                         ? 'Belum ada profil tersimpan'
                         : 'Profil tersimpan'}
-                </Badge>
+                </span>
             </div>
 
             <ProfileSectionIndex
@@ -1295,20 +1308,20 @@ export function OnboardingProfile({
 
             <section
                 aria-labelledby="profile-basics-title"
-                className="border border-border bg-card"
+                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs"
                 id="profile-basics"
             >
-                <div className="border-b border-border px-5 py-4 sm:px-6">
-                    <p className="font-label text-label text-muted-foreground">
+                <div className="border-b border-slate-100 px-6 py-4 sm:px-7">
+                    <p className="font-mono text-xs font-bold tracking-wider text-slate-400 uppercase">
                         01 / PROFIL INTI
                     </p>
                     <h3
                         id="profile-basics-title"
-                        className="mt-1 text-xl font-bold"
+                        className="mt-1 text-base font-bold text-slate-950 sm:text-lg"
                     >
                         Ceritakan konteks belajarmu
                     </h3>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
                         Isi seperlunya. Data ini membantu orang memahami
                         kontribusi dan arah belajarmu.
                     </p>
@@ -1493,20 +1506,20 @@ export function OnboardingProfile({
 
             <section
                 aria-labelledby="profile-skills-title"
-                className="border border-border bg-card"
+                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs"
                 id="profile-skills"
             >
-                <div className="border-b border-border px-5 py-4 sm:px-6">
-                    <p className="font-label text-label text-muted-foreground">
+                <div className="border-b border-slate-100 px-6 py-4 sm:px-7">
+                    <p className="font-mono text-xs font-bold tracking-wider text-slate-400 uppercase">
                         02 / SKILL DAN MINAT
                     </p>
                     <h3
                         id="profile-skills-title"
-                        className="mt-1 text-xl font-bold"
+                        className="mt-1 text-base font-bold text-slate-950 sm:text-lg"
                     >
                         Pilih kemampuan yang ingin kamu tampilkan
                     </h3>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
                         Pilih dari taxonomi terverifikasi. Tingkat kemahiran dan
                         bukti pengalaman membantu konteks tetap jelas.
                     </p>
@@ -1750,20 +1763,20 @@ export function OnboardingProfile({
 
             <section
                 aria-labelledby="profile-availability-title"
-                className="border border-border bg-card"
+                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs"
                 id="profile-availability"
             >
-                <div className="border-b border-border px-5 py-4 sm:px-6">
-                    <p className="font-label text-label text-muted-foreground">
+                <div className="border-b border-slate-100 px-6 py-4 sm:px-7">
+                    <p className="font-mono text-xs font-bold tracking-wider text-slate-400 uppercase">
                         03 / KETERSEDIAAN
                     </p>
                     <h3
                         id="profile-availability-title"
-                        className="mt-1 text-xl font-bold"
+                        className="mt-1 text-base font-bold text-slate-950 sm:text-lg"
                     >
                         Tentukan waktu yang mungkin untuk berkolaborasi
                     </h3>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
                         Jadwal ini membantu mencocokkan kesempatan kolaborasi.
                         Kamu bisa mengosongkannya atau mengubahnya kapan saja.
                     </p>
@@ -1981,20 +1994,20 @@ export function OnboardingProfile({
 
             <section
                 aria-labelledby="profile-visibility-title"
-                className="border border-border bg-card"
+                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs"
                 id="profile-visibility"
             >
-                <div className="border-b border-border px-5 py-4 sm:px-6">
-                    <p className="font-label text-label text-muted-foreground">
+                <div className="border-b border-slate-100 px-6 py-4 sm:px-7">
+                    <p className="font-mono text-xs font-bold tracking-wider text-slate-400 uppercase">
                         04 / VISIBILITAS DAN PERSETUJUAN
                     </p>
                     <h3
                         id="profile-visibility-title"
-                        className="mt-1 text-xl font-bold"
+                        className="mt-1 text-base font-bold text-slate-950 sm:text-lg"
                     >
                         Kamu yang menentukan siapa yang dapat melihat
                     </h3>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
                         Pilihan ini terpisah dari afiliasi kampus. Tidak ada
                         pilihan yang diaktifkan otomatis untuk membagikan profil
                         ke recruiter.

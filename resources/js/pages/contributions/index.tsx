@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import {
     create as contributionsCreate,
+    index as contributionsIndex,
     show as contributionShow,
 } from '@/routes/contributions';
 import type {
@@ -82,7 +83,9 @@ function formatDate(value: string): string {
 }
 
 function verificationLabel(status: ContributionStatus): string {
-    return status === 'approved' ? 'Institution-verified' : 'Self-reported';
+    return status === 'approved'
+        ? 'Terverifikasi kampus'
+        : 'Dilaporkan sendiri';
 }
 
 function ContributionsRefreshState() {
@@ -92,7 +95,7 @@ function ContributionsRefreshState() {
             aria-live="polite"
             aria-busy="true"
             data-test="contributions-loading"
-            className="grid gap-3 border-t border-border px-4 py-4 md:px-6"
+            className="grid gap-3 border-t border-slate-100 bg-slate-50/70 px-4 py-4 md:px-6"
         >
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <RefreshCw
@@ -122,12 +125,11 @@ function EmptyContributions({ canCreate }: { canCreate: boolean }) {
     return (
         <section
             data-test="contributions-empty"
-            className="grid gap-5 border-y border-border px-4 py-12 text-center md:px-8"
+            className="grid justify-items-center gap-5 rounded-2xl border border-slate-200 bg-white px-5 py-14 text-center shadow-[0_14px_32px_-30px_rgba(30,64,175,0.34)] md:px-8"
         >
-            <FileCheck2
-                aria-hidden="true"
-                className="mx-auto size-9 text-primary"
-            />
+            <span className="grid size-12 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+                <FileCheck2 aria-hidden="true" className="size-6" />
+            </span>
             <div className="grid gap-2">
                 <h2 className="text-title font-semibold">
                     Belum ada contribution
@@ -198,66 +200,80 @@ export default function ContributionsIndex({
         <>
             <Head title="Contribution" />
             <AppPage className="min-w-0">
-                <div className="mx-auto grid max-w-7xl min-w-0 gap-8">
-                    <header className="grid gap-5 border-b border-border pb-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.35fr)] lg:items-end lg:gap-10">
-                        <div className="min-w-0 space-y-3">
-                            <p className="font-label text-label text-primary">
-                                BUKU BESAR KONTRIBUSI / STUDENT
-                            </p>
-                            <h1 className="max-w-[22ch] text-headline font-bold text-balance">
-                                Ubah pekerjaan nyata menjadi catatan yang dapat
-                                ditinjau.
-                            </h1>
-                            <p className="max-w-[68ch] text-body text-muted-foreground">
-                                Setiap contribution menyimpan task, evidence,
-                                pernyataan, versi, dan keputusan validasi dalam
-                                satu jejak yang tetap terbaca.
-                            </p>
-                        </div>
-
-                        <div className="grid gap-3 border border-border bg-card/60 px-4 py-4">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <ShieldCheck
-                                    aria-hidden="true"
-                                    className="size-4 shrink-0 text-verified"
-                                />
-                                <span className="font-label text-label">
-                                    BATAS DATA
-                                </span>
+                <div
+                    className="mx-auto grid max-w-7xl min-w-0 gap-6"
+                    data-test="contributions-root"
+                >
+                    <header
+                        className="relative isolate overflow-hidden rounded-2xl border border-blue-100 bg-white px-5 py-6 shadow-[0_18px_50px_-40px_rgba(30,64,175,0.42)] sm:px-7 sm:py-7"
+                        data-test="contributions-header"
+                    >
+                        <div
+                            aria-hidden="true"
+                            className="absolute -top-24 -right-20 size-72 rounded-full bg-blue-100/70 blur-3xl"
+                        />
+                        <div className="relative grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,0.48fr)] lg:items-stretch lg:gap-10">
+                            <div className="min-w-0">
+                                <p className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold tracking-[0.12em] text-blue-700 uppercase">
+                                    <span className="size-1.5 rounded-full bg-blue-600" />
+                                    Buku besar kontribusi
+                                </p>
+                                <h1 className="mt-4 max-w-[22ch] text-headline font-bold tracking-[-0.035em] text-balance text-slate-950">
+                                    Ubah pekerjaan nyata menjadi catatan yang
+                                    dapat ditinjau.
+                                </h1>
+                                <p className="mt-3 max-w-[66ch] text-sm leading-6 text-slate-600">
+                                    Setiap contribution menyimpan task,
+                                    evidence, pernyataan, versi, dan keputusan
+                                    validasi dalam satu jejak yang terbaca.
+                                </p>
                             </div>
-                            <p className="text-sm leading-6">
-                                Evidence tetap private dan hanya ditampilkan
-                                sesuai akses project serta validasi kampus.
-                            </p>
-                            <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-                                {canCreate && (
-                                    <Button asChild className="cursor-pointer">
-                                        <Link
-                                            href={contributionsCreate()}
-                                            data-test="create-contribution-link"
-                                        >
-                                            <Plus aria-hidden="true" />
-                                            Susun contribution
-                                        </Link>
-                                    </Button>
-                                )}
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="cursor-pointer"
-                                    onClick={refresh}
-                                    disabled={isRefreshing}
-                                    data-test="contributions-refresh"
-                                >
-                                    <RefreshCw
+
+                            <div className="flex flex-col justify-end border-t border-slate-200 pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+                                <div className="flex items-center gap-2 text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
+                                    <ShieldCheck
                                         aria-hidden="true"
-                                        className={cn(
-                                            isRefreshing &&
-                                                'animate-spin motion-reduce:animate-none',
-                                        )}
+                                        className="size-4 shrink-0 text-verified"
                                     />
-                                    Segarkan daftar
-                                </Button>
+                                    Ruang terlindungi
+                                </div>
+                                <p className="mt-2 text-sm leading-6 text-slate-600">
+                                    Evidence tetap private dan hanya tampil
+                                    sesuai akses project serta validasi kampus.
+                                </p>
+                                <div className="mt-5 flex flex-col gap-2 sm:flex-row lg:flex-col">
+                                    {canCreate && (
+                                        <Button
+                                            asChild
+                                            className="w-full self-start lg:w-auto"
+                                        >
+                                            <Link
+                                                href={contributionsCreate()}
+                                                data-test="create-contribution-link"
+                                            >
+                                                <Plus aria-hidden="true" />
+                                                Susun contribution
+                                            </Link>
+                                        </Button>
+                                    )}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="w-full self-start border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50 lg:w-auto"
+                                        onClick={refresh}
+                                        disabled={isRefreshing}
+                                        data-test="contributions-refresh"
+                                    >
+                                        <RefreshCw
+                                            aria-hidden="true"
+                                            className={cn(
+                                                isRefreshing &&
+                                                    'animate-spin motion-reduce:animate-none',
+                                            )}
+                                        />
+                                        Segarkan daftar
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </header>
@@ -266,7 +282,7 @@ export default function ContributionsIndex({
                         <div
                             role="alert"
                             data-test="contributions-refresh-error"
-                            className="flex items-start gap-3 border border-correction/30 bg-correction-subtle px-4 py-3 text-sm leading-6 text-correction-subtle-foreground"
+                            className="flex items-start gap-3 rounded-2xl border border-correction/30 bg-correction-subtle px-4 py-3 text-sm leading-6 text-correction-subtle-foreground"
                         >
                             <CircleAlert
                                 aria-hidden="true"
@@ -289,30 +305,30 @@ export default function ContributionsIndex({
                             aria-labelledby="contributions-ledger-title"
                             aria-busy={isRefreshing}
                             data-test="contributions-ledger"
-                            className="grid gap-0 border-y border-border"
+                            className="grid gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_32px_-30px_rgba(30,64,175,0.34)]"
                         >
-                            <div className="grid gap-2 px-4 py-5 md:px-6">
+                            <div className="grid gap-2 px-5 py-5 sm:px-6">
                                 <div className="flex flex-wrap items-center justify-between gap-3">
                                     <div>
-                                        <p className="font-label text-label text-muted-foreground">
-                                            REGISTER / {contributions.length}{' '}
-                                            ITEM
+                                        <p className="text-xs font-bold tracking-[0.13em] text-blue-700 uppercase">
+                                            Register kontribusi /{' '}
+                                            {contributions.length} item
                                         </p>
                                         <h2
                                             id="contributions-ledger-title"
-                                            className="mt-1 text-title font-semibold"
+                                            className="mt-1 text-title font-bold tracking-[-0.02em] text-slate-950"
                                         >
                                             Contribution milikmu
                                         </h2>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-800">
                                         Urut dari perubahan terakhir
                                     </p>
                                 </div>
                             </div>
                             {isRefreshing && <ContributionsRefreshState />}
                             <ol className="grid">
-                                {contributions.map((contribution, index) => {
+                                {contributions.map((contribution) => {
                                     const meta =
                                         statusMeta[contribution.status];
                                     const task =
@@ -321,29 +337,23 @@ export default function ContributionsIndex({
                                     return (
                                         <li
                                             key={contribution.id}
-                                            className="border-t border-border"
+                                            className="border-t border-slate-100"
                                         >
                                             <Link
                                                 href={contributionShow(
                                                     contribution.id,
                                                 )}
-                                                className="grid cursor-pointer gap-4 px-4 py-5 transition-colors duration-fast hover:bg-muted/50 md:grid-cols-[2rem_minmax(0,1fr)_12rem_9rem] md:items-center md:px-6"
+                                                className="grid cursor-pointer gap-4 px-5 py-5 transition-colors duration-fast hover:bg-slate-50/70 sm:px-6 md:grid-cols-[minmax(0,1fr)_12rem_10rem] md:items-center"
                                                 data-test={`contribution-row-${contribution.id}`}
                                             >
-                                                <span className="font-label text-label text-muted-foreground">
-                                                    {String(index + 1).padStart(
-                                                        2,
-                                                        '0',
-                                                    )}
-                                                </span>
                                                 <span className="min-w-0">
-                                                    <span className="block text-base font-semibold break-words">
+                                                    <span className="block text-base font-bold tracking-[-0.015em] break-words text-slate-950">
                                                         {
                                                             contribution.project
                                                                 .title
                                                         }
                                                     </span>
-                                                    <span className="mt-1 block text-sm break-words text-muted-foreground">
+                                                    <span className="mt-1 block text-sm break-words text-slate-600">
                                                         {task?.title ??
                                                             'Task belum ditautkan'}
                                                     </span>
@@ -351,7 +361,7 @@ export default function ContributionsIndex({
                                                 <span className="grid gap-1">
                                                     <span
                                                         className={cn(
-                                                            'inline-flex w-fit items-center gap-2 border px-2 py-1 text-xs font-semibold',
+                                                            'inline-flex w-fit items-center gap-2 rounded-lg border px-2 py-1 text-xs font-semibold',
                                                             meta.className,
                                                         )}
                                                     >
@@ -381,17 +391,17 @@ export default function ContributionsIndex({
                                                         )}
                                                         {meta.label}
                                                     </span>
-                                                    <span className="text-xs text-muted-foreground">
+                                                    <span className="text-xs leading-5 text-slate-500">
                                                         {meta.description}
                                                     </span>
                                                 </span>
-                                                <span className="grid gap-1 text-sm md:text-right">
-                                                    <span className="font-label text-label text-muted-foreground">
+                                                <span className="grid gap-1 text-sm md:border-l md:border-slate-100 md:pl-5 md:text-right">
+                                                    <span className="text-xs font-bold tracking-[0.11em] text-slate-500 uppercase">
                                                         {verificationLabel(
                                                             contribution.status,
                                                         )}
                                                     </span>
-                                                    <span className="text-muted-foreground">
+                                                    <span className="text-slate-500">
                                                         {formatDate(
                                                             contribution.updated_at,
                                                         )}
@@ -409,3 +419,12 @@ export default function ContributionsIndex({
         </>
     );
 }
+
+ContributionsIndex.layout = {
+    breadcrumbs: [
+        {
+            title: 'Contribution',
+            href: contributionsIndex(),
+        },
+    ],
+};

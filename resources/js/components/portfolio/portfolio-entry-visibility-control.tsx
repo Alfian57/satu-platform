@@ -103,23 +103,23 @@ export function PortfolioEntryVisibilityControl({
 
     return (
         <form
-            className="grid gap-3 border-t border-border pt-4"
+            className="grid gap-3 border-t border-slate-100 pt-4 md:border-t-0 md:border-l md:pt-0 md:pl-5"
             aria-busy={form.processing}
             onSubmit={submit}
             data-test={`${dataTestPrefix}-visibility-form`}
         >
             <div className="grid gap-1">
                 <Label htmlFor={`${dataTestPrefix}-visibility`}>
-                    Audience entry
+                    Jangkauan karya
                 </Label>
                 <p className="text-xs leading-5 text-muted-foreground">
-                    Status verifikasi tetap mengikuti provenance contribution.
+                    Status verifikasi mengikuti sumber contribution.
                 </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3">
                 <select
                     id={`${dataTestPrefix}-visibility`}
-                    className="min-h-control-md w-full cursor-pointer rounded-md border border-input bg-background px-3 text-sm outline-hidden focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 sm:max-w-xs"
+                    className="min-h-control-md w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-hidden transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger hover:border-blue-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
                     value={form.data.visibility}
                     onChange={(event) =>
                         form.setData(
@@ -139,7 +139,7 @@ export function PortfolioEntryVisibilityControl({
                 <Button
                     type="submit"
                     variant="outline"
-                    className="w-fit cursor-pointer disabled:cursor-not-allowed"
+                    className="w-fit cursor-pointer border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed"
                     disabled={form.processing}
                     data-test={`${dataTestPrefix}-visibility-save`}
                 >
