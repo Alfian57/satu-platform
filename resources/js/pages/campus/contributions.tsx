@@ -1,4 +1,4 @@
-import { Deferred, Head, router, useHttp } from '@inertiajs/react';
+import { Deferred, Head, Link, router, useHttp } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowDownToLine,
@@ -6,27 +6,33 @@ import {
     ChevronLeft,
     ChevronRight,
     CircleDot,
+    ClipboardCheck,
     Clock3,
     Eye,
     FileCheck2,
+    FileSpreadsheet,
+    FileText,
     FileWarning,
     History,
+    Lock,
     LockKeyhole,
     RefreshCw,
     ShieldCheck,
     UserRoundCheck,
     XCircle,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import ContributionController from '@/actions/App/Http/Controllers/ContributionController';
 import { AppPage } from '@/components/app-page';
-import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { index as affiliationIndex } from '@/routes/campus/affiliations';
 import { index as campusContributionsIndex } from '@/routes/campus/contributions';
+import { show as campusRoster } from '@/routes/campus/roster';
 import {
     download as downloadAttachment,
     preview as previewAttachment,
@@ -87,36 +93,32 @@ const statusMeta: Record<
     draft: {
         label: 'Draft',
         description: 'Belum dikirim untuk validasi.',
-        className: 'border-border bg-muted text-muted-foreground',
+        className: 'border-slate-200 bg-slate-50 text-slate-600',
     },
     pending: {
         label: 'Menunggu validasi',
         description: 'Menunggu keputusan reviewer kampus.',
-        className:
-            'border-pending/40 bg-pending-subtle text-pending-subtle-foreground',
+        className: 'border-amber-200/80 bg-amber-50 text-amber-800',
     },
     revision: {
         label: 'Perlu diperbaiki',
         description: 'Pemilik menerima catatan untuk membuat versi baru.',
-        className:
-            'border-correction/40 bg-correction-subtle text-correction-subtle-foreground',
+        className: 'border-rose-200/80 bg-rose-50 text-rose-800',
     },
     approved: {
         label: 'Tervalidasi',
-        description: 'Keputusan validasi tersimpan.',
-        className:
-            'border-verified/40 bg-verified-subtle text-verified-subtle-foreground',
+        description: 'Keputusan validasi tersimpan di ledger.',
+        className: 'border-emerald-200/80 bg-emerald-50 text-emerald-800',
     },
     rejected: {
         label: 'Ditolak',
         description: 'Keputusan penolakan tersimpan di riwayat.',
-        className:
-            'border-correction/40 bg-correction-subtle text-correction-subtle-foreground',
+        className: 'border-rose-200/80 bg-rose-50 text-rose-800',
     },
     archived: {
         label: 'Diarsipkan',
-        description: 'Contribution tidak menerima keputusan baru.',
-        className: 'border-border bg-muted text-muted-foreground',
+        description: 'Kontribusi tidak menerima keputusan baru.',
+        className: 'border-slate-200 bg-slate-50 text-slate-600',
     },
 };
 
@@ -125,19 +127,23 @@ const decisionMeta: Record<
     { label: string; description: string; className: string }
 > = {
     approved: {
-        label: 'Setujui',
-        description: 'Contribution dapat menjadi sumber validasi kampus.',
-        className: 'border-verified/40 bg-verified-subtle',
+        label: 'Setujui Kontribusi',
+        description: 'Kontribusi valid dan dapat menjadi capaian portfolio.',
+        className:
+            'border-emerald-200 bg-emerald-50/40 text-emerald-950 hover:bg-emerald-50',
     },
     revision: {
-        label: 'Minta perbaikan',
-        description: 'Pemilik perlu membuat versi baru dengan alasan tertulis.',
-        className: 'border-pending/40 bg-pending-subtle',
+        label: 'Minta Perbaikan',
+        description:
+            'Mahasiswa perlu membuat versi baru berdasarkan catatan reviewer.',
+        className:
+            'border-amber-200 bg-amber-50/40 text-amber-950 hover:bg-amber-50',
     },
     rejected: {
-        label: 'Tolak',
-        description: 'Simpan keputusan penolakan dengan alasan tertulis.',
-        className: 'border-correction/40 bg-correction-subtle',
+        label: 'Tolak Kontribusi',
+        description: 'Tolak kontribusi dengan alasan tertulis faktual.',
+        className:
+            'border-rose-200 bg-rose-50/40 text-rose-950 hover:bg-rose-50',
     },
 };
 
@@ -179,18 +185,18 @@ function firstError(errors: ErrorMap, field: string): string | undefined {
 
 function StatusMark({ status }: { status: ContributionStatus }) {
     if (status === 'approved') {
-        return <CheckCircle2 aria-hidden="true" className="size-4" />;
+        return <CheckCircle2 aria-hidden="true" className="size-3.5" />;
     }
 
     if (status === 'pending') {
-        return <Clock3 aria-hidden="true" className="size-4" />;
+        return <Clock3 aria-hidden="true" className="size-3.5" />;
     }
 
     if (status === 'revision' || status === 'rejected') {
-        return <AlertTriangle aria-hidden="true" className="size-4" />;
+        return <AlertTriangle aria-hidden="true" className="size-3.5" />;
     }
 
-    return <CircleDot aria-hidden="true" className="size-4" />;
+    return <CircleDot aria-hidden="true" className="size-3.5" />;
 }
 
 function StatusChip({ status }: { status: ContributionStatus }) {
@@ -199,7 +205,7 @@ function StatusChip({ status }: { status: ContributionStatus }) {
     return (
         <span
             className={cn(
-                'inline-flex w-fit items-center gap-2 border px-2 py-1 text-xs font-semibold',
+                'inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold',
                 meta.className,
             )}
         >
@@ -214,28 +220,30 @@ function QueueSkeleton() {
         <div
             aria-busy="true"
             aria-label="Antrean validasi contribution sedang dimuat"
-            className="border-y border-border"
+            className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white"
             data-test="campus-contribution-queue-loading"
         >
             <p className="sr-only" role="status">
                 Memuat antrean validasi contribution.
             </p>
-            {Array.from({ length: 10 }, (_, index) => (
+            {Array.from({ length: 5 }, (_, index) => (
                 <div
                     key={index}
                     aria-hidden="true"
-                    className="grid min-h-28 gap-4 border-b border-border px-4 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_10rem] sm:items-center"
+                    className="grid min-h-24 gap-4 border-b border-slate-100 p-6 last:border-b-0 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_10rem] sm:items-center"
                 >
-                    <div className="grid gap-2">
-                        <Skeleton className="h-3 w-20" />
-                        <Skeleton className="h-5 w-4/5" />
-                        <Skeleton className="h-3 w-2/5" />
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="size-10 rounded-xl bg-slate-100" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-32 bg-slate-100" />
+                            <Skeleton className="h-3 w-48 bg-slate-100" />
+                        </div>
                     </div>
-                    <div className="grid gap-2">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-44" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-28 bg-slate-100" />
+                        <Skeleton className="h-3 w-36 bg-slate-100" />
                     </div>
-                    <Skeleton className="h-control-md w-full" />
+                    <Skeleton className="h-10 w-full rounded-xl bg-slate-100" />
                 </div>
             ))}
         </div>
@@ -248,119 +256,136 @@ function QueueRefreshState() {
             role="status"
             aria-live="polite"
             aria-busy="true"
-            className="grid gap-3 border-y border-border px-4 py-4"
+            className="flex items-center gap-2.5 rounded-2xl border border-blue-100 bg-blue-50/50 p-4 text-xs font-semibold text-blue-800"
             data-test="campus-contribution-queue-refreshing"
         >
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <RefreshCw
-                    aria-hidden="true"
-                    className="size-4 animate-spin motion-reduce:animate-none"
-                />
-                <span>
-                    Menyegarkan antrean tanpa menghapus contribution yang sedang
-                    terlihat.
-                </span>
-            </div>
-            <div
+            <RefreshCw
                 aria-hidden="true"
-                className="grid gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_10rem] sm:items-center"
+                className="size-4 animate-spin text-blue-600 motion-reduce:animate-none"
+            />
+            <span>
+                Menyegarkan antrean tanpa menghapus contribution yang sedang
+                terlihat.
+            </span>
+        </div>
+    );
+}
+
+function SummaryRail({
+    reviewQueue,
+    institution,
+}: {
+    reviewQueue: ReviewQueue;
+    institution: Props['institution'];
+}) {
+    return (
+        <div className="grid gap-6">
+            {/* Card 1: Ringkasan Antrean */}
+            <section
+                aria-labelledby="contribution-review-summary-title"
+                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs"
             >
-                <div className="grid gap-2">
-                    <Skeleton className="h-3 w-20" />
-                    <Skeleton className="h-5 w-4/5" />
+                <div className="flex items-center gap-2">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <FileCheck2 className="size-3.5" aria-hidden="true" />
+                    </span>
+                    <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
+                        RINGKASAN VALIDASI
+                    </p>
                 </div>
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-control-md w-full" />
-            </div>
-        </div>
-    );
-}
 
-function SummaryFact({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="grid gap-1 py-3">
-            <dt className="font-label text-label text-muted-foreground">
-                {label}
-            </dt>
-            <dd className="font-medium [overflow-wrap:anywhere]">{value}</dd>
-        </div>
-    );
-}
-
-function SummaryRow({ label, value }: { label: string; value: number }) {
-    return (
-        <div className="flex items-baseline justify-between gap-4 py-3">
-            <dt className="text-sm text-muted-foreground">{label}</dt>
-            <dd className="font-label text-lg font-semibold">{value}</dd>
-        </div>
-    );
-}
-
-function SummaryRail({ reviewQueue }: { reviewQueue: ReviewQueue }) {
-    return (
-        <div className="grid gap-8">
-            <section aria-labelledby="contribution-review-summary-title">
-                <p className="font-label text-label text-muted-foreground">
-                    Ringkasan antrean
-                </p>
                 <h2
                     id="contribution-review-summary-title"
-                    className="mt-2 text-title font-bold"
+                    className="mt-3 text-base font-bold tracking-tight text-slate-950"
                 >
-                    {reviewQueue.summary.pending} menunggu keputusan
+                    {reviewQueue.summary.pending} Menunggu Keputusan
                 </h2>
-                <dl className="mt-5 divide-y divide-border border-y border-border">
-                    <SummaryRow
-                        label="Menunggu validasi"
-                        value={reviewQueue.summary.pending}
-                    />
-                    <SummaryRow
-                        label="Sudah tervalidasi"
-                        value={reviewQueue.summary.approved}
-                    />
-                    <SummaryRow
-                        label="Perlu diperbaiki"
-                        value={reviewQueue.summary.revision}
-                    />
-                    <SummaryRow
-                        label="Ditolak"
-                        value={reviewQueue.summary.rejected}
-                    />
+
+                <dl className="mt-4 divide-y divide-slate-100 border-t border-slate-100 text-xs">
+                    <div className="flex items-center justify-between py-3">
+                        <dt className="text-slate-600">Menunggu validasi</dt>
+                        <dd className="font-mono font-bold text-amber-700">
+                            {reviewQueue.summary.pending}
+                        </dd>
+                    </div>
+                    <div className="flex items-center justify-between py-3">
+                        <dt className="text-slate-600">Sudah tervalidasi</dt>
+                        <dd className="font-mono font-bold text-emerald-700">
+                            {reviewQueue.summary.approved}
+                        </dd>
+                    </div>
+                    <div className="flex items-center justify-between py-3">
+                        <dt className="text-slate-600">Perlu diperbaiki</dt>
+                        <dd className="font-mono font-bold text-rose-700">
+                            {reviewQueue.summary.revision}
+                        </dd>
+                    </div>
+                    <div className="flex items-center justify-between py-3">
+                        <dt className="text-slate-600">Ditolak</dt>
+                        <dd className="font-mono font-bold text-slate-700">
+                            {reviewQueue.summary.rejected}
+                        </dd>
+                    </div>
                 </dl>
             </section>
 
-            <section aria-labelledby="review-boundary-title">
-                <div className="flex items-center gap-2">
-                    <LockKeyhole
-                        aria-hidden="true"
-                        className="size-4 text-primary"
-                    />
-                    <h2 id="review-boundary-title" className="font-semibold">
-                        Batas keputusan
-                    </h2>
+            {/* Card 2: Batas Privasi & Keputusan */}
+            <section
+                aria-labelledby="review-boundary-title"
+                className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/80 to-indigo-50/40 p-4.5"
+            >
+                <div className="flex items-start gap-3">
+                    <Lock className="mt-0.5 size-4.5 shrink-0 text-blue-600" />
+                    <div>
+                        <h2
+                            id="review-boundary-title"
+                            className="text-xs font-bold text-blue-900"
+                        >
+                            Batas Keputusan & Audit
+                        </h2>
+                        <p className="mt-1 text-xs leading-relaxed text-blue-800/80">
+                            Evidence yang dibuka tetap private. Setiap keputusan
+                            menyimpan reviewer, alasan, waktu, dan policy
+                            version dalam riwayat ledger yang tidak dapat
+                            ditimpa.
+                        </p>
+                    </div>
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                    Evidence yang dibuka tetap private. Setiap keputusan
-                    menyimpan reviewer, alasan, waktu, dan policy version dalam
-                    riwayat yang tidak dapat ditimpa.
-                </p>
             </section>
 
-            <section aria-labelledby="review-guidance-title">
-                <div className="flex items-center gap-2">
-                    <ShieldCheck
-                        aria-hidden="true"
-                        className="size-4 text-verified"
-                    />
-                    <h2 id="review-guidance-title" className="font-semibold">
-                        Cara kerja reviewer
-                    </h2>
-                </div>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                    Pilih satu berkas, periksa task dan evidence, lalu simpan
-                    satu keputusan. Keputusan lama tetap terlihat sebagai
-                    provenance.
+            {/* Card 3: Akses Cepat */}
+            <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+                <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
+                    MODUL OPERASIONAL
                 </p>
+
+                <div className="mt-3.5 grid gap-2">
+                    <Link
+                        href={affiliationIndex({
+                            institution: institution.id,
+                        })}
+                        prefetch
+                        className="group flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs font-semibold text-slate-800 transition-all hover:border-blue-200 hover:bg-blue-50/50 hover:text-blue-900"
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <ClipboardCheck className="size-4 text-blue-600" />
+                            <span>Review Afiliasi</span>
+                        </div>
+                        <ChevronRight className="size-3.5 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-blue-600" />
+                    </Link>
+
+                    <Link
+                        href={campusRoster({ institution: institution.id })}
+                        prefetch
+                        className="group flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs font-semibold text-slate-800 transition-all hover:border-blue-200 hover:bg-blue-50/50 hover:text-blue-900"
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <FileSpreadsheet className="size-4 text-emerald-600" />
+                            <span>Roster Mahasiswa</span>
+                        </div>
+                        <ChevronRight className="size-3.5 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-blue-600" />
+                    </Link>
+                </div>
             </section>
         </div>
     );
@@ -369,19 +394,22 @@ function SummaryRail({ reviewQueue }: { reviewQueue: ReviewQueue }) {
 function ReviewHistory({ reviews }: { reviews: ContributionReview[] }) {
     if (reviews.length === 0) {
         return (
-            <p className="border-y border-border py-4 text-sm leading-6 text-muted-foreground">
+            <p className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-center text-xs text-slate-500">
                 Belum ada keputusan reviewer pada contribution ini.
             </p>
         );
     }
 
     return (
-        <ol className="grid divide-y divide-border border-y border-border">
+        <ol className="space-y-3">
             {reviews
                 .slice()
                 .reverse()
                 .map((review) => (
-                    <li key={review.id} className="grid gap-2 py-4">
+                    <li
+                        key={review.id}
+                        className="space-y-2 rounded-xl border border-slate-100 bg-slate-50/50 p-3 text-xs"
+                    >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <StatusChip
                                 status={
@@ -392,25 +420,25 @@ function ReviewHistory({ reviews }: { reviews: ContributionReview[] }) {
                             />
                             <time
                                 dateTime={review.reviewed_at}
-                                className="font-label text-label text-muted-foreground"
+                                className="font-mono text-[0.6875rem] text-slate-400"
                             >
                                 {formatDate(review.reviewed_at)}
                             </time>
                         </div>
-                        <p className="text-sm font-semibold">
+                        <p className="font-semibold text-slate-900">
                             {review.reviewer.name}
                         </p>
                         {review.reason && (
-                            <p className="text-sm leading-6 break-words">
+                            <p className="leading-relaxed text-slate-700">
                                 {review.reason}
                             </p>
                         )}
                         {review.note && (
-                            <p className="border-l-2 border-border pl-3 text-sm leading-6 break-words text-muted-foreground">
+                            <p className="border-l-2 border-slate-200 pl-2.5 text-slate-500 italic">
                                 {review.note}
                             </p>
                         )}
-                        <p className="font-label text-label text-muted-foreground">
+                        <p className="font-mono text-[0.6875rem] text-slate-400">
                             {review.policy_version}
                         </p>
                     </li>
@@ -624,66 +652,83 @@ function ReviewWorkspace({
     }
 
     return (
-        <div className="grid gap-5">
+        <div className="space-y-6">
+            {/* Status alerts */}
             {actionMessage && (
-                <p
-                    role="status"
-                    className="border border-verified/40 bg-verified-subtle px-3 py-3 text-sm leading-6 text-verified-subtle-foreground"
-                    data-test="campus-contribution-action-success"
-                >
-                    {actionMessage}
-                </p>
+                <Alert className="rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-950 shadow-xs">
+                    <CheckCircle2 className="size-4 text-emerald-600" />
+                    <AlertTitle className="font-bold">
+                        Perubahan Tersimpan
+                    </AlertTitle>
+                    <AlertDescription
+                        className="text-xs text-emerald-800"
+                        data-test="campus-contribution-action-success"
+                    >
+                        {actionMessage}
+                    </AlertDescription>
+                </Alert>
             )}
 
             {actionError && (
-                <div
-                    role="alert"
-                    className="grid gap-1 border border-correction/40 bg-correction-subtle px-3 py-3 text-sm leading-6 text-correction-subtle-foreground"
+                <Alert
+                    variant="destructive"
+                    className="rounded-2xl border-rose-200 bg-rose-50 text-rose-950 shadow-xs"
                     data-test="campus-contribution-action-error"
                 >
-                    <span className="font-semibold">
-                        Keputusan belum tersimpan
-                    </span>
-                    <span>{actionError}</span>
-                </div>
+                    <AlertTriangle className="size-4 text-rose-600" />
+                    <AlertTitle className="font-bold">
+                        Keputusan Belum Tersimpan
+                    </AlertTitle>
+                    <AlertDescription className="text-xs text-rose-800">
+                        {actionError}
+                    </AlertDescription>
+                </Alert>
             )}
 
             {queueError && (
                 <div
                     role="alert"
-                    className="flex flex-wrap items-start justify-between gap-3 border border-correction/40 bg-correction-subtle px-3 py-3 text-sm leading-6 text-correction-subtle-foreground"
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-900 shadow-xs"
                     data-test="campus-contribution-queue-error"
                 >
                     <span>{queueError}</span>
                     <Button
                         type="button"
                         variant="outline"
-                        className="cursor-pointer disabled:cursor-not-allowed"
+                        className="h-8 cursor-pointer rounded-xl bg-white text-xs disabled:cursor-not-allowed"
                         disabled={isLoading}
                         onClick={refreshQueue}
                         data-test="campus-contribution-queue-error-retry"
                     >
-                        {isLoading ? <Spinner /> : <RefreshCw />}
+                        {isLoading ? (
+                            <Spinner className="mr-1 size-3" />
+                        ) : (
+                            <RefreshCw className="mr-1 size-3 text-slate-500" />
+                        )}
                         Coba lagi
                     </Button>
                 </div>
             )}
 
-            <div className="grid gap-8 2xl:grid-cols-[minmax(0,1fr)_27rem]">
+            <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_26rem]">
                 <section
                     aria-labelledby="contribution-review-queue-title"
                     aria-busy={isLoading}
                     className="min-w-0"
                 >
-                    <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+                    {/* Header bar */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-6 py-5 shadow-xs">
                         <div>
-                            <h2
-                                id="contribution-review-queue-title"
-                                className="text-title font-bold"
-                            >
-                                Antrean validasi
-                            </h2>
-                            <p className="mt-1 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                                <FileCheck2 className="size-4.5 text-blue-600" />
+                                <h2
+                                    id="contribution-review-queue-title"
+                                    className="text-base font-bold text-slate-900"
+                                >
+                                    Antrean Validasi
+                                </h2>
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">
                                 {reviewQueue.pagination.total} contribution
                                 sesuai filter
                             </p>
@@ -691,41 +736,44 @@ function ReviewWorkspace({
                         <Button
                             type="button"
                             variant="outline"
-                            className="cursor-pointer disabled:cursor-not-allowed"
+                            className="h-9 cursor-pointer rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed"
                             disabled={isLoading}
                             onClick={refreshQueue}
                             data-test="campus-contribution-refresh"
                         >
-                            {isLoading ? <Spinner /> : <RefreshCw />}
+                            {isLoading ? (
+                                <Spinner className="mr-1.5 size-3.5" />
+                            ) : (
+                                <RefreshCw className="mr-1.5 size-3.5 text-slate-500" />
+                            )}
                             Muat ulang
                         </Button>
                     </div>
 
-                    {reviewQueue.items.length === 0 ? (
-                        <>
-                            {isLoading && <QueueRefreshState />}
+                    <div className="mt-4">
+                        {reviewQueue.items.length === 0 ? (
                             <div
-                                className="border-y border-border px-4 py-14 text-center"
+                                className="grid justify-items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-6 py-16 text-center shadow-xs"
                                 data-test="campus-contribution-queue-empty"
                             >
-                                <CheckCircle2
-                                    aria-hidden="true"
-                                    className="mx-auto size-9 text-verified"
-                                />
-                                <h3 className="mt-4 text-lg font-bold">
+                                <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/50">
+                                    <CheckCircle2
+                                        aria-hidden="true"
+                                        className="size-7"
+                                    />
+                                </div>
+                                <h3 className="text-base font-bold text-slate-900">
                                     Antrean kosong
                                 </h3>
-                                <p className="mx-auto mt-2 max-w-[55ch] text-sm leading-relaxed text-muted-foreground">
+                                <p className="mx-auto max-w-[50ch] text-xs leading-relaxed text-slate-500">
                                     Semua contribution pada filter ini sudah
                                     memiliki status yang tercatat. Ubah filter
                                     untuk melihat riwayat lain.
                                 </p>
                             </div>
-                        </>
-                    ) : (
-                        <div className="grid gap-3">
-                            {isLoading && <QueueRefreshState />}
-                            <div className="border-y border-border">
+                        ) : (
+                            <div className="grid gap-3">
+                                {isLoading && <QueueRefreshState />}
                                 {reviewQueue.items.map((item) => {
                                     const itemStatus = statusMeta[item.status];
 
@@ -733,78 +781,100 @@ function ReviewWorkspace({
                                         <article
                                             key={item.id}
                                             className={cn(
-                                                'border-b border-border last:border-b-0',
+                                                'group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md sm:p-6',
                                                 selectedId === item.id &&
-                                                    'bg-primary/5',
+                                                    'border-blue-500 bg-blue-50/20 shadow-md ring-2 ring-blue-500/20',
                                             )}
                                             data-test={`campus-contribution-row-${item.id}`}
                                         >
                                             <button
                                                 type="button"
-                                                className="grid w-full cursor-pointer gap-4 px-4 py-4 text-left transition-colors duration-fast hover:bg-muted/50 focus-visible:bg-muted/50 motion-reduce:transition-none sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_10rem] sm:items-center"
+                                                className="grid w-full cursor-pointer gap-4 text-left sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_10rem] sm:items-center"
                                                 aria-pressed={
                                                     selectedId === item.id
                                                 }
                                                 onClick={() => selectItem(item)}
                                                 data-test={`campus-contribution-select-${item.id}`}
                                             >
-                                                <span className="min-w-0">
-                                                    <span className="block font-label text-label text-primary">
-                                                        {item.reference}
-                                                    </span>
-                                                    <span className="mt-1 block text-base font-semibold break-words">
-                                                        {item.project.title}
-                                                    </span>
-                                                    <span className="mt-1 block text-sm break-words text-muted-foreground">
-                                                        {item.contributor.name}
-                                                    </span>
-                                                </span>
-                                                <span className="min-w-0 text-sm">
-                                                    <span className="block font-medium break-words">
+                                                <div className="flex items-start gap-3.5">
+                                                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                                        <FileText className="size-5" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <span className="font-mono text-xs font-bold text-slate-400">
+                                                            {item.reference}
+                                                        </span>
+                                                        <h3 className="mt-0.5 text-sm font-bold break-words text-slate-900">
+                                                            {item.project.title}
+                                                        </h3>
+                                                        <p className="mt-1 text-xs text-slate-500">
+                                                            Oleh:{' '}
+                                                            <strong className="font-semibold text-slate-700">
+                                                                {
+                                                                    item
+                                                                        .contributor
+                                                                        .name
+                                                                }
+                                                            </strong>
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="min-w-0 text-xs">
+                                                    <p className="font-semibold break-words text-slate-800">
                                                         {item.current_version
                                                             ?.task?.title ??
                                                             'Task belum tersedia'}
-                                                    </span>
-                                                    <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                                                    </p>
+                                                    <p className="mt-1 text-[0.6875rem] text-slate-400">
                                                         {item.current_version
                                                             ? `Versi ${item.current_version.version_number}`
                                                             : 'Versi belum tersedia'}{' '}
-                                                        ·{' '}
+                                                        •{' '}
                                                         {formatDate(
                                                             item.updated_at,
                                                         )}
-                                                    </span>
-                                                    <span className="mt-2 block text-xs text-muted-foreground">
+                                                    </p>
+                                                    <p className="mt-1.5 text-slate-500">
                                                         {itemStatus.description}
-                                                    </span>
-                                                </span>
-                                                <span className="flex items-center justify-between gap-3 sm:grid sm:justify-items-start">
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
                                                     <StatusChip
                                                         status={item.status}
                                                     />
-                                                    <span className="font-label text-label text-primary underline-offset-4 group-hover:underline">
+                                                    <span
+                                                        className={`text-xs font-semibold ${
+                                                            selectedId ===
+                                                            item.id
+                                                                ? 'text-blue-600'
+                                                                : 'text-slate-400 group-hover:text-blue-600'
+                                                        }`}
+                                                    >
                                                         {selectedId === item.id
-                                                            ? 'Dibuka'
-                                                            : 'Tinjau'}
+                                                            ? 'Sedang Dibuka'
+                                                            : 'Buka Docket →'}
                                                     </span>
-                                                </span>
+                                                </div>
                                             </button>
                                         </article>
                                     );
                                 })}
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
+                    {/* Pagination */}
                     {reviewQueue.pagination.last_page > 1 && (
                         <nav
                             aria-label="Paginasi antrean validasi contribution"
-                            className="mt-4 flex items-center justify-between gap-4"
+                            className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs"
                         >
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="cursor-pointer disabled:cursor-not-allowed"
+                                className="cursor-pointer rounded-xl text-xs font-semibold disabled:cursor-not-allowed"
                                 disabled={
                                     isLoading ||
                                     reviewQueue.pagination.current_page === 1
@@ -817,17 +887,17 @@ function ReviewWorkspace({
                                     })
                                 }
                             >
-                                <ChevronLeft />
+                                <ChevronLeft className="mr-1 size-3.5" />
                                 Sebelumnya
                             </Button>
-                            <p className="font-label text-label text-muted-foreground">
+                            <p className="font-mono text-xs font-semibold text-slate-600">
                                 Halaman {reviewQueue.pagination.current_page}{' '}
                                 dari {reviewQueue.pagination.last_page}
                             </p>
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="cursor-pointer disabled:cursor-not-allowed"
+                                className="cursor-pointer rounded-xl text-xs font-semibold disabled:cursor-not-allowed"
                                 disabled={
                                     isLoading ||
                                     reviewQueue.pagination.current_page ===
@@ -842,148 +912,163 @@ function ReviewWorkspace({
                                 }
                             >
                                 Berikutnya
-                                <ChevronRight />
+                                <ChevronRight className="ml-1 size-3.5" />
                             </Button>
                         </nav>
                     )}
                 </section>
 
+                {/* Sticky Docket Aside */}
                 <aside
                     aria-labelledby="campus-review-decision-title"
-                    className="min-w-0 border-t border-border pt-6 2xl:border-t-0 2xl:border-l 2xl:pt-0 2xl:pl-6"
+                    className="min-w-0"
                 >
                     {selected === null ? (
-                        <div className="sticky top-6 border-y border-border py-8 text-center">
-                            <UserRoundCheck
-                                aria-hidden="true"
-                                className="mx-auto size-8 text-muted-foreground"
-                            />
-                            <h2 className="mt-3 font-bold">
-                                Pilih contribution untuk ditinjau
+                        <div className="sticky top-6 grid justify-items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-8 text-center shadow-xs">
+                            <div className="flex size-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                                <UserRoundCheck
+                                    aria-hidden="true"
+                                    className="size-6"
+                                />
+                            </div>
+                            <h2 className="text-base font-bold text-slate-900">
+                                Pilih Contribution untuk Ditinjau
                             </h2>
-                            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                                Gunakan Tab dan Enter untuk membuka docket.
-                                Tekan Escape untuk menutupnya.
+                            <p className="text-xs leading-relaxed text-slate-500">
+                                Klik salah satu baris kontribusi untuk memeriksa
+                                deskripsi tugas, klaim hasil, dan tautan
+                                evidence private.
                             </p>
                         </div>
                     ) : (
                         <div
-                            className="sticky top-6 grid min-w-0 gap-6"
+                            className="sticky top-6 grid min-w-0 gap-5 rounded-2xl border border-blue-200 bg-white p-6 shadow-md"
                             data-test="campus-contribution-docket"
                         >
-                            <header className="grid gap-3 border-y border-border py-4">
-                                <p className="font-label text-label text-primary">
+                            {/* Docket Header */}
+                            <header className="border-b border-slate-100 pb-4">
+                                <span className="font-mono text-xs font-bold text-blue-600">
                                     {selected.reference}
-                                </p>
+                                </span>
                                 <h2
                                     id="campus-review-decision-title"
                                     tabIndex={-1}
-                                    className="text-title font-bold break-words focus-visible:outline-none"
+                                    className="mt-1 text-lg font-bold break-words text-slate-950 focus-visible:outline-none"
                                 >
                                     {selected.project.title}
                                 </h2>
-                                <div className="flex flex-wrap items-center gap-2">
+                                <div className="mt-2 flex flex-wrap items-center gap-2">
                                     <StatusChip status={selected.status} />
-                                    <span className="text-sm text-muted-foreground">
-                                        {selected.contributor.name}
+                                    <span className="text-xs text-slate-500">
+                                        Oleh {selected.contributor.name}
                                     </span>
                                 </div>
                             </header>
 
                             {statusError && (
-                                <p
-                                    role="alert"
-                                    className="border border-correction/40 bg-correction-subtle px-3 py-3 text-sm leading-6 text-correction-subtle-foreground"
+                                <Alert
+                                    variant="destructive"
+                                    className="rounded-xl"
                                 >
-                                    {statusError}
-                                </p>
+                                    <AlertDescription className="text-xs">
+                                        {statusError}
+                                    </AlertDescription>
+                                </Alert>
                             )}
 
-                            <section aria-labelledby="contribution-provenance-title">
+                            {/* Provenance Facts */}
+                            <section
+                                aria-labelledby="contribution-provenance-title"
+                                className="space-y-2"
+                            >
                                 <div className="flex items-center gap-2">
                                     <History
                                         aria-hidden="true"
-                                        className="size-4 text-primary"
+                                        className="size-4 text-blue-600"
                                     />
                                     <h3
                                         id="contribution-provenance-title"
-                                        className="font-semibold"
+                                        className="text-xs font-bold text-slate-800"
                                     >
-                                        Provenance review
+                                        Provenance Review
                                     </h3>
                                 </div>
-                                <dl className="mt-3 divide-y divide-border border-y border-border text-sm">
-                                    <SummaryFact
-                                        label="Pemilik contribution"
-                                        value={selected.contributor.name}
-                                    />
-                                    <SummaryFact
-                                        label="Task"
-                                        value={
-                                            version?.task?.title ??
-                                            'Task belum tersedia'
-                                        }
-                                    />
-                                    <SummaryFact
-                                        label="Versi aktif"
-                                        value={
-                                            version === null
+                                <dl className="space-y-1.5 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs">
+                                    <div className="flex items-center justify-between">
+                                        <dt className="text-slate-500">Task</dt>
+                                        <dd className="font-semibold text-slate-900">
+                                            {version?.task?.title ??
+                                                'Belum ada task'}
+                                        </dd>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <dt className="text-slate-500">
+                                            Versi Aktif
+                                        </dt>
+                                        <dd className="font-semibold text-slate-900">
+                                            {version === null
                                                 ? 'Belum tersedia'
-                                                : `Versi ${version.version_number}`
-                                        }
-                                    />
-                                    <SummaryFact
-                                        label="Diperbarui"
-                                        value={formatDate(selected.updated_at)}
-                                    />
+                                                : `Versi ${version.version_number}`}
+                                        </dd>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <dt className="text-slate-500">
+                                            Diperbarui
+                                        </dt>
+                                        <dd className="text-slate-700">
+                                            {formatDate(selected.updated_at)}
+                                        </dd>
+                                    </div>
                                 </dl>
                             </section>
 
+                            {/* Version Claim & Summary */}
                             {version && (
                                 <>
                                     <section
                                         aria-labelledby="contribution-claim-title"
-                                        className="grid gap-3"
+                                        className="space-y-2 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs"
                                     >
                                         <h3
                                             id="contribution-claim-title"
-                                            className="font-semibold"
+                                            className="font-bold text-slate-900"
                                         >
-                                            Klaim dan ringkasan
+                                            Klaim & Ringkasan Kontribusi
                                         </h3>
-                                        <p className="text-base leading-7 break-words">
+                                        <p className="leading-relaxed font-semibold text-slate-800">
                                             {version.claim}
                                         </p>
-                                        <p className="text-sm leading-6 break-words text-muted-foreground">
+                                        <p className="leading-relaxed text-slate-600">
                                             {version.summary}
                                         </p>
-                                        <p className="border-l-2 border-border pl-3 text-sm leading-6 break-words text-muted-foreground">
+                                        <p className="border-l-2 border-blue-400 pl-2 text-slate-500 italic">
                                             {version.declaration}
                                         </p>
                                     </section>
 
+                                    {/* Evidence List */}
                                     <section
                                         aria-labelledby="contribution-evidence-title"
-                                        className="grid gap-3"
+                                        className="space-y-2"
                                     >
-                                        <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center justify-between">
                                             <h3
                                                 id="contribution-evidence-title"
-                                                className="font-semibold"
+                                                className="text-xs font-bold text-slate-800"
                                             >
-                                                Evidence private
+                                                Evidence Private
                                             </h3>
-                                            <span className="font-label text-label text-muted-foreground">
+                                            <span className="font-mono text-[0.6875rem] text-slate-400">
                                                 {version.evidence.length} file
                                             </span>
                                         </div>
                                         {version.evidence.length === 0 ? (
-                                            <p className="border-y border-border py-4 text-sm leading-6 text-muted-foreground">
+                                            <p className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 text-center text-xs text-slate-500">
                                                 Tidak ada evidence yang
                                                 ditautkan ke versi ini.
                                             </p>
                                         ) : (
-                                            <ul className="grid divide-y divide-border border-y border-border">
+                                            <ul className="space-y-2">
                                                 {version.evidence.map(
                                                     (evidence) => {
                                                         const attachment =
@@ -994,24 +1079,24 @@ function ReviewWorkspace({
                                                                 key={
                                                                     evidence.id
                                                                 }
-                                                                className="grid gap-2 py-4"
+                                                                className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs"
                                                             >
-                                                                <div className="flex items-start gap-3">
+                                                                <div className="flex items-start gap-2.5">
                                                                     <FileCheck2
                                                                         aria-hidden="true"
-                                                                        className="mt-1 size-4 shrink-0 text-verified"
+                                                                        className="mt-0.5 size-4 shrink-0 text-emerald-600"
                                                                     />
                                                                     <div className="min-w-0">
-                                                                        <p className="font-medium break-words">
+                                                                        <p className="font-bold break-words text-slate-900">
                                                                             {attachment?.original_name ??
                                                                                 evidence.source_label}
                                                                         </p>
                                                                         {attachment && (
-                                                                            <p className="mt-1 font-label text-label text-muted-foreground">
+                                                                            <p className="font-mono text-[0.6875rem] text-slate-400">
                                                                                 {
                                                                                     attachment.mime_type
                                                                                 }{' '}
-                                                                                ·{' '}
+                                                                                •{' '}
                                                                                 {formatFileSize(
                                                                                     attachment.size_bytes,
                                                                                 )}
@@ -1020,7 +1105,7 @@ function ReviewWorkspace({
                                                                     </div>
                                                                 </div>
                                                                 {evidence.notes && (
-                                                                    <p className="pl-7 text-sm leading-6 text-muted-foreground">
+                                                                    <p className="mt-1.5 pl-6 text-slate-600">
                                                                         {
                                                                             evidence.notes
                                                                         }
@@ -1028,7 +1113,7 @@ function ReviewWorkspace({
                                                                 )}
                                                                 {evidence.available &&
                                                                     attachment && (
-                                                                        <div className="flex flex-wrap gap-3 pl-7 text-sm font-semibold">
+                                                                        <div className="mt-2 flex items-center gap-3 pl-6 font-semibold">
                                                                             <a
                                                                                 href={
                                                                                     previewAttachment(
@@ -1045,9 +1130,9 @@ function ReviewWorkspace({
                                                                                 }
                                                                                 target="_blank"
                                                                                 rel="noreferrer"
-                                                                                className="inline-flex cursor-pointer items-center gap-2 text-primary underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                                                                                className="inline-flex cursor-pointer items-center gap-1 text-blue-600 hover:underline"
                                                                             >
-                                                                                <Eye aria-hidden="true" />
+                                                                                <Eye className="size-3.5" />
                                                                                 Pratinjau
                                                                             </a>
                                                                             <a
@@ -1064,27 +1149,13 @@ function ReviewWorkspace({
                                                                                     )
                                                                                         .url
                                                                                 }
-                                                                                className="inline-flex cursor-pointer items-center gap-2 text-primary underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                                                                                className="inline-flex cursor-pointer items-center gap-1 text-blue-600 hover:underline"
                                                                             >
-                                                                                <ArrowDownToLine aria-hidden="true" />
+                                                                                <ArrowDownToLine className="size-3.5" />
                                                                                 Unduh
                                                                             </a>
                                                                         </div>
                                                                     )}
-                                                                {!evidence.available && (
-                                                                    <p className="pl-7 text-sm leading-6 text-correction-subtle-foreground">
-                                                                        File
-                                                                        tidak
-                                                                        tersedia.
-                                                                        Referensi
-                                                                        tetap
-                                                                        disimpan
-                                                                        agar
-                                                                        provenance
-                                                                        tidak
-                                                                        hilang.
-                                                                    </p>
-                                                                )}
                                                             </li>
                                                         );
                                                     },
@@ -1095,46 +1166,36 @@ function ReviewWorkspace({
                                 </>
                             )}
 
-                            <section aria-labelledby="contribution-history-title">
+                            {/* Riwayat Keputusan */}
+                            <section
+                                aria-labelledby="contribution-history-title"
+                                className="space-y-2"
+                            >
                                 <div className="flex items-center gap-2">
                                     <History
                                         aria-hidden="true"
-                                        className="size-4 text-primary"
+                                        className="size-4 text-blue-600"
                                     />
                                     <h3
                                         id="contribution-history-title"
-                                        className="font-semibold"
+                                        className="text-xs font-bold text-slate-800"
                                     >
-                                        Riwayat keputusan
+                                        Riwayat Keputusan
                                     </h3>
                                 </div>
-                                <div className="mt-3">
-                                    <ReviewHistory reviews={selected.reviews} />
-                                </div>
+                                <ReviewHistory reviews={selected.reviews} />
                             </section>
 
+                            {/* Decision Form */}
                             {selected.status === 'pending' && version ? (
                                 <form
-                                    className="grid gap-5 border-t border-border pt-5"
+                                    className="grid gap-4 border-t border-slate-100 pt-4"
                                     onSubmit={submitReview}
                                     data-test="campus-contribution-review-form"
                                 >
-                                    <div className="grid gap-1">
-                                        <h3
-                                            id="contribution-decision-form-title"
-                                            className="font-semibold"
-                                        >
-                                            Keputusan reviewer
-                                        </h3>
-                                        <p className="text-sm leading-6 text-muted-foreground">
-                                            Pilih satu keputusan. Alasan wajib
-                                            untuk minta perbaikan atau menolak.
-                                        </p>
-                                    </div>
-
                                     <fieldset className="grid gap-2">
-                                        <legend className="text-sm font-semibold">
-                                            Tindakan
+                                        <legend className="text-xs font-bold tracking-wider text-slate-700 uppercase">
+                                            Tindakan Reviewer
                                         </legend>
                                         {(
                                             Object.keys(
@@ -1144,12 +1205,12 @@ function ReviewWorkspace({
                                             <label
                                                 key={decision}
                                                 className={cn(
-                                                    'flex min-h-control-lg cursor-pointer items-start gap-3 rounded-md border px-3 py-2 text-sm transition-colors duration-fast hover:bg-accent motion-reduce:transition-none',
+                                                    'flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition-all',
                                                     decisionMeta[decision]
                                                         .className,
                                                     selectedDecision ===
                                                         decision &&
-                                                        'border-primary ring-1 ring-primary',
+                                                        'ring-2 ring-blue-600/30',
                                                 )}
                                             >
                                                 <input
@@ -1166,28 +1227,24 @@ function ReviewWorkspace({
                                                             decision,
                                                         )
                                                     }
-                                                    className="mt-1 size-4 cursor-pointer accent-primary"
-                                                    aria-describedby={`decision-help-${decision}`}
+                                                    className="mt-0.5 size-4 cursor-pointer accent-blue-600"
                                                 />
-                                                <span className="grid gap-1">
-                                                    <span className="font-semibold">
+                                                <div>
+                                                    <span className="font-bold text-slate-900">
                                                         {
                                                             decisionMeta[
                                                                 decision
                                                             ].label
                                                         }
                                                     </span>
-                                                    <span
-                                                        id={`decision-help-${decision}`}
-                                                        className="text-xs leading-5 text-muted-foreground"
-                                                    >
+                                                    <p className="mt-0.5 text-[0.6875rem] text-slate-500">
                                                         {
                                                             decisionMeta[
                                                                 decision
                                                             ].description
                                                         }
-                                                    </span>
-                                                </span>
+                                                    </p>
+                                                </div>
                                             </label>
                                         ))}
                                     </fieldset>
@@ -1195,21 +1252,22 @@ function ReviewWorkspace({
                                     {decisionError && (
                                         <p
                                             role="alert"
-                                            className="text-sm text-correction-subtle-foreground"
+                                            className="text-xs font-semibold text-rose-600"
                                         >
                                             {decisionError}
                                         </p>
                                     )}
 
-                                    <div className="grid gap-2">
+                                    {/* Alasan */}
+                                    <div className="grid gap-1.5">
                                         <label
                                             htmlFor="campus-contribution-review-reason"
-                                            className="text-sm font-semibold"
+                                            className="text-xs font-bold text-slate-700"
                                         >
-                                            Alasan keputusan
+                                            Alasan Keputusan
                                             {selectedDecision !==
                                                 'approved' && (
-                                                <span aria-hidden="true">
+                                                <span className="text-rose-600">
                                                     {' '}
                                                     *
                                                 </span>
@@ -1219,61 +1277,50 @@ function ReviewWorkspace({
                                             id="campus-contribution-review-reason"
                                             value={reviewForm.data.reason ?? ''}
                                             maxLength={1000}
-                                            rows={4}
+                                            rows={3}
                                             required={
                                                 selectedDecision !== 'approved'
                                             }
                                             aria-invalid={Boolean(reasonError)}
-                                            aria-describedby="campus-contribution-review-reason-help"
                                             onChange={(event) =>
                                                 reviewForm.setData(
                                                     'reason',
                                                     event.target.value,
                                                 )
                                             }
-                                            className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm leading-6 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                                            placeholder="Tulis alasan faktual yang membantu pemilik menindaklanjuti keputusan."
+                                            className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-xs font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-600 focus:bg-white"
+                                            placeholder="Tulis alasan faktual yang membantu mahasiswa..."
                                         />
-                                        <p
-                                            id="campus-contribution-review-reason-help"
-                                            className="flex justify-between gap-3 text-xs text-muted-foreground"
-                                        >
-                                            <span>
-                                                Jangan salin data pribadi yang
-                                                tidak diperlukan.
-                                            </span>
-                                            <span className="shrink-0">
-                                                {
-                                                    (
-                                                        reviewForm.data
-                                                            .reason ?? ''
-                                                    ).length
-                                                }{' '}
-                                                / 1.000
-                                            </span>
+                                        <p className="text-right font-mono text-[0.6875rem] text-slate-400">
+                                            {
+                                                (reviewForm.data.reason ?? '')
+                                                    .length
+                                            }{' '}
+                                            / 1.000
                                         </p>
                                         {reasonError && (
                                             <p
                                                 role="alert"
-                                                className="text-sm text-correction-subtle-foreground"
+                                                className="text-xs font-semibold text-rose-600"
                                             >
                                                 {reasonError}
                                             </p>
                                         )}
                                     </div>
 
-                                    <div className="grid gap-2">
+                                    {/* Catatan internal */}
+                                    <div className="grid gap-1.5">
                                         <label
                                             htmlFor="campus-contribution-review-note"
-                                            className="text-sm font-semibold"
+                                            className="text-xs font-bold text-slate-700"
                                         >
-                                            Catatan internal (opsional)
+                                            Catatan Internal (Opsional)
                                         </label>
                                         <textarea
                                             id="campus-contribution-review-note"
                                             value={reviewForm.data.note ?? ''}
                                             maxLength={1000}
-                                            rows={3}
+                                            rows={2}
                                             aria-invalid={Boolean(noteError)}
                                             onChange={(event) =>
                                                 reviewForm.setData(
@@ -1281,20 +1328,21 @@ function ReviewWorkspace({
                                                     event.target.value,
                                                 )
                                             }
-                                            className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm leading-6 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                                            placeholder="Konteks tambahan untuk reviewer kampus."
+                                            className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-xs font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-600 focus:bg-white"
+                                            placeholder="Konteks tambahan untuk reviewer kampus..."
                                         />
                                         {noteError && (
                                             <p
                                                 role="alert"
-                                                className="text-sm text-correction-subtle-foreground"
+                                                className="text-xs font-semibold text-rose-600"
                                             >
                                                 {noteError}
                                             </p>
                                         )}
                                     </div>
 
-                                    <div className="grid gap-2 border-t border-border pt-4">
+                                    {/* Action Buttons */}
+                                    <div className="grid gap-2 border-t border-slate-100 pt-3">
                                         <Button
                                             type="submit"
                                             variant={
@@ -1302,20 +1350,27 @@ function ReviewWorkspace({
                                                     ? 'destructive'
                                                     : 'default'
                                             }
-                                            className="cursor-pointer disabled:cursor-not-allowed"
+                                            className={`h-10 cursor-pointer rounded-xl text-xs font-semibold text-white shadow-xs ${
+                                                selectedDecision === 'approved'
+                                                    ? 'bg-emerald-700 hover:bg-emerald-800'
+                                                    : selectedDecision ===
+                                                        'revision'
+                                                      ? 'bg-amber-700 hover:bg-amber-800'
+                                                      : 'bg-rose-600 hover:bg-rose-700'
+                                            }`}
                                             disabled={reviewForm.processing}
                                             data-test="campus-contribution-decision-submit"
                                         >
                                             {reviewForm.processing ? (
-                                                <Spinner aria-label="Menyimpan keputusan" />
+                                                <Spinner className="mr-1.5 size-3.5" />
                                             ) : selectedDecision ===
                                               'approved' ? (
-                                                <ShieldCheck />
+                                                <ShieldCheck className="mr-1.5 size-3.5" />
                                             ) : selectedDecision ===
                                               'revision' ? (
-                                                <FileWarning />
+                                                <FileWarning className="mr-1.5 size-3.5" />
                                             ) : (
-                                                <XCircle />
+                                                <XCircle className="mr-1.5 size-3.5" />
                                             )}
                                             {reviewForm.processing
                                                 ? 'Menyimpan keputusan...'
@@ -1325,7 +1380,7 @@ function ReviewWorkspace({
                                         <Button
                                             type="button"
                                             variant="ghost"
-                                            className="cursor-pointer disabled:cursor-not-allowed"
+                                            className="h-9 cursor-pointer rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
                                             disabled={reviewForm.processing}
                                             onClick={() => setSelectedId(null)}
                                         >
@@ -1334,16 +1389,13 @@ function ReviewWorkspace({
                                     </div>
                                 </form>
                             ) : (
-                                <div className="flex items-start gap-3 border border-border bg-muted/50 px-3 py-3 text-sm leading-6 text-muted-foreground">
-                                    <LockKeyhole
-                                        aria-hidden="true"
-                                        className="mt-1 size-4 shrink-0"
-                                    />
-                                    <p>
-                                        Mode baca. Status ini sudah memiliki
+                                <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-xs text-slate-600">
+                                    <LockKeyhole className="size-4 shrink-0 text-slate-500" />
+                                    <span>
+                                        Mode baca. Kontribusi ini sudah memiliki
                                         keputusan dan tidak menerima perubahan
                                         baru.
-                                    </p>
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -1405,7 +1457,10 @@ export default function CampusContributions({
 
     return (
         <>
-            <Head title={`Validasi contribution, ${institution.name}`} />
+            <Head
+                title={`Validasi Kontribusi Mahasiswa - ${institution.name} | SATU`}
+            />
+
             <AppPage
                 contextRail={
                     <Deferred
@@ -1416,91 +1471,106 @@ export default function CampusContributions({
                                 className="grid gap-4"
                                 data-test="campus-contribution-summary-loading"
                             >
-                                <span className="sr-only" role="status">
-                                    Memuat ringkasan antrean contribution.
-                                </span>
-                                <Skeleton className="h-3 w-32" />
-                                <Skeleton className="h-8 w-52" />
-                                <Skeleton className="h-44 w-full" />
-                                <Skeleton className="h-28 w-full" />
+                                <Skeleton className="h-4 w-32 bg-slate-100" />
+                                <Skeleton className="h-8 w-52 bg-slate-100" />
+                                <Skeleton className="h-44 w-full rounded-2xl bg-slate-100" />
+                                <Skeleton className="h-28 w-full rounded-2xl bg-slate-100" />
                             </div>
                         }
                     >
-                        <SummaryRail reviewQueue={reviewQueue!} />
+                        <SummaryRail
+                            reviewQueue={reviewQueue!}
+                            institution={institution}
+                        />
                     </Deferred>
                 }
                 contextRailLabel="Ringkasan dan batas validasi contribution"
             >
                 <div
-                    className="mx-auto w-full max-w-7xl"
+                    className="space-y-6"
                     data-test="campus-contribution-review-root"
                 >
-                    <header className="mb-7 grid gap-5 border-b border-border pb-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.35fr)] lg:items-end lg:gap-10">
-                        <div className="min-w-0 space-y-3">
-                            <p className="font-label text-label text-primary">
-                                MEJA VALIDASI / CAMPUS REVIEWER
-                            </p>
-                            <div className="flex flex-wrap items-start justify-between gap-4">
-                                <div>
-                                    <h1 className="max-w-[24ch] text-headline font-bold text-balance">
-                                        Validasi contribution {institution.name}
-                                    </h1>
-                                    <p className="mt-3 max-w-[68ch] text-body text-muted-foreground">
-                                        Periksa pekerjaan, task, evidence, dan
-                                        provenance sebelum menyimpan keputusan
-                                        kampus.
-                                    </p>
+                    {/* Header Banner */}
+                    <header className="relative isolate overflow-hidden rounded-2xl border border-blue-100 bg-white px-6 py-6 shadow-[0_18px_50px_-36px_rgba(30,64,175,0.35)] sm:px-8 sm:py-7">
+                        <div
+                            aria-hidden="true"
+                            className="absolute -top-28 -right-24 size-80 rounded-full bg-blue-100/75 blur-3xl sm:-right-12"
+                        />
+                        <div
+                            aria-hidden="true"
+                            className="absolute right-14 bottom-0 hidden h-24 w-24 rounded-tl-[2.5rem] border-t border-l border-indigo-100 sm:block"
+                        />
+
+                        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                                    <FileCheck2 className="size-3 text-blue-600" />
+                                    Meja Validasi Kampus
                                 </div>
-                                <Badge
-                                    variant="outline"
-                                    className="border-primary/30 bg-primary/5 px-3 py-1 text-primary"
-                                >
-                                    <ShieldCheck />
-                                    Akses reviewer kampus
-                                </Badge>
+
+                                <h1 className="mt-3 text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
+                                    Validasi Kontribusi {institution.name}
+                                </h1>
+
+                                <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-slate-600">
+                                    Periksa pekerjaan, task, evidence private,
+                                    dan provenance sebelum menetapkan keputusan
+                                    validasi kampus di{' '}
+                                    <span className="font-semibold text-slate-900">
+                                        {institution.name}
+                                    </span>
+                                    .
+                                </p>
                             </div>
-                        </div>
-                        <div className="grid gap-2 border border-border bg-card/60 px-4 py-4 text-sm leading-6">
-                            <p className="font-label text-label text-muted-foreground">
-                                SUMBER KEPUTUSAN
-                            </p>
-                            <p>
-                                Data berasal dari contribution yang dikirim
-                                mahasiswa pada institution ini. Tidak ada bulk
-                                decision.
-                            </p>
+
+                            <div className="flex shrink-0 items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-2.5 text-xs font-semibold text-blue-800">
+                                <ShieldCheck className="size-4 text-blue-600" />
+                                <span>Akses Reviewer Kampus</span>
+                            </div>
                         </div>
                     </header>
 
+                    {/* Filter error */}
                     {filterError && (
                         <div
                             role="alert"
-                            className="mb-7 flex flex-wrap items-start justify-between gap-3 border border-correction/40 bg-correction-subtle px-3 py-3 text-sm leading-6 text-correction-subtle-foreground"
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-900 shadow-xs"
                             data-test="campus-contribution-filter-error"
                         >
                             <span>{filterError}</span>
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="cursor-pointer disabled:cursor-not-allowed"
+                                className="h-8 cursor-pointer rounded-xl bg-white text-xs disabled:cursor-not-allowed"
                                 disabled={isFilterLoading}
                                 onClick={() => updateFilters({})}
                                 data-test="campus-contribution-filter-error-retry"
                             >
-                                {isFilterLoading ? <Spinner /> : <RefreshCw />}
+                                {isFilterLoading ? (
+                                    <Spinner className="mr-1 size-3" />
+                                ) : (
+                                    <RefreshCw className="mr-1 size-3 text-slate-500" />
+                                )}
                                 Coba lagi
                             </Button>
                         </div>
                     )}
 
+                    {/* Filter Card */}
                     <section
                         aria-label="Filter antrean validasi contribution"
                         aria-busy={isFilterLoading}
-                        className="mb-7 grid gap-4 border-y border-border py-4 sm:grid-cols-2"
+                        className="grid gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:grid-cols-2"
                     >
-                        <label className="grid gap-2 text-sm font-semibold">
-                            Status
+                        <div className="space-y-1.5">
+                            <label
+                                htmlFor="filter-status"
+                                className="text-xs font-bold text-slate-700"
+                            >
+                                Status Validasi
+                            </label>
                             <select
+                                id="filter-status"
                                 value={filters.status}
                                 disabled={isFilterLoading}
                                 onChange={(event) =>
@@ -1509,7 +1579,7 @@ export default function CampusContributions({
                                             ContributionStatus | 'all',
                                     })
                                 }
-                                className="h-control-md cursor-pointer rounded-md border border-input bg-background px-3 text-sm font-normal outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                                className="h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-900 outline-none focus:border-blue-600 focus:bg-white"
                                 data-test="campus-contribution-status-filter"
                             >
                                 <option value="pending">
@@ -1522,10 +1592,17 @@ export default function CampusContributions({
                                 </option>
                                 <option value="rejected">Ditolak</option>
                             </select>
-                        </label>
-                        <label className="grid gap-2 text-sm font-semibold">
-                            Urutan
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label
+                                htmlFor="filter-sort"
+                                className="text-xs font-bold text-slate-700"
+                            >
+                                Urutan Pengajuan
+                            </label>
                             <select
+                                id="filter-sort"
                                 value={filters.sort}
                                 disabled={isFilterLoading}
                                 onChange={(event) =>
@@ -1534,15 +1611,16 @@ export default function CampusContributions({
                                             'oldest' | 'newest',
                                     })
                                 }
-                                className="h-control-md cursor-pointer rounded-md border border-input bg-background px-3 text-sm font-normal outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                                className="h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-900 outline-none focus:border-blue-600 focus:bg-white"
                                 data-test="campus-contribution-sort-filter"
                             >
                                 <option value="oldest">Paling lama</option>
                                 <option value="newest">Paling baru</option>
                             </select>
-                        </label>
+                        </div>
                     </section>
 
+                    {/* Review Workspace with Deferred queue */}
                     <Deferred data="reviewQueue" fallback={<QueueSkeleton />}>
                         <ReviewWorkspace
                             institution={institution}
@@ -1556,3 +1634,16 @@ export default function CampusContributions({
         </>
     );
 }
+
+CampusContributions.layout = {
+    breadcrumbs: [
+        {
+            title: 'Operasi Kampus',
+            href: '#',
+        },
+        {
+            title: 'Validasi Kontribusi',
+            href: '#',
+        },
+    ],
+};

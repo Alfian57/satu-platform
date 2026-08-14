@@ -30,7 +30,6 @@ Contoh:
 feat(identity): add verified phone challenge
 fix(onboarding): preserve recovery focus after validation
 docs(workflow): add PR template authoring guide
-test(membership): cover suspended affiliation denial
 ```
 
 Gunakan subject singkat, imperative, tanpa titik penutup, dan jangan menyertakan secret atau data pribadi.
@@ -47,7 +46,6 @@ Gunakan subject singkat, imperative, tanpa titik penutup, dan jangan menyertakan
 - `refactor`: perubahan struktur tanpa perubahan behavior.
 - `revert`: membatalkan commit sebelumnya.
 - `style`: perubahan formatting atau style tanpa behavior.
-- `test`: penambahan atau perubahan test.
 
 Scope bersifat optional. Gunakan area yang jelas seperti `identity`, `onboarding`, `workflow`, atau `ci`.
 
@@ -63,7 +61,7 @@ Scope bersifat optional. Gunakan area yang jelas seperti `identity`, `onboarding
 
 - `.husky/commit-msg` menjalankan `commitlint` dengan `@commitlint/config-conventional`.
 - `.husky/pre-commit` menjalankan format check, ESLint, TypeScript check, dan `git diff --cached --check`.
-- Required CI tetap menjadi verifikasi final. Hook lokal tidak menggantikan test, review, atau branch protection.
+- Required CI tetap menjadi verifikasi final. Hook lokal tidak menggantikan review atau branch protection.
 - Jika hook sengaja dilewati untuk diagnosis, jangan gunakan hasil tersebut sebagai evidence dan jelaskan alasannya pada Pull Request.
 
 ## Squash Merge Message Convention
@@ -128,4 +126,4 @@ Jika type, format, hook, atau check berubah, perbarui file berikut dalam Pull Re
 3. `package.json` dan `package-lock.json` bila dependency berubah.
 4. Dokumen ini dan [PR template guide](./PR_TEMPLATE_GUIDE.md).
 
-Jalankan check dokumentasi, test yang relevan, dan `git diff --check` sebelum merge.
+Jalankan check dokumentasi dan `git diff --check` sebelum merge.

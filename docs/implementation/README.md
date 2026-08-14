@@ -23,7 +23,7 @@ Setiap implementation issue wajib memiliki:
 
 Issue yang menyentuh frontend juga wajib memiliki `Frontend Loading Contract` atau menulis `N/A` bila tidak relevan. Quality gate frontend memakai section `Frontend Loading Verification`.
 
-Issue UI juga menunjuk surface brief. Issue yang membutuhkan library menyebut exact package, install command, reason, compatibility, license review, dan fake/test strategy. Jika framework-native cukup, jelaskan alasannya.
+Issue UI juga menunjuk surface brief. Issue yang membutuhkan library menyebut exact package, install command, reason, compatibility, dan license review. Jika framework-native cukup, jelaskan alasannya.
 
 ## Labels
 
@@ -65,7 +65,7 @@ Panduan authoring template ada di [PR_TEMPLATE_GUIDE.md](./PR_TEMPLATE_GUIDE.md)
 - Contributor non-owner memerlukan minimal satu approval. Repository owner boleh melakukan self-review dan merge sebagai admin tanpa approval reviewer tambahan, dengan required CI dan conversation resolution tetap wajib.
 - UI: screenshot mobile/desktop serta state penting.
 - Data/security: migration impact, threat/authorization note, rollback/recovery.
-- Verification: affected Pest tests, lint, typecheck, accessibility/browser checks yang relevan.
+- Verification: lint, typecheck, dan static check yang relevan.
 - Jangan menjalankan local production build kecuali diperlukan untuk diagnosis atau diminta pengguna. CI tetap menjalankan required build/check.
 
 Ownership gate dan prosedur stacked branch ada pada [DEPENDENCY_WORKFLOW.md](./DEPENDENCY_WORKFLOW.md). AI agent wajib mencocokkan login GitHub CLI aktif dengan assignee issue sebelum membuat branch.
@@ -88,7 +88,7 @@ Dependency yang sudah selesai ditulis sebagai `Prerequisite completed: #<issue>`
 ## Definition of Done
 
 - Acceptance criteria dan verification lulus.
-- Test dan docs sesuai perubahan.
+- Docs sesuai perubahan.
 - Review conversation selesai.
 - Required check lulus dan review requirement terpenuhi. Contributor non-owner memerlukan minimal satu approval; repository owner dapat memakai self-review admin bypass.
 - Squash merge ke protected `main` menutup issue.

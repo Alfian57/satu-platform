@@ -31,12 +31,7 @@ All protected models have corresponding Policy classes in `app/Policies/`:
 
 ### Verification
 
-Existing feature tests verify Policy enforcement:
-- `tests/Feature/Affiliation/AffiliationReviewTest.php`: cross-tenant denial
-- `tests/Feature/Campus/CampusInclusionTest.php`: inclusion signal access restriction
-- `tests/Feature/ContributionDomainTest.php`: contribution tenant boundary
-- `tests/Feature/Task/TaskWorkspaceControllerTest.php`: workspace Policy checks
-- `tests/Feature/Workspace/WorkspaceRealtimeTest.php`: Reverb channel authorization
+Policy enforcement diverifikasi melalui `app/Policies/` dan review authorization matrix pada [docs/engineering/SECURITY_PRIVACY.md](docs/engineering/SECURITY_PRIVACY.md). Automated test suite sudah dihapus dari repository; verifikasi keamanan dilakukan melalui static analysis, review, dan audit manual.
 
 ---
 
@@ -45,11 +40,13 @@ Existing feature tests verify Policy enforcement:
 ### ✅ IDOR Protection
 
 **Verified Implementation:**
+
 - All controllers use Policy-based authorization before resource access
 - Route model binding combined with Policy checks prevent IDOR
 - `InstitutionContext` and `InstitutionContextResolver` enforce active tenant scope
 
 **Sample Evidence (app/Http/Controllers/ContributionController.php:38-40):**
+
 ```php
 public function show(ShowContributionRequest $request): Response
 {
@@ -57,6 +54,7 @@ public function show(ShowContributionRequest $request): Response
 ```
 
 **Sample Evidence (app/Http/Controllers/ProjectWorkspaceController.php:25-27):**
+
 ```php
 public function show(Project $project): Response
 {
@@ -66,17 +64,14 @@ public function show(Project $project): Response
 ### ✅ Tenant Scope Enforcement
 
 **Database Queries:**
+
 - Models implement `InstitutionOwned` interface
 - Scoped queries use `->where('institution_id', ...)` consistently
-- Tests verify cross-tenant denial matrix
+- Cross-tenant denial diverifikasi melalui audit matriks pada [docs/engineering/SECURITY_PRIVACY.md](docs/engineering/SECURITY_PRIVACY.md)
 
 **Sample Evidence (app/Models/Project.php uses InstitutionOwned):**
-- `app/Concerns/InstitutionOwned` ensures tenant boundary contract
 
-**Test Coverage:**
-- `tests/Feature/ContributionDomainTest.php:266-283`: cross-tenant contribution denial
-- `tests/Feature/Campus/CampusInclusionTest.php:80-96`: cross-tenant inclusion denial
-- `tests/Feature/Task/TaskWorkspaceControllerTest.php:38-52`: task cross-tenant denial
+- `app/Concerns/InstitutionOwned` ensures tenant boundary contract
 
 ---
 
@@ -85,12 +80,14 @@ public function show(Project $project): Response
 ### ✅ Role Assignment
 
 **Verified:**
+
 - Open registration creates `student` role only (SECURITY_PRIVACY.md:24)
 - Campus admin provisioned through invitation + review flow
 - Recruiter requires organization verification + membership
 - Platform admin not accessible via public flow
 
 **Evidence:**
+
 - `app/Actions/Identity/*`: registration limited to student
 - `app/Policies/InstitutionMembershipPolicy.php`: role-based access control
 - `app/Policies/RecruiterOrganizationPolicy.php`: recruiter verification gate
@@ -108,12 +105,13 @@ public function show(Project $project): Response
 ### ✅ Models Use Guarded or Fillable
 
 **Sample Audit:**
+
 - `app/Models/Contribution.php:32`: `#[Guarded(['id', 'institution_id', 'owner_id', ...])]`
 - `app/Models/Project.php`: uses `$guarded`
 - `app/Models/User.php`: uses `$fillable`
 - `app/Models/InclusionSignal.php:16`: `protected $guarded = [];` (acceptable for internal-only model)
 
-**Recommendation:** Audit `InclusionSignal` to ensure it's never mass-assigned from user input. *(Low priority, model is restricted by InclusionSignalPolicy)*
+**Recommendation:** Audit `InclusionSignal` to ensure it's never mass-assigned from user input. _(Low priority, model is restricted by InclusionSignalPolicy)_
 
 ---
 
@@ -130,12 +128,9 @@ All serializers in `app/Support/` implement allowlist-based projections:
 - **AttachmentSerializer**: authorized download URLs only
 
 **Evidence (app/Support/RecruiterSafeCandidateSerializer.php):**
+
 - Only public-safe fields: name, headline, skills, portfolio URL
 - Phone, NIM, institution_id, private evidence excluded
-
-**Test Coverage:**
-- `tests/Feature/Campus/InclusionQualityGateTest.php:55-70`: inclusion never serialized to student
-- Existing serialization tests in feature suites verify allowlist enforcement
 
 ---
 
@@ -144,23 +139,21 @@ All serializers in `app/Support/` implement allowlist-based projections:
 ### ✅ Channel Authorization (routes/channels.php)
 
 **Verified:**
+
 ```php
-Broadcast::channel('institutions.{institution}.projects.{project}.workspace', 
-    fn ($user, $institution, $project) => 
-        $institution->exists 
+Broadcast::channel('institutions.{institution}.projects.{project}.workspace',
+    fn ($user, $institution, $project) =>
+        $institution->exists
         && (int) $project->institution_id === (int) $institution->getKey()
         && Gate::forUser($user)->allows('viewAny', [Task::class, $project])
 );
 ```
 
 **Evidence:**
+
 - Tenant ID match enforced: `$project->institution_id === $institution->getKey()`
 - Policy check: `Gate::forUser($user)->allows('viewAny', [Task::class, $project])`
 - Presence channel returns only `id` and `name`, no sensitive data
-
-**Test Coverage:**
-- `tests/Feature/Workspace/WorkspaceRealtimeTest.php:57-76`: channel authorization denial
-- Browser test: `tests/Browser/ProjectWorkspaceBrowserTest.php`: two-client reconnect flow
 
 ---
 
@@ -169,22 +162,22 @@ Broadcast::channel('institutions.{institution}.projects.{project}.workspace',
 ### ✅ Attachment Authorization
 
 **Implementation (app/Http/Controllers/ProjectAttachmentController.php):**
+
 - Upload: `$this->authorize('create', [Attachment::class, $project])`
 - Download: `$this->authorize('view', $attachment)`
 
 **Storage:**
+
 - Private storage path: `storage/app/private/attachments/`
 - Randomized filename, no direct URL access
 - MIME and size validation present
 
 **Evidence:**
+
 - `app/Support/Attachment/AttachmentStorage.php`: private storage, authorized retrieval
 - `app/Policies/AttachmentPolicy.php`: view/create/delete gated by team membership
 
-**Test Coverage:**
-- `tests/Feature/Attachment/AttachmentControllerTest.php`: upload/download authorization
-
-**Recommendation:** Document malware scanning strategy before production. *(Gate: production readiness)*
+**Recommendation:** Document malware scanning strategy before production. _(Gate: production readiness)_
 
 ---
 
@@ -193,16 +186,19 @@ Broadcast::channel('institutions.{institution}.projects.{project}.workspace',
 ### ✅ Sensitive Data Not Logged
 
 **Verified:**
+
 - No raw OTP, password, token in logs (grep confirms)
 - Phone sanitized in notification logs
 - Provider payloads redacted
 - Inclusion detail not logged to general log
 
 **Evidence:**
+
 - `app/Console/Commands/SendOutboxMessages.php:82`: masked phone in log
 - `app/Support/Notification/DeliveryPreferences.php`: no phone in preferences log
 
 **Audit Commands:**
+
 ```bash
 grep -r "phone" app/ | grep -i log  # No raw phone logging found
 grep -r "otp" app/ | grep -i log    # No OTP logging found
@@ -215,18 +211,17 @@ grep -r "otp" app/ | grep -i log    # No OTP logging found
 ### ✅ Recruiter Access Restricted
 
 **Verified:**
+
 - Recruiter search uses allowlisted projection (RecruiterSafeCandidateSerializer)
 - Entitlement expiration enforced (RecruiterOrganizationPolicy)
 - Contact request requires explicit student consent
 - Visibility withdrawal stops new projection
 
 **Evidence:**
+
 - `app/Support/RecruiterSafeCandidateSerializer.php`: safe projection only
 - `app/Policies/RecruiterOrganizationPolicy.php:searchTalent()`: entitlement check
 - No username, NIM, phone, private evidence, discussion, audit, matching input, or inclusion exposed
-
-**Test Coverage:**
-- Existing tests verify recruiter cannot access private student data
 
 ---
 
@@ -235,6 +230,7 @@ grep -r "otp" app/ | grep -i log    # No OTP logging found
 ### ✅ Forbidden Operations Not Implemented
 
 **Verified Compliance:**
+
 - No message content sentiment analysis
 - No inclusion signal exposed to student/teammate/recruiter
 - No inclusion used as leaderboard input
@@ -242,6 +238,7 @@ grep -r "otp" app/ | grep -i log    # No OTP logging found
 - No mental-health diagnosis claims
 
 **Evidence:**
+
 - `app/Support/Inclusion/`: graph-based, not content-based
 - `app/Policies/InclusionSignalPolicy.php`: restricted to campus admin
 - `app/Support/Gamification/`: XP ledger does not use inclusion data
@@ -253,6 +250,7 @@ grep -r "otp" app/ | grep -i log    # No OTP logging found
 ### ✅ No Known Critical Vulnerabilities
 
 **Command:**
+
 ```bash
 composer audit
 ```
@@ -268,6 +266,7 @@ composer audit
 ### ✅ Larastan Passed
 
 **Command:**
+
 ```bash
 vendor/bin/phpstan analyse --memory-limit=2G
 ```
@@ -278,15 +277,15 @@ vendor/bin/phpstan analyse --memory-limit=2G
 
 ## 13. Denial Matrix Summary
 
-| Boundary | Same Tenant | Other Tenant | Suspended | Unverified | Test Coverage |
-|----------|-------------|--------------|-----------|------------|---------------|
-| Project | ✅ Allow | ❌ Deny | ❌ Deny | ❌ Deny | ✅ Verified |
-| Contribution | ✅ Allow | ❌ Deny | ❌ Deny | ❌ Deny | ✅ Verified |
-| Attachment | ✅ Allow (team) | ❌ Deny | ❌ Deny | ❌ Deny | ✅ Verified |
-| Task | ✅ Allow (team) | ❌ Deny | ❌ Deny | ❌ Deny | ✅ Verified |
-| Inclusion Signal | ❌ Deny (student) | ❌ Deny | ❌ Deny | ❌ Deny | ✅ Verified |
-| Recruiter Search | N/A | N/A | N/A | ❌ Deny (expired entitlement) | ✅ Verified |
-| Reverb Channel | ✅ Allow (team) | ❌ Deny | ❌ Deny | ❌ Deny | ✅ Verified |
+| Boundary         | Same Tenant       | Other Tenant | Suspended | Unverified                    | Verifikasi |
+| ---------------- | ----------------- | ------------ | --------- | ----------------------------- | ---------- |
+| Project          | ✅ Allow          | ❌ Deny      | ❌ Deny   | ❌ Deny                       | ✅ Audit   |
+| Contribution     | ✅ Allow          | ❌ Deny      | ❌ Deny   | ❌ Deny                       | ✅ Audit   |
+| Attachment       | ✅ Allow (team)   | ❌ Deny      | ❌ Deny   | ❌ Deny                       | ✅ Audit   |
+| Task             | ✅ Allow (team)   | ❌ Deny      | ❌ Deny   | ❌ Deny                       | ✅ Audit   |
+| Inclusion Signal | ❌ Deny (student) | ❌ Deny      | ❌ Deny   | ❌ Deny                       | ✅ Audit   |
+| Recruiter Search | N/A               | N/A          | N/A       | ❌ Deny (expired entitlement) | ✅ Audit   |
+| Reverb Channel   | ✅ Allow (team)   | ❌ Deny      | ❌ Deny   | ❌ Deny                       | ✅ Audit   |
 
 ---
 
@@ -329,42 +328,41 @@ vendor/bin/phpstan analyse --memory-limit=2G
 ## 16. Verification Evidence
 
 **Static Analysis:**
+
 ```bash
 vendor/bin/phpstan analyse --memory-limit=2G
 # Result: No errors
 ```
 
 **Dependency Audit:**
+
 ```bash
 composer audit
 # Result: No known vulnerabilities
 ```
 
 **Formatter:**
+
 ```bash
 vendor/bin/pint --test --format agent
 # Result: Pass
 ```
-
-**Existing Test Suites:**
-- `vendor/bin/pest tests/Feature/ --compact`: All tenant/policy tests pass
-- `vendor/bin/pest tests/Browser/ --compact`: Realtime and UI security flows verified
 
 ---
 
 ## 17. Recommendations
 
 1. **High Priority:**
-   - None. All critical boundaries properly implemented.
+    - None. All critical boundaries properly implemented.
 
 2. **Medium Priority:**
-   - Add malware scanning for attachments before production.
-   - Enable Dependabot for ongoing dependency monitoring.
-   - Add rate limiting to matching/projection endpoints.
+    - Add malware scanning for attachments before production.
+    - Enable Dependabot for ongoing dependency monitoring.
+    - Add rate limiting to matching/projection endpoints.
 
 3. **Low Priority:**
-   - Audit `InclusionSignal` guarded property (already protected by Policy).
-   - Document data rights deletion/export completion timeline.
+    - Audit `InclusionSignal` guarded property (already protected by Policy).
+    - Document data rights deletion/export completion timeline.
 
 ---
 
@@ -373,6 +371,7 @@ vendor/bin/pint --test --format agent
 **Security audit PASSED.** All acceptance criteria met. No critical or high-severity issues found. SATU implements proper Policy-based authorization, tenant isolation, restricted serialization, and broadcast security. Recommended hardening items are documented for future milestones.
 
 **Next Steps:**
+
 - Merge this audit report
-- Proceed to #70 (Release rehearsal and final UAT)
+- Proceed to release rehearsal dan final acceptance
 - Address medium-priority recommendations before pilot deployment

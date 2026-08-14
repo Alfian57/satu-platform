@@ -4,10 +4,15 @@ import { cn } from '@/lib/utils';
 type Props = {
     className?: string;
     compact?: boolean;
+    logoClassName?: string;
     ruleClassName?: string;
 };
 
-export default function AppLogo({ className, compact = false }: Props) {
+export default function AppLogo({
+    className,
+    compact = false,
+    logoClassName,
+}: Props) {
     const { name } = usePage().props;
 
     return (
@@ -20,7 +25,10 @@ export default function AppLogo({ className, compact = false }: Props) {
             <img
                 src="/images/logo.png"
                 alt="Logo SATU"
-                className="size-8 shrink-0 rounded-lg object-contain shadow-2xs"
+                className={cn(
+                    'size-8 shrink-0 rounded-lg object-contain shadow-2xs',
+                    logoClassName,
+                )}
             />
             <span className="flex min-w-0 flex-col justify-center">
                 <span className="truncate text-xl leading-none font-bold tracking-[-0.025em]">

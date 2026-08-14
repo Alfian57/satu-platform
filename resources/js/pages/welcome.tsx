@@ -177,7 +177,7 @@ export default function Welcome() {
                 {/* Header Navigation - Glassmorphism             */}
                 {/* ============================================ */}
                 <header className="landing-glass landing-glass-border sticky top-0 z-50 w-full shadow-sm">
-                    <div className="mx-auto flex min-h-16 max-w-[110rem] items-center justify-between gap-6 px-5 sm:px-6 lg:px-10">
+                    <div className="mx-auto flex min-h-16 max-w-[110rem] items-center justify-between gap-6 px-5 sm:px-6 lg:px-20">
                         <a
                             href="#top"
                             aria-label="SATU: kembali ke awal halaman"
@@ -282,7 +282,7 @@ export default function Welcome() {
                             className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(37,99,235,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(37,99,235,0.03)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_30%,black_20%,transparent_100%)] bg-[size:60px_60px]"
                         />
 
-                        <div className="relative mx-auto grid min-h-[calc(100svh-4rem)] max-w-[110rem] items-center gap-12 px-5 py-16 sm:px-6 sm:py-20 lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:gap-16 lg:px-10 lg:py-24">
+                        <div className="relative mx-auto grid min-h-[calc(100svh-4rem)] max-w-[110rem] items-center gap-12 px-5 py-16 sm:px-6 sm:py-20 lg:min-h-[calc(100svh-14rem)] lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:gap-16 lg:px-20 lg:pt-4 lg:pb-8">
                             <div className="relative z-10 max-w-2xl">
                                 {/* Kicker badge */}
                                 <div
@@ -429,7 +429,7 @@ export default function Welcome() {
                         aria-labelledby="lifecycle-heading"
                         className="landing-section-surface landing-section-surface--paper relative scroll-mt-16 py-24 sm:py-32"
                     >
-                        <div className="mx-auto max-w-[110rem] px-5 sm:px-6 lg:px-10">
+                        <div className="mx-auto max-w-[110rem] px-5 sm:px-6 lg:px-20">
                             {/* Section header */}
                             <div className="landing-scroll-reveal grid gap-6 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] lg:items-end lg:gap-14">
                                 <div>
@@ -520,7 +520,7 @@ export default function Welcome() {
                             className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(37,99,235,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(37,99,235,0.02)_1px,transparent_1px)] bg-[size:48px_48px]"
                         />
 
-                        <div className="relative mx-auto max-w-[110rem] px-5 sm:px-6 lg:px-10">
+                        <div className="relative mx-auto max-w-[110rem] px-5 sm:px-6 lg:px-20">
                             <div className="landing-scroll-reveal flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
                                 <div className="max-w-2xl">
                                     <div className="inline-flex items-center gap-2.5 rounded-full border border-blue-100 bg-blue-50/80 px-4 py-1.5 font-label text-[0.65rem] font-semibold tracking-wider text-blue-700">
@@ -586,7 +586,7 @@ export default function Welcome() {
                         aria-labelledby="roles-heading"
                         className="landing-section-surface landing-section-surface--paper relative scroll-mt-16 py-24 sm:py-32"
                     >
-                        <div className="mx-auto max-w-[110rem] px-5 sm:px-6 lg:px-10">
+                        <div className="mx-auto max-w-[110rem] px-5 sm:px-6 lg:px-20">
                             <div className="landing-scroll-reveal max-w-2xl">
                                 <div className="inline-flex items-center gap-2.5 rounded-full border border-blue-100 bg-blue-50/80 px-4 py-1.5 font-label text-[0.65rem] font-semibold tracking-wider text-blue-700">
                                     <Target
@@ -901,7 +901,7 @@ export default function Welcome() {
                 {/* Footer                                        */}
                 {/* ============================================ */}
                 <footer className="landing-section-surface landing-section-surface--footer border-t border-slate-200/80 py-10 sm:py-12">
-                    <div className="mx-auto max-w-[110rem] px-5 sm:px-6 lg:px-10">
+                    <div className="mx-auto max-w-[110rem] px-5 sm:px-6 lg:px-20">
                         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                             <div className="flex items-center gap-3">
                                 <AppLogo

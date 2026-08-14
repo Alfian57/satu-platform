@@ -94,9 +94,9 @@ Talent memakai recruiter-safe projection terpisah dari domain model dan private 
 
 ## 12. Libraries
 
-- Existing: Laravel Fortify, Inertia, Wayfinder, Reverb/Echo, Pest, Tailwind.
-- Approved fit-first: Laravel Pennant, Laravel Scout database engine, `propaganistas/laravel-phone`, `spatie/simple-excel`, `@tanstack/react-table`, Recharts, Cytoscape.js, `@dnd-kit/react`, dan `@axe-core/playwright`.
-- Setiap issue menyebut install command, compatibility, license review, alasan, dan fake/test strategy. Dependency baru tetap memerlukan approval sebagaimana project rule.
+- Existing: Laravel Fortify, Inertia, Wayfinder, Reverb/Echo, Tailwind.
+- Approved fit-first: Laravel Pennant, Laravel Scout database engine, `propaganistas/laravel-phone`, `spatie/simple-excel`, `@tanstack/react-table`, Recharts, Cytoscape.js, dan `@dnd-kit/react`.
+- Setiap issue menyebut install command, compatibility, license review, dan alasan. Dependency baru tetap memerlukan approval sebagaimana project rule.
 
 ## 13. Operations
 

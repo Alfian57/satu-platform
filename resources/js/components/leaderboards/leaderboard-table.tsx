@@ -62,7 +62,7 @@ function EntityCell({ row }: { row: LeaderboardRow }) {
     return (
         <div className="grid min-w-0 gap-1.5">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <span className="truncate font-semibold">
+                <span className="font-semibold break-words text-slate-950">
                     {row.scopeLabel ?? 'Entitas tanpa nama'}
                 </span>
                 {row.suppressed ? (
@@ -143,6 +143,7 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                             type="button"
                             variant="outline"
                             size="sm"
+                            className="cursor-pointer border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50"
                             onClick={() => onExplain(row.original)}
                             data-test="leaderboard-explanation-trigger"
                         >
@@ -161,13 +162,16 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
     });
 
     return (
-        <div data-test="leaderboard-table">
+        <div
+            data-test="leaderboard-table"
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+        >
             <div className="hidden overflow-x-auto md:block">
-                <table className="w-full min-w-[48rem] border-collapse text-left">
+                <table className="w-full min-w-[44rem] border-collapse text-left">
                     <caption className="sr-only">
                         Peringkat leaderboard dengan rata-rata XP terverifikasi
                     </caption>
-                    <thead className="bg-muted/60">
+                    <thead className="bg-slate-50">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <tr key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => (
@@ -175,11 +179,11 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                                         key={header.id}
                                         scope="col"
                                         className={cn(
-                                            'border-b border-border px-4 py-3 font-label text-label font-semibold text-muted-foreground',
-                                            header.id === 'rank' && 'w-28',
-                                            header.id === 'score' && 'w-36',
-                                            header.id === 'members' && 'w-32',
-                                            header.id === 'action' && 'w-40',
+                                            'border-b border-slate-100 px-4 py-3 font-label text-label font-semibold text-slate-500',
+                                            header.id === 'rank' && 'w-24',
+                                            header.id === 'score' && 'w-32',
+                                            header.id === 'members' && 'w-28',
+                                            header.id === 'action' && 'w-36',
                                         )}
                                     >
                                         {header.isPlaceholder ? null : (
@@ -197,7 +201,7 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                                 data-test="leaderboard-desktop-row"
                                 data-scope-key={row.original.scopeKey}
                                 className={cn(
-                                    'border-b border-border/80 align-top transition-colors duration-fast ease-ledger last:border-b-0 hover:bg-accent/40 motion-reduce:transition-none',
+                                    'border-b border-slate-100 align-top transition-colors duration-fast ease-ledger last:border-b-0 hover:bg-slate-50/70 motion-reduce:transition-none',
                                     row.original.suppressed &&
                                         'bg-pending-subtle/20',
                                 )}
@@ -212,7 +216,7 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                                             <th
                                                 key={cell.id}
                                                 scope="row"
-                                                className="px-4 py-4 text-left text-sm leading-6 font-normal"
+                                                className="px-4 py-5 text-left text-sm leading-6 font-normal"
                                             >
                                                 {content}
                                             </th>
@@ -222,7 +226,7 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                                     return (
                                         <td
                                             key={cell.id}
-                                            className="px-4 py-4 text-sm leading-6"
+                                            className="px-4 py-5 text-sm leading-6"
                                         >
                                             {content}
                                         </td>
@@ -234,27 +238,27 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                 </table>
             </div>
 
-            <div className="grid gap-3 md:hidden">
+            <div className="grid md:hidden">
                 {rows.map((row) => (
                     <article
                         key={row.scopeKey}
                         data-test="leaderboard-mobile-row"
                         data-scope-key={row.scopeKey}
                         className={cn(
-                            'grid gap-4 border-b border-border/80 px-1 py-4 last:border-b-0',
+                            'grid gap-4 border-b border-slate-100 px-5 py-5 last:border-b-0',
                             row.suppressed && 'bg-pending-subtle/20',
                         )}
                     >
                         <div className="flex items-start justify-between gap-4">
                             <div className="flex min-w-0 items-start gap-3">
-                                <span className="grid size-9 shrink-0 place-items-center border border-border bg-muted/50 font-label text-label font-semibold tabular-nums">
+                                <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-slate-200 bg-slate-50 font-label text-label font-semibold text-slate-700 tabular-nums">
                                     {row.suppressed ? '-' : row.rank}
                                 </span>
                                 <div className="min-w-0">
-                                    <h3 className="truncate font-semibold">
+                                    <h3 className="font-semibold break-words text-slate-950">
                                         {row.scopeLabel ?? 'Entitas tanpa nama'}
                                     </h3>
-                                    <p className="mt-1 text-xs text-muted-foreground">
+                                    <p className="mt-1 text-xs text-slate-500">
                                         {row.suppressed
                                             ? `${row.cohortSize} anggota aktif, kohort dilindungi`
                                             : row.sharedRankGroup !== null
@@ -276,7 +280,7 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                             )}
                         </div>
 
-                        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-border/70 pt-3 text-sm">
+                        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-slate-100 pt-3 text-sm">
                             <div>
                                 <dt className="font-label text-label text-muted-foreground">
                                     Rata-rata XP
@@ -305,7 +309,7 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                         <Button
                             type="button"
                             variant="outline"
-                            className="w-full"
+                            className="w-full cursor-pointer border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50"
                             onClick={() => onExplain(row)}
                             data-test="leaderboard-mobile-explanation-trigger"
                         >

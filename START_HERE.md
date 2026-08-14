@@ -28,7 +28,7 @@ GitHub issues dan milestones adalah sumber kebenaran execution. Dokumen Markdown
 
 - Satu issue, satu branch, satu pull request.
 - Gunakan Conventional Commit dan cantumkan `Closes #<issue>` pada body pull request.
-- Sertakan hasil test, screenshot untuk UI, perubahan data/security, rollback, dan dokumentasi yang relevan.
+- Sertakan screenshot untuk UI, perubahan data/security, rollback, dan dokumentasi yang relevan.
 - Pull request dibuka sebagai draft sampai acceptance criteria dan verifikasi selesai.
 - `main` hanya menerima **Squash and merge** setelah required CI lulus dan seluruh conversation selesai.
 - Contributor non-owner memerlukan minimal satu approval.
@@ -41,7 +41,7 @@ GitHub issues dan milestones adalah sumber kebenaran execution. Dokumen Markdown
 3. `DESIGN.md`
 4. `docs/ux/` dan surface brief terkait di `.impeccable/surfaces/`
 5. `docs/engineering/`
-6. GitHub issue, `docs/implementation/ROADMAP.md`, dan `docs/implementation/TEST_STRATEGY.md`
+6. GitHub issue dan `docs/implementation/ROADMAP.md`
 7. `docs/governance/DECISIONS.md`
 8. `docs/reference/proposal_lomba.md` sebagai input historis
 

@@ -2,15 +2,23 @@
 
 namespace App\Http\Middleware;
 
+use App\Actions\Auth\ResolveUserWorkspace;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
 use App\Enums\InstitutionStatus;
+use App\Enums\WorkspaceRole;
+use App\Models\Institution;
 use App\Models\InstitutionMembership;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
+    public function __construct(
+        private readonly ResolveUserWorkspace $resolveUserWorkspace,
+    ) {}
+
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -47,13 +55,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $isPublicPortfolio
                     ? null
-                    : $request->user()?->only([
-                        'id',
-                        'name',
-                        'username',
-                        'created_at',
-                        'updated_at',
-                    ]),
+                    : fn (): ?array => $this->authenticatedUserSummary($request),
             ],
             'shell' => [
                 'institutionMembership' => $isPublicPortfolio
@@ -62,6 +64,56 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    /**
+     * @return array{id: int, name: string, username: string, is_platform_admin: bool, workspace: array<string, mixed>, created_at: mixed, updated_at: mixed}|null
+     */
+    private function authenticatedUserSummary(Request $request): ?array
+    {
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            return null;
+        }
+
+        return [
+            ...$user->only([
+                'id',
+                'name',
+                'username',
+                'created_at',
+                'updated_at',
+            ]),
+            'is_platform_admin' => (bool) $user->is_platform_admin,
+            'workspace' => $this->resolveUserWorkspace
+                ->handle(
+                    $user,
+                    $this->routeInstitution($request),
+                    $this->routeWorkspaceRole($request),
+                )
+                ->toArray(),
+        ];
+    }
+
+    private function routeInstitution(Request $request): ?Institution
+    {
+        $institution = $request->route('institution');
+
+        return $institution instanceof Institution ? $institution : null;
+    }
+
+    private function routeWorkspaceRole(Request $request): ?WorkspaceRole
+    {
+        if ($request->routeIs('recruiter.*')) {
+            return WorkspaceRole::Recruiter;
+        }
+
+        if ($request->routeIs('campus.*')) {
+            return WorkspaceRole::CampusAdmin;
+        }
+
+        return null;
     }
 
     /**

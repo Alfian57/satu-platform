@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\Log;
 
 final class FonnteGateway implements WhatsAppGateway
 {
-    private const API_URL = 'https://api.fonnte.com/send';
-
     private const TIMEOUT = 15;
 
     private const RETRY_ATTEMPTS = 2;
@@ -19,10 +17,14 @@ final class FonnteGateway implements WhatsAppGateway
 
     public function __construct(
         private readonly string $token,
+        private readonly string $baseUrl = 'https://api.fonnte.com',
+        private readonly string $countryCode = '62',
     ) {}
 
     public function send(array $payload): array
     {
+        $sendUrl = rtrim($this->baseUrl, '/').'/send';
+
         try {
             $response = Http::timeout(self::TIMEOUT)
                 ->retry(self::RETRY_ATTEMPTS, self::RETRY_DELAY)
@@ -30,10 +32,10 @@ final class FonnteGateway implements WhatsAppGateway
                     'Authorization' => $this->token,
                 ])
                 ->asForm()
-                ->post(self::API_URL, [
+                ->post($sendUrl, [
                     'target' => $payload['target'],
                     'message' => $payload['message'],
-                    'countryCode' => $payload['countryCode'] ?? '62',
+                    'countryCode' => $payload['countryCode'] ?? $this->countryCode,
                 ]);
 
             if ($response->successful()) {

@@ -44,31 +44,27 @@ const statusStyles: Record<
 > = {
     correction: {
         icon: AlertCircle,
-        className:
-            'border-correction/30 bg-gradient-to-b from-correction-subtle via-correction-subtle/90 to-correction-subtle/70 text-correction-subtle-foreground',
+        className: 'bg-rose-50 text-rose-800',
         iconContainerClass:
-            'rounded-lg bg-correction/15 p-2.5 text-correction ring-1 ring-correction/25 shadow-2xs',
+            'rounded-xl border border-rose-200 bg-white p-2.5 text-rose-600 shadow-sm',
     },
     pending: {
         icon: Clock3,
-        className:
-            'border-pending/30 bg-gradient-to-b from-pending-subtle via-pending-subtle/90 to-pending-subtle/70 text-pending-subtle-foreground',
+        className: 'bg-amber-50 text-amber-900',
         iconContainerClass:
-            'rounded-lg bg-pending/15 p-2.5 text-pending ring-1 ring-pending/25 shadow-2xs',
+            'rounded-xl border border-amber-200 bg-white p-2.5 text-amber-700 shadow-sm',
     },
     neutral: {
         icon: FileText,
-        className:
-            'border-primary/25 bg-gradient-to-b from-accent via-accent/90 to-accent/70 text-accent-foreground',
+        className: 'bg-blue-50 text-blue-900',
         iconContainerClass:
-            'rounded-lg bg-primary/15 p-2.5 text-primary ring-1 ring-primary/25 shadow-2xs',
+            'rounded-xl border border-blue-200 bg-white p-2.5 text-blue-700 shadow-sm',
     },
     verified: {
         icon: CircleCheck,
-        className:
-            'border-verified/30 bg-gradient-to-b from-verified-subtle via-verified-subtle/90 to-verified-subtle/70 text-verified-subtle-foreground',
+        className: 'bg-emerald-50 text-emerald-900',
         iconContainerClass:
-            'rounded-lg bg-verified/15 p-2.5 text-verified ring-1 ring-verified/25 shadow-2xs',
+            'rounded-xl border border-emerald-200 bg-white p-2.5 text-emerald-700 shadow-sm',
     },
 };
 
@@ -122,8 +118,8 @@ function FactValue({ fact }: { fact: DashboardDocketFact }) {
                 )}
                 {fact.supportingValue && (
                     <span className="font-normal text-muted-foreground">
-                        {' '}
-                        · {fact.supportingValue}
+                        {' · '}
+                        {fact.supportingValue}
                     </span>
                 )}
             </span>
@@ -133,11 +129,11 @@ function FactValue({ fact }: { fact: DashboardDocketFact }) {
 
 function FactRow({ fact }: { fact: DashboardDocketFact }) {
     return (
-        <div className="grid border-b border-border/80 transition-colors last:border-b-0 hover:bg-muted/15">
-            <dt className="border-b border-border/80 bg-muted/40 px-4 py-2.5 font-label text-label font-semibold tracking-wider text-muted-foreground uppercase sm:border-r sm:border-b-0 sm:px-5 sm:py-3 xl:py-1.5">
+        <div className="grid border-b border-slate-100 transition-colors last:border-b-0 hover:bg-blue-50/55 sm:grid-cols-[10.5rem_minmax(0,1fr)]">
+            <dt className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5 font-label text-label font-semibold tracking-wider text-slate-500 uppercase sm:border-r sm:border-b-0 sm:px-5 sm:py-3 xl:py-1.5">
                 {fact.label}
             </dt>
-            <dd className="min-w-0 px-4 py-3 text-sm leading-6 font-medium sm:px-5 xl:py-1.5">
+            <dd className="min-w-0 px-4 py-3 text-sm leading-6 font-medium text-slate-800 sm:px-5 xl:py-1.5">
                 <FactValue fact={fact} />
             </dd>
         </div>
@@ -160,8 +156,8 @@ function ActionControl({
     const href = getActionHref(action);
     const icon = primary ? <PencilLine aria-hidden="true" /> : null;
     const className = primary
-        ? 'w-full font-semibold shadow-sm transition-all duration-fast hover:-translate-y-0.5 hover:shadow sm:w-auto'
-        : 'group w-full text-primary transition-all duration-fast hover:bg-accent/80 hover:text-primary sm:w-auto';
+        ? 'w-full rounded-xl bg-blue-600 font-semibold shadow-md shadow-blue-200 transition-colors duration-fast hover:bg-blue-700 sm:w-auto'
+        : 'group w-full rounded-xl text-blue-700 transition-colors duration-fast hover:bg-blue-50 hover:text-blue-800 sm:w-auto';
 
     if (href !== null) {
         return (
@@ -216,10 +212,10 @@ export function DashboardNextAction({
             aria-labelledby="dashboard-next-action"
             data-test="dashboard-docket"
         >
-            <div className="grid overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm transition-shadow duration-standard hover:shadow-md motion-reduce:transition-none sm:grid-cols-[7.5rem_minmax(0,1fr)]">
+            <div className="grid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_45px_-38px_rgba(30,64,175,0.5)] sm:grid-cols-[9rem_minmax(0,1fr)]">
                 <div
                     className={cn(
-                        'flex items-center gap-3 border-b px-4 py-4 sm:flex-col sm:justify-start sm:border-r sm:border-b-0 sm:px-4 sm:py-6 sm:text-center xl:py-5',
+                        'flex items-center gap-3 border-b border-slate-100 px-4 py-4 sm:flex-col sm:justify-center sm:border-r sm:border-b-0 sm:px-4 sm:py-6 sm:text-center xl:py-3',
                         status.className,
                     )}
                 >
@@ -229,31 +225,31 @@ export function DashboardNextAction({
                             className="size-7 shrink-0 stroke-[1.8]"
                         />
                     </span>
-                    <p className="text-sm leading-5 font-bold tracking-tight">
+                    <p className="font-label text-label leading-5 font-bold tracking-[0.11em] uppercase">
                         {action.statusLabel}
                     </p>
                 </div>
 
                 <div className="min-w-0">
-                    <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 border-b border-border/80 bg-muted/20 px-4 py-3 sm:px-5 xl:py-2">
+                    <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 border-b border-slate-100 bg-slate-50 px-4 py-3 sm:px-5 xl:py-1">
                         <p className="min-w-0 font-label text-label font-semibold wrap-anywhere">
-                            <span className="text-muted-foreground">
+                            <span className="text-slate-500">
                                 {action.category}
                             </span>
                             <span
                                 aria-hidden="true"
-                                className="px-2 text-muted-foreground"
+                                className="px-2 text-slate-400"
                             >
                                 /
                             </span>
-                            <span className="inline-flex items-center rounded border border-primary/25 bg-accent/80 px-2 py-0.5 font-mono text-xs font-semibold text-primary">
+                            <span className="inline-flex items-center rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 font-mono text-xs font-semibold text-blue-700">
                                 {action.reference}
                             </span>
                         </p>
-                        <p className="flex items-center gap-1.5 font-label text-label text-muted-foreground">
+                        <p className="flex items-center gap-1.5 font-label text-label text-slate-500">
                             <Clock3
                                 aria-hidden="true"
-                                className="size-3.5 text-muted-foreground"
+                                className="size-3.5 text-blue-600"
                             />
                             <span>Dicatat</span>{' '}
                             <time
@@ -265,10 +261,10 @@ export function DashboardNextAction({
                         </p>
                     </div>
 
-                    <div className="border-b border-border/80 px-4 py-5 sm:px-5 sm:py-5 xl:py-2.5">
+                    <div className="border-b border-slate-100 px-4 py-5 sm:px-5 sm:py-5 xl:py-2">
                         <h2
                             id="dashboard-next-action"
-                            className="max-w-[30ch] text-headline font-bold text-balance wrap-anywhere"
+                            className="max-w-[29ch] text-headline font-bold tracking-[-0.03em] text-balance wrap-anywhere text-slate-950 xl:text-2xl xl:leading-8"
                         >
                             {action.title}
                         </h2>
@@ -281,7 +277,7 @@ export function DashboardNextAction({
                     </dl>
 
                     {hasActions && (
-                        <div className="grid gap-2.5 border-t border-border/80 bg-muted/10 px-4 py-4 sm:flex sm:flex-wrap sm:items-center sm:px-5 xl:py-2">
+                        <div className="grid gap-2.5 bg-slate-50 px-4 py-4 sm:flex sm:flex-wrap sm:items-center sm:px-5 xl:py-1.5">
                             {action.primaryAction && (
                                 <ActionControl
                                     action={action.primaryAction}

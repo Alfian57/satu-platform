@@ -10,6 +10,7 @@ use App\Models\Project;
 use App\Models\StudentProfile;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -86,8 +87,10 @@ class FetchCampusOverviewMetrics
         }
 
         if ($program !== null) {
-            $query->whereHas('user.studentProfiles', function (Builder $b) use ($program) {
-                $b->where('study_program', $program);
+            $query->whereHas('user.studentProfiles', function (Builder $builder) use ($institution, $program) {
+                $builder
+                    ->where('institution_id', $institution->getKey())
+                    ->where('study_program', $program);
             });
         }
 
@@ -233,6 +236,7 @@ class FetchCampusOverviewMetrics
         ?CarbonImmutable $dateTo,
     ): array {
         $query = StudentProfile::query()
+            ->where('institution_id', $institution->getKey())
             ->whereHas('user.institutionMemberships', function (Builder $b) use ($institution, $dateFrom, $dateTo) {
                 $b->where('institution_id', $institution->getKey());
                 if ($dateFrom !== null) {
@@ -269,7 +273,15 @@ class FetchCampusOverviewMetrics
     ): LengthAwarePaginator {
         $query = InstitutionMembership::query()
             ->where('institution_id', $institution->getKey())
-            ->with(['user', 'user.studentProfiles']);
+            ->with([
+                'user:id,username',
+                'user.studentProfiles' => function (Relation $relation) use ($institution): void {
+                    $relation
+                        ->getQuery()
+                        ->select(['id', 'user_id', 'institution_id', 'study_program'])
+                        ->where('institution_id', $institution->getKey());
+                },
+            ]);
 
         if ($dateFrom !== null) {
             $query->where('created_at', '>=', $dateFrom);
@@ -280,8 +292,10 @@ class FetchCampusOverviewMetrics
         }
 
         if ($program !== null) {
-            $query->whereHas('user.studentProfiles', function (Builder $b) use ($program) {
-                $b->where('study_program', $program);
+            $query->whereHas('user.studentProfiles', function (Builder $builder) use ($institution, $program) {
+                $builder
+                    ->where('institution_id', $institution->getKey())
+                    ->where('study_program', $program);
             });
         }
 

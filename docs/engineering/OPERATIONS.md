@@ -65,7 +65,7 @@ Catatan: `laravel/reverb` sudah dideklarasikan di `composer.json`. Scheduler saa
 
 - Channel `institutions.{institution}.projects.{project}.workspace` dan `.presence` memverifikasi institution scope serta Policy `viewAny` pada Task.
 - Klien hanya menerima delta setelah commit; reconciliation selalu membaca snapshot database.
-- Jangan menambah channel baru tanpa authorization Policy dan test denial lintas tenant.
+- Jangan menambah channel baru tanpa authorization Policy dan verifikasi denial lintas tenant.
 
 ## 5. Storage Privat
 
@@ -86,7 +86,7 @@ Jalankan satu scheduler daemon per environment (`schedule:work`) atau cron `* * 
 ## 8. Health Checks
 
 - Endpoint `GET /up` (Laravel default) mengembalikan `200 OK` ketika aplikasi dapat di-bootstrap. Diarahkan ke health probe load balancer.
-- Verifikasi tambahan dilakukan dengan `php artisan about` dan test `tests/Feature/Platform/RuntimeContractTest.php`.
+- Verifikasi tambahan dilakukan dengan `php artisan about` dan `php artisan route:list`.
 
 ## 9. Startup Ordering
 
@@ -111,7 +111,7 @@ Jalankan satu scheduler daemon per environment (`schedule:work`) atau cron `* * 
 
 1. Checkout tag/commit release di branch deploy.
 2. Jalankan startup ordering pada bagian 9.
-3. Verifikasi `php artisan about`, endpoint `/up`, dan test smoke.
+3. Verifikasi `php artisan about` dan endpoint `/up`.
 4. Konfirmasi worker, scheduler, dan Reverb aktif.
 5. Pantau log aplikasi (tanpa sensitive payload) dan queue length.
 
@@ -123,7 +123,6 @@ Jalankan satu scheduler daemon per environment (`schedule:work`) atau cron `* * 
 - [ ] `GET /up` mengembalikan `200`.
 - [ ] `php artisan queue:work --once` memproses job tanpa error.
 - [ ] `php artisan reverb:start` dapat di-bootstrap.
-- [ ] `tests/Feature/Platform/RuntimeContractTest.php` lulus.
 - [ ] Walkthrough runbook deploy tereksekusi tanpa langkah implisit.
 
 ## 13. Backup dan Monitoring

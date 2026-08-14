@@ -20,17 +20,15 @@ const noticeStyles: Record<
 > = {
     error: {
         icon: ShieldAlert,
-        className:
-            'border-correction/30 bg-correction-subtle text-correction-subtle-foreground',
+        className: 'border-rose-200 bg-rose-50 text-rose-900',
     },
     pending: {
         icon: Clock3,
-        className:
-            'border-pending/30 bg-pending-subtle text-pending-subtle-foreground',
+        className: 'border-amber-200 bg-amber-50 text-amber-900',
     },
     stale: {
         icon: RefreshCw,
-        className: 'border-primary/25 bg-accent text-accent-foreground',
+        className: 'border-blue-200 bg-blue-50 text-blue-900',
     },
 };
 
@@ -48,7 +46,7 @@ export function DashboardStateNotice({
         <div
             aria-live={notice.tone === 'error' ? undefined : 'polite'}
             className={cn(
-                'flex flex-col gap-4 border-y px-4 py-4 sm:flex-row sm:items-center sm:justify-between',
+                'flex flex-col gap-4 rounded-2xl border px-4 py-4 shadow-[0_14px_32px_-30px_rgba(30,64,175,0.35)] sm:flex-row sm:items-center sm:justify-between',
                 style.className,
             )}
             data-dashboard-notice={notice.tone}
@@ -76,7 +74,7 @@ export function DashboardStateNotice({
                     asChild
                     variant="outline"
                     size="lg"
-                    className="w-full shrink-0 border-current bg-transparent text-current hover:bg-background/40 hover:text-current sm:w-auto"
+                    className="w-full shrink-0 rounded-xl border-current bg-white/45 text-current hover:bg-white/75 hover:text-current sm:w-auto"
                 >
                     <Link href={actionHref}>{action.label}</Link>
                 </Button>
@@ -86,7 +84,7 @@ export function DashboardStateNotice({
                     type="button"
                     variant="outline"
                     size="lg"
-                    className="w-full shrink-0 border-current bg-transparent text-current hover:bg-background/40 hover:text-current sm:w-auto"
+                    className="w-full shrink-0 rounded-xl border-current bg-white/45 text-current hover:bg-white/75 hover:text-current sm:w-auto"
                     onClick={() => onAction(action)}
                 >
                     {action.label}

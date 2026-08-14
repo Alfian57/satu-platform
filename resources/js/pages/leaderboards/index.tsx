@@ -60,6 +60,7 @@ function formatDate(value: string | null): string {
     return new Intl.DateTimeFormat('id-ID', {
         dateStyle: 'medium',
         timeStyle: 'short',
+        timeZone: 'UTC',
     }).format(date);
 }
 
@@ -76,11 +77,11 @@ function LeaderboardLoading() {
         <section
             aria-busy="true"
             aria-labelledby="leaderboard-loading-title"
-            className="grid gap-4 border-y border-border py-5"
+            className="grid gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-white"
             data-test="leaderboard-loading"
         >
-            <div className="flex items-center gap-3">
-                <Skeleton className="size-9 rounded-none" />
+            <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-5 sm:px-6">
+                <Skeleton className="size-9 rounded-lg" />
                 <div className="grid gap-2">
                     <Skeleton className="h-4 w-44" />
                     <Skeleton className="h-3 w-64 max-w-[70vw]" />
@@ -89,9 +90,14 @@ function LeaderboardLoading() {
             <p id="leaderboard-loading-title" role="status" className="sr-only">
                 Memuat papan peringkat.
             </p>
-            <div className="grid gap-3">
+            <div className="grid gap-0">
                 {Array.from({ length: 10 }, (_, item) => item).map((item) => (
-                    <Skeleton key={item} className="h-16 w-full rounded-none" />
+                    <div
+                        key={item}
+                        className="border-t border-slate-100 px-5 py-4 sm:px-6"
+                    >
+                        <Skeleton className="h-12 w-full rounded-lg" />
+                    </div>
                 ))}
             </div>
         </section>
@@ -100,7 +106,10 @@ function LeaderboardLoading() {
 
 function LeaderboardRefreshLoading() {
     return (
-        <div className="grid gap-2" data-test="leaderboard-refresh-loading">
+        <div
+            className="grid gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-4 sm:px-6"
+            data-test="leaderboard-refresh-loading"
+        >
             <p role="status" className="sr-only">
                 Memuat pembaruan leaderboard.
             </p>
@@ -159,7 +168,7 @@ function PeriodTabs({
     return (
         <div
             aria-label="Periode leaderboard"
-            className="flex max-w-full gap-1 overflow-x-auto border-b border-border"
+            className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-1"
             role="tablist"
         >
             {semesters.map((semester, index) => {
@@ -173,10 +182,10 @@ function PeriodTabs({
                         aria-controls="leaderboard-results"
                         aria-selected={isSelected}
                         className={cn(
-                            'min-h-control-md shrink-0 cursor-pointer border-b-2 px-3 font-label text-label font-semibold transition-colors duration-fast ease-ledger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none',
+                            'min-h-control-md shrink-0 cursor-pointer rounded-lg px-3 font-label text-label font-semibold transition-[color,background-color,box-shadow] duration-fast ease-ledger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 motion-reduce:transition-none',
                             isSelected
-                                ? 'border-primary text-primary'
-                                : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
+                                ? 'bg-white text-blue-700'
+                                : 'text-slate-500 hover:bg-white/70 hover:text-slate-900',
                         )}
                         data-leaderboard-period={semester.value}
                         data-test="leaderboard-period-tab"
@@ -211,7 +220,7 @@ function StateNotice({
     return (
         <div
             className={cn(
-                'flex items-start gap-3 border px-4 py-3 text-sm leading-6',
+                'flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm leading-6',
                 tone === 'error' &&
                     'border-correction/30 bg-correction-subtle text-correction-subtle-foreground',
                 tone === 'warning' &&
@@ -243,11 +252,11 @@ function EmptyLeaderboard({
         return (
             <section
                 aria-labelledby="leaderboard-opt-in-title"
-                className="grid gap-4 border border-primary/25 bg-primary/5 px-5 py-6"
+                className="grid gap-5 rounded-2xl border border-blue-100 bg-white px-5 py-6"
                 data-test="leaderboard-opt-in-preview"
             >
                 <div className="flex items-start gap-3">
-                    <div className="grid size-10 shrink-0 place-items-center border border-primary/30 bg-primary/10 text-primary">
+                    <div className="grid size-10 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
                         <LockKeyhole aria-hidden="true" className="size-5" />
                     </div>
                     <div className="grid gap-1">
@@ -285,7 +294,7 @@ function EmptyLeaderboard({
     return (
         <section
             aria-labelledby="leaderboard-empty-title"
-            className="grid gap-4 border-y border-border py-8"
+            className="grid justify-items-start gap-5 rounded-2xl border border-slate-200 bg-white px-5 py-10 md:px-6"
             data-test="leaderboard-empty"
         >
             <div className="grid gap-2">
@@ -318,43 +327,49 @@ function LeaderboardContextRail({
     data: LeaderboardPageProps['leaderboard'];
 }) {
     return (
-        <div className="grid gap-8">
+        <div className="grid overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <section
                 aria-labelledby="leaderboard-method-title"
-                className="grid gap-4"
+                className="grid gap-4 px-5 py-5"
             >
-                <div className="flex items-center gap-2">
-                    <Trophy
-                        aria-hidden="true"
-                        className="size-4 text-primary"
-                    />
-                    <h2 id="leaderboard-method-title" className="font-semibold">
-                        Cara membaca
-                    </h2>
-                </div>
-                <dl className="grid gap-3 border-y border-border py-4 text-sm">
+                <div className="flex items-start gap-3">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+                        <Trophy aria-hidden="true" className="size-4" />
+                    </span>
                     <div className="grid gap-1">
-                        <dt className="text-muted-foreground">Skor</dt>
-                        <dd className="font-label text-label font-semibold">
+                        <h2
+                            id="leaderboard-method-title"
+                            className="text-title font-bold"
+                        >
+                            Cara membaca
+                        </h2>
+                        <p className="text-sm leading-6 text-slate-600">
+                            Ranking ini membantu membaca aktivitas yang sudah
+                            tervalidasi, bukan menilai individu.
+                        </p>
+                    </div>
+                </div>
+                <dl className="grid gap-3 border-y border-slate-100 py-4 text-sm">
+                    <div className="grid gap-1">
+                        <dt className="text-slate-500">Skor</dt>
+                        <dd className="font-label text-label font-semibold text-slate-900">
                             Rata-rata XP terverifikasi
                         </dd>
                     </div>
                     <div className="grid gap-1">
-                        <dt className="text-muted-foreground">Denominator</dt>
-                        <dd className="font-label text-label font-semibold">
+                        <dt className="text-slate-500">Denominator</dt>
+                        <dd className="font-label text-label font-semibold text-slate-900">
                             Anggota aktif pada scope
                         </dd>
                     </div>
                     <div className="grid gap-1">
-                        <dt className="text-muted-foreground">
-                            Minimum publikasi
-                        </dt>
-                        <dd className="font-label text-label font-semibold">
+                        <dt className="text-slate-500">Minimum publikasi</dt>
+                        <dd className="font-label text-label font-semibold text-slate-900">
                             5 anggota aktif
                         </dd>
                     </div>
                 </dl>
-                <p className="text-sm leading-6 text-muted-foreground">
+                <p className="text-sm leading-6 text-slate-600">
                     Angka yang belum memenuhi ambang ditahan. Status itu tetap
                     terlihat supaya hasil tidak disalahartikan.
                 </p>
@@ -362,12 +377,12 @@ function LeaderboardContextRail({
 
             <section
                 aria-labelledby="leaderboard-freshness-title"
-                className="grid gap-3 border-t border-border pt-6"
+                className="grid gap-3 border-t border-slate-100 px-5 py-5"
             >
                 <div className="flex items-center gap-2">
                     <RefreshCw
                         aria-hidden="true"
-                        className="size-4 text-primary"
+                        className="size-4 text-blue-700"
                     />
                     <h2
                         id="leaderboard-freshness-title"
@@ -376,23 +391,26 @@ function LeaderboardContextRail({
                         Freshness
                     </h2>
                 </div>
-                <p className="text-sm leading-6 text-muted-foreground">
+                <p className="text-sm leading-6 text-slate-600">
                     Dihitung {formatDate(data.period?.computedAt ?? null)}.
                     {data.period?.isStale
                         ? ' Data perlu diproses ulang oleh sistem.'
                         : ' Sumber tetap berasal dari proyeksi server.'}
                 </p>
-                <span className="font-label text-label text-muted-foreground">
+                <span className="font-label text-label text-slate-500">
                     Rule version {data.period?.ruleVersion ?? 'belum tersedia'}
                 </span>
             </section>
 
             <section
                 aria-labelledby="leaderboard-badge-title"
-                className="grid gap-3 border-t border-border pt-6"
+                className="grid gap-3 border-t border-slate-100 px-5 py-5"
             >
                 <div className="flex items-center gap-2">
-                    <Award aria-hidden="true" className="size-4 text-primary" />
+                    <Award
+                        aria-hidden="true"
+                        className="size-4 text-blue-700"
+                    />
                     <h2 id="leaderboard-badge-title" className="font-semibold">
                         Badge terverifikasi
                     </h2>
@@ -405,7 +423,7 @@ function LeaderboardContextRail({
                         {data.badges.map((badge) => (
                             <li
                                 key={badge.id}
-                                className="grid gap-1 border-b border-border pb-3 last:border-b-0 last:pb-0"
+                                className="grid gap-1 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0"
                             >
                                 <div className="flex items-start justify-between gap-3">
                                     <span className="font-semibold">
@@ -415,10 +433,10 @@ function LeaderboardContextRail({
                                         Lv. {badge.level}
                                     </Badge>
                                 </div>
-                                <p className="text-xs leading-5 text-muted-foreground">
+                                <p className="text-xs leading-5 text-slate-600">
                                     {badge.description}
                                 </p>
-                                <span className="font-label text-label text-xs text-muted-foreground">
+                                <span className="font-label text-label text-xs text-slate-500">
                                     {badge.sourceLabel}, rule v
                                     {badge.ruleVersion}
                                 </span>
@@ -426,17 +444,17 @@ function LeaderboardContextRail({
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-sm leading-6 text-muted-foreground">
+                    <p className="text-sm leading-6 text-slate-600">
                         Belum ada badge yang bisa ditampilkan dari sumber
                         terverifikasi.
                     </p>
                 )}
             </section>
 
-            <div className="flex items-start gap-2 border-t border-border pt-6 text-sm leading-6 text-muted-foreground">
+            <div className="flex items-start gap-2 border-t border-slate-100 bg-slate-50/70 px-5 py-5 text-sm leading-6 text-slate-600">
                 <LockKeyhole
                     aria-hidden="true"
-                    className="mt-1 size-4 shrink-0 text-primary"
+                    className="mt-1 size-4 shrink-0 text-blue-700"
                 />
                 <p>
                     Data inclusion, evidence privat, dan audit mentah tidak
@@ -520,14 +538,14 @@ export default function LeaderboardIndex() {
                         className="mx-auto grid max-w-3xl gap-6"
                         data-test="leaderboard-root"
                     >
-                        <header className="grid gap-3 border-b border-border pb-6">
-                            <p className="font-label text-label text-primary">
-                                GAMIFICATION LEDGER
+                        <header className="grid gap-4 rounded-2xl border border-blue-100 bg-white px-5 py-6 sm:px-7">
+                            <p className="text-xs font-bold tracking-[0.13em] text-blue-700 uppercase">
+                                Aktivitas terverifikasi
                             </p>
-                            <h1 className="text-headline font-bold">
+                            <h1 className="text-headline font-bold tracking-[-0.03em] text-slate-950">
                                 Leaderboard belum tersedia
                             </h1>
-                            <p className="max-w-[65ch] text-body text-muted-foreground">
+                            <p className="max-w-[65ch] text-body text-slate-600">
                                 Hubungkan dan verifikasi afiliasi kampus sebelum
                                 membuka proyeksi leaderboard.
                             </p>
@@ -559,52 +577,79 @@ export default function LeaderboardIndex() {
                 contextRailLabel="Metode dan provenance leaderboard"
             >
                 <div
-                    className="mx-auto grid max-w-5xl min-w-0 gap-7"
+                    className="mx-auto grid max-w-7xl min-w-0 gap-6"
                     data-leaderboard-source="application"
                     data-test="leaderboard-root"
                 >
-                    <header className="grid gap-4 border-b border-border pb-6">
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                            <div className="flex items-start gap-3">
-                                <div className="mt-1 grid size-10 place-items-center border border-primary/30 bg-primary/10 text-primary">
-                                    <Trophy
-                                        aria-hidden="true"
-                                        className="size-5"
-                                    />
-                                </div>
-                                <div>
-                                    <p className="font-label text-label text-primary">
-                                        GAMIFICATION LEDGER
-                                    </p>
-                                    <h1 className="mt-1 text-headline font-bold">
-                                        Leaderboard yang bisa kamu jelaskan
-                                    </h1>
-                                </div>
+                    <header
+                        className="relative isolate overflow-hidden rounded-2xl border border-blue-100 bg-white px-5 py-6 sm:px-7 sm:py-7"
+                        data-test="leaderboard-header"
+                    >
+                        <div
+                            aria-hidden="true"
+                            className="absolute -top-28 -right-24 size-72 rounded-full bg-blue-100/70 blur-3xl"
+                        />
+                        <div className="relative grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,0.46fr)] lg:items-stretch lg:gap-10">
+                            <div className="min-w-0">
+                                <p className="flex items-center gap-2 text-xs font-bold tracking-[0.13em] text-blue-700 uppercase">
+                                    <span className="size-1.5 rounded-full bg-blue-600" />
+                                    Aktivitas terverifikasi
+                                </p>
+                                <h1 className="mt-4 max-w-[23ch] text-headline font-bold tracking-[-0.035em] text-balance text-slate-950">
+                                    Lihat pola kontribusi, tanpa kehilangan
+                                    konteks.
+                                </h1>
+                                <p className="mt-3 max-w-[66ch] text-sm leading-6 text-slate-600">
+                                    Ranking ini merangkum aktivitas yang telah
+                                    tervalidasi. Ia bukan ukuran nilai pribadi
+                                    dan tidak memuat sinyal inclusion.
+                                </p>
                             </div>
-                            <Badge variant="outline" className="gap-1.5 py-1.5">
-                                <ShieldCheck
-                                    aria-hidden="true"
-                                    className="size-3.5 text-verified"
-                                />
-                                XP terverifikasi
-                            </Badge>
+
+                            <div className="flex flex-col justify-end border-t border-slate-200 pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+                                <div className="flex items-center gap-2 text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
+                                    <ShieldCheck
+                                        aria-hidden="true"
+                                        className="size-4 shrink-0 text-verified"
+                                    />
+                                    Dasar peringkat
+                                </div>
+                                <p className="mt-2 text-sm leading-6 text-slate-600">
+                                    Skor dihitung dari rata-rata XP
+                                    terverifikasi per anggota aktif dalam satu
+                                    periode.
+                                </p>
+                                <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
+                                    <div className="grid gap-1">
+                                        <dt className="text-xs font-bold tracking-[0.11em] text-slate-500 uppercase">
+                                            Periode
+                                        </dt>
+                                        <dd className="text-sm font-semibold text-slate-900">
+                                            {leaderboard.semester ||
+                                                'Belum tersedia'}
+                                        </dd>
+                                    </div>
+                                    <div className="grid gap-1">
+                                        <dt className="text-xs font-bold tracking-[0.11em] text-slate-500 uppercase">
+                                            Ambang
+                                        </dt>
+                                        <dd className="text-sm font-semibold text-slate-900">
+                                            5 anggota aktif
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
                         </div>
-                        <p className="max-w-[70ch] text-body text-muted-foreground">
-                            Bandingkan pola kolaborasi dari data yang sudah
-                            tervalidasi. Ranking ini bukan ukuran nilai pribadi
-                            dan tidak memuat sinyal inclusion.
-                        </p>
                     </header>
 
-                    <div className="flex items-start gap-3 border-y border-border py-3 text-sm leading-6 text-muted-foreground">
+                    <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-600">
                         <Info
                             aria-hidden="true"
-                            className="mt-1 size-4 shrink-0 text-primary"
+                            className="mt-1 size-4 shrink-0 text-blue-700"
                         />
                         <p>
-                            {leaderboard.institution?.name ?? 'Kampus'} ·
-                            periode{' '}
-                            <span className="font-semibold text-foreground">
+                            {leaderboard.institution?.name ?? 'Kampus'}, periode{' '}
+                            <span className="font-semibold text-slate-900">
                                 {leaderboard.semester || 'belum tersedia'}
                             </span>
                             . Setiap baris menyimpan penjelasan denominator dan
@@ -612,87 +657,92 @@ export default function LeaderboardIndex() {
                         </p>
                     </div>
 
-                    {leaderboard.semesters.length > 0 && (
-                        <PeriodTabs
-                            semesters={leaderboard.semesters}
-                            selectedSemester={leaderboard.semester}
-                            onChange={(semester) => navigateTo(semester)}
-                        />
-                    )}
-
-                    <section
-                        aria-labelledby="leaderboard-filter-title"
-                        className="grid gap-4"
-                    >
-                        <div className="flex flex-wrap items-end justify-between gap-4">
-                            <div className="grid gap-1">
-                                <h2
-                                    id="leaderboard-filter-title"
-                                    className="font-semibold"
-                                >
-                                    Pilih scope
-                                </h2>
-                                <p className="text-sm text-muted-foreground">
-                                    Scope tersimpan di URL agar bisa dibagikan
-                                    tanpa membawa data privat.
-                                </p>
-                            </div>
-                            <label className="grid min-w-52 gap-2">
-                                <span className="font-label text-label text-muted-foreground">
-                                    Scope leaderboard
-                                </span>
-                                <select
-                                    aria-label="Scope leaderboard"
-                                    className="min-h-control-md cursor-pointer rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                                    data-test="leaderboard-scope-select"
-                                    value={leaderboard.scope}
-                                    onChange={(event) =>
-                                        navigateTo(
-                                            leaderboard.semester,
-                                            event.target
-                                                .value as typeof leaderboard.scope,
-                                        )
-                                    }
-                                >
-                                    {leaderboard.scopes.map((scope) => (
-                                        <option
-                                            key={scope.value}
-                                            value={scope.value}
-                                        >
-                                            {scope.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                        </div>
-                        {leaderboard.scope === 'individual' && (
-                            <div className="flex flex-wrap items-center justify-between gap-3 border border-border bg-muted/30 px-4 py-3 text-sm">
-                                <p className="leading-6 text-muted-foreground">
-                                    {leaderboard.preference.isOptedIn
-                                        ? 'Ranking individual kamu sedang terlihat di scope ini.'
-                                        : 'Scope individual hanya aktif setelah kamu menyetujuinya.'}
-                                </p>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="cursor-pointer"
-                                    disabled={pendingPreference}
-                                    onClick={() =>
-                                        leaderboard.preference.isOptedIn
-                                            ? setWithdrawDialogOpen(true)
-                                            : setOptInDialogOpen(true)
-                                    }
-                                    data-test="leaderboard-preference-action"
-                                >
-                                    {pendingPreference && <Spinner />}
-                                    {leaderboard.preference.isOptedIn
-                                        ? 'Tarik dari ranking'
-                                        : 'Atur visibilitas'}
-                                </Button>
-                            </div>
+                    <div className="grid gap-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+                        {leaderboard.semesters.length > 0 && (
+                            <PeriodTabs
+                                semesters={leaderboard.semesters}
+                                selectedSemester={leaderboard.semester}
+                                onChange={(semester) => navigateTo(semester)}
+                            />
                         )}
-                    </section>
+
+                        <section
+                            aria-labelledby="leaderboard-filter-title"
+                            className="grid gap-4"
+                        >
+                            <div className="flex flex-wrap items-end justify-between gap-4">
+                                <div className="grid gap-1">
+                                    <p className="text-xs font-bold tracking-[0.13em] text-blue-700 uppercase">
+                                        Tampilan peringkat
+                                    </p>
+                                    <h2
+                                        id="leaderboard-filter-title"
+                                        className="mt-1 text-title font-bold tracking-[-0.02em] text-slate-950"
+                                    >
+                                        Pilih scope
+                                    </h2>
+                                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                                        Scope tersimpan di URL agar bisa
+                                        dibagikan tanpa membawa data privat.
+                                    </p>
+                                </div>
+                                <label className="grid min-w-52 gap-2">
+                                    <span className="font-label text-label text-slate-500">
+                                        Scope leaderboard
+                                    </span>
+                                    <select
+                                        aria-label="Scope leaderboard"
+                                        className="min-h-control-md cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-hidden transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger hover:border-blue-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-100"
+                                        data-test="leaderboard-scope-select"
+                                        value={leaderboard.scope}
+                                        onChange={(event) =>
+                                            navigateTo(
+                                                leaderboard.semester,
+                                                event.target
+                                                    .value as typeof leaderboard.scope,
+                                            )
+                                        }
+                                    >
+                                        {leaderboard.scopes.map((scope) => (
+                                            <option
+                                                key={scope.value}
+                                                value={scope.value}
+                                            >
+                                                {scope.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                            </div>
+                            {leaderboard.scope === 'individual' && (
+                                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+                                    <p className="leading-6 text-slate-600">
+                                        {leaderboard.preference.isOptedIn
+                                            ? 'Ranking individual kamu sedang terlihat di scope ini.'
+                                            : 'Scope individual hanya aktif setelah kamu menyetujuinya.'}
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="cursor-pointer"
+                                        disabled={pendingPreference}
+                                        onClick={() =>
+                                            leaderboard.preference.isOptedIn
+                                                ? setWithdrawDialogOpen(true)
+                                                : setOptInDialogOpen(true)
+                                        }
+                                        data-test="leaderboard-preference-action"
+                                    >
+                                        {pendingPreference && <Spinner />}
+                                        {leaderboard.preference.isOptedIn
+                                            ? 'Tarik dari ranking'
+                                            : 'Atur visibilitas'}
+                                    </Button>
+                                </div>
+                            )}
+                        </section>
+                    </div>
 
                     {isStale && (
                         <StateNotice
@@ -754,14 +804,14 @@ export default function LeaderboardIndex() {
                         className="grid gap-4"
                         aria-busy={isNavigating}
                     >
-                        <div className="flex flex-wrap items-end justify-between gap-3">
+                        <div className="flex flex-wrap items-end justify-between gap-3 px-1">
                             <div>
-                                <p className="font-label text-label text-primary">
-                                    RANKED PROJECTION
+                                <p className="text-xs font-bold tracking-[0.13em] text-blue-700 uppercase">
+                                    Rekam peringkat
                                 </p>
                                 <h2
                                     id="leaderboard-results-title"
-                                    className="mt-1 text-xl font-bold"
+                                    className="mt-1 text-title font-bold tracking-[-0.02em] text-slate-950"
                                 >
                                     {leaderboard.scopes.find(
                                         (scope) =>
@@ -770,8 +820,8 @@ export default function LeaderboardIndex() {
                                 </h2>
                             </div>
                             {rows?.pagination && (
-                                <p className="font-label text-label text-muted-foreground">
-                                    {rows.pagination.total} baris · halaman{' '}
+                                <p className="rounded-full border border-slate-200 bg-white px-3 py-1.5 font-label text-label text-slate-500">
+                                    {rows.pagination.total} baris, halaman{' '}
                                     {rows.pagination.currentPage}/
                                     {rows.pagination.lastPage}
                                 </p>
@@ -793,7 +843,7 @@ export default function LeaderboardIndex() {
                                     {rows.pagination.lastPage > 1 && (
                                         <nav
                                             aria-label="Navigasi halaman leaderboard"
-                                            className="flex items-center justify-between border-t border-border pt-4"
+                                            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3"
                                         >
                                             <Button
                                                 type="button"

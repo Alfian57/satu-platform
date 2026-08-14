@@ -4,18 +4,27 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import type { NavItem } from '@/types';
 
-export function NavMain({ items = [] }: { items: NavItem[] }) {
-    const { isCurrentUrl } = useCurrentUrl();
+export function NavMain({
+    items = [],
+    label = 'Ruang kerja',
+    ariaLabel = 'Navigasi utama',
+}: {
+    items: NavItem[];
+    label?: string;
+    ariaLabel?: string;
+}) {
+    const { isCurrentOrParentUrl } = useCurrentUrl();
     const { isMobile, setOpenMobile } = useSidebar();
 
     return (
-        <nav aria-label="Navigasi utama">
-            <p className="px-6 font-label text-label leading-none text-sidebar-foreground/60">
-                Ruang kerja
+        <nav aria-label={ariaLabel} className="px-3">
+            <p className="px-3 text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
+                {label}
             </p>
-            <ul className="mt-3 grid">
+            <ul className="mt-3 grid gap-1.5">
                 {items.map((item) => {
-                    const isActive = isCurrentUrl(item.href);
+                    const isActive = isCurrentOrParentUrl(item.href);
+                    const Icon = item.icon;
 
                     return (
                         <li key={item.title}>
@@ -30,18 +39,26 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                     }
                                 }}
                                 className={cn(
-                                    'relative flex min-h-control-lg items-center gap-3 px-6 text-sm font-medium transition-colors duration-fast ease-ledger motion-reduce:transition-none',
-                                    'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-loading:opacity-60',
+                                    'flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 data-loading:opacity-60',
                                     isActive
-                                        ? 'bg-sidebar-accent text-sidebar-primary before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-sidebar-primary'
-                                        : 'text-sidebar-foreground/75',
+                                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-950/25'
+                                        : 'text-slate-600',
                                 )}
                             >
-                                {item.icon && (
-                                    <item.icon
-                                        aria-hidden="true"
-                                        className="size-4 shrink-0"
-                                    />
+                                {Icon && (
+                                    <span
+                                        className={cn(
+                                            'flex size-7 shrink-0 items-center justify-center rounded-lg',
+                                            isActive
+                                                ? 'bg-white/15'
+                                                : 'bg-slate-100 text-slate-500',
+                                        )}
+                                    >
+                                        <Icon
+                                            aria-hidden="true"
+                                            className="size-4"
+                                        />
+                                    </span>
                                 )}
                                 <span className="truncate">{item.title}</span>
                             </Link>

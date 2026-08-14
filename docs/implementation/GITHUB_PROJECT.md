@@ -134,8 +134,8 @@ Jika GitHub API mengalami rate limit, tunggu window reset lalu jalankan reconcil
 
 ## Development Contract
 
-- Helper ditulis sebagai CommonJS agar dapat diuji dengan Node.js bawaan runner.
-- Test berada di `.github/scripts/sync-satu-project.test.cjs` dan mencakup mapping, idempotency, dry-run, konfigurasi, dan API error.
+- Helper ditulis sebagai CommonJS agar dapat dipakai pada runner Node.js.
+- Script berada di `.github/scripts/sync-satu-project.cjs` dan mengelola mapping, idempotency, dry-run, konfigurasi, dan API error.
 - Action `actions/github-script@v9.0.0` dan `actions/checkout@v7.0.1` dipin ke immutable commit SHA.
 - Tidak ada runtime dependency baru.
 - Perubahan permission harus direview sebagai security-sensitive change.
@@ -143,4 +143,4 @@ Jika GitHub API mengalami rate limit, tunggu window reset lalu jalankan reconcil
 
 ## Handoff
 
-Consumer berikutnya memakai GitHub Project untuk triage dan workload view, tetapi tetap membaca issue body untuk `Blocked by`, gate, acceptance criteria, dan handoff. Developer yang mengubah status mapping wajib memperbarui script, test, issue contract, dan bagian mapping dokumen ini dalam Pull Request yang sama.
+Consumer berikutnya memakai GitHub Project untuk triage dan workload view, tetapi tetap membaca issue body untuk `Blocked by`, gate, acceptance criteria, dan handoff. Developer yang mengubah status mapping wajib memperbarui script, issue contract, dan bagian mapping dokumen ini dalam Pull Request yang sama.

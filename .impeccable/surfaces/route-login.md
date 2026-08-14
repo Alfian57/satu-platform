@@ -17,7 +17,7 @@ Pengguna menyelesaikan flow tanpa email, memahami cooldown/expiry, dan tidak ter
 
 ## Selected Direction
 
-Compact security docket dengan numbered receipt untuk OTP. Private username dijelaskan sebagai login-only. Phone dimasking setelah submit. Visual world **Buku Besar Kolaborasi** menyediakan receipt, ruled fields, dan validation mark sebagai keluarga bentuk.
+Compact security docket dengan numbered receipt untuk OTP. Private username dijelaskan sebagai login-only. Phone dimasking setelah submit. Visual world **Buku Besar Kolaborasi** menyediakan receipt, ruled fields, dan validation mark sebagai keluarga bentuk. Pada desktop, panel kiri menjadi collaboration canvas yang mengikuti hero landing: gradasi biru muda, mascot transparan yang utuh, pesan singkat, dan catatan privasi. Form di panel kanan tetap menjadi working surface yang tenang.
 
 ## Scope and Boundaries
 
@@ -28,6 +28,7 @@ Compact security docket dengan numbered receipt untuk OTP. Private username dije
 ## States and Ranges
 
 ### Auth States
+
 - **Unknown number:** sebelum nomor WhatsApp disubmit.
 - **Delivery queued:** OTP dikirim ke provider, menunggu konfirmasi delivery.
 - **Delivery sent:** OTP berhasil dikirim ke nomor WhatsApp.
@@ -48,15 +49,19 @@ Compact security docket dengan numbered receipt untuk OTP. Private username dije
 ## Interaction and Accessibility
 
 ### Keyboard
+
 Seluruh flow dapat diselesaikan keyboard: Tab antar field, Enter untuk submit, Escape untuk dismiss overlay. OTP field mendukung navigation antar digit dengan Arrow Left/Right. Focus dialihkan ke error summary setelah submit gagal. Focus tetap pada field saat cooldown timer berjalan.
 
 ### Screen Reader
+
 OTP memiliki single logical label per group, bukan label per digit. Timer tidak diumumkan setiap detik; hanya diumumkan saat tersedia kembali. Error tidak mengungkap account existence. Live region mengumumkan "Kode dikirim ke WhatsApp Anda" setelah delivery berhasil dan "Pengiriman gagal. Periksa nomor atau coba lagi." setelah delivery gagal. Decorative frame dan receipt border disembunyikan dari screen reader.
 
 ### Reduced Motion
+
 `prefers-reduced-motion` menonaktifkan: OTP digit transition, timer countdown animation, skeleton shimmer, dan success checkmark animation. Status delivery tetap tersedia melalui text dan status semantics tanpa bergantung pada animation.
 
 ### Mobile Consequence
+
 Single column pada 320px. Nomor WhatsApp input memakai `inputmode="numeric"`. OTP receipt compact dengan digit input ukuran besar (min 44px touch target). Recovery action tidak tertutup keyboard virtual. Tidak ada horizontal overflow.
 
 ## Constraints

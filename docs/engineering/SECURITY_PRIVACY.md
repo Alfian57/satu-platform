@@ -25,7 +25,7 @@ Open registration hanya student. Campus admin dan recruiter diprovisikan melalui
 
 ## 4. Tenant Isolation
 
-Setiap protected feature memiliki positive dan negative test untuk same tenant, other tenant, missing tenant, suspended membership, stale context, queued job, cached result, storage path, export, dan Reverb channel. Platform operations memakai explicit audited scope.
+Setiap protected feature harus diverifikasi untuk same tenant, other tenant, missing tenant, suspended membership, stale context, queued job, cached result, storage path, export, dan Reverb channel. Platform operations memakai explicit audited scope.
 
 ## 5. Privacy by Purpose
 
@@ -49,7 +49,7 @@ Forbidden:
 - membuat adverse decision atau counseling escalation otomatis;
 - menyatakan correlation sebagai diagnosis.
 
-Real-data inclusion activation membutuhkan DPIA, lawful basis, retention, notice, access control review, fairness test, feature flag approval, dan human review procedure. Synthetic demo tidak melewati gate menjadi real processing.
+Real-data inclusion activation membutuhkan DPIA, lawful basis, retention, notice, access control review, fairness review, feature flag approval, dan human review procedure. Synthetic demo tidak melewati gate menjadi real processing.
 
 ## 7. Gamification Integrity
 
@@ -113,7 +113,7 @@ DPIA/lawful basis, roster agreement, retention, incident owner, Fonnte notice, b
 
 ### Production
 
-Threat model review, penetration test plan, provider SLA/recovery, MySQL/load test, data-right drill, cross-tenant regression, and final human approval.
+Threat model review, penetration test plan, provider SLA/recovery, MySQL/load verification, data-right drill, cross-tenant regression review, and final human approval.
 
 ## 14. Repository Governance
 

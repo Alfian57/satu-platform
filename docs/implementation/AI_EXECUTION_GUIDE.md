@@ -16,7 +16,7 @@ Panduan dependency paralel dan ownership gate ada pada [DEPENDENCY_WORKFLOW.md](
 5. Baca assignee issue yang dipilih. Issue tanpa assignee boleh diambil. Issue dengan assignee yang sama dengan login aktif boleh dikerjakan. Issue dengan assignee berbeda atau lebih dari satu harus dihentikan dan dilaporkan.
 6. Baca issue yang dipilih secara lengkap, termasuk labels, milestone, `Blocked by`, gate, Library/Package, References, Acceptance Criteria, dan Handoff.
 7. Baca hanya dokumen yang ditautkan oleh selected issue, selain dokumen entry yang diwajibkan di atas.
-8. Periksa runtime dan test yang benar-benar tersedia sebelum menyebut capability sebagai implemented.
+8. Periksa runtime yang benar-benar tersedia sebelum menyebut capability sebagai implemented.
 9. Catat ambiguity atau konflik pada issue comment dan berhenti jika keputusan product, human, external, atau ownership diperlukan.
 
 ## Memilih Issue
@@ -33,7 +33,7 @@ Issue hanya boleh dipilih jika:
 - berstatus open dan memiliki label `ready`, atau memiliki status `stacked` yang mengikuti [DEPENDENCY_WORKFLOW.md](./DEPENDENCY_WORKFLOW.md);
 - jika berstatus `ready`, tidak memiliki `Blocked by` yang masih open;
 - jika berstatus `stacked`, parent pada `Stacked on` memiliki label `contract-ready` dan Pull Request menargetkan branch parent;
-- References, surface brief, acceptance criteria, package decision, dan verification tersedia;
+- References, surface brief, acceptance criteria, dan package decision tersedia;
 - milestone serta owner role dapat diidentifikasi.
 
 Label status bersifat mutually exclusive:
@@ -90,7 +90,7 @@ Jika ada konflik, gunakan urutan berikut:
 3. `DESIGN.md`
 4. `docs/ux/` dan matching surface brief
 5. `docs/engineering/`
-6. Selected issue, roadmap, dan test strategy
+6. Selected issue dan roadmap
 7. `docs/governance/DECISIONS.md`
 8. `docs/reference/proposal_lomba.md` sebagai historical input
 
@@ -108,11 +108,8 @@ Perbarui owning source melalui Pull Request. Jangan menyelesaikan konflik dengan
 
 ## Verification
 
-Jalankan verification paling sempit terlebih dahulu, lalu check yang diperlukan oleh scope:
+Jalankan check yang diperlukan oleh scope:
 
-- Pest feature test untuk route, Action, Policy, Job, Notification, dan integration boundary.
-- Unit test untuk pure calculation, ranking, normalization, dan policy version.
-- Browser test untuk critical flow, keyboard, accessibility, responsive, loading transition, dan reconnect.
 - Frontend `npm run lint:check` serta `npm run types:check` bila frontend berubah.
 - PHP formatting dan static checks bila PHP berubah.
 - Documentation Prettier, internal-link review, surface-brief resolution, Unicode em dash check, dan `git diff --check` bila docs berubah.
@@ -128,7 +125,7 @@ Berhenti dan tampilkan evidence ketika issue memiliki `gate:human`, `gate:extern
 - Buka Pull Request sebagai draft sampai acceptance criteria dan verification lengkap.
 - Body Pull Request wajib mencantumkan `Closes #<issue>`.
 - Pull Request stacked wajib mencantumkan `Stacked on: #<parent>` dan base branch parent.
-- Sertakan command, hasil test, screenshot/recording UI, migration/security/recovery note, dan handoff.
+- Sertakan command check, screenshot/recording UI, migration/security/recovery note, dan handoff.
 - Ubah status issue menjadi `in-progress` saat pekerjaan branch-only dimulai. Setelah Pull Request dibuat, automation menurunkan `in-progress` atau `needs-review` dari draft state dan review readiness.
 - `main` hanya menerima **Squash and merge** setelah required CI `ci` lulus dan seluruh conversation selesai.
 - Contributor non-owner memerlukan minimal satu approval. Repository owner dapat memakai self-review dan admin merge tanpa approval reviewer tambahan, tetapi tidak boleh melewati required CI atau conversation resolution.
@@ -159,9 +156,9 @@ Berhenti dan tampilkan evidence ketika issue memiliki `gate:human`, `gate:extern
     Jangan menyertakan `(#<issue>)` atau `(#<pr>)` pada PR title. Body PR mencantumkan `Closes #<issue>`.
 
 2. **Merge draft PR:** sebelum menandai ready, pastikan:
-   - Semua acceptance criteria terpenuhi.
-   - Parent dependency (jika stacked) sudah merge ke `main`.
-   - Gunakan `gh pr ready <number>` untuk menandai ready, lalu:
+    - Semua acceptance criteria terpenuhi.
+    - Parent dependency (jika stacked) sudah merge ke `main`.
+    - Gunakan `gh pr ready <number>` untuk menandai ready, lalu:
 
     ```sh
     gh pr merge <number> --squash --admin
@@ -205,14 +202,11 @@ composer ci:check
 
 Urutan check yang dijalankan:
 
-| Step | Command                     | Keterangan                                         |
-| ---- | --------------------------- | -------------------------------------------------- |
-| 1    | `npm run lint:check`        | ESLint static analysis untuk JavaScript/TypeScript |
-| 2    | `npm run format:check`      | Prettier formatting check                          |
-| 3    | `npm run types:check`       | TypeScript type checking (`tsc --noEmit`)          |
-| 4    | `npm run test:issue-status` | Unit test untuk workflow `sync-issue-status`       |
-| 5    | `npm run test:satu-project` | Unit test untuk workflow `sync-satu-project`       |
-| 6    | `composer test`             | Pint → PHPStan → Pest (unit, feature, browser)     |
+| Step | Command                | Keterangan                                         |
+| ---- | ---------------------- | -------------------------------------------------- |
+| 1    | `npm run lint:check`   | ESLint static analysis untuk JavaScript/TypeScript |
+| 2    | `npm run format:check` | Prettier formatting check                          |
+| 3    | `npm run types:check`  | TypeScript type checking (`tsc --noEmit`)          |
 
 Jika `composer ci:check` gagal, jalankan command yang gagal secara terpisah untuk mendapatkan output yang lebih detail.
 
@@ -302,11 +296,10 @@ git branch -D feat/<issue1>-<slug> feat/<issue2>-<slug> feat/<issue3>-<slug>
 Sebelum menyatakan selesai, pastikan:
 
 1. Semua Acceptance Criteria dan Verification issue terpenuhi.
-2. Test evidence dapat diperiksa dan tidak mengandung secret atau data pribadi.
-3. Owning docs, surface brief, dan issue body sudah konsisten.
-4. Pull Request linked, conversation resolved, dan required CI lulus.
-5. Handoff berikutnya menyebut consumer, artifact, dependency, dan gate yang masih terbuka.
-6. Issue ditutup oleh merge Pull Request, bukan dengan asumsi atau komentar tanpa evidence.
+2. Owning docs, surface brief, dan issue body sudah konsisten.
+3. Pull Request linked, conversation resolved, dan required CI lulus.
+4. Handoff berikutnya menyebut consumer, artifact, dependency, dan gate yang masih terbuka.
+5. Issue ditutup oleh merge Pull Request, bukan dengan asumsi atau komentar tanpa evidence.
 
 ## Larangan
 

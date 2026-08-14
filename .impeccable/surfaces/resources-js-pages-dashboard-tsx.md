@@ -95,11 +95,10 @@ dan tidak melompat dari docket ke rail.
 
 ## P07 Approval Feedback Contract
 
-Top app bar menyediakan shortcut biner untuk berpindah antara tema terang dan
-gelap. Shortcut selalu mencerminkan tindakan berikutnya; pilihan Sistem tetap
-tersedia pada halaman Pengaturan tampilan. Target ini, sidebar trigger, menu
-akun, dan seluruh kontrol aktif lain memiliki pointer cursor serta target sentuh
-minimum 44px pada mobile.
+Dashboard memakai tampilan terang yang konsisten dengan landing page. Top app
+bar tidak menyediakan kontrol pergantian tema. Sidebar trigger, menu akun, dan
+seluruh kontrol aktif lain memiliki pointer cursor serta target sentuh minimum
+44px pada mobile.
 
 Root grid dashboard menjadi flex item yang sekurang-kurangnya memenuhi sisa
 tinggi semantic `main` setelah app bar. Long content tetap memperpanjang halaman
@@ -138,11 +137,11 @@ Acceptance reflow yang dikunci:
   pertama;
 - seluruh range memakai wrapping tanpa silent truncation atau document-level
   horizontal overflow, target interaktif minimum 44px, visible focus, status
-  text + icon, dark mode, serta reduced-motion fallback.
+  text + icon, tampilan terang, serta reduced-motion fallback.
 
 Chromium browser regression menjalankan seluruh state, overflow pada
 320×800/768×1024/1366×768/1672×941, urutan visual mobile, keyboard activation,
-dark mode, serious accessibility issues, dan recovery copy. P07 tetap memiliki
+kontras tampilan terang, serious accessibility issues, dan recovery copy. P07 tetap memiliki
 human gate untuk kritik, polish, screenshot approval, dan pembaruan design
 authority.
 
@@ -165,8 +164,8 @@ breakpoint `xl`, dan turun setelah main content pada viewport yang lebih sempit.
 
 WCAG 2.2 AA, keyboard-first, no sensitive inference, Wayfinder routes, dan
 server state tetap authority. P03 menetapkan Familjen Grotesk untuk display/body,
-Azeret Mono untuk technical label, semantic light/dark tokens, 2px offset focus,
-small controlled radii, flat resting surfaces, dan dukungan Light/Dark/System.
+Azeret Mono untuk technical label, semantic light tokens, 2px offset focus,
+small controlled radii, dan flat resting surfaces.
 Keputusan tersebut tidak mengubah topology comp A. App shell memakai icon
 Lucide yang sudah tersedia. Dashboard query tetap terbuka sampai phase teknis
 yang memilikinya dan harus tetap server-authoritative.

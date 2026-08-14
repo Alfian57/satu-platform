@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\Campus;
 
+use App\Enums\InstitutionMembershipRole;
+use App\Enums\InstitutionMembershipStatus;
+use App\Enums\InstitutionStatus;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\User;
@@ -25,11 +28,15 @@ class ShowCampusOverviewRequest extends FormRequest
             return false;
         }
 
+        if ($institution->status !== InstitutionStatus::Active) {
+            return false;
+        }
+
         return InstitutionMembership::query()
             ->where('institution_id', $institution->getKey())
             ->where('user_id', $user->getKey())
-            ->where('status', 'verified')
-            ->whereIn('role', ['campus_admin', 'reviewer'])
+            ->where('status', InstitutionMembershipStatus::Verified)
+            ->where('role', InstitutionMembershipRole::CampusAdmin)
             ->exists();
     }
 
