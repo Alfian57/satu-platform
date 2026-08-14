@@ -9,7 +9,6 @@ import {
     ChevronLeft,
     ChevronRight,
     Filter,
-    GraduationCap,
     Lock,
     RotateCcw,
     Search,
@@ -20,11 +19,8 @@ import {
     Users,
     X,
 } from 'lucide-react';
-import { useState, useTransition, type FormEvent } from 'react';
-import { AppPage } from '@/components/app-page';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useTransition } from 'react';
+import type { FormEvent } from 'react';
 import {
     destroy as unsaveCandidate,
     store as saveCandidate,
@@ -33,8 +29,12 @@ import {
     index as talentSearch,
     show as showCandidate,
 } from '@/actions/App/Http/Controllers/TalentSearchController';
-import { index as contactRequests } from '@/routes/recruiter/talent/contact-requests';
+import { AppPage } from '@/components/app-page';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { saved as savedCandidates } from '@/routes/recruiter/talent';
+import { index as contactRequests } from '@/routes/recruiter/talent/contact-requests';
 
 interface Candidate {
     id: number;

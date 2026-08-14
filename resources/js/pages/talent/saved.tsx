@@ -12,26 +12,22 @@ import {
     Lock,
     Search,
     ShieldCheck,
-    Sparkles,
     Trash2,
     UserCheck,
     UserRound,
     Users,
 } from 'lucide-react';
 import React, { useState, useTransition } from 'react';
-import { AppPage } from '@/components/app-page';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-    destroy as unsaveCandidate,
-    store as saveCandidate,
-} from '@/actions/App/Http/Controllers/SavedCandidatesController';
+import { destroy as unsaveCandidate } from '@/actions/App/Http/Controllers/SavedCandidatesController';
 import {
     index as talentSearch,
     show as showCandidate,
 } from '@/actions/App/Http/Controllers/TalentSearchController';
-import { index as contactRequests } from '@/routes/recruiter/talent/contact-requests';
+import { AppPage } from '@/components/app-page';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { saved as savedCandidates } from '@/routes/recruiter/talent';
+import { index as contactRequests } from '@/routes/recruiter/talent/contact-requests';
 
 interface Candidate {
     id: number;

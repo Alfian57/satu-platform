@@ -17,8 +17,6 @@ import {
     RotateCcw,
     Shield,
     ShieldCheck,
-    Sparkles,
-    UserCheck,
     UserRound,
     Users,
 } from 'lucide-react';

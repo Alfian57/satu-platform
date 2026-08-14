@@ -3,7 +3,6 @@ import {
     ArrowLeft,
     Ban,
     Bookmark,
-    Building2,
     Calendar,
     CheckCircle2,
     ChevronRight,
@@ -12,17 +11,13 @@ import {
     Mail,
     Search,
     Send,
-    ShieldCheck,
-    Sparkles,
     UserCheck,
     UserRound,
-    Users,
-    XCircle,
 } from 'lucide-react';
 import React, { useState, useTransition } from 'react';
+import { index as talentSearch } from '@/actions/App/Http/Controllers/TalentSearchController';
 import { AppPage } from '@/components/app-page';
 import { Button } from '@/components/ui/button';
-import { index as talentSearch } from '@/actions/App/Http/Controllers/TalentSearchController';
 import { saved as savedCandidates } from '@/routes/recruiter/talent';
 import { index as contactRequestsIndex } from '@/routes/recruiter/talent/contact-requests';
 
@@ -95,12 +90,10 @@ function ContactRequestsContextRail({
     totalCount,
     pendingCount,
     acceptedCount,
-    hasEntitlement,
 }: {
     totalCount: number;
     pendingCount: number;
     acceptedCount: number;
-    hasEntitlement: boolean;
 }) {
     return (
         <div className="grid gap-6">
@@ -252,7 +245,6 @@ export default function RecruiterContactRequests({
                 contextRail={
                     <ContactRequestsContextRail
                         acceptedCount={acceptedCount}
-                        hasEntitlement={entitlement.has_entitlement}
                         pendingCount={pendingCount}
                         totalCount={requests.length}
                     />

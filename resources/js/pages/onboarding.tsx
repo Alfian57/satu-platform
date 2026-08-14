@@ -4,7 +4,6 @@ import {
     Building2,
     Check,
     CheckCircle2,
-    ChevronRight,
     CircleAlert,
     CircleDashed,
     Clock3,

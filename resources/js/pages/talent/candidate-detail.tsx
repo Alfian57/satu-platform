@@ -10,20 +10,18 @@ import {
     FileCheck2,
     Lock,
     Send,
-    Shield,
     ShieldCheck,
     Sparkles,
-    UserCheck,
     UserRound,
 } from 'lucide-react';
 import React, { useState, useTransition } from 'react';
-import { AppPage } from '@/components/app-page';
-import { Button } from '@/components/ui/button';
 import {
     destroy as unsaveCandidate,
     store as saveCandidate,
 } from '@/actions/App/Http/Controllers/SavedCandidatesController';
 import { index as talentSearch } from '@/actions/App/Http/Controllers/TalentSearchController';
+import { AppPage } from '@/components/app-page';
+import { Button } from '@/components/ui/button';
 import { saved as savedCandidates } from '@/routes/recruiter/talent';
 
 interface Candidate {
@@ -473,8 +471,8 @@ export default function CandidateDetail({
                                               .title
                                         : contrib;
                                     const role = isObj
-                                        ? (contrib as Record<string, unknown>)
-                                              .role
+                                        ? ((contrib as Record<string, unknown>)
+                                              .role as string | null)
                                         : null;
 
                                     return (

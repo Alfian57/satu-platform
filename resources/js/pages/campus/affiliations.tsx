@@ -1,7 +1,6 @@
-import { Deferred, Head, Link, router } from '@inertiajs/react';
+import { Deferred, Head, router } from '@inertiajs/react';
 import {
     AlertTriangle,
-    Building2,
     CheckCircle2,
     ChevronLeft,
     ChevronRight,
@@ -12,20 +11,16 @@ import {
     LockKeyhole,
     RefreshCw,
     RotateCcw,
-    Shield,
     ShieldCheck,
     UnlockKeyhole,
-    UserCheck,
     UserRound,
     UserRoundCheck,
-    Users,
     XCircle,
 } from 'lucide-react';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { AppPage } from '@/components/app-page';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
@@ -36,8 +31,6 @@ import {
     destroy as releaseLock,
     store as acquireLock,
 } from '@/routes/campus/affiliations/locks';
-import { show as campusOverview } from '@/routes/campus/overview';
-import { show as campusRoster } from '@/routes/campus/roster';
 
 type MatchResult =
     | 'exact'

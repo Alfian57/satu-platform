@@ -2,7 +2,6 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     AlertTriangle,
     Building2,
-    Calendar,
     CheckCircle2,
     ChevronRight,
     ClipboardCheck,
@@ -11,17 +10,10 @@ import {
     FileText,
     FileUp,
     History,
-    Info,
     LoaderCircle,
-    Lock,
-    Network,
     ShieldCheck,
-    Sparkles,
     TableProperties,
     UploadCloud,
-    UserCheck,
-    Users,
-    XCircle,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
@@ -33,10 +25,8 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { index as affiliationIndex } from '@/routes/campus/affiliations';
 import { index as campusContributionsIndex } from '@/routes/campus/contributions';
-import { index as campusInclusionIndex } from '@/routes/campus/inclusion';
 import {
     preview as previewRoster,
-    show as campusRoster,
     store as storeRoster,
 } from '@/routes/campus/roster';
 
