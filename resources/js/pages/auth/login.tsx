@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import { LogIn } from 'lucide-react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -28,9 +29,14 @@ export default function Login({ status }: Props) {
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid gap-6">
+                        <div className="grid gap-5">
                             <div className="grid gap-2">
-                                <Label htmlFor="username">Nama pengguna</Label>
+                                <Label
+                                    htmlFor="username"
+                                    className="text-sm font-semibold text-slate-700"
+                                >
+                                    Nama pengguna
+                                </Label>
                                 <Input
                                     id="username"
                                     type="text"
@@ -40,10 +46,11 @@ export default function Login({ status }: Props) {
                                     autoComplete="username"
                                     placeholder="nama_pengguna"
                                     aria-describedby="username-help"
+                                    className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                 />
                                 <p
                                     id="username-help"
-                                    className="text-xs leading-relaxed text-muted-foreground"
+                                    className="text-xs leading-relaxed text-slate-500"
                                 >
                                     Nama pengguna hanya untuk masuk ke SATU,
                                     bukan untuk profil publik.
@@ -52,25 +59,36 @@ export default function Login({ status }: Props) {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
+                                <Label
+                                    htmlFor="password"
+                                    className="text-sm font-semibold text-slate-700"
+                                >
+                                    Password
+                                </Label>
                                 <PasswordInput
                                     id="password"
                                     name="password"
                                     required
                                     autoComplete="current-password"
                                     placeholder="Password"
+                                    className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                 />
                                 <InputError message={errors.password} />
                             </div>
 
-                            <div className="flex items-center space-x-3">
-                                <Checkbox id="remember" name="remember" />
-                                <Label htmlFor="remember">Ingat saya</Label>
-                            </div>
-
-                            <div className="flex justify-end text-sm">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2.5">
+                                    <Checkbox id="remember" name="remember" />
+                                    <Label
+                                        htmlFor="remember"
+                                        className="text-sm text-slate-600"
+                                    >
+                                        Ingat saya
+                                    </Label>
+                                </div>
                                 <TextLink
                                     href={recover()}
+                                    className="text-xs font-semibold text-blue-600 no-underline hover:text-blue-700 hover:underline"
                                     data-test="forgot-password-link"
                                 >
                                     Lupa password?
@@ -79,18 +97,39 @@ export default function Login({ status }: Props) {
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full cursor-pointer disabled:cursor-not-allowed"
+                                className="mt-2 h-12 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-md motion-reduce:transition-none"
                                 disabled={processing}
                                 data-test="login-button"
                             >
-                                {processing && <Spinner />}
+                                {processing ? (
+                                    <Spinner />
+                                ) : (
+                                    <LogIn
+                                        aria-hidden="true"
+                                        className="mr-1.5 size-4"
+                                    />
+                                )}
                                 Masuk
                             </Button>
                         </div>
 
-                        <div className="text-center text-sm text-muted-foreground">
+                        <div className="relative flex items-center justify-center">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-slate-200" />
+                            </div>
+                            <span className="relative bg-white px-4 text-xs text-slate-400">
+                                atau
+                            </span>
+                        </div>
+
+                        <div className="text-center text-sm text-slate-500">
                             Belum punya akun?{' '}
-                            <TextLink href={register()}>Daftar</TextLink>
+                            <TextLink
+                                href={register()}
+                                className="font-semibold text-blue-600 no-underline hover:text-blue-700 hover:underline"
+                            >
+                                Daftar sekarang
+                            </TextLink>
                         </div>
                     </>
                 )}
@@ -99,7 +138,7 @@ export default function Login({ status }: Props) {
             {status && (
                 <div
                     role="status"
-                    className="rounded-md border border-verified/35 bg-verified-subtle px-3 py-2 text-center text-sm font-medium text-verified-subtle-foreground"
+                    className="mt-4 rounded-xl border border-emerald-200/60 bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-700"
                 >
                     {status}
                 </div>
