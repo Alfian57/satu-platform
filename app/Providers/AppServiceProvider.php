@@ -31,6 +31,12 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->bind(AcademicGateway::class, SandboxGateway::class);
+
+        if ($this->app->environment('production')) {
+            $this->app->bind('path.public', function () {
+                return base_path('../public_html');
+            });
+        }
     }
 
     /**
