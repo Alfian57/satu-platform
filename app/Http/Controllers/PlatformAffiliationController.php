@@ -40,7 +40,7 @@ class PlatformAffiliationController extends Controller
         return Inertia::render('platform/affiliations', [
             'filters' => [
                 'q' => $search,
-                'status' => $status?->value ?? 'all',
+                'status' => $status->value ?? 'all',
             ],
             'summary' => [
                 'institutions' => $institutions->count(),
