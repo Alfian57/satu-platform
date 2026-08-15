@@ -18,7 +18,6 @@ class PlatformSkillTaxonomyController extends Controller
      */
     public function index(Request $request): Response
     {
-        /** @var User $user */
         $user = $request->user();
 
         abort_unless($user instanceof User && $user->is_platform_admin, 403);
@@ -88,7 +87,6 @@ class PlatformSkillTaxonomyController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        /** @var User $user */
         $user = $request->user();
         abort_unless($user instanceof User && $user->is_platform_admin, 403);
 
@@ -116,7 +114,6 @@ class PlatformSkillTaxonomyController extends Controller
      */
     public function update(Request $request, SkillTaxonomy $skillTaxonomy): RedirectResponse
     {
-        /** @var User $user */
         $user = $request->user();
         abort_unless($user instanceof User && $user->is_platform_admin, 403);
 
@@ -142,7 +139,6 @@ class PlatformSkillTaxonomyController extends Controller
      */
     public function toggleVerification(Request $request, SkillTaxonomy $skillTaxonomy): RedirectResponse
     {
-        /** @var User $user */
         $user = $request->user();
         abort_unless($user instanceof User && $user->is_platform_admin, 403);
 
@@ -158,7 +154,6 @@ class PlatformSkillTaxonomyController extends Controller
      */
     public function destroy(Request $request, SkillTaxonomy $skillTaxonomy): RedirectResponse
     {
-        /** @var User $user */
         $user = $request->user();
         abort_unless($user instanceof User && $user->is_platform_admin, 403);
 
