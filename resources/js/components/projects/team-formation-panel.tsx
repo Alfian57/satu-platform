@@ -118,7 +118,7 @@ function CapacityLedger({
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="grid gap-1">
                     <p className="font-label text-label text-muted-foreground">
-                        KAPASITAS TEAM
+                        KAPASITAS TIM
                     </p>
                     <h3
                         id="team-capacity-title"
@@ -258,8 +258,8 @@ function InvitationRow({
 
             {expired ? (
                 <StatusNotice tone="warning">
-                    Invitation ini sudah tidak berlaku. Kamu tidak perlu
-                    mengambil tindakan lain.
+                    Undangan ini sudah tidak berlaku. Kamu tidak perlu mengambil
+                    tindakan lain.
                 </StatusNotice>
             ) : (
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -271,7 +271,7 @@ function InvitationRow({
                         data-test={`accept-invitation-${invitation.id}`}
                     >
                         {processing && <Spinner aria-hidden="true" />}
-                        Terima invitation
+                        Terima undangan
                     </Button>
                     <Button
                         type="button"
@@ -359,8 +359,8 @@ function StudentTeamView({ projectId, roles, team }: Props) {
 
         const successMessage =
             target.kind === 'reject-invitation'
-                ? 'Invitation ditolak. Kamu tetap dapat menemukan peluang project lain.'
-                : 'Invitation diterima. Kamu sekarang menjadi bagian dari team project ini.';
+                ? 'Undangan ditolak. Kamu tetap dapat menemukan peluang project lain.'
+                : 'Undangan diterima. Kamu sekarang menjadi bagian dari team project ini.';
         const requestOptions = {
             onSuccess: () => {
                 setDecision(null);
@@ -411,7 +411,7 @@ function StudentTeamView({ projectId, roles, team }: Props) {
                 >
                     <div className="grid gap-1 border-b border-border pb-3">
                         <p className="font-label text-label text-muted-foreground">
-                            INVITATION
+                            UNDANGAN
                         </p>
                         <h3
                             id="team-invitations-title"
@@ -461,7 +461,7 @@ function StudentTeamView({ projectId, roles, team }: Props) {
                 >
                     <div className="grid gap-1 border-b border-border pb-3">
                         <p className="font-label text-label text-muted-foreground">
-                            MEMBERSHIP
+                            KEANGGOTAAN
                         </p>
                         <h3
                             id="team-membership-title"
@@ -499,7 +499,7 @@ function StudentTeamView({ projectId, roles, team }: Props) {
                     >
                         <div className="grid gap-1 border-b border-border pb-3">
                             <p className="font-label text-label text-muted-foreground">
-                                REQUEST TERKIRIM
+                                PERMINTAAN TERKIRIM
                             </p>
                             <h3
                                 id="team-request-pending-title"
@@ -514,7 +514,7 @@ function StudentTeamView({ projectId, roles, team }: Props) {
                                 {roleLabel(team.pending_join_request.role)}
                             </strong>
                             . Kamu akan melihat keputusan berikutnya melalui
-                            notification center.
+                            pusat notifikasi.
                         </StatusNotice>
                     </section>
                 )}
@@ -530,7 +530,7 @@ function StudentTeamView({ projectId, roles, team }: Props) {
                     >
                         <div className="grid gap-1 border-b border-border pb-3">
                             <p className="font-label text-label text-muted-foreground">
-                                JOIN REQUEST
+                                PERMINTAAN BERGABUNG
                             </p>
                             <h3 className="text-title font-semibold">
                                 Ajukan diri ke project ini
@@ -642,7 +642,7 @@ function StudentTeamView({ projectId, roles, team }: Props) {
                             {joinForm.processing && (
                                 <Spinner aria-hidden="true" />
                             )}
-                            Kirim join request
+                            Kirim permintaan bergabung
                         </Button>
                     </form>
                 )}
@@ -676,7 +676,7 @@ function StudentTeamView({ projectId, roles, team }: Props) {
             >
                 <DialogContent>
                     <DialogTitle>
-                        Tolak invitation dari {decision?.person}?
+                        Tolak undangan dari {decision?.person}?
                     </DialogTitle>
                     <DialogDescription>
                         Menolak invitation tidak menghapus profil atau project.
@@ -729,7 +729,7 @@ function StudentTeamView({ projectId, roles, team }: Props) {
                             {decisionForm.processing && (
                                 <Spinner aria-hidden="true" />
                             )}
-                            Tolak invitation
+                            Tolak undangan
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -887,7 +887,7 @@ function OwnerTeamView({ team }: { team: TeamFormationState }) {
             >
                 <div className="grid gap-1 border-b border-border pb-3">
                     <p className="font-label text-label text-muted-foreground">
-                        ACTIVE TEAM
+                        TIM AKTIF
                     </p>
                     <h3
                         id="team-members-title"
@@ -937,7 +937,7 @@ function OwnerTeamView({ team }: { team: TeamFormationState }) {
             >
                 <div className="grid gap-1 border-b border-border pb-3">
                     <p className="font-label text-label text-muted-foreground">
-                        REQUEST QUEUE
+                        ANTRIAN PERMINTAAN
                     </p>
                     <h3
                         id="team-request-queue-title"
@@ -991,18 +991,18 @@ function OwnerTeamView({ team }: { team: TeamFormationState }) {
             >
                 <div className="grid gap-1 border-b border-border pb-3">
                     <p className="font-label text-label text-muted-foreground">
-                        SENT INVITATIONS
+                        UNDANGAN TERKIRIM
                     </p>
                     <h3
                         id="team-sent-invitations-title"
                         className="text-title font-semibold"
                     >
-                        Invitation yang masih aktif
+                        Undangan yang masih aktif
                     </h3>
                 </div>
                 {team.sent_invitations.length === 0 ? (
                     <StatusNotice>
-                        Belum ada invitation aktif yang perlu dikelola.
+                        Belum ada undangan aktif yang perlu dikelola.
                     </StatusNotice>
                 ) : (
                     <ul
@@ -1041,7 +1041,7 @@ function OwnerTeamView({ team }: { team: TeamFormationState }) {
                                     }
                                     data-test={`revoke-invitation-${invitation.id}`}
                                 >
-                                    Batalkan invitation
+                                    Batalkan undangan
                                 </Button>
                             </li>
                         ))}
@@ -1076,7 +1076,7 @@ function OwnerTeamView({ team }: { team: TeamFormationState }) {
                 <DialogContent>
                     <DialogTitle>
                         {decision?.kind === 'revoke-invitation'
-                            ? `Batalkan invitation untuk ${decision?.person}?`
+                            ? `Batalkan undangan untuk ${decision?.person}?`
                             : `Tolak request dari ${decision?.person}?`}
                     </DialogTitle>
                     <DialogDescription>
@@ -1131,7 +1131,7 @@ function OwnerTeamView({ team }: { team: TeamFormationState }) {
                                 <Spinner aria-hidden="true" />
                             )}
                             {decision?.kind === 'revoke-invitation'
-                                ? 'Batalkan invitation'
+                                ? 'Batalkan undangan'
                                 : 'Tolak request'}
                         </Button>
                     </DialogFooter>

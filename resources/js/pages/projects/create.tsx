@@ -21,7 +21,7 @@ export default function ProjectCreate({ institution }: ProjectCreateProps) {
 ProjectCreate.layout = {
     breadcrumbs: [
         {
-            title: 'Project discovery',
+            title: 'Penemuan proyek',
             href: projectsIndex(),
         },
         {

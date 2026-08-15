@@ -21,7 +21,6 @@ import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as contributionsIndex } from '@/routes/contributions';
 import { index as leaderboardsIndex } from '@/routes/leaderboards';
-import { show as onboarding } from '@/routes/onboarding';
 import { index as portfolioIndex } from '@/routes/portfolio';
 import { index as projectsIndex } from '@/routes/projects';
 import type {
@@ -32,17 +31,17 @@ import type {
 
 const studentNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: 'Beranda',
         href: dashboard(),
         icon: LayoutDashboard,
     },
     {
-        title: 'Project',
+        title: 'Proyek',
         href: projectsIndex(),
         icon: BriefcaseBusiness,
     },
     {
-        title: 'Contribution',
+        title: 'Kontribusi',
         href: contributionsIndex(),
         icon: FileCheck2,
     },
@@ -52,7 +51,7 @@ const studentNavItems: NavItem[] = [
         icon: BookOpenCheck,
     },
     {
-        title: 'Leaderboard',
+        title: 'Peringkat',
         href: leaderboardsIndex(),
         icon: ListOrdered,
     },
@@ -87,7 +86,7 @@ function StudentNav() {
     const visibleItems =
         shell.institutionMembership?.status === 'verified'
             ? studentNavItems
-            : studentNavItems.filter((item) => item.title === 'Dashboard');
+            : studentNavItems.filter((item) => item.title === 'Beranda');
 
     return (
         <nav aria-label="Navigasi mahasiswa" className="px-3">
@@ -111,18 +110,18 @@ function StudentNav() {
                                     }
                                 }}
                                 className={cn(
-                                    'flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold',
+                                    'flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
                                     isActive
-                                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-950/25'
-                                        : 'text-slate-600',
+                                        ? 'bg-blue-600 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
                                 )}
                             >
                                 {Icon && (
                                     <span
                                         className={cn(
-                                            'flex size-7 shrink-0 items-center justify-center rounded-lg',
+                                            'flex size-7 shrink-0 items-center justify-center rounded-lg transition-colors',
                                             isActive
-                                                ? 'bg-white/15'
+                                                ? 'bg-white/20 text-white'
                                                 : 'bg-slate-100 text-slate-500',
                                         )}
                                     >
@@ -148,7 +147,7 @@ function InstitutionContext({ shell }: { shell: ShellContext }) {
     if (!membership) {
         return (
             <Link
-                href={onboarding()}
+                href={dashboard()}
                 className="group flex min-h-11 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 transition-colors hover:border-blue-200 hover:bg-blue-50"
             >
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
@@ -197,7 +196,7 @@ function InstitutionContext({ shell }: { shell: ShellContext }) {
         </div>
     ) : (
         <Link
-            href={onboarding()}
+            href={dashboard()}
             className="flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 transition-colors hover:border-blue-200 hover:bg-blue-50"
         >
             {content}
@@ -214,22 +213,22 @@ export function StudentSidebar() {
             variant="sidebar"
             className="border-r border-slate-200 bg-white text-slate-950"
         >
-            <SidebarHeader className="border-b border-slate-200 px-6 py-7">
+            <SidebarHeader className="h-16 shrink-0 flex-row items-center border-b border-slate-200 p-0 px-4">
                 <Link
-                    aria-label="SATU: Dashboard"
+                    aria-label="SATU: Beranda"
                     href={dashboard()}
                     prefetch
-                    className="rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+                    className="flex w-full items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
                 >
                     <AppLogo
                         className="text-slate-950"
-                        logoClassName="size-12 rounded-xl"
+                        logoClassName="size-9 rounded-lg"
                         ruleClassName="bg-blue-600"
                     />
                 </Link>
             </SidebarHeader>
 
-            <SidebarContent className="py-7">
+            <SidebarContent className="py-5">
                 <StudentNav />
             </SidebarContent>
 

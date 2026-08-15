@@ -18,7 +18,7 @@ const entryVisibilityOptions: Array<{
 }> = [
     { value: 'private', label: 'Hanya saya' },
     { value: 'institution', label: 'Kampus' },
-    { value: 'recruiter', label: 'Recruiter' },
+    { value: 'recruiter', label: 'Perekrut' },
     { value: 'public', label: 'Publik' },
 ];
 
@@ -78,15 +78,15 @@ export function PortfolioEntryVisibilityControl({
                         response.status === 409
                             ? 'Entry berubah di sesi lain. Muat ulang halaman lalu coba lagi.'
                             : response.status === 403
-                              ? 'Audience entry ini sudah tidak dapat diubah.'
-                              : 'Audience entry belum tersimpan. Coba lagi.',
+                              ? 'Audiens entry ini sudah tidak dapat diubah.'
+                              : 'Audiens entry belum tersimpan. Coba lagi.',
                     );
 
                     return false;
                 },
                 onNetworkError: () => {
                     setActionError(
-                        'Audience entry belum tersimpan. Periksa koneksi lalu coba lagi.',
+                        'Audiens entry belum tersimpan. Periksa koneksi lalu coba lagi.',
                     );
 
                     return false;
@@ -96,7 +96,7 @@ export function PortfolioEntryVisibilityControl({
             .then((response) => {
                 setEntry(response.data);
                 onUpdated(response.data);
-                setActionMessage('Audience entry sudah diperbarui.');
+                setActionMessage('Audiens entry sudah diperbarui.');
             })
             .catch(() => undefined);
     }
@@ -148,7 +148,7 @@ export function PortfolioEntryVisibilityControl({
                     ) : (
                         <Save aria-hidden="true" />
                     )}
-                    Simpan audience
+                    Simpan audiens
                 </Button>
             </div>
             {(validationError || actionError) && (

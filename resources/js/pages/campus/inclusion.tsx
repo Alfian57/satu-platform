@@ -294,9 +294,8 @@ export default function CampusInclusion({
                             <div>
                                 <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
                                     <Shield className="size-3 text-amber-600" />
-                                    Restricted Operational Surface
+                                    Permukaan Operasional Terbatas
                                 </div>
-
                                 <h1 className="mt-3 text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
                                     Peninjauan Inklusi Mahasiswa
                                 </h1>
@@ -391,8 +390,8 @@ export default function CampusInclusion({
                                         htmlFor="restrictedOnly"
                                         className="cursor-pointer text-xs font-semibold text-slate-700"
                                     >
-                                        Tampilkan Hanya Sinyal Terbatas
-                                        (Restricted State)
+                                        Tampilkan Hanya Sinyal Terbatas (Keadaan
+                                        Terbatas)
                                     </Label>
                                 </div>
                             </div>
@@ -631,8 +630,8 @@ export default function CampusInclusion({
                                                 }`}
                                             >
                                                 {selectedSignal.data_sufficiency_met
-                                                    ? 'Terpenuhi (Sufficient)'
-                                                    : 'Kurang (Sparse Data)'}
+                                                    ? 'Terpenuhi (Cukup)'
+                                                    : 'Kurang (Data Jarang)'}
                                             </span>
                                         </div>
 
@@ -712,7 +711,7 @@ export default function CampusInclusion({
                                                 htmlFor="human-conclusion"
                                                 className="text-xs font-bold text-slate-700"
                                             >
-                                                Keputusan Manusia (*Conclusion*)
+                                                Keputusan Manusia (*Kesimpulan*)
                                             </Label>
                                             <select
                                                 id="human-conclusion"
@@ -726,16 +725,15 @@ export default function CampusInclusion({
                                                 className="h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-900 outline-none focus:border-blue-600 focus:bg-white"
                                             >
                                                 <option value="acknowledged">
-                                                    Telah Ditinjau
-                                                    (Acknowledged)
+                                                    Telah Ditinjau (Diakui)
                                                 </option>
                                                 <option value="dismissed">
                                                     Abaikan / Sinyal Tidak
-                                                    Relevan (Dismissed)
+                                                    Relevan (Dikesampingkan)
                                                 </option>
                                                 <option value="outreach_recorded">
                                                     Catat Tindakan Pendukung
-                                                    (Outreach Recorded)
+                                                    (Tindak Lanjut Tercatat)
                                                 </option>
                                             </select>
                                             {errors.human_conclusion && (
@@ -778,7 +776,7 @@ export default function CampusInclusion({
                                                 htmlFor="inclusion-reason"
                                                 className="text-xs font-bold text-slate-700"
                                             >
-                                                Alasan Keputusan (*Reason* -
+                                                Alasan Keputusan (*Alasan* -
                                                 Wajib)
                                             </Label>
                                             <textarea

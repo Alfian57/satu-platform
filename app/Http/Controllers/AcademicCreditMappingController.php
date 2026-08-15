@@ -105,7 +105,7 @@ class AcademicCreditMappingController extends Controller
         $institution = $membership?->institution;
 
         if ($institution === null && ! $user->is_platform_admin) {
-            abort(403, 'You are not an active member of a campus institution.');
+            abort(403, 'Anda bukan anggota aktif dari institusi kampus.');
         }
 
         /** @var Institution $activeInst */
@@ -126,7 +126,7 @@ class AcademicCreditMappingController extends Controller
             return back()->withErrors(['activity_type' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Draft credit mapping created.');
+        return back()->with('success', 'Draft pemetaan kredit berhasil dibuat.');
     }
 
     /**
@@ -146,7 +146,7 @@ class AcademicCreditMappingController extends Controller
             return back()->withErrors(['mapping' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Credit mapping activated.');
+        return back()->with('success', 'Pemetaan kredit berhasil diaktifkan.');
     }
 
     /**
@@ -171,6 +171,6 @@ class AcademicCreditMappingController extends Controller
             return back()->withErrors(['mapping' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Credit mapping retired.');
+        return back()->with('success', 'Pemetaan kredit berhasil dipensiunkan.');
     }
 }

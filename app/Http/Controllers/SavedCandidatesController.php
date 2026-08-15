@@ -129,7 +129,7 @@ class SavedCandidatesController extends Controller
         $organization = $membership?->organization;
 
         if ($organization === null && ! $user->is_platform_admin) {
-            abort(403, 'You are not an active member of a recruiter organization.');
+            abort(403, 'Anda bukan anggota aktif dari organization perekrut.');
         }
 
         /** @var RecruiterOrganization $activeOrg */
@@ -150,7 +150,7 @@ class SavedCandidatesController extends Controller
             abort(404, $e->getMessage());
         }
 
-        return back()->with('success', 'Candidate saved successfully.');
+        return back()->with('success', 'Kandidat berhasil disimpan.');
     }
 
     /**
@@ -170,7 +170,7 @@ class SavedCandidatesController extends Controller
         $organization = $membership?->organization;
 
         if ($organization === null && ! $user->is_platform_admin) {
-            abort(403, 'You are not an active member of a recruiter organization.');
+            abort(403, 'Anda bukan anggota aktif dari organization perekrut.');
         }
 
         /** @var RecruiterOrganization $activeOrg */
@@ -189,6 +189,6 @@ class SavedCandidatesController extends Controller
             abort(403, $e->getMessage());
         }
 
-        return back()->with('success', 'Candidate unsaved successfully.');
+        return back()->with('success', 'Kandidat berhasil dihapus dari bookmark.');
     }
 }

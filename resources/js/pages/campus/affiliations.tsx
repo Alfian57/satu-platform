@@ -655,7 +655,7 @@ function ReviewQueueRegion({
                                                         ? 'Data berubah'
                                                         : item.lock
                                                                 ?.ownedByCurrentUser
-                                                          ? 'Lanjutkan Review'
+                                                          ? 'Lanjutkan Tinjauan'
                                                           : lockedByOther
                                                             ? 'Sedang ditinjau'
                                                             : 'Tinjau Berkas'}

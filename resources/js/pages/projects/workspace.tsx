@@ -206,7 +206,7 @@ function firstError(errors: ErrorMap, field: string): string | undefined {
 
 function requestFailureMessage(status: number): string {
     if (status === 403) {
-        return 'Akses perubahan task sudah tidak tersedia. Muat ulang workspace untuk menyegarkan permission.';
+        return 'Akses perubahan task sudah tidak tersedia. Muat ulang workspace untuk menyegarkan izin.';
     }
 
     if (status === 404) {
@@ -375,7 +375,7 @@ function WorkspaceContextRail({
                     {project.title}
                 </h2>
                 <p className="text-sm leading-6 text-muted-foreground">
-                    Workspace adalah catatan kerja bersama. Refresh mengambil
+                    Workspace adalah catatan kerja bersama. Muat ulang mengambil
                     snapshot terbaru dari database.
                 </p>
             </section>
@@ -513,7 +513,7 @@ function TaskFormFields({
                         htmlFor={`${idPrefix}-due-at`}
                         className="text-sm font-semibold"
                     >
-                        Due date
+                        Batas waktu
                     </label>
                     <Input
                         id={`${idPrefix}-due-at`}
@@ -1393,8 +1393,8 @@ export default function ProjectWorkspace({
                                 className="mt-0.5 size-4 shrink-0"
                             />
                             <p>
-                                Mode baca. Permission perubahan task tidak
-                                tersedia untuk akun ini.
+                                Mode baca. Izin perubahan task tidak tersedia
+                                untuk akun ini.
                             </p>
                         </div>
                     )}
@@ -1620,7 +1620,7 @@ export default function ProjectWorkspace({
                                             id="workspace-list-title"
                                             className="font-label text-label text-muted-foreground"
                                         >
-                                            TASK LEDGER
+                                            LEDGER TASK
                                         </h3>
                                         <span className="text-xs text-muted-foreground">
                                             {tasks.meta.from}-{tasks.meta.to}

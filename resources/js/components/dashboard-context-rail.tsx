@@ -3,12 +3,16 @@ import type { InertiaLinkProps } from '@inertiajs/react';
 import {
     ArrowRight,
     Check,
+    ClipboardCheck,
     Clock3,
+    Compass,
     EyeOff,
+    FileCheck2,
     Lightbulb,
     RefreshCw,
     SearchX,
     ShieldAlert,
+    Sparkles,
     UserRoundCog,
     UsersRound,
 } from 'lucide-react';
@@ -54,12 +58,15 @@ function RegionAction({
             <Button
                 asChild
                 variant="outline"
-                size="lg"
-                className="mt-4 w-full border-primary text-primary hover:text-primary"
+                className="mt-4 h-10 w-full cursor-pointer rounded-xl border-slate-200 bg-slate-50/50 text-xs font-bold text-slate-800 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 sm:text-sm"
             >
                 <Link href={href}>
+                    <Compass className="mr-1.5 size-4 text-blue-600" />
                     {action.label}
-                    <ArrowRight aria-hidden="true" />
+                    <ArrowRight
+                        aria-hidden="true"
+                        className="ml-1.5 size-3.5"
+                    />
                 </Link>
             </Button>
         );
@@ -69,12 +76,12 @@ function RegionAction({
         <Button
             type="button"
             variant="outline"
-            size="lg"
-            className="mt-4 w-full border-primary text-primary hover:text-primary"
+            className="mt-4 h-10 w-full cursor-pointer rounded-xl border-slate-200 bg-slate-50/50 text-xs font-bold text-slate-800 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 sm:text-sm"
             onClick={() => onAction(action)}
         >
+            <Compass className="mr-1.5 size-4 text-blue-600" />
             {action.label}
-            <ArrowRight aria-hidden="true" />
+            <ArrowRight aria-hidden="true" className="ml-1.5 size-3.5" />
         </Button>
     );
 }
@@ -100,29 +107,40 @@ function RecommendationState({
 
     return (
         <div
-            className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-5 shadow-[0_14px_32px_-30px_rgba(30,64,175,0.45)]"
+            className="mt-3 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs transition-all hover:border-slate-300/90"
             data-test={`dashboard-recommendation-${region.state}`}
             role={region.state === 'error' ? 'alert' : undefined}
         >
-            <Icon
-                aria-hidden="true"
-                className={cn(
-                    'size-5',
-                    region.state === 'error'
-                        ? 'text-correction'
-                        : 'text-primary',
-                )}
-            />
-            <p className="mt-3 font-semibold">{region.title}</p>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                {region.description}
-            </p>
+            <div className="flex items-start gap-3.5">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-600">
+                    <Icon
+                        aria-hidden="true"
+                        className={cn(
+                            'size-5 stroke-[2]',
+                            region.state === 'error'
+                                ? 'text-rose-600'
+                                : 'text-blue-600',
+                        )}
+                    />
+                </span>
+                <div className="min-w-0 flex-1">
+                    <p className="text-sm leading-snug font-bold text-slate-900">
+                        {region.title}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                        {region.description}
+                    </p>
+                </div>
+            </div>
+
             {region.action && (
-                <RegionAction
-                    action={region.action}
-                    getActionHref={getActionHref}
-                    onAction={onAction}
-                />
+                <div className="pt-1">
+                    <RegionAction
+                        action={region.action}
+                        getActionHref={getActionHref}
+                        onAction={onAction}
+                    />
+                </div>
             )}
         </div>
     );
@@ -133,22 +151,22 @@ function RecommendationLoading({ announcement }: { announcement: string }) {
         <div
             aria-busy="true"
             aria-live="polite"
-            className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4"
+            className="mt-3 overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs"
             data-test="dashboard-recommendation-loading"
             role="status"
         >
             <span className="sr-only">{announcement}</span>
-            <div aria-hidden="true" className="grid gap-4">
+            <div aria-hidden="true" className="grid gap-3">
                 <div className="flex items-center gap-3">
-                    <Skeleton className="size-10 shrink-0 rounded-full" />
-                    <div className="grid w-full gap-2">
+                    <Skeleton className="size-10 shrink-0 rounded-xl" />
+                    <div className="grid w-full gap-1.5">
                         <Skeleton className="h-4 w-4/5" />
                         <Skeleton className="h-3 w-1/2" />
                     </div>
                 </div>
                 <Skeleton className="h-3 w-full" />
                 <Skeleton className="h-3 w-5/6" />
-                <Skeleton className="h-11 w-full" />
+                <Skeleton className="h-10 w-full rounded-xl" />
             </div>
         </div>
     );
@@ -183,18 +201,21 @@ function RecommendationReady({
     const isStale = recommendation.isStale;
 
     return (
-        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_38px_-34px_rgba(30,64,175,0.45)]">
-            <div className="flex items-center gap-3.5 border-b border-slate-100 bg-gradient-to-br from-blue-50 to-indigo-50/70 px-4 py-4">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-white text-blue-700 shadow-sm">
-                    <UsersRound aria-hidden="true" className="size-5" />
+        <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xs">
+            <div className="flex items-start gap-3.5 border-b border-slate-100 bg-slate-50/60 p-4 sm:p-5">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-600">
+                    <UsersRound
+                        aria-hidden="true"
+                        className="size-5 stroke-[2]"
+                    />
                 </span>
-                <div className="min-w-0">
-                    <p className="leading-5 font-bold wrap-anywhere">
+                <div className="min-w-0 flex-1">
+                    <p className="text-sm leading-tight font-bold wrap-anywhere text-slate-900">
                         {recommendation.title}
                     </p>
-                    <p className="mt-1 text-sm wrap-anywhere text-muted-foreground">
+                    <p className="mt-1 text-xs wrap-anywhere text-slate-500">
                         Peran:{' '}
-                        <span className="font-semibold text-foreground">
+                        <span className="font-bold text-blue-700">
                             {recommendation.role}
                         </span>
                     </p>
@@ -203,7 +224,7 @@ function RecommendationReady({
 
             {isStale && (
                 <p
-                    className="border-b border-pending/30 bg-pending-subtle px-4 py-3 text-sm leading-5 text-pending-subtle-foreground"
+                    className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-xs leading-5 text-amber-800"
                     data-test="dashboard-recommendation-stale"
                     role="status"
                 >
@@ -214,66 +235,60 @@ function RecommendationReady({
 
             <ul
                 aria-label="Alasan kecocokan project"
-                className="grid gap-2.5 px-4 py-3"
+                className="grid gap-2.5 p-4 sm:p-5"
                 data-test="dashboard-recommendation-reasons"
             >
                 {recommendation.reasons.map((reason) => (
                     <li
                         key={reason}
-                        className="flex min-w-0 items-start gap-2.5 text-sm leading-5"
+                        className="flex min-w-0 items-start gap-2 text-xs leading-5 text-slate-700"
                         data-test="dashboard-recommendation-reason"
                     >
                         <span
-                            className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border border-verified/30 bg-accent text-primary"
+                            className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded bg-emerald-50 text-emerald-700"
                             data-test="dashboard-recommendation-marker"
                         >
                             <Check
                                 aria-hidden="true"
-                                className="size-3.5 stroke-[2.5]"
+                                className="size-3 stroke-[2.5]"
                             />
                         </span>
-                        <span className="min-w-0 wrap-anywhere text-foreground/90">
-                            {reason}
-                        </span>
+                        <span className="min-w-0 wrap-anywhere">{reason}</span>
                     </li>
                 ))}
             </ul>
 
-            <div className="border-t border-slate-100 bg-slate-50 p-3">
+            <div className="border-t border-slate-100 bg-slate-50/50 p-4">
                 {recommendation.projectId !== null &&
                     getActionHref(projectAction) !== null && (
                         <Button
                             asChild
-                            size="lg"
-                            className="group w-full rounded-xl bg-blue-600 shadow-md shadow-blue-100 transition-colors duration-fast hover:bg-blue-700 motion-reduce:transition-none"
+                            size="sm"
+                            className="group h-10 w-full rounded-xl bg-blue-600 font-bold text-white shadow-sm transition-all hover:bg-blue-700"
                         >
                             <Link href={getActionHref(projectAction)!}>
                                 {projectAction.label}
                                 <ArrowRight
                                     aria-hidden="true"
-                                    className="size-4 transition-transform group-hover:translate-x-1 motion-reduce:transition-none"
+                                    className="ml-1.5 size-4 transition-transform group-hover:translate-x-1"
                                 />
                             </Link>
                         </Button>
                     )}
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                    <Button
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-1 text-xs">
+                    <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-primary"
+                        className="inline-flex cursor-pointer items-center gap-1 text-[0.7rem] font-semibold text-slate-500 transition-colors hover:text-blue-600"
                         disabled={isProcessing || isStale}
                         data-test="dashboard-recommendation-hide"
                         onClick={() => onFeedback(recommendation.id, 'hide')}
                     >
-                        <EyeOff aria-hidden="true" />
+                        <EyeOff aria-hidden="true" className="size-3.5" />
                         Sembunyikan
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-muted-foreground"
+                        className="inline-flex cursor-pointer items-center gap-1 text-[0.7rem] font-semibold text-slate-400 transition-colors hover:text-slate-700"
                         disabled={isProcessing || isStale}
                         data-test="dashboard-recommendation-not-relevant"
                         onClick={() =>
@@ -281,20 +296,18 @@ function RecommendationReady({
                         }
                     >
                         Tidak relevan
-                    </Button>
+                    </button>
                     {getActionHref(profileAction) !== null && (
-                        <Button
-                            asChild
-                            type="button"
-                            variant="link"
-                            size="sm"
-                            className="ml-auto text-primary"
+                        <Link
+                            href={getActionHref(profileAction)!}
+                            className="ml-auto inline-flex items-center gap-1 text-[0.7rem] font-semibold text-blue-600 hover:underline"
                         >
-                            <Link href={getActionHref(profileAction)!}>
-                                <UserRoundCog aria-hidden="true" />
-                                {profileAction.label}
-                            </Link>
-                        </Button>
+                            <UserRoundCog
+                                aria-hidden="true"
+                                className="size-3.5"
+                            />
+                            {profileAction.label}
+                        </Link>
                     )}
                 </div>
             </div>
@@ -312,57 +325,71 @@ export function DashboardContextRail({
 }: Props) {
     return (
         <div
-            className="grid gap-7 lg:grid-cols-2 xl:grid-cols-1"
+            className="grid gap-6 lg:grid-cols-2 xl:grid-cols-1"
             data-test="dashboard-context-rail"
         >
-            <div className="border-b border-slate-200 pb-4 lg:col-span-2 xl:col-span-1">
-                <p className="text-xs font-bold tracking-[0.13em] text-blue-700 uppercase">
-                    Ringkasan kerja
-                </p>
-                <h2 className="mt-1 text-title font-bold tracking-[-0.025em] text-slate-950">
+            {/* Context Rail Header */}
+            <div className="border-b border-slate-200/80 pb-4 lg:col-span-2 xl:col-span-1">
+                <div className="flex items-center gap-2">
+                    <span className="flex size-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <Sparkles className="size-3.5" />
+                    </span>
+                    <p className="font-label text-xs font-bold tracking-wider text-blue-700 uppercase">
+                        Ringkasan Kerja
+                    </p>
+                </div>
+                <h2 className="mt-1.5 text-lg font-extrabold tracking-tight text-slate-950">
                     Minggu ini
                 </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    Ringkasan ini memakai data akun dan konteks institusi kamu.
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+                    Ringkasan memakai data akun dan konteks institusimu.
                 </p>
             </div>
 
+            {/* Review Queue Card */}
             <section aria-labelledby="review-queue-heading" className="min-w-0">
-                <h3
-                    id="review-queue-heading"
-                    className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase"
-                >
-                    Menunggu tinjauan
-                </h3>
-                <div className="mt-3 flex items-start gap-3.5 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-muted-foreground shadow-[0_14px_32px_-30px_rgba(30,64,175,0.45)]">
-                    <span className="flex shrink-0 rounded-xl border border-blue-100 bg-blue-50 p-2 text-blue-700">
+                <div className="flex items-center gap-2">
+                    <span className="flex size-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <ClipboardCheck className="size-3.5" />
+                    </span>
+                    <h3
+                        id="review-queue-heading"
+                        className="font-label text-xs font-bold tracking-wider text-slate-500 uppercase"
+                    >
+                        Menunggu tinjauan
+                    </h3>
+                </div>
+
+                <div className="mt-3 flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs transition-all hover:border-slate-300/90">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-600">
                         <Clock3
                             aria-hidden="true"
-                            className="size-6 stroke-[1.8]"
+                            className="size-5 stroke-[2]"
                         />
                     </span>
-                    <p className="min-w-0 text-sm leading-5">
-                        <span className="block text-base font-bold text-foreground">
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm leading-snug font-bold text-slate-900">
                             {reviewQueue.title}
-                        </span>
-                        <span className="mt-1 block wrap-anywhere">
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed wrap-anywhere text-slate-500">
                             {reviewQueue.description}
-                        </span>
-                    </p>
+                        </p>
+                    </div>
                 </div>
             </section>
 
+            {/* Recommendation Card */}
             <section
                 aria-labelledby="recommendation-heading"
-                className="border-t border-slate-200 pt-7 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-7 xl:border-t xl:border-l-0 xl:pt-7 xl:pl-0"
+                className="border-t border-slate-200/80 pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6 xl:border-t xl:border-l-0 xl:pt-6 xl:pl-0"
             >
-                <div className="flex items-center gap-2.5">
-                    <span className="flex size-8 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
-                        <Lightbulb aria-hidden="true" className="size-4" />
+                <div className="flex items-center gap-2">
+                    <span className="flex size-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <Lightbulb aria-hidden="true" className="size-3.5" />
                     </span>
                     <h3
                         id="recommendation-heading"
-                        className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase"
+                        className="font-label text-xs font-bold tracking-wider text-slate-500 uppercase"
                     >
                         Rekomendasi untukmu
                     </h3>

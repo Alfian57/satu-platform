@@ -30,8 +30,8 @@ const visibilityOptions: Array<{
     },
     {
         value: 'recruiter',
-        label: 'Recruiter',
-        description: 'Dapat masuk ke proyeksi aman recruiter yang berhak.',
+        label: 'Perekrut',
+        description: 'Dapat masuk ke proyeksi aman perekrut yang berhak.',
     },
     {
         value: 'public',
@@ -97,17 +97,17 @@ export function PortfolioVisibilitySettings({
             onHttpException: (response: { status: number }) => {
                 setActionError(
                     response.status === 409
-                        ? 'Pengaturan visibility berubah di sesi lain. Muat halaman lalu coba lagi.'
+                        ? 'Pengaturan visibilitas berubah di sesi lain. Muat halaman lalu coba lagi.'
                         : response.status === 403
-                          ? 'Pengaturan visibility ini sudah tidak dapat diubah.'
-                          : 'Pengaturan visibility belum tersimpan. Coba lagi.',
+                          ? 'Pengaturan visibilitas ini sudah tidak dapat diubah.'
+                          : 'Pengaturan visibilitas belum tersimpan. Coba lagi.',
                 );
 
                 return false;
             },
             onNetworkError: () => {
                 setActionError(
-                    'Pengaturan visibility belum tersimpan. Periksa koneksi lalu coba lagi.',
+                    'Pengaturan visibilitas belum tersimpan. Periksa koneksi lalu coba lagi.',
                 );
 
                 return false;
@@ -146,7 +146,7 @@ export function PortfolioVisibilitySettings({
                     </h2>
                     <p className="text-sm leading-6 text-muted-foreground">
                         Tentukan siapa yang dapat menemukan karya. Kehadiran di
-                        pencarian recruiter adalah pilihan terpisah.
+                        pencarian perekrut adalah pilihan terpisah.
                     </p>
                 </div>
             </div>
@@ -205,7 +205,7 @@ export function PortfolioVisibilitySettings({
                             htmlFor={`${dataTestPrefix}-discoverable`}
                             className="cursor-pointer"
                         >
-                            Izinkan recruiter menemukan profilku
+                            Izinkan perekrut menemukan profilku
                         </Label>
                         <p className="text-xs leading-5 text-muted-foreground">
                             Recruiter hanya menerima proyeksi yang diizinkan,

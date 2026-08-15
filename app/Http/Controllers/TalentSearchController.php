@@ -172,7 +172,7 @@ class TalentSearchController extends Controller
         $organization = $membership?->organization;
 
         if ($organization === null && ! $user->is_platform_admin) {
-            abort(403, 'You are not an active member of a recruiter organization.');
+            abort(403, 'Anda bukan anggota aktif dari organization perekrut.');
         }
 
         /** @var RecruiterOrganization $activeOrg */
@@ -187,7 +187,7 @@ class TalentSearchController extends Controller
         );
 
         if (! $hasEntitlement) {
-            abort(403, 'Recruiter organization does not hold an active candidate search entitlement.');
+            abort(403, 'Organization perekrut tidak memiliki hak akses pencarian kandidat yang aktif.');
         }
 
         $isSaved = RecruiterSavedCandidate::query()

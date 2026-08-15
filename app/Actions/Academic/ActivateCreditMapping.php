@@ -30,11 +30,11 @@ final class ActivateCreditMapping
         $mapping = AcademicCreditMapping::query()->find($mappingId);
 
         if ($mapping === null) {
-            throw new InvalidArgumentException('Credit mapping not found.');
+            throw new InvalidArgumentException('Pemetaan kredit tidak ditemukan.');
         }
 
         if ($mapping->status !== CreditMappingStatus::Draft) {
-            throw new InvalidArgumentException('Only draft credit mappings can be activated.');
+            throw new InvalidArgumentException('Hanya pemetaan kredit berstatus draft yang dapat diaktifkan.');
         }
 
         return DB::transaction(function () use ($approver, $mapping) {

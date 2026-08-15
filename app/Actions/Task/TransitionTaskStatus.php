@@ -52,7 +52,7 @@ final class TransitionTaskStatus
 
             if (! $lockedTask->status->canTransitionTo($targetStatus)) {
                 throw new InvalidTaskTransition(
-                    "Task cannot transition from {$lockedTask->status->value} to {$targetStatus->value}.",
+                    "Task tidak dapat berpindah dari {$lockedTask->status->value} ke {$targetStatus->value}.",
                 );
             }
 

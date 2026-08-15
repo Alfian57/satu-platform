@@ -37,7 +37,7 @@ final class ProcessIntegrationSync
             return null;
         }
 
-        $this->markAs($sync, IntegrationSyncStatus::Sending, 'Sending to provider...');
+        $this->markAs($sync, IntegrationSyncStatus::Sending, 'Mengirim ke provider...');
         $sync->forceFill([
             'attempts' => $sync->attempts + 1,
             'last_attempt_at' => Carbon::now(),
@@ -47,7 +47,7 @@ final class ProcessIntegrationSync
             $response = $this->gateway->sync($sync->connection, $payload);
 
             $sync->forceFill(['external_reference' => $response['reference'] ?? null])->save();
-            $this->markAs($sync, IntegrationSyncStatus::Succeeded, 'Sync successful.', $response);
+            $this->markAs($sync, IntegrationSyncStatus::Succeeded, 'Sinkronisasi berhasil.', $response);
 
             $this->log('academic.sync.succeeded', $sync, null);
 
@@ -73,7 +73,7 @@ final class ProcessIntegrationSync
     {
         if ($class === IntegrationSyncErrorClass::Duplicate) {
             $snapshot = $e instanceof RequestException ? $e->response->json() : null;
-            $this->markAs($sync, IntegrationSyncStatus::Reconciled, 'Record already exists; reconciled.', $snapshot);
+            $this->markAs($sync, IntegrationSyncStatus::Reconciled, 'Rekaman sudah ada; telah direkonsiliasi.', $snapshot);
             $this->log('academic.sync.reconciled', $sync, $class);
 
             return $class;

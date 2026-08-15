@@ -199,7 +199,7 @@ class AuthFlowController extends Controller
         $request->session()->forget('auth.registration');
         $request->session()->regenerate();
 
-        return to_route('onboarding.show');
+        return to_route('dashboard');
     }
 
     public function showRecovery(Request $request): Response

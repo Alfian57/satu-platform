@@ -107,7 +107,7 @@ function RecoveryOtpStep({ recovery }: { recovery: RecoveryState }) {
         <div className="grid gap-6" data-test="recovery-otp-step">
             <div className="grid gap-2 border-y border-border py-4">
                 <p className="font-label text-label text-muted-foreground">
-                    Receipt recovery
+                    Bukti pemulihan
                 </p>
                 <p className="text-sm leading-relaxed">
                     Masukkan kode 6 digit. Kode berlaku 5 menit dan hanya dapat
@@ -218,7 +218,7 @@ function RecoveryResetStep() {
                 <div className="grid gap-6" data-test="recovery-reset-step">
                     <div className="grid gap-2 border-y border-border py-4">
                         <p className="font-label text-label text-muted-foreground">
-                            Recovery terverifikasi
+                            Pemulihan terverifikasi
                         </p>
                         <p className="text-sm leading-relaxed">
                             Buat password baru. Setelah tersimpan, masuk kembali
@@ -314,7 +314,7 @@ function RecoveryPhoneStep({ status }: { status: RecoveryState['status'] }) {
                         data-test="recovery-start-button"
                     >
                         {processing && <Spinner />}
-                        Kirim kode recovery
+                        Kirim kode pemulihan
                     </Button>
 
                     {status === 'expired' && (
@@ -322,7 +322,7 @@ function RecoveryPhoneStep({ status }: { status: RecoveryState['status'] }) {
                             role="status"
                             className="rounded-md border border-pending/35 bg-pending-subtle px-3 py-2 text-sm text-pending-subtle-foreground"
                         >
-                            Sesi recovery sudah berakhir. Minta kode baru untuk
+                            Sesi pemulihan sudah berakhir. Minta kode baru untuk
                             melanjutkan dengan aman.
                         </p>
                     )}
@@ -337,7 +337,7 @@ export default function Recover({ recovery }: Props) {
 
     return (
         <>
-            <Head title="Recovery akun" />
+            <Head title="Pemulihan akun" />
 
             {state.step === 'otp' ? (
                 <RecoveryOtpStep recovery={state} />
@@ -360,5 +360,5 @@ export default function Recover({ recovery }: Props) {
 Recover.layout = {
     title: 'Pulihkan akun',
     description:
-        'Verifikasi nomor WhatsApp untuk membuat password baru. SATU tidak memakai email untuk recovery.',
+        'Verifikasi nomor WhatsApp untuk membuat password baru. SATU tidak memakai email untuk pemulihan.',
 };

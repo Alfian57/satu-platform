@@ -44,9 +44,9 @@ export default function Login({ status }: Props) {
                                     required
                                     autoFocus
                                     autoComplete="username"
-                                    placeholder="nama_pengguna"
+                                    placeholder="Masukkan nama pengguna"
                                     aria-describedby="username-help"
-                                    className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                    className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                 />
                                 <p
                                     id="username-help"
@@ -70,8 +70,8 @@ export default function Login({ status }: Props) {
                                     name="password"
                                     required
                                     autoComplete="current-password"
-                                    placeholder="Password"
-                                    className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                    placeholder="Masukkan password"
+                                    className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                 />
                                 <InputError message={errors.password} />
                             </div>

@@ -108,11 +108,11 @@ export default function StudentContactRequests({
 
     return (
         <AppPage className="max-w-5xl">
-            <Head title="Permintaan Kontak Recruiter" />
+            <Head title="Permintaan Kontak Perekrut" />
 
             <Heading
                 title="Permintaan kontak"
-                description="Tinjau permintaan kontak dari organization recruiter terverifikasi. Nomor WhatsApp hanya dibagikan saat kamu menerima permintaan."
+                description="Tinjau permintaan kontak dari perekrut organization terverifikasi. Nomor WhatsApp hanya dibagikan saat kamu menerima permintaan."
             />
 
             <div
@@ -249,7 +249,7 @@ export default function StudentContactRequests({
                         Jaminan kerahasiaan
                     </p>
                     <p className="text-muted-foreground">
-                        Recruiter tidak pernah menerima nomor WhatsApp atau
+                        Perekrut tidak pernah menerima nomor WhatsApp atau
                         kontak langsung sampai kamu menerima permintaan. Menolak
                         atau mengabaikan permintaan menjaga kredensial privatmu.
                     </p>
@@ -267,8 +267,8 @@ export default function StudentContactRequests({
                     </p>
                     <p className="text-muted-foreground">
                         Menerima permintaan mencatat persetujuan (consent) yang
-                        mengontrol handoff kontak. Data yang telah dibagikan
-                        tetap mengikuti kebijakan retention.
+                        mengontrol serah terima kontak. Data yang telah
+                        dibagikan tetap mengikuti kebijakan retention.
                     </p>
                 </div>
             </div>

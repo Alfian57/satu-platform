@@ -40,7 +40,7 @@ final class SaveCandidate
                 ->exists();
 
             if (! $isMember) {
-                throw new AuthorizationException('You are not an active member of this recruiter organization.');
+                throw new AuthorizationException('Anda bukan anggota aktif dari organization perekrut ini.');
             }
         }
 
@@ -50,7 +50,7 @@ final class SaveCandidate
         );
 
         if (! $hasEntitlement) {
-            throw new AuthorizationException('Recruiter organization does not hold an active candidate search entitlement.');
+            throw new AuthorizationException('Organization perekrut tidak memiliki hak akses pencarian kandidat yang aktif.');
         }
 
         $projection = TalentCandidateProjection::query()
@@ -59,7 +59,7 @@ final class SaveCandidate
             ->first();
 
         if ($projection === null) {
-            throw new InvalidArgumentException('Target candidate projection is not found or has been withdrawn.');
+            throw new InvalidArgumentException('Proyeksi kandidat target tidak ditemukan atau telah ditarik.');
         }
 
         return DB::transaction(function () use ($recruiter, $organization, $projection) {

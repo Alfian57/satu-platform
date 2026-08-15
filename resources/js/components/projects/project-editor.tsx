@@ -149,7 +149,7 @@ function EditorContextRail({
         <div className="grid gap-6">
             <section className="grid gap-3 border-b border-border pb-5">
                 <p className="font-label text-label text-primary">
-                    KONTEKS PROJECT
+                    KONTEKS PROYEK
                 </p>
                 <h2 className="text-title font-semibold break-words">
                     {institution.name}
@@ -366,7 +366,7 @@ function SkillPicker({
                                 {skill.name ?? `Skill #${skill.taxonomy_id}`}
                             </span>
                             <select
-                                aria-label={`Proficiency ${skill.name ?? skill.taxonomy_id}`}
+                                aria-label={`Tingkat keahlian ${skill.name ?? skill.taxonomy_id}`}
                                 className={cn(selectClassName, 'h-control-sm')}
                                 value={skill.proficiency}
                                 onChange={(event) =>
@@ -591,8 +591,8 @@ export function ProjectEditor({
             >
                 <header className="grid gap-3 border-b border-border pb-6">
                     <p className="font-label text-label text-primary">
-                        {mode === 'create' ? 'PROJECT BARU' : 'EDITOR PROJECT'}{' '}
-                        / {institution.name}
+                        {mode === 'create' ? 'PROYEK BARU' : 'EDITOR PROYEK'} /{' '}
+                        {institution.name}
                     </p>
                     <h1 className="max-w-[28ch] text-headline font-bold text-balance">
                         {mode === 'create'
@@ -652,7 +652,7 @@ export function ProjectEditor({
                     <section className="grid gap-5 border-y border-border py-6">
                         <div>
                             <p className="font-label text-label text-muted-foreground">
-                                IDENTITAS PROJECT
+                                IDENTITAS PROYEK
                             </p>
                             <h2 className="mt-2 text-title font-semibold">
                                 Apa yang akan dikerjakan bersama?
@@ -711,7 +711,7 @@ export function ProjectEditor({
                     <section className="grid gap-5 border-b border-border pb-6">
                         <div>
                             <p className="font-label text-label text-muted-foreground">
-                                KONTRAK PROJECT
+                                KONTRAK PROYEK
                             </p>
                             <h2 className="mt-2 text-title font-semibold">
                                 Tetapkan batas kerja dan visibilitas.
@@ -749,7 +749,7 @@ export function ProjectEditor({
 
                             <div className="grid gap-2">
                                 <Label htmlFor="project-deadline">
-                                    Deadline
+                                    Batas waktu
                                 </Label>
                                 <Input
                                     id="project-deadline"
@@ -821,7 +821,7 @@ export function ProjectEditor({
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                             <div>
                                 <p className="font-label text-label text-muted-foreground">
-                                    REQUIREMENTS
+                                    PERSYARATAN
                                 </p>
                                 <h2
                                     id="project-roles-title"
@@ -844,7 +844,7 @@ export function ProjectEditor({
                                         : 'text-muted-foreground',
                                 )}
                             >
-                                {roleCapacity} / {form.data.capacity} slot role
+                                {roleCapacity} / {form.data.capacity} slot peran
                             </p>
                         </div>
 
@@ -1056,7 +1056,7 @@ export function ProjectEditor({
                             >
                                 {isProcessing && <Spinner aria-hidden="true" />}
                                 {mode === 'create'
-                                    ? 'Simpan dan buka project'
+                                    ? 'Simpan dan buka proyek'
                                     : 'Simpan perubahan'}
                             </Button>
                         </div>

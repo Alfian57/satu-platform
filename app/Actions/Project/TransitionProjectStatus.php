@@ -52,13 +52,13 @@ final class TransitionProjectStatus
 
             if ($lockedProject->status === $targetStatus && $operation !== null) {
                 throw new InvalidProjectTransition(
-                    "Project is already in {$targetStatus->value} status.",
+                    "Project sudah berada dalam status {$targetStatus->value}.",
                 );
             }
 
             if (! $lockedProject->status->canTransitionTo($targetStatus)) {
                 throw new InvalidProjectTransition(
-                    "Project cannot transition from {$lockedProject->status->value} to {$targetStatus->value}.",
+                    "Project tidak dapat berpindah dari {$lockedProject->status->value} ke {$targetStatus->value}.",
                 );
             }
 

@@ -93,7 +93,7 @@ export default function ContributionsCreate({
                         </Link>
                         <div className="grid gap-3">
                             <p className="font-label text-label text-primary">
-                                ENTRY BARU / DRAFT
+                                ENTRI BARU / DRAFT
                             </p>
                             <h1 className="text-headline font-bold text-balance">
                                 Susun contribution dari pekerjaan yang sudah
@@ -145,7 +145,7 @@ export default function ContributionsCreate({
                         >
                             <div className="grid gap-2">
                                 <p className="font-label text-label text-muted-foreground">
-                                    DRAFT COMPOSER
+                                    PENYUSUN DRAFT
                                 </p>
                                 <h2
                                     id="contribution-composer-title"

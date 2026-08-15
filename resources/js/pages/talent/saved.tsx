@@ -263,7 +263,7 @@ export default function SavedCandidates({
                                     </h1>
                                     <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                                         <Bookmark className="size-3 text-blue-600" />
-                                        Private Bookmark
+                                        Bookmark Private
                                     </span>
                                 </div>
 
@@ -500,7 +500,7 @@ export default function SavedCandidates({
                         {/* Pagination */}
                         {candidates.last_page > 1 && (
                             <nav
-                                aria-label="Pagination kandidat tersimpan"
+                                aria-label="Paginasi kandidat tersimpan"
                                 className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs"
                             >
                                 <Button

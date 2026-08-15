@@ -107,7 +107,7 @@ class RecruiterContactRequestController extends Controller
         $organization = $membership?->organization;
 
         if ($organization === null && ! $user->is_platform_admin) {
-            abort(403, 'You are not an active member of a recruiter organization.');
+            abort(403, 'Anda bukan anggota aktif dari organization perekrut.');
         }
 
         /** @var RecruiterOrganization $activeOrg */
@@ -130,7 +130,7 @@ class RecruiterContactRequestController extends Controller
             return back()->withErrors(['purpose' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Contact request sent successfully.');
+        return back()->with('success', 'Permintaan kontak berhasil dikirim.');
     }
 
     /**
@@ -150,7 +150,7 @@ class RecruiterContactRequestController extends Controller
         $organization = $membership?->organization;
 
         if ($organization === null && ! $user->is_platform_admin) {
-            abort(403, 'You are not an active member of a recruiter organization.');
+            abort(403, 'Anda bukan anggota aktif dari organization perekrut.');
         }
 
         /** @var RecruiterOrganization $activeOrg */
@@ -171,6 +171,6 @@ class RecruiterContactRequestController extends Controller
             abort(400, $e->getMessage());
         }
 
-        return back()->with('success', 'Contact request canceled successfully.');
+        return back()->with('success', 'Permintaan kontak berhasil dibatalkan.');
     }
 }

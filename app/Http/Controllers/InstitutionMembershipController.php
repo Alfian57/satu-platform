@@ -22,18 +22,18 @@ class InstitutionMembershipController extends Controller
                 $request->string('nim')->toString(),
             );
         } catch (VerifiedPhoneRequired) {
-            return to_route('onboarding.show')
+            return to_route('dashboard')
                 ->with('onboarding_recovery', 'phone_required');
         } catch (AuthorizationException $exception) {
             if (! $request->header('X-Inertia')) {
                 throw $exception;
             }
 
-            return to_route('onboarding.show')
+            return to_route('dashboard')
                 ->with('onboarding_recovery', 'forbidden');
         }
 
-        return to_route('onboarding.show')
+        return to_route('dashboard')
             ->with('membership_status', $affiliationRequest->membership->status->value)
             ->with('affiliation_status', $affiliationRequest->status->value);
     }

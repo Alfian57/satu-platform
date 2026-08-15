@@ -8,10 +8,10 @@ type Props = {
 };
 
 export function StudentHeader({ breadcrumbs = [] }: Props) {
-    const currentPageTitle = breadcrumbs.at(-1)?.title ?? 'Dashboard';
+    const currentPageTitle = breadcrumbs.at(-1)?.title ?? 'Beranda';
 
     return (
-        <header className="sticky top-0 z-20 flex min-h-[4.75rem] shrink-0 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
                 <SidebarTrigger
                     className="size-11 shrink-0 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 md:size-10"

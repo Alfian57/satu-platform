@@ -989,7 +989,7 @@ export default function TalentSearch({
                             {/* Pagination Controls */}
                             {candidates.last_page > 1 && (
                                 <nav
-                                    aria-label="Pagination kandidat"
+                                    aria-label="Paginasi kandidat"
                                     className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs"
                                 >
                                     <Button

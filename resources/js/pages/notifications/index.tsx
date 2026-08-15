@@ -337,9 +337,9 @@ export default function NotificationIndex({
                                 </div>
                             </dl>
                             <p className="text-sm leading-6 text-muted-foreground">
-                                Notification center adalah history canonical.
+                                Pusat notifikasi adalah riwayat kanonik.
                                 WhatsApp hanya menjadi channel tambahan sesuai
-                                purpose.
+                                tujuan.
                             </p>
                         </section>
 
@@ -402,7 +402,7 @@ export default function NotificationIndex({
                                 </div>
                                 <div>
                                     <p className="font-label text-label text-primary">
-                                        DISPATCH LEDGER
+                                        LEDGER PENGIRIMAN
                                     </p>
                                     <h1 className="mt-1 text-headline font-bold">
                                         Notifikasi

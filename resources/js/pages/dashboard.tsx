@@ -12,7 +12,6 @@ import {
     notRelevant as markRecommendationNotRelevant,
     profileFix as markRecommendationProfileFix,
 } from '@/routes/dashboard/recommendations';
-import { show as onboarding } from '@/routes/onboarding';
 import { index as projectsIndex, show as projectShow } from '@/routes/projects';
 import type {
     DashboardAction,
@@ -21,12 +20,12 @@ import type {
     DashboardRecommendationRegion,
 } from '@/types';
 
-type DashboardRoute = ReturnType<typeof onboarding>;
+type DashboardRoute = ReturnType<typeof dashboard>;
 
 function actionHref(action: DashboardAction): DashboardRoute | null {
     switch (action.key) {
         case 'onboarding':
-            return onboarding();
+            return dashboard();
         case 'projects':
             return projectsIndex();
         case 'project':
@@ -48,7 +47,7 @@ function loadingProjects(): DashboardProjectsRegion {
 function loadingRecommendations(): DashboardRecommendationRegion {
     return {
         state: 'loading',
-        announcement: 'Memuat recommendation project.',
+        announcement: 'Memuat rekomendasi proyek.',
     };
 }
 
@@ -138,25 +137,13 @@ export default function Dashboard() {
                     data-dashboard-source="application"
                     data-test="dashboard-root"
                 >
-                    <header className="relative isolate mb-6 overflow-hidden rounded-2xl border border-blue-100 bg-white px-5 py-6 shadow-[0_18px_50px_-36px_rgba(30,64,175,0.45)] sm:px-7 sm:py-7 xl:px-7 xl:py-4">
-                        <div
-                            aria-hidden="true"
-                            className="absolute -top-28 -right-24 size-80 rounded-full bg-blue-100/75 blur-3xl sm:-right-12"
-                        />
-                        <div
-                            aria-hidden="true"
-                            className="absolute right-14 bottom-0 hidden h-24 w-24 rounded-tl-[2.5rem] border-t border-l border-indigo-100 sm:block"
-                        />
-                        <div className="relative grid gap-6 2xl:grid-cols-[minmax(0,1.45fr)_minmax(15rem,0.72fr)] 2xl:items-stretch 2xl:gap-8">
+                    <header className="relative isolate mb-6 overflow-hidden rounded-2xl border border-slate-200/90 bg-white px-5 py-6 shadow-xs sm:px-7 sm:py-6">
+                        <div className="relative grid gap-6 2xl:grid-cols-[minmax(0,1.45fr)_minmax(15rem,0.72fr)] 2xl:items-center 2xl:gap-8">
                             <div>
-                                <p className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold tracking-[0.12em] text-blue-700 uppercase">
-                                    <span className="size-1.5 rounded-full bg-blue-600" />
-                                    Ruang kerja mahasiswa
-                                </p>
-                                <h1 className="mt-4 max-w-[18ch] text-headline font-bold tracking-[-0.035em] text-balance text-slate-950 xl:mt-3 xl:max-w-none">
+                                <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                                     Selamat datang, {firstName}.
                                 </h1>
-                                <p className="mt-3 max-w-[60ch] text-sm leading-6 text-slate-600 xl:mt-2 xl:leading-5">
+                                <p className="mt-2.5 max-w-[60ch] text-sm leading-6 text-slate-600">
                                     Mulai dari satu langkah yang paling
                                     membutuhkan perhatianmu. Project,
                                     rekomendasi, dan tindak lanjutmu tersusun
@@ -165,21 +152,21 @@ export default function Dashboard() {
                             </div>
 
                             <div
-                                className="hidden border-l border-slate-200 pl-8 2xl:flex 2xl:flex-col 2xl:justify-end"
+                                className="hidden border-l border-slate-200/80 pl-8 2xl:flex 2xl:flex-col 2xl:justify-center"
                                 data-test="dashboard-work-note"
                             >
-                                <p className="flex items-center gap-3 text-xs font-bold tracking-[0.14em] text-slate-500 uppercase">
+                                <p className="flex items-center gap-2.5 font-label text-xs font-bold tracking-wider text-slate-400 uppercase">
                                     <span
                                         aria-hidden="true"
-                                        className="h-px w-6 bg-blue-600"
+                                        className="h-px w-5 bg-primary"
                                     />
                                     Ritme hari ini
                                 </p>
-                                <p className="mt-3 max-w-[24ch] text-lg leading-7 font-semibold tracking-[-0.02em] text-slate-900">
+                                <p className="mt-2 text-base leading-6 font-bold text-slate-900">
                                     Mulai dari langkah utama, lalu lanjutkan
                                     project aktifmu.
                                 </p>
-                                <p className="mt-3 max-w-[30ch] text-sm leading-5 text-slate-500">
+                                <p className="mt-1 text-xs leading-5 text-slate-500">
                                     Prioritas berikutnya sudah tersusun di
                                     bawah.
                                 </p>
@@ -226,7 +213,7 @@ export default function Dashboard() {
 Dashboard.layout = {
     breadcrumbs: [
         {
-            title: 'Dashboard',
+            title: 'Beranda',
             href: dashboard(),
         },
     ],
