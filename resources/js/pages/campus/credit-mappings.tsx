@@ -78,7 +78,7 @@ export default function CampusCreditMappings({
 
     return (
         <>
-            <Head title="Academic Credit Mappings - SATU Platform" />
+            <Head title="Pemetaan Kredit Akademik - SATU" />
 
             <div className="mx-auto min-h-screen max-w-7xl space-y-8 bg-slate-900 p-6 text-slate-100 md:p-10">
                 {/* Header */}
@@ -86,18 +86,18 @@ export default function CampusCreditMappings({
                     <div>
                         <div className="flex items-center gap-3">
                             <h1 className="text-3xl font-extrabold tracking-tight text-blue-100">
-                                Academic Credit Mapping Engine
+                                Mesin Pemetaan Kredit Akademik
                             </h1>
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-800/50 bg-blue-950 px-3 py-1 text-xs font-semibold text-blue-300">
                                 <Shield className="h-3.5 w-3.5 text-blue-400" />{' '}
-                                Versioned Policy Rules
+                                Aturan Policy Berbasis Versi
                             </span>
                         </div>
                         <p className="mt-1 text-sm text-slate-400">
-                            Configure versioned activity-to-credit mapping
-                            rulesets for{' '}
+                            Atur aturan pemetaan aktivitas ke kredit dengan
+                            versi untuk{' '}
                             <strong className="text-slate-200">
-                                {institution?.name || 'Campus Institution'}
+                                {institution?.name || 'Institusi Kampus'}
                             </strong>
                             .
                         </p>
@@ -110,13 +110,13 @@ export default function CampusCreditMappings({
                     className="space-y-4 rounded-2xl border border-slate-700/60 bg-slate-800/50 p-6 shadow-xl"
                 >
                     <h2 className="text-sm font-semibold tracking-wider text-slate-300 uppercase">
-                        Create Draft Credit Mapping Rule
+                        Buat Aturan Pemetaan Kredit (Draft)
                     </h2>
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="space-y-1">
                             <label className="text-xs font-medium text-slate-400">
-                                Activity Type
+                                Tipe Aktivitas
                             </label>
                             <select
                                 value={activityType}
@@ -126,23 +126,21 @@ export default function CampusCreditMappings({
                                 className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             >
                                 <option value="project">
-                                    Verified Project
+                                    Proyek Terverifikasi
                                 </option>
                                 <option value="competition">
-                                    Competition / Hackathon
+                                    Kompetisi / Hackathon
                                 </option>
-                                <option value="research">
-                                    Academic Research
-                                </option>
+                                <option value="research">Riset Akademik</option>
                                 <option value="organization">
-                                    Student Organization Leadership
+                                    Kepemimpinan Organisasi Mahasiswa
                                 </option>
                             </select>
                         </div>
 
                         <div className="space-y-1">
                             <label className="text-xs font-medium text-slate-400">
-                                Credit Amount (SKS)
+                                Jumlah Kredit (SKS)
                             </label>
                             <input
                                 type="number"
@@ -160,13 +158,13 @@ export default function CampusCreditMappings({
 
                         <div className="space-y-1">
                             <label className="text-xs font-medium text-slate-400">
-                                Policy Reason / Notes
+                                Alasan Policy / Catatan
                             </label>
                             <input
                                 type="text"
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
-                                placeholder="Curriculum credit policy update..."
+                                placeholder="Pembaruan policy kredit kurikulum..."
                                 className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             />
                         </div>
@@ -178,7 +176,7 @@ export default function CampusCreditMappings({
                             disabled={isPending}
                             className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg transition-all hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50"
                         >
-                            <Plus className="h-4 w-4" /> Create Draft Mapping
+                            <Plus className="h-4 w-4" /> Buat Draft Mapping
                         </button>
                     </div>
                 </form>
@@ -191,7 +189,7 @@ export default function CampusCreditMappings({
                     className="space-y-4"
                 >
                     <h2 className="text-sm font-semibold tracking-wider text-slate-400 uppercase">
-                        Configured Mapping Rulesets ({mappings.length})
+                        Aturan Mapping Terkonfigurasi ({mappings.length})
                     </h2>
 
                     {mappings.length === 0 && (
@@ -199,12 +197,12 @@ export default function CampusCreditMappings({
                             <Award className="mx-auto h-12 w-12 text-slate-600" />
                             <div className="space-y-1">
                                 <h3 className="text-lg font-semibold text-slate-300">
-                                    No Credit Mappings Configured
+                                    Belum Ada Aturan Kredit
                                 </h3>
                                 <p className="mx-auto max-w-md text-sm text-slate-500">
-                                    Create a draft credit mapping ruleset above
-                                    to start allocating academic credits to
-                                    verified activities.
+                                    Buat aturan pemetaan kredit dalam bentuk
+                                    draft di atas untuk mulai mengalokasikan
+                                    kredit akademik ke aktivitas terverifikasi.
                                 </p>
                             </div>
                         </div>
@@ -227,8 +225,7 @@ export default function CampusCreditMappings({
                                                     )}
                                                 </h3>
                                                 <span className="rounded-lg border border-blue-900 bg-blue-950 px-2.5 py-0.5 text-xs font-semibold text-blue-300">
-                                                    {map.credit_amount} SKS /
-                                                    Credits
+                                                    {map.credit_amount} SKS
                                                 </span>
                                                 <span
                                                     className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
@@ -246,14 +243,14 @@ export default function CampusCreditMappings({
 
                                             {map.reason && (
                                                 <p className="rounded-xl border border-slate-700/40 bg-slate-900/40 p-3 text-xs text-slate-300">
-                                                    Note: {map.reason}
+                                                    Catatan: {map.reason}
                                                 </p>
                                             )}
 
                                             <div className="flex items-center gap-4 pt-1 text-xs text-slate-500">
                                                 {map.effective_from && (
                                                     <span>
-                                                        Effective From:{' '}
+                                                        Berlaku dari:{' '}
                                                         {new Date(
                                                             map.effective_from,
                                                         ).toLocaleDateString()}
@@ -261,7 +258,7 @@ export default function CampusCreditMappings({
                                                 )}
                                                 {map.approver_name && (
                                                     <span>
-                                                        Approver:{' '}
+                                                        Disetujui oleh:{' '}
                                                         {map.approver_name}
                                                     </span>
                                                 )}
@@ -278,7 +275,7 @@ export default function CampusCreditMappings({
                                                     className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-800 disabled:opacity-50"
                                                 >
                                                     <CheckCircle2 className="h-4 w-4" />{' '}
-                                                    Activate Policy
+                                                    Aktifkan Policy
                                                 </button>
                                             )}
 
@@ -291,7 +288,7 @@ export default function CampusCreditMappings({
                                                     className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 transition-colors hover:bg-slate-700 disabled:opacity-50"
                                                 >
                                                     <XCircle className="h-4 w-4" />{' '}
-                                                    Retire Policy
+                                                    Pensiunkan Policy
                                                 </button>
                                             )}
                                         </div>

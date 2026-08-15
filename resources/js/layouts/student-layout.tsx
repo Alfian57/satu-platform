@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { AppContent } from '@/components/app-content';
 import { AppShell } from '@/components/app-shell';
+import { OnboardingModal } from '@/components/onboarding-modal';
 import { StudentHeader } from '@/components/student-header';
 import { StudentSidebar } from '@/components/student-sidebar';
 import AppLayout from '@/layouts/app-layout';
@@ -23,6 +24,7 @@ export default function StudentLayout({
                 <StudentHeader breadcrumbs={breadcrumbs} />
                 {children}
             </AppContent>
+            <OnboardingModal />
         </AppShell>
     );
 }

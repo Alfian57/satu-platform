@@ -556,7 +556,7 @@ export default function CampusOverview({
                         <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:border-amber-200 hover:shadow-md">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">
-                                    Turnaround Review SLA
+                                    Turnaround SLA Tinjauan
                                 </span>
                                 <span className="flex size-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
                                     <Clock className="size-4" />

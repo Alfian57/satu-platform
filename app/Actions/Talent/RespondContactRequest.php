@@ -36,20 +36,20 @@ final class RespondContactRequest
         $contactRequest = RecruiterContactRequest::query()->find($contactRequestId);
 
         if ($contactRequest === null) {
-            throw new InvalidArgumentException('Contact request not found.');
+            throw new InvalidArgumentException('Permintaan kontak tidak ditemukan.');
         }
 
         if ($contactRequest->candidate_user_id !== $candidateUser->id) {
-            throw new AuthorizationException('You are not authorized to respond to this contact request.');
+            throw new AuthorizationException('Anda tidak berwenang menanggapi permintaan kontak ini.');
         }
 
         if ($contactRequest->status !== ContactRequestStatus::Pending) {
-            throw new InvalidArgumentException('This contact request is no longer pending.');
+            throw new InvalidArgumentException('Permintaan kontak ini tidak lagi berstatus pending.');
         }
 
         if (Carbon::now()->greaterThan($contactRequest->expires_at)) {
             $contactRequest->update(['status' => ContactRequestStatus::Expired]);
-            throw new InvalidArgumentException('This contact request has expired.');
+            throw new InvalidArgumentException('Permintaan kontak ini sudah kedaluwarsa.');
         }
 
         return DB::transaction(function () use ($candidateUser, $contactRequest, $accept) {

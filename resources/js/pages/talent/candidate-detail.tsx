@@ -234,9 +234,7 @@ export default function CandidateDetail({
 
     return (
         <>
-            <Head
-                title={`${candidate.headline ?? 'Profil Talenta'} | SATU Platform`}
-            />
+            <Head title={`${candidate.headline ?? 'Profil Talenta'} | SATU`} />
 
             <AppPage
                 contextRail={

@@ -242,7 +242,7 @@ function LedgerEntry({
             <div className="grid min-w-0 gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                     <span className="font-label text-label text-primary">
-                        PUBLIC ENTRY
+                        ENTRI PUBLIK
                     </span>
                     <VerificationMark entry={entry} compact />
                 </div>
@@ -283,7 +283,7 @@ function PublishedPortfolio({
             <section className="grid gap-8 border-b border-border pb-8 md:grid-cols-[minmax(0,1fr)_22rem] md:items-end md:gap-12 md:pb-12">
                 <div className="grid min-w-0 gap-5">
                     <p className="font-label text-label text-primary">
-                        PUBLIC PORTFOLIO / VERIFIED PROJECTION
+                        PORTOFOLIO PUBLIK / PROYEKSI TERVERIFIKASI
                     </p>
                     <div className="grid gap-3">
                         <h1 className="max-w-[16ch] text-headline font-bold text-balance md:text-display">
@@ -322,7 +322,7 @@ function PublishedPortfolio({
                             </h2>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            {entries.length} entry dengan provenance yang dapat
+                            {entries.length} entri dengan provenance yang dapat
                             dibaca siapa pun yang menerima tautan ini.
                         </p>
                     </div>
@@ -362,7 +362,7 @@ function UnavailablePortfolio() {
                 data-test="public-portfolio-unavailable"
             >
                 <p className="font-label text-label text-correction">
-                    PUBLIC PORTFOLIO / UNAVAILABLE
+                    PORTOFOLIO PUBLIK / TIDAK TERSEDIA
                 </p>
                 <div className="flex items-start gap-4">
                     <CircleAlert
@@ -377,8 +377,8 @@ function UnavailablePortfolio() {
                             Portfolio ini tidak tersedia untuk dibaca.
                         </h1>
                         <p className="max-w-[62ch] text-body leading-7 text-muted-foreground">
-                            Pemilik dapat menarik visibility kapan saja. Data
-                            privat dan entry yang belum dipilih publik tidak
+                            Pemilik dapat menarik visibilitas kapan saja. Data
+                            privat dan entri yang belum dipilih publik tidak
                             ditampilkan pada tautan ini.
                         </p>
                     </div>
@@ -410,7 +410,7 @@ export default function PublicPortfolio({
     const description = isPublished
         ? 'Portfolio publik ' +
           profile.display_name +
-          ', dengan entry yang dibagikan secara eksplisit.'
+          ', dengan entri yang dibagikan secara eksplisit.'
         : 'Portfolio publik ini tidak sedang tersedia untuk dibaca.';
 
     return (

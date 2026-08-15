@@ -28,38 +28,38 @@ type Props = {
 function MobileProjectFacts({ project }: { project: DashboardActiveProject }) {
     return (
         <span
-            className="grid min-w-0 gap-2 border-l border-slate-100 bg-slate-50/55 px-4 py-3 md:hidden"
+            className="grid min-w-0 gap-2 border-l border-slate-200/80 bg-slate-50/60 px-4 py-3 md:hidden"
             data-test="dashboard-project-mobile-facts"
         >
             <span className="grid min-w-0 gap-1 sm:grid-cols-[4.75rem_minmax(0,1fr)] sm:gap-3">
-                <span className="font-label text-label font-semibold text-muted-foreground">
-                    Project
+                <span className="font-label text-xs font-bold text-slate-400 uppercase">
+                    Proyek
                 </span>
-                <span className="min-w-0 font-semibold wrap-anywhere">
+                <span className="min-w-0 font-semibold wrap-anywhere text-slate-800">
                     {project.name}
                 </span>
             </span>
             <span className="grid min-w-0 gap-1 sm:grid-cols-[4.75rem_minmax(0,1fr)] sm:gap-3">
-                <span className="font-label text-label font-semibold text-muted-foreground">
+                <span className="font-label text-xs font-bold text-slate-400 uppercase">
                     Berikutnya
                 </span>
-                <span className="min-w-0 text-sm leading-5 wrap-anywhere">
+                <span className="min-w-0 text-sm wrap-anywhere text-slate-600">
                     {project.nextTask}
                 </span>
             </span>
             <span className="grid min-w-0 gap-1 sm:grid-cols-[4.75rem_minmax(0,1fr)] sm:items-center sm:gap-3">
-                <span className="font-label text-label font-semibold text-muted-foreground">
+                <span className="font-label text-xs font-bold text-slate-400 uppercase">
                     Batas
                 </span>
                 <span
                     className={cn(
-                        'inline-flex min-w-0 items-center gap-2 text-sm font-semibold',
+                        'inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold',
                         project.deadlineTone === 'correction'
-                            ? 'text-correction'
-                            : 'text-foreground',
+                            ? 'text-rose-700'
+                            : 'text-slate-700',
                     )}
                 >
-                    <CalendarDays aria-hidden="true" className="size-4" />
+                    <CalendarDays aria-hidden="true" className="size-3.5" />
                     <time dateTime={project.deadlineIso}>
                         {project.deadline}
                     </time>
@@ -74,27 +74,30 @@ function ProjectRow({ project }: { project: DashboardActiveProject }) {
         <li data-test="dashboard-project-row">
             <Link
                 href={projectShow(project.id)}
-                className="group grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)] items-stretch px-3 py-0 transition-colors hover:bg-blue-50/70 motion-reduce:transition-none md:grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem] md:items-center md:py-3.5"
+                className="group grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)] items-stretch px-3 py-0 transition-colors hover:bg-blue-50/50 motion-reduce:transition-none md:grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_7.5rem_2.5rem] md:items-center md:py-3.5"
                 aria-label={`Buka project ${project.name}`}
             >
-                <span className="my-3 flex size-7 items-center justify-center self-start rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 font-label text-label font-bold text-white shadow-sm md:my-0 md:size-8 md:self-auto">
+                <span className="my-3 flex size-7 items-center justify-center self-start rounded-lg border border-primary/20 bg-blue-50 font-label text-xs font-bold text-primary md:my-0 md:size-8 md:self-auto">
                     {project.index}
                 </span>
-                <span className="hidden min-w-0 border-l border-border px-4 py-1 font-semibold wrap-anywhere md:block">
+                <span className="hidden min-w-0 border-l border-slate-200/80 px-4 py-1 font-bold wrap-anywhere text-slate-900 md:block">
                     {project.name}
                 </span>
-                <span className="hidden min-w-0 border-l border-border px-4 py-1 text-sm leading-5 wrap-anywhere md:block">
+                <span className="hidden min-w-0 border-l border-slate-200/80 px-4 py-1 text-sm wrap-anywhere text-slate-600 md:block">
                     {project.nextTask}
                 </span>
                 <span
                     className={cn(
-                        'hidden items-center gap-2 border-l border-border px-4 py-1 text-sm font-semibold md:flex',
+                        'hidden items-center gap-1.5 border-l border-slate-200/80 px-4 py-1 text-xs font-semibold md:flex',
                         project.deadlineTone === 'correction'
-                            ? 'text-correction'
-                            : 'text-foreground',
+                            ? 'text-rose-700'
+                            : 'text-slate-700',
                     )}
                 >
-                    <CalendarDays aria-hidden="true" className="size-4" />
+                    <CalendarDays
+                        aria-hidden="true"
+                        className="size-3.5 text-slate-400"
+                    />
                     <time dateTime={project.deadlineIso}>
                         {project.deadline}
                     </time>
@@ -102,7 +105,7 @@ function ProjectRow({ project }: { project: DashboardActiveProject }) {
                 <span className="hidden items-center justify-center md:flex">
                     <ChevronRight
                         aria-hidden="true"
-                        className="size-4 text-muted-foreground/70 transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                        className="size-4 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-primary"
                     />
                 </span>
                 <MobileProjectFacts project={project} />
@@ -128,11 +131,11 @@ function RegionAction({
                 asChild
                 variant="outline"
                 size="lg"
-                className="w-full shrink-0 rounded-xl border-blue-200 text-blue-700 transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white sm:w-auto"
+                className="w-full shrink-0 rounded-xl border-slate-300 font-bold text-primary hover:border-primary hover:bg-blue-50 hover:text-primary sm:w-auto"
             >
                 <Link href={href}>
                     {action.label}
-                    <ArrowRight aria-hidden="true" />
+                    <ArrowRight aria-hidden="true" className="size-4" />
                 </Link>
             </Button>
         );
@@ -143,11 +146,11 @@ function RegionAction({
             type="button"
             variant="outline"
             size="lg"
-            className="w-full shrink-0 rounded-xl border-blue-200 text-blue-700 transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white sm:w-auto"
+            className="w-full shrink-0 rounded-xl border-slate-300 font-bold text-primary hover:border-primary hover:bg-blue-50 hover:text-primary sm:w-auto"
             onClick={() => onAction(action)}
         >
             {action.label}
-            <ArrowRight aria-hidden="true" />
+            <ArrowRight aria-hidden="true" className="size-4" />
         </Button>
     );
 }
@@ -168,25 +171,27 @@ function ProjectRegionState({
 
     return (
         <div
-            className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-[0_16px_38px_-34px_rgba(30,64,175,0.45)] sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-4 rounded-2xl border border-slate-300/80 bg-white p-5 shadow-xs sm:flex-row sm:items-center sm:justify-between sm:p-6"
             data-test={`dashboard-projects-${region.state}`}
             role={region.state === 'error' ? 'alert' : undefined}
         >
-            <div className="flex min-w-0 items-start gap-3.5">
-                <span className="shrink-0 rounded-xl border border-blue-100 bg-blue-50 p-2.5 text-blue-700">
+            <div className="flex min-w-0 items-start gap-4">
+                <span className="shrink-0 rounded-xl border border-primary/20 bg-blue-50 p-3 text-primary">
                     <Icon
                         aria-hidden="true"
                         className={cn(
-                            'size-5',
+                            'size-6',
                             region.state === 'error'
-                                ? 'text-correction'
+                                ? 'text-rose-600'
                                 : 'text-primary',
                         )}
                     />
                 </span>
                 <div className="min-w-0">
-                    <p className="font-semibold">{region.title}</p>
-                    <p className="mt-1 max-w-[65ch] text-sm leading-6 text-muted-foreground">
+                    <p className="text-base font-bold text-slate-900">
+                        {region.title}
+                    </p>
+                    <p className="mt-1 max-w-[65ch] text-xs leading-5 text-slate-500">
                         {region.description}
                     </p>
                 </div>
@@ -207,7 +212,7 @@ function ProjectLoading({ announcement }: { announcement: string }) {
         <div
             aria-busy="true"
             aria-live="polite"
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white"
             data-test="dashboard-projects-loading"
             role="status"
         >
@@ -216,7 +221,7 @@ function ProjectLoading({ announcement }: { announcement: string }) {
                 {[0, 1].map((index) => (
                     <div
                         key={index}
-                        className="grid grid-cols-[2.75rem_minmax(0,1fr)] border-b border-border/80 px-3 py-4 last:border-b-0 md:grid-cols-[3.25rem_minmax(0,1fr)_minmax(0,1fr)_6.5rem]"
+                        className="grid grid-cols-[2.75rem_minmax(0,1fr)] border-b border-slate-100 px-3 py-4 last:border-b-0 md:grid-cols-[3.25rem_minmax(0,1fr)_minmax(0,1fr)_6.5rem]"
                     >
                         <Skeleton className="h-4 w-5" />
                         <Skeleton className="h-4 w-3/4" />
@@ -246,25 +251,21 @@ export function DashboardProjectLedger({
             aria-labelledby="active-projects-heading"
             data-test="dashboard-ledger"
         >
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3 xl:mb-2">
-                <div>
-                    <p className="text-xs font-bold tracking-[0.13em] text-blue-700 uppercase xl:hidden">
-                        Yang sedang berjalan
-                    </p>
-                    <h2
-                        id="active-projects-heading"
-                        className="mt-1 text-title font-bold tracking-[-0.025em] text-slate-950 xl:mt-0"
-                    >
-                        Project aktif
-                    </h2>
-                </div>
+            <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
+                <h2
+                    id="active-projects-heading"
+                    className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl"
+                >
+                    Proyek aktif
+                </h2>
+
                 {totalCount !== undefined && (
                     <span
-                        aria-label={`${totalCount} project`}
-                        className="inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700"
+                        aria-label={`${totalCount} proyek`}
+                        className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-label text-xs font-bold text-slate-700"
                         data-test="dashboard-project-count"
                     >
-                        {totalCount} project
+                        {totalCount} proyek
                     </span>
                 )}
             </div>
@@ -284,32 +285,32 @@ export function DashboardProjectLedger({
             )}
 
             {region.state === 'ready' && (
-                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_38px_-34px_rgba(30,64,175,0.45)]">
+                <div className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-xs">
                     <div
                         aria-hidden="true"
-                        className="hidden grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_6.5rem_2.5rem] border-b border-slate-100 bg-slate-50 font-label text-[11px] font-semibold tracking-wider text-slate-500 uppercase md:grid"
+                        className="hidden grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_7.5rem_2.5rem] border-b border-slate-200/80 bg-slate-50/80 font-label text-[11px] font-bold tracking-wider text-slate-500 uppercase md:grid"
                     >
                         <span />
-                        <span className="border-l border-border/80 px-4 py-2.5">
-                            Project
+                        <span className="border-l border-slate-200/80 px-4 py-2.5">
+                            Proyek
                         </span>
-                        <span className="border-l border-border/80 px-4 py-2.5">
+                        <span className="border-l border-slate-200/80 px-4 py-2.5">
                             Berikutnya
                         </span>
-                        <span className="border-l border-border/80 px-4 py-2.5">
+                        <span className="border-l border-slate-200/80 px-4 py-2.5">
                             Batas waktu
                         </span>
                         <span />
                     </div>
 
-                    <ol className="divide-y divide-border/80">
+                    <ol className="divide-y divide-slate-100">
                         {region.projects.map((project) => (
                             <ProjectRow key={project.id} project={project} />
                         ))}
                     </ol>
 
                     {region.remainingActionLabel && (
-                        <div className="border-t border-slate-100 bg-slate-50 px-3 py-3">
+                        <div className="border-t border-slate-200/80 bg-slate-50/80 px-4 py-3">
                             <RegionAction
                                 action={{
                                     key: 'projects',

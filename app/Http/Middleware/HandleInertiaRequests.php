@@ -9,6 +9,7 @@ use App\Enums\InstitutionStatus;
 use App\Enums\WorkspaceRole;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
+use App\Models\StudentProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -62,6 +63,9 @@ class HandleInertiaRequests extends Middleware
                     ? null
                     : fn (): ?array => $this->institutionMembershipSummary($request),
             ],
+            'onboarding' => $isPublicPortfolio
+                ? null
+                : fn (): ?array => $this->studentOnboardingSummary($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
@@ -146,6 +150,82 @@ class HandleInertiaRequests extends Middleware
         return [
             'institutionName' => $membership->institution->name,
             'status' => $membership->status->value,
+        ];
+    }
+
+    /**
+     * @return array{required: bool, institutionId: int|null, institutionName: string|null, membershipStatus: string, profileId: int|null, studyProgram: string, studyYear: int, bio: string, skillsCount: int, availabilityCount: int, institutions: array<int, array{id: int, name: string}>, nim: string}|null
+     */
+    private function studentOnboardingSummary(Request $request): ?array
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return null;
+        }
+
+        $workspace = $this->resolveUserWorkspace->handle($user);
+
+        if ($workspace->role !== WorkspaceRole::Student) {
+            return null;
+        }
+
+        $membership = $user->institutionMemberships()
+            ->with(['institution:id,name,status', 'affiliationRequest.roster:id,nim'])
+            ->whereRelation('institution', 'status', InstitutionStatus::Active)
+            ->where('role', InstitutionMembershipRole::Student)
+            ->latest('requested_at')
+            ->latest('id')
+            ->first();
+
+        $institutionId = $membership?->institution_id;
+        $institutionName = $membership?->institution?->name;
+
+        if ($institutionId === null) {
+            $defaultInstitution = Institution::query()
+                ->where('status', InstitutionStatus::Active)
+                ->first(['id', 'name']);
+            $institutionId = $defaultInstitution?->getKey();
+            $institutionName = $defaultInstitution?->name;
+        }
+
+        $institutions = Institution::query()
+            ->where('status', InstitutionStatus::Active)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn (Institution $inst): array => [
+                'id' => (int) $inst->getKey(),
+                'name' => (string) $inst->name,
+            ])
+            ->values()
+            ->all();
+
+        $profile = $institutionId !== null
+            ? StudentProfile::query()
+                ->withCount(['skills', 'availabilityWindows'])
+                ->whereBelongsTo($user)
+                ->where('institution_id', $institutionId)
+                ->first()
+            : null;
+
+        $isReady = $profile !== null
+            && ! empty($profile->study_program)
+            && (int) $profile->skills_count > 0
+            && (int) $profile->availability_windows_count > 0;
+
+        return [
+            'required' => ! $isReady,
+            'institutionId' => $institutionId,
+            'institutionName' => $institutionName,
+            'membershipStatus' => $membership?->status->value ?? 'unverified',
+            'profileId' => $profile?->getKey(),
+            'studyProgram' => $profile !== null ? (string) $profile->study_program : '',
+            'studyYear' => $profile !== null ? (int) $profile->study_year : 1,
+            'bio' => $profile !== null ? (string) $profile->bio : '',
+            'skillsCount' => $profile === null ? 0 : (int) $profile->skills_count,
+            'availabilityCount' => $profile === null ? 0 : (int) $profile->availability_windows_count,
+            'institutions' => $institutions,
+            'nim' => (string) ($membership?->affiliationRequest?->roster?->nim ?? ''),
         ];
     }
 }

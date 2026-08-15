@@ -71,7 +71,7 @@ class StudentContactRequestController extends Controller
             return back()->withErrors(['request' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Contact request accepted.');
+        return back()->with('success', 'Permintaan kontak diterima.');
     }
 
     /**
@@ -94,6 +94,6 @@ class StudentContactRequestController extends Controller
             return back()->withErrors(['request' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Contact request declined.');
+        return back()->with('success', 'Permintaan kontak ditolak.');
     }
 }

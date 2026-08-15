@@ -62,7 +62,7 @@ const statusMeta: Record<
 const visibilityLabels: Record<PortfolioEntry['visibility'], string> = {
     private: 'Hanya saya',
     institution: 'Kampus',
-    recruiter: 'Recruiter',
+    recruiter: 'Perekrut',
     public: 'Publik',
 };
 
@@ -104,7 +104,7 @@ function PortfolioAccessNote() {
             <p className="text-sm leading-6 text-muted-foreground">
                 Detail ini hanya memuat data portofolio yang diizinkan. Evidence
                 private, sinyal inclusion, dan audit mentah tetap berada di
-                boundary masing-masing.
+                batasnya masing-masing.
             </p>
         </section>
     );
@@ -177,7 +177,7 @@ function PortfolioProvenance({ entry }: { entry: PortfolioEntry }) {
                 </div>
                 <div className="grid gap-1">
                     <dt className="font-label text-label text-muted-foreground">
-                        AUDIENCE ENTRY
+                        AUDIENS ENTRY
                     </dt>
                     <dd className="font-semibold">
                         {visibilityLabels[entry.visibility]}
@@ -198,7 +198,7 @@ function PortfolioProvenance({ entry }: { entry: PortfolioEntry }) {
                     aria-hidden="true"
                     className="mt-0.5 size-3.5 shrink-0 text-primary"
                 />
-                Recruiter hanya menerima proyeksi yang diizinkan. Evidence
+                Perekrut hanya menerima proyeksi yang diizinkan. Evidence
                 private dan data audit tidak ikut diproyeksikan.
             </p>
         </section>

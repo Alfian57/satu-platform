@@ -5,10 +5,13 @@ import {
     ArrowRight,
     Building2,
     CalendarDays,
+    Check,
     CircleCheck,
     Clock3,
+    Compass,
     FileText,
     PencilLine,
+    Sparkles,
     UserRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -40,40 +43,49 @@ const factIcons: Record<DashboardFactIcon, LucideIcon> = {
 
 const statusStyles: Record<
     DashboardStatusTone,
-    { icon: LucideIcon; className: string; iconContainerClass: string }
+    {
+        icon: LucideIcon;
+        className: string;
+        iconContainerClass: string;
+        labelClass: string;
+    }
 > = {
     correction: {
         icon: AlertCircle,
-        className: 'bg-rose-50 text-rose-800',
+        className: 'bg-rose-50/80 text-rose-950 border-rose-200/90',
         iconContainerClass:
-            'rounded-xl border border-rose-200 bg-white p-2.5 text-rose-600 shadow-sm',
+            'rounded-2xl border border-rose-200 bg-white p-3 text-rose-600 shadow-2xs',
+        labelClass: 'text-rose-800 font-bold',
     },
     pending: {
         icon: Clock3,
-        className: 'bg-amber-50 text-amber-900',
+        className: 'bg-amber-50/80 text-amber-950 border-amber-200/90',
         iconContainerClass:
-            'rounded-xl border border-amber-200 bg-white p-2.5 text-amber-700 shadow-sm',
+            'rounded-2xl border border-amber-200 bg-white p-3 text-amber-600 shadow-2xs',
+        labelClass: 'text-amber-800 font-bold',
     },
     neutral: {
-        icon: FileText,
-        className: 'bg-blue-50 text-blue-900',
+        icon: Sparkles,
+        className: 'bg-blue-50/70 text-slate-900 border-blue-200/80',
         iconContainerClass:
-            'rounded-xl border border-blue-200 bg-white p-2.5 text-blue-700 shadow-sm',
+            'rounded-2xl border border-blue-200 bg-white p-3 text-blue-600 shadow-2xs',
+        labelClass: 'text-blue-800 font-bold',
     },
     verified: {
         icon: CircleCheck,
-        className: 'bg-emerald-50 text-emerald-900',
+        className: 'bg-emerald-50/70 text-emerald-950 border-emerald-200/80',
         iconContainerClass:
-            'rounded-xl border border-emerald-200 bg-white p-2.5 text-emerald-700 shadow-sm',
+            'rounded-2xl border border-emerald-200 bg-white p-3 text-emerald-600 shadow-2xs',
+        labelClass: 'text-emerald-800 font-bold',
     },
 };
 
 const factToneStyles = {
-    correction: 'text-correction',
-    default: 'text-foreground',
-    muted: 'text-muted-foreground',
-    pending: 'text-pending',
-    verified: 'text-verified',
+    correction: 'text-rose-700',
+    default: 'text-slate-800',
+    muted: 'text-slate-500',
+    pending: 'text-amber-700',
+    verified: 'text-emerald-700',
 } as const;
 
 function FactValue({ fact }: { fact: DashboardDocketFact }) {
@@ -91,33 +103,39 @@ function FactValue({ fact }: { fact: DashboardDocketFact }) {
     return (
         <span
             className={cn(
-                'flex min-w-0 items-start gap-2',
+                'flex min-w-0 items-center gap-2',
                 factToneStyles[fact.tone ?? 'default'],
             )}
         >
             {Icon && (
-                <Icon aria-hidden="true" className="mt-1 size-4 shrink-0" />
+                <Icon
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-slate-400"
+                />
             )}
             <span className="min-w-0 wrap-anywhere">
                 {isHighlightTone ? (
                     <span
                         className={cn(
-                            'inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-semibold',
+                            'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-bold shadow-2xs',
                             fact.tone === 'correction' &&
-                                'border-correction/30 bg-correction-subtle text-correction-subtle-foreground',
+                                'border-rose-200 bg-rose-50 text-rose-800',
                             fact.tone === 'pending' &&
-                                'border-pending/30 bg-pending-subtle text-pending-subtle-foreground',
+                                'border-amber-200 bg-amber-50 text-amber-800',
                             fact.tone === 'verified' &&
-                                'border-verified/30 bg-verified-subtle text-verified-subtle-foreground',
+                                'border-emerald-200 bg-emerald-50 text-emerald-800',
                         )}
                     >
+                        <Check className="size-3 stroke-[3] text-emerald-600" />
                         {value}
                     </span>
                 ) : (
-                    <span className="font-semibold">{value}</span>
+                    <span className="text-sm font-semibold text-slate-800">
+                        {value}
+                    </span>
                 )}
                 {fact.supportingValue && (
-                    <span className="font-normal text-muted-foreground">
+                    <span className="ml-1.5 text-xs font-normal text-slate-500">
                         {' · '}
                         {fact.supportingValue}
                     </span>
@@ -129,11 +147,11 @@ function FactValue({ fact }: { fact: DashboardDocketFact }) {
 
 function FactRow({ fact }: { fact: DashboardDocketFact }) {
     return (
-        <div className="grid border-b border-slate-100 transition-colors last:border-b-0 hover:bg-blue-50/55 sm:grid-cols-[10.5rem_minmax(0,1fr)]">
-            <dt className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5 font-label text-label font-semibold tracking-wider text-slate-500 uppercase sm:border-r sm:border-b-0 sm:px-5 sm:py-3 xl:py-1.5">
+        <div className="grid items-center border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50/60 sm:grid-cols-[11rem_minmax(0,1fr)]">
+            <dt className="border-b border-slate-100 bg-slate-50/50 px-4 py-3 font-label text-xs font-bold tracking-wider text-slate-500 uppercase sm:border-r sm:border-b-0 sm:px-5 sm:py-3.5">
                 {fact.label}
             </dt>
-            <dd className="min-w-0 px-4 py-3 text-sm leading-6 font-medium text-slate-800 sm:px-5 xl:py-1.5">
+            <dd className="min-w-0 px-4 py-3 text-sm font-medium text-slate-800 sm:px-5 sm:py-3.5">
                 <FactValue fact={fact} />
             </dd>
         </div>
@@ -154,10 +172,12 @@ function ActionControl({
     primary?: boolean;
 }) {
     const href = getActionHref(action);
-    const icon = primary ? <PencilLine aria-hidden="true" /> : null;
+    const icon = primary ? (
+        <Compass aria-hidden="true" className="mr-2 size-4" />
+    ) : null;
     const className = primary
-        ? 'w-full rounded-xl bg-blue-600 font-semibold shadow-md shadow-blue-200 transition-colors duration-fast hover:bg-blue-700 sm:w-auto'
-        : 'group w-full rounded-xl text-blue-700 transition-colors duration-fast hover:bg-blue-50 hover:text-blue-800 sm:w-auto';
+        ? 'w-full rounded-xl bg-blue-600 px-6 font-bold text-sm text-white shadow-md shadow-blue-600/20 hover:bg-blue-700 transition-all sm:w-auto h-11'
+        : 'group w-full rounded-xl font-bold text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors sm:w-auto h-11';
 
     if (href !== null) {
         return (
@@ -173,7 +193,7 @@ function ActionControl({
                     {!primary && (
                         <ArrowRight
                             aria-hidden="true"
-                            className="size-4 transition-transform group-hover:translate-x-1"
+                            className="ml-1.5 size-4 transition-transform group-hover:translate-x-1"
                         />
                     )}
                 </Link>
@@ -192,7 +212,12 @@ function ActionControl({
         >
             {icon}
             {action.label}
-            {!primary && <ArrowRight aria-hidden="true" className="size-4" />}
+            {!primary && (
+                <ArrowRight
+                    aria-hidden="true"
+                    className="ml-1.5 size-4 transition-transform group-hover:translate-x-1"
+                />
+            )}
         </Button>
     );
 }
@@ -212,72 +237,75 @@ export function DashboardNextAction({
             aria-labelledby="dashboard-next-action"
             data-test="dashboard-docket"
         >
-            <div className="grid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_45px_-38px_rgba(30,64,175,0.5)] sm:grid-cols-[9rem_minmax(0,1fr)]">
+            <div className="grid overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs sm:grid-cols-[10rem_minmax(0,1fr)]">
+                {/* Status Margin (Left on Desktop, Top on Mobile) */}
                 <div
                     className={cn(
-                        'flex items-center gap-3 border-b border-slate-100 px-4 py-4 sm:flex-col sm:justify-center sm:border-r sm:border-b-0 sm:px-4 sm:py-6 sm:text-center xl:py-3',
+                        'flex items-center gap-3 border-b border-slate-200/80 px-4 py-4 sm:flex-col sm:justify-center sm:border-r sm:border-b-0 sm:px-4 sm:py-6 sm:text-center',
                         status.className,
                     )}
                 >
                     <span className={status.iconContainerClass}>
                         <StatusIcon
                             aria-hidden="true"
-                            className="size-7 shrink-0 stroke-[1.8]"
+                            className="size-6 shrink-0 stroke-[2]"
                         />
                     </span>
-                    <p className="font-label text-label leading-5 font-bold tracking-[0.11em] uppercase">
+                    <p
+                        className={cn(
+                            'mt-1 font-label text-xs leading-4 font-bold tracking-wider uppercase',
+                            status.labelClass,
+                        )}
+                    >
                         {action.statusLabel}
                     </p>
                 </div>
 
+                {/* Docket Main Body */}
                 <div className="min-w-0">
-                    <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 border-b border-slate-100 bg-slate-50 px-4 py-3 sm:px-5 xl:py-1">
-                        <p className="min-w-0 font-label text-label font-semibold wrap-anywhere">
-                            <span className="text-slate-500">
+                    {/* Top Reference Bar without DISCOVERY-START */}
+                    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-slate-100 bg-slate-50/60 px-5 py-3">
+                        <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200/80 bg-blue-50/80 px-2.5 py-0.5 text-xs font-bold tracking-wider text-blue-700 uppercase">
+                                <Sparkles className="size-3 text-blue-600" />
                                 {action.category}
                             </span>
-                            <span
-                                aria-hidden="true"
-                                className="px-2 text-slate-400"
-                            >
-                                /
-                            </span>
-                            <span className="inline-flex items-center rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 font-mono text-xs font-semibold text-blue-700">
-                                {action.reference}
-                            </span>
-                        </p>
-                        <p className="flex items-center gap-1.5 font-label text-label text-slate-500">
+                        </div>
+                        <p className="flex items-center gap-1.5 font-label text-xs text-slate-500">
                             <Clock3
                                 aria-hidden="true"
-                                className="size-3.5 text-blue-600"
+                                className="size-3.5 text-slate-400"
                             />
                             <span>Dicatat</span>{' '}
                             <time
                                 dateTime={action.recordedAtIso}
-                                className="font-medium"
+                                className="font-semibold text-slate-700"
                             >
                                 {action.recordedAt}
                             </time>
                         </p>
                     </div>
 
-                    <div className="border-b border-slate-100 px-4 py-5 sm:px-5 sm:py-5 xl:py-2">
+                    {/* Headline */}
+                    <div className="border-b border-slate-100 px-5 py-5">
                         <h2
                             id="dashboard-next-action"
-                            className="max-w-[29ch] text-headline font-bold tracking-[-0.03em] text-balance wrap-anywhere text-slate-950 xl:text-2xl xl:leading-8"
+                            className="text-xl font-extrabold tracking-tight text-slate-950 sm:text-2xl"
                         >
                             {action.title}
                         </h2>
                     </div>
 
+                    {/* Ruled Fact Rows */}
                     <dl>
                         {action.facts.map((fact) => (
                             <FactRow key={fact.label} fact={fact} />
                         ))}
                     </dl>
 
+                    {/* Action Footer */}
                     {hasActions && (
-                        <div className="grid gap-2.5 bg-slate-50 px-4 py-4 sm:flex sm:flex-wrap sm:items-center sm:px-5 xl:py-1.5">
+                        <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 bg-slate-50/50 px-5 py-4">
                             {action.primaryAction && (
                                 <ActionControl
                                     action={action.primaryAction}
@@ -290,6 +318,7 @@ export function DashboardNextAction({
                             {action.secondaryAction && (
                                 <ActionControl
                                     action={action.secondaryAction}
+                                    dataTest="dashboard-secondary-action"
                                     getActionHref={getActionHref}
                                     onAction={onAction}
                                 />

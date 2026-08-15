@@ -68,13 +68,13 @@ final class ReviewContribution
                 || $version->version_number !== $expectedVersion
             ) {
                 throw new StaleContributionDecision(
-                    'The contribution changed before this decision was saved.',
+                    'Contribution berubah sebelum keputusan ini disimpan.',
                 );
             }
 
             if ($lockedContribution->status !== ContributionStatus::Pending) {
                 throw new InvalidContributionTransition(
-                    'Only pending contributions may be reviewed.',
+                    'Hanya contribution dengan status pending yang dapat ditinjau.',
                 );
             }
 
@@ -84,7 +84,7 @@ final class ReviewContribution
                 ->where('contribution_version_id', $version->getKey())
                 ->exists()) {
                 throw new StaleContributionDecision(
-                    'This contribution version already has a review decision.',
+                    'Versi contribution ini sudah memiliki keputusan review.',
                 );
             }
 
@@ -92,7 +92,7 @@ final class ReviewContribution
 
             if (! $lockedContribution->status->canTransitionTo($newStatus)) {
                 throw new InvalidContributionTransition(
-                    'The contribution cannot transition to the selected review status.',
+                    'Contribution tidak dapat berpindah ke status review yang dipilih.',
                 );
             }
 

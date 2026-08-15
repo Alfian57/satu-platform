@@ -112,7 +112,7 @@ function formatFileSize(bytes: number): string {
 }
 
 function verificationLabel(status: ContributionStatus): string {
-    return status === 'approved' ? 'Institution-verified' : 'Self-reported';
+    return status === 'approved' ? 'Terverifikasi institusi' : 'Lapor mandiri';
 }
 
 function reviewMeta(decision: ContributionReview['decision']): {
@@ -272,7 +272,7 @@ function ProvenanceTrace({
         >
             <div>
                 <p className="font-label text-label text-primary">
-                    OUTCOME CHAIN
+                    RANTAI OUTCOME
                 </p>
                 <h2
                     id="contribution-provenance-title"
@@ -510,7 +510,7 @@ export default function ContributionsShow({
         <div className="grid gap-6">
             <section className="grid gap-3 border-b border-border pb-6">
                 <p className="font-label text-label text-muted-foreground">
-                    NEXT ACTION
+                    AKSI BERIKUTNYA
                 </p>
                 <div
                     className={cn(
@@ -597,8 +597,8 @@ export default function ContributionsShow({
                     </div>
                 </dl>
                 <p className="text-xs leading-5 text-muted-foreground">
-                    Status validasi tidak otomatis menjanjikan credit akademik
-                    atau akses recruiter.
+                    Status validasi tidak otomatis menjanjikan kredit akademik
+                    atau akses perekrut.
                 </p>
             </section>
             <div className="flex items-start gap-2 text-sm leading-6 text-muted-foreground">
@@ -630,7 +630,7 @@ export default function ContributionsShow({
                         </Link>
                         <div className="grid gap-3">
                             <p className="font-label text-label text-primary">
-                                CONTRIBUTION / RECEIPT-{contribution.id}
+                                CONTRIBUTION / BUKTI-{contribution.id}
                             </p>
                             <h1 className="max-w-[26ch] text-headline font-bold text-balance break-words">
                                 {contribution.project.title}
@@ -719,15 +719,15 @@ export default function ContributionsShow({
                             <div className="grid gap-2">
                                 <p className="font-label text-label text-muted-foreground">
                                     {status === 'revision'
-                                        ? 'REVISION RESPONSE'
-                                        : 'DRAFT EDITOR'}
+                                        ? 'RESPONS REVISI'
+                                        : 'EDITOR DRAFT'}
                                 </p>
                                 <h2
                                     id="contribution-revision-title"
                                     className="text-title font-semibold"
                                 >
                                     {status === 'revision'
-                                        ? 'Tanggapi feedback tanpa menghapus history.'
+                                        ? 'Tanggapi feedback tanpa menghapus riwayat.'
                                         : 'Perbarui draft sebelum dikirim.'}
                                 </h2>
                             </div>
@@ -840,7 +840,7 @@ export default function ContributionsShow({
                                         </div>
                                         <span className="font-label text-label text-muted-foreground">
                                             {currentVersion.evidence.length}/20
-                                            FILE
+                                            BERKAS
                                         </span>
                                     </div>
                                     {currentVersion.evidence.length === 0 ? (
@@ -912,14 +912,14 @@ export default function ContributionsShow({
                             >
                                 <div>
                                     <p className="font-label text-label text-muted-foreground">
-                                        VALIDATION TRACE
+                                        JEJAK VALIDASI
                                     </p>
                                     <h2
                                         id="contribution-review-title"
                                         className="mt-1 text-title font-semibold"
                                     >
-                                        Feedback reviewer
-                                    </h2>
+                                        Umpan balik reviewer
+                                    </h2>{' '}
                                 </div>
                                 <ReviewFeedback
                                     reviews={contribution.reviews}
@@ -936,7 +936,7 @@ export default function ContributionsShow({
                             >
                                 <div>
                                     <p className="font-label text-label text-muted-foreground">
-                                        APPEND-ONLY HISTORY
+                                        RIWAYAT APPEND-ONLY
                                     </p>
                                     <h2
                                         id="contribution-history-title"

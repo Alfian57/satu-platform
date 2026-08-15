@@ -11,9 +11,9 @@ enum PortfolioVerificationLevel: string
     public function label(): string
     {
         return match ($this) {
-            self::SelfReported => 'Self-reported',
-            self::TeamConfirmed => 'Team-confirmed',
-            self::InstitutionVerified => 'Institution-verified',
+            self::SelfReported => 'Lapor mandiri',
+            self::TeamConfirmed => 'Dikonfirmasi tim',
+            self::InstitutionVerified => 'Terverifikasi institusi',
         };
     }
 }

@@ -10,7 +10,7 @@ type ProjectEditProps = {
 export default function ProjectEdit({ project }: ProjectEditProps) {
     return (
         <>
-            <Head title={`Edit ${project.title}`} />
+            <Head title={`Ubah ${project.title}`} />
             <ProjectEditor
                 mode="edit"
                 institution={project.institution}
@@ -27,7 +27,7 @@ ProjectEdit.layout = {
             href: projectsIndex(),
         },
         {
-            title: 'Edit project',
+            title: 'Ubah proyek',
         },
     ],
 };

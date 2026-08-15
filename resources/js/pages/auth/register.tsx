@@ -115,7 +115,7 @@ function RegistrationOtpStep({
             {/* Receipt section */}
             <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
                 <p className="font-label text-[0.65rem] font-semibold tracking-wider text-blue-600">
-                    Receipt verifikasi
+                    Bukti verifikasi
                 </p>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">
                     Masukkan kode 6 digit yang dikirim ke{' '}
@@ -273,8 +273,8 @@ export default function Register({ passwordRules, registration }: Props) {
                                         autoFocus
                                         autoComplete="name"
                                         name="name"
-                                        placeholder="Nama lengkap"
-                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        placeholder="Masukkan nama lengkap"
+                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                     />
                                     <InputError message={errors.name} />
                                 </div>
@@ -292,9 +292,9 @@ export default function Register({ passwordRules, registration }: Props) {
                                         required
                                         autoComplete="username"
                                         name="username"
-                                        placeholder="nama_pengguna"
+                                        placeholder="Masukkan nama pengguna"
                                         aria-describedby="register-username-help"
-                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                     />
                                     <p
                                         id="register-username-help"
@@ -322,7 +322,7 @@ export default function Register({ passwordRules, registration }: Props) {
                                         name="phone"
                                         placeholder="08xxxxxxxxxx"
                                         aria-describedby="register-phone-help"
-                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                     />
                                     <p
                                         id="register-phone-help"
@@ -347,9 +347,9 @@ export default function Register({ passwordRules, registration }: Props) {
                                         required
                                         autoComplete="new-password"
                                         name="password"
-                                        placeholder="Password"
+                                        placeholder="Masukkan password"
                                         passwordrules={passwordRules}
-                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                     />
                                     <InputError message={errors.password} />
                                 </div>
@@ -366,9 +366,9 @@ export default function Register({ passwordRules, registration }: Props) {
                                         required
                                         autoComplete="new-password"
                                         name="password_confirmation"
-                                        placeholder="Konfirmasi password"
+                                        placeholder="Ulangi password"
                                         passwordrules={passwordRules}
-                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                                     />
                                     <InputError
                                         message={errors.password_confirmation}
@@ -434,5 +434,5 @@ export default function Register({ passwordRules, registration }: Props) {
 Register.layout = {
     title: 'Buat akun',
     description:
-        'Buat akun student dengan username login-only dan nomor WhatsApp terverifikasi.',
+        'Buat akun mahasiswa dengan username login-only dan nomor WhatsApp terverifikasi.',
 };

@@ -388,7 +388,7 @@ function LeaderboardContextRail({
                         id="leaderboard-freshness-title"
                         className="font-semibold"
                     >
-                        Freshness
+                        Kesegaran
                     </h2>
                 </div>
                 <p className="text-sm leading-6 text-slate-600">
@@ -398,7 +398,7 @@ function LeaderboardContextRail({
                         : ' Sumber tetap berasal dari proyeksi server.'}
                 </p>
                 <span className="font-label text-label text-slate-500">
-                    Rule version {data.period?.ruleVersion ?? 'belum tersedia'}
+                    Versi aturan {data.period?.ruleVersion ?? 'belum tersedia'}
                 </span>
             </section>
 
@@ -816,7 +816,7 @@ export default function LeaderboardIndex() {
                                     {leaderboard.scopes.find(
                                         (scope) =>
                                             scope.value === leaderboard.scope,
-                                    )?.label ?? 'Leaderboard'}
+                                    )?.label ?? 'Peringkat'}
                                 </h2>
                             </div>
                             {rows?.pagination && (
@@ -1109,7 +1109,7 @@ export default function LeaderboardIndex() {
 LeaderboardIndex.layout = {
     breadcrumbs: [
         {
-            title: 'Leaderboard',
+            title: 'Peringkat',
             href: leaderboardsIndex(),
         },
     ],

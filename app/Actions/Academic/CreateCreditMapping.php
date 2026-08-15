@@ -32,11 +32,11 @@ final class CreateCreditMapping
         ?string $reason = null,
     ): AcademicCreditMapping {
         if ($creditAmount <= 0 || $creditAmount > 24) {
-            throw new InvalidArgumentException('Credit amount must be between 0.5 and 24 credits.');
+            throw new InvalidArgumentException('Jumlah kredit harus antara 0.5 dan 24.');
         }
 
         if (trim($activityType) === '') {
-            throw new InvalidArgumentException('Activity type is required.');
+            throw new InvalidArgumentException('Tipe aktivitas wajib diisi.');
         }
 
         return DB::transaction(function () use ($operator, $institution, $activityType, $creditAmount, $reason) {

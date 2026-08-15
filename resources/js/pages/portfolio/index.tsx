@@ -18,8 +18,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { dashboard } from '@/routes';
 import { index as contributionsIndex } from '@/routes/contributions';
-import { show as onboarding } from '@/routes/onboarding';
 import {
     index as portfolioIndex,
     show as portfolioShow,
@@ -72,7 +72,7 @@ const entryStatusMeta: Record<
 const visibilityLabels: Record<PortfolioEntry['visibility'], string> = {
     private: 'Hanya saya',
     institution: 'Kampus',
-    recruiter: 'Recruiter',
+    recruiter: 'Perekrut',
     public: 'Publik',
 };
 
@@ -195,7 +195,7 @@ function PortfolioEmpty({ profile }: { profile: PortfolioProfile | null }) {
                     </p>
                 </div>
                 <Button asChild className="mx-auto w-fit cursor-pointer">
-                    <Link href={onboarding()}>
+                    <Link href={dashboard()}>
                         Hubungkan afiliasi
                         <ArrowRight aria-hidden="true" />
                     </Link>
@@ -218,7 +218,7 @@ function PortfolioEmpty({ profile }: { profile: PortfolioProfile | null }) {
                 </h2>
                 <p className="mx-auto max-w-[58ch] text-sm leading-6 text-muted-foreground">
                     Portofolio akan bertambah setelah contribution-mu disetujui
-                    reviewer kampus. Kamu tetap memegang kendali audience-nya.
+                    reviewer kampus. Kamu tetap memegang kendali audiens-nya.
                 </p>
             </div>
             <Button
@@ -270,7 +270,7 @@ function PortfolioLedger({
                     </h2>
                     <p className="text-sm leading-6 text-slate-600">
                         Setiap karya terhubung ke sumber contribution dan
-                        pilihan audience-mu di {profile.institution.name}.
+                        pilihan audiens-mu di {profile.institution.name}.
                     </p>
                 </div>
                 <Button
@@ -363,7 +363,7 @@ function PortfolioLedger({
                                                 aria-hidden="true"
                                                 className="size-3.5 text-blue-600"
                                             />
-                                            Audience:{' '}
+                                            Audiens:{' '}
                                             {visibilityLabels[entry.visibility]}
                                         </span>
                                         <time dateTime={entry.updated_at}>
@@ -511,7 +511,7 @@ export default function PortfolioIndex({
                                     Akses yang jelas
                                 </div>
                                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                                    Karyamu tampil sesuai audience yang kamu
+                                    Karyamu tampil sesuai audiens yang kamu
                                     pilih. Evidence private dan data audit tetap
                                     berada di batas aksesnya.
                                 </p>

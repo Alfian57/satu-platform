@@ -31,11 +31,11 @@ final class RetireCreditMapping
         $mapping = AcademicCreditMapping::query()->find($mappingId);
 
         if ($mapping === null) {
-            throw new InvalidArgumentException('Credit mapping not found.');
+            throw new InvalidArgumentException('Pemetaan kredit tidak ditemukan.');
         }
 
         if ($mapping->status !== CreditMappingStatus::Active) {
-            throw new InvalidArgumentException('Only active credit mappings can be retired.');
+            throw new InvalidArgumentException('Hanya pemetaan kredit berstatus aktif yang dapat dipensiunkan.');
         }
 
         return DB::transaction(function () use ($operator, $mapping, $reason) {

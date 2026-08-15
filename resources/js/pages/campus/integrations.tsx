@@ -432,8 +432,8 @@ function Forbidden() {
                     Anda belum memiliki akses integrasi akademik
                 </p>
                 <p className="mt-1 max-w-[65ch] text-sm leading-6 text-correction-subtle-foreground">
-                    Hubungi platform admin untuk mendapatkan akses campus
-                    operator.
+                    Hubungi admin platform untuk mendapatkan akses operator
+                    kampus.
                 </p>
             </div>
         </div>

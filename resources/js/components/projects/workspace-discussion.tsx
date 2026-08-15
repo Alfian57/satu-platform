@@ -528,7 +528,7 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
             <header className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-5">
                 <div className="grid gap-2">
                     <p className="font-label text-label text-muted-foreground">
-                        DISCUSSION TIMELINE
+                        LINIMASA DISKUSI
                     </p>
                     <h2
                         id="workspace-discussion-title"
@@ -612,7 +612,7 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                         }}
                         className="min-h-28 w-full resize-y border border-input bg-background px-3 py-2 text-base text-foreground transition-[color,background-color,border-color,box-shadow] duration-fast outline-none placeholder:text-muted-foreground hover:border-ring focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         maxLength={5000}
-                        placeholder="Tulis blocking issue, keputusan, atau next action untuk team"
+                        placeholder="Tulis blocking issue, keputusan, atau langkah berikutnya untuk tim"
                         aria-describedby="discussion-body-help discussion-body-error"
                         aria-invalid={Boolean(
                             firstError(discussionErrors, 'body'),
@@ -812,7 +812,7 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                         </h3>
                         <p className="mx-auto max-w-[54ch] text-sm leading-6 text-muted-foreground">
                             Gunakan catatan untuk keputusan, blocking issue, dan
-                            handoff yang perlu dibaca team.
+                            serah terima yang perlu dibaca tim.
                         </p>
                     </div>
                 ) : (

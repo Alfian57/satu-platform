@@ -37,7 +37,7 @@ final class CancelContactRequest
                 ->exists();
 
             if (! $isMember) {
-                throw new AuthorizationException('You are not an active member of this recruiter organization.');
+                throw new AuthorizationException('Anda bukan anggota aktif dari organization perekrut ini.');
             }
         }
 
@@ -47,11 +47,11 @@ final class CancelContactRequest
             ->first();
 
         if ($contactRequest === null) {
-            throw new InvalidArgumentException('Contact request not found for this organization.');
+            throw new InvalidArgumentException('Permintaan kontak tidak ditemukan untuk organization ini.');
         }
 
         if ($contactRequest->status !== ContactRequestStatus::Pending) {
-            throw new InvalidArgumentException('Only pending contact requests can be canceled.');
+            throw new InvalidArgumentException('Hanya permintaan kontak berstatus pending yang dapat dibatalkan.');
         }
 
         return DB::transaction(function () use ($recruiter, $contactRequest) {

@@ -13,8 +13,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PlatformAffiliationController;
+use App\Http\Controllers\PlatformSkillTaxonomyController;
 use App\Http\Controllers\PortfolioEntryController;
 use App\Http\Controllers\PortfolioPageController;
 use App\Http\Controllers\ProjectAttachmentController;
@@ -211,7 +211,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('team-memberships/{teamMembership}/remove', [TeamTransitionController::class, 'remove'])
         ->name('team.memberships.remove');
 
-    Route::get('onboarding', [OnboardingController::class, 'show'])
+    Route::redirect('onboarding', '/dashboard')
         ->name('onboarding.show');
 
     Route::post('institution-memberships', [InstitutionMembershipController::class, 'store'])
@@ -241,6 +241,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('platform/affiliations', PlatformAffiliationController::class)
         ->name('platform.affiliations.index');
+
+    Route::prefix('platform/skills')->name('platform.skills.')->group(function () {
+        Route::get('/', [PlatformSkillTaxonomyController::class, 'index'])->name('index');
+        Route::post('/', [PlatformSkillTaxonomyController::class, 'store'])->name('store');
+        Route::patch('/{skillTaxonomy}', [PlatformSkillTaxonomyController::class, 'update'])->name('update');
+        Route::delete('/{skillTaxonomy}', [PlatformSkillTaxonomyController::class, 'destroy'])->name('destroy');
+        Route::patch('/{skillTaxonomy}/toggle-verification', [PlatformSkillTaxonomyController::class, 'toggleVerification'])->name('toggle-verification');
+    });
 
     Route::post('notification-preferences', [NotificationController::class, 'updatePreference'])
         ->name('notification-preferences.update');
@@ -324,6 +332,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('api/skills/taxonomy', [SkillTaxonomyController::class, 'index'])
         ->name('skills.taxonomy.index');
+    Route::post('api/skills/taxonomy', [SkillTaxonomyController::class, 'store'])
+        ->name('skills.taxonomy.store');
 
     Route::prefix('student-profiles')->name('student-profiles.')->group(function () {
         Route::post('/', [StudentProfileController::class, 'store'])

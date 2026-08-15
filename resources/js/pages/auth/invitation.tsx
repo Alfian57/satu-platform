@@ -47,7 +47,7 @@ export default function Invitation({ invitation }: Props) {
                             />
                         )}
                         <p className="font-label text-label text-muted-foreground">
-                            {isExpired ? 'Status undangan' : 'Receipt undangan'}
+                            {isExpired ? 'Status undangan' : 'Bukti undangan'}
                         </p>
                     </div>
 
@@ -113,7 +113,9 @@ export default function Invitation({ invitation }: Props) {
                                 variant="outline"
                                 className="w-full cursor-pointer"
                             >
-                                <Link href={register()}>Buat akun student</Link>
+                                <Link href={register()}>
+                                    Buat akun mahasiswa
+                                </Link>
                             </Button>
                         </div>
                     </>

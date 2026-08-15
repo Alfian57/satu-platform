@@ -312,7 +312,7 @@ export default function ContributionsIndex({
                                     <div>
                                         <p className="text-xs font-bold tracking-[0.13em] text-blue-700 uppercase">
                                             Register kontribusi /{' '}
-                                            {contributions.length} item
+                                            {contributions.length} entri
                                         </p>
                                         <h2
                                             id="contributions-ledger-title"
@@ -423,7 +423,7 @@ export default function ContributionsIndex({
 ContributionsIndex.layout = {
     breadcrumbs: [
         {
-            title: 'Contribution',
+            title: 'Kontribusi',
             href: contributionsIndex(),
         },
     ],

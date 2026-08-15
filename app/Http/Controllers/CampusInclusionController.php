@@ -129,7 +129,7 @@ class CampusInclusionController extends Controller
         }
 
         if ($signal->institution_id !== $institution->id) {
-            throw new AuthorizationException('Signal does not belong to this institution.');
+            throw new AuthorizationException('Sinyal tidak termasuk institusi ini.');
         }
 
         $validated = $request->validated();

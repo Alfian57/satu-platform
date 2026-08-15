@@ -210,9 +210,9 @@ function ProjectContextRail({ project }: { project: ProjectDetail }) {
             </dl>
 
             <p className="border-t border-border pt-4 text-xs leading-5 text-muted-foreground">
-                Match explanation dan tindakan kolaborasi mengikuti permission
-                project. Sinyal inclusion atau data privat tidak ditampilkan di
-                halaman ini.
+                Penjelasan kecocokan dan tindakan kolaborasi mengikuti
+                permission project. Sinyal inclusion atau data privat tidak
+                ditampilkan di halaman ini.
             </p>
         </div>
     );
@@ -233,7 +233,7 @@ function ActionAvailability({ project }: { project: ProjectDetail }) {
         return 'Project hanya dapat diarsipkan sebagai riwayat.';
     }
 
-    return 'Project ini bersifat read-only karena lifecycle sudah selesai.';
+    return 'Project ini bersifat baca-saja karena lifecycle sudah selesai.';
 }
 
 function ProjectActionRail({
@@ -265,7 +265,7 @@ function ProjectActionRail({
                 id="project-actions-title"
                 className="font-label text-label text-muted-foreground"
             >
-                AKSI OWNER
+                AKSI PEMILIK
             </h2>
             {canEdit && (status === 'draft' || status === 'open') && (
                 <Button
@@ -664,7 +664,7 @@ export default function ProjectShow({
                             >
                                 <div className="grid gap-2 border-b border-border pb-3">
                                     <p className="font-label text-label text-muted-foreground">
-                                        REQUIREMENTS
+                                        PERSYARATAN
                                     </p>
                                     <h2
                                         id="project-requirements-title"

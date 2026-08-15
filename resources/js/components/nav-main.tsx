@@ -39,18 +39,18 @@ export function NavMain({
                                     }
                                 }}
                                 className={cn(
-                                    'flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 data-loading:opacity-60',
+                                    'flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 data-loading:opacity-60',
                                     isActive
-                                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-950/25'
-                                        : 'text-slate-600',
+                                        ? 'bg-blue-600 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
                                 )}
                             >
                                 {Icon && (
                                     <span
                                         className={cn(
-                                            'flex size-7 shrink-0 items-center justify-center rounded-lg',
+                                            'flex size-7 shrink-0 items-center justify-center rounded-lg transition-colors',
                                             isActive
-                                                ? 'bg-white/15'
+                                                ? 'bg-white/20 text-white'
                                                 : 'bg-slate-100 text-slate-500',
                                         )}
                                     >

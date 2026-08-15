@@ -345,9 +345,8 @@ function SummaryRail({
                         </h2>
                         <p className="mt-1 text-xs leading-relaxed text-blue-800/80">
                             Evidence yang dibuka tetap private. Setiap keputusan
-                            menyimpan reviewer, alasan, waktu, dan policy
-                            version dalam riwayat ledger yang tidak dapat
-                            ditimpa.
+                            menyimpan reviewer, alasan, waktu, dan versi policy
+                            dalam riwayat ledger yang tidak dapat ditimpa.
                         </p>
                     </div>
                 </div>
@@ -990,7 +989,7 @@ function ReviewWorkspace({
                                         id="contribution-provenance-title"
                                         className="text-xs font-bold text-slate-800"
                                     >
-                                        Provenance Review
+                                        Provenance Tinjauan
                                     </h3>
                                 </div>
                                 <dl className="space-y-1.5 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs">
@@ -1059,7 +1058,7 @@ function ReviewWorkspace({
                                                 Evidence Private
                                             </h3>
                                             <span className="font-mono text-[0.6875rem] text-slate-400">
-                                                {version.evidence.length} file
+                                                {version.evidence.length} berkas
                                             </span>
                                         </div>
                                         {version.evidence.length === 0 ? (

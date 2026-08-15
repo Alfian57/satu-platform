@@ -39,7 +39,7 @@ final class SendContactRequest
         ?string $message = null,
     ): RecruiterContactRequest {
         if (trim($purpose) === '') {
-            throw new InvalidArgumentException('Contact request purpose is required.');
+            throw new InvalidArgumentException('Tujuan permintaan kontak wajib diisi.');
         }
 
         if (! $recruiter->is_platform_admin) {
@@ -49,7 +49,7 @@ final class SendContactRequest
                 ->exists();
 
             if (! $isMember) {
-                throw new AuthorizationException('You are not an active member of this recruiter organization.');
+                throw new AuthorizationException('Anda bukan anggota aktif dari organization perekrut ini.');
             }
         }
 
@@ -59,7 +59,7 @@ final class SendContactRequest
         );
 
         if (! $hasEntitlement) {
-            throw new AuthorizationException('Recruiter organization does not hold an active candidate search entitlement.');
+            throw new AuthorizationException('Organization perekrut tidak memiliki hak akses pencarian kandidat yang aktif.');
         }
 
         $projection = TalentCandidateProjection::query()
@@ -68,7 +68,7 @@ final class SendContactRequest
             ->first();
 
         if ($projection === null) {
-            throw new InvalidArgumentException('Target candidate projection is not found or has been withdrawn.');
+            throw new InvalidArgumentException('Proyeksi kandidat target tidak ditemukan atau telah ditarik.');
         }
 
         // Deduplication check: no duplicate pending request for same org & candidate projection
@@ -80,7 +80,7 @@ final class SendContactRequest
             ->exists();
 
         if ($existingPending) {
-            throw new InvalidArgumentException('A pending contact request already exists for this candidate.');
+            throw new InvalidArgumentException('Permintaan kontak yang masih menunggu sudah ada untuk kandidat ini.');
         }
 
         return DB::transaction(function () use ($recruiter, $organization, $projection, $purpose, $message) {

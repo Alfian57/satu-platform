@@ -13,6 +13,7 @@ import {
     Search,
     SendHorizontal,
     ShieldCheck,
+    Sparkles,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -31,8 +32,8 @@ import { show as campusOverview } from '@/routes/campus/overview';
 import { show as campusRoster } from '@/routes/campus/roster';
 import { index as contributionsIndex } from '@/routes/contributions';
 import { index as leaderboardsIndex } from '@/routes/leaderboards';
-import { show as onboarding } from '@/routes/onboarding';
 import { index as platformAffiliationsIndex } from '@/routes/platform/affiliations';
+import { index as platformSkillsIndex } from '@/routes/platform/skills';
 import { index as portfolioIndex } from '@/routes/portfolio';
 import { index as projectsIndex } from '@/routes/projects';
 import {
@@ -48,17 +49,17 @@ import type {
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: 'Beranda',
         href: dashboard(),
         icon: LayoutDashboard,
     },
     {
-        title: 'Project',
+        title: 'Proyek',
         href: projectsIndex(),
         icon: BriefcaseBusiness,
     },
     {
-        title: 'Contribution',
+        title: 'Kontribusi',
         href: contributionsIndex(),
         icon: FileCheck2,
     },
@@ -68,7 +69,7 @@ const mainNavItems: NavItem[] = [
         icon: BookOpenCheck,
     },
     {
-        title: 'Leaderboard',
+        title: 'Peringkat',
         href: leaderboardsIndex(),
         icon: ListOrdered,
     },
@@ -131,7 +132,7 @@ function InstitutionMembershipContext({ shell }: { shell: ShellContext }) {
                 <div className="mt-3 grid gap-2">{membershipContent}</div>
             ) : (
                 <Link
-                    href={onboarding()}
+                    href={dashboard()}
                     aria-label={
                         membership
                             ? `Buka status afiliasi ${membership.institutionName}`
@@ -244,6 +245,11 @@ export function AppSidebar() {
                   href: platformAffiliationsIndex(),
                   icon: Building2,
               },
+              {
+                  title: 'Taksonomi skill',
+                  href: platformSkillsIndex(),
+                  icon: Sparkles,
+              },
           ]
         : isCampusWorkspace
           ? [
@@ -306,10 +312,10 @@ export function AppSidebar() {
               : mainNavItems.filter(
                     (item) =>
                         ![
-                            'Project',
-                            'Contribution',
+                            'Proyek',
+                            'Kontribusi',
                             'Portofolio',
-                            'Leaderboard',
+                            'Peringkat',
                         ].includes(item.title),
                 );
 
@@ -319,7 +325,7 @@ export function AppSidebar() {
             variant="sidebar"
             className="border-r border-slate-200 bg-white text-slate-950"
         >
-            <SidebarHeader className="border-b border-slate-200 px-6 py-7">
+            <SidebarHeader className="h-16 shrink-0 flex-row items-center border-b border-slate-200 p-0 px-4">
                 <Link
                     aria-label={
                         isPlatformAdmin
@@ -328,7 +334,7 @@ export function AppSidebar() {
                               ? 'SATU: Operasi kampus'
                               : isRecruiterWorkspace
                                 ? 'SATU: Ruang perekrut'
-                                : 'SATU: Dashboard'
+                                : 'SATU: Beranda'
                     }
                     href={
                         isPlatformAdmin
@@ -342,17 +348,17 @@ export function AppSidebar() {
                                 : dashboard()
                     }
                     prefetch
-                    className="rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+                    className="flex items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
                 >
                     <AppLogo
                         className="text-slate-950"
-                        logoClassName="size-12 rounded-xl"
+                        logoClassName="size-9 rounded-lg"
                         ruleClassName="bg-blue-600"
                     />
                 </Link>
             </SidebarHeader>
 
-            <SidebarContent className="py-7">
+            <SidebarContent className="py-5">
                 <NavMain
                     items={visibleMainNavItems}
                     ariaLabel={

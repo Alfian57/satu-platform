@@ -55,12 +55,12 @@ class CalculateInclusionSignal
 
             if ($receivedCount < $threshold) {
                 $isRestrictedCandidate = true;
-                $evidenceSummary['factor'] = 'User has received fewer collaboration events than the configured threshold.';
+                $evidenceSummary['factor'] = 'Pengguna menerima lebih sedikit event kolaborasi daripada ambang batas yang dikonfigurasi.';
             } else {
-                $evidenceSummary['factor'] = 'User has sufficient collaboration events.';
+                $evidenceSummary['factor'] = 'Pengguna memiliki event kolaborasi yang cukup.';
             }
         } else {
-            $evidenceSummary['factor'] = 'Insufficient data to perform inclusion signal calculation.';
+            $evidenceSummary['factor'] = 'Data tidak cukup untuk melakukan perhitungan sinyal inclusion.';
         }
 
         return DB::transaction(function () use ($institution, $subject, $version, $period, $dataSufficiencyMet, $isRestrictedCandidate, $evidenceSummary) {

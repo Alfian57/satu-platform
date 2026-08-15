@@ -35,7 +35,7 @@ final class UnsaveCandidate
                 ->exists();
 
             if (! $isMember) {
-                throw new AuthorizationException('You are not an active member of this recruiter organization.');
+                throw new AuthorizationException('Anda bukan anggota aktif dari organization perekrut ini.');
             }
         }
 

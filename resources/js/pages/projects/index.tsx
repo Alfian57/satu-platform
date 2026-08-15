@@ -638,7 +638,7 @@ export default function ProjectIndex({
                             <div className="min-w-0">
                                 <p className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold tracking-[0.12em] text-blue-700 uppercase">
                                     <span className="size-1.5 rounded-full bg-blue-600" />
-                                    Ruang discovery project
+                                    Ruang penemuan project
                                 </p>
                                 <h1 className="mt-4 max-w-[24ch] text-headline font-bold tracking-[-0.035em] text-balance text-slate-950">
                                     Temukan project yang bisa kamu kerjakan
@@ -863,7 +863,7 @@ export default function ProjectIndex({
                                         {filterOptions.sort.map((sort) => (
                                             <option key={sort} value={sort}>
                                                 {sort === 'deadline'
-                                                    ? 'Deadline'
+                                                    ? 'Batas waktu'
                                                     : sort === 'newest'
                                                       ? 'Project terbaru'
                                                       : sort === 'title'
@@ -1103,7 +1103,7 @@ export default function ProjectIndex({
 ProjectIndex.layout = {
     breadcrumbs: [
         {
-            title: 'Project discovery',
+            title: 'Penemuan proyek',
             href: projectsIndex(),
         },
     ],

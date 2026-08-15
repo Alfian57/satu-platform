@@ -28,3 +28,7 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Presentation & Video Scripts
+/naskah_presentasi_video_satu.md
+/naskah_presentasi_video_satu.txt
