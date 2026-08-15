@@ -2,29 +2,21 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowDown,
     ArrowRight,
-    Award,
     BadgeCheck,
-    Check,
-    CheckCircle2,
-    ChevronDown,
-    ChevronUp,
     EyeOff,
     FileCheck2,
-    FileText,
-    HelpCircle,
-    Info,
     Landmark,
     Layers,
     LockKeyhole,
     Network,
-    Scale,
+    Rocket,
+    Search,
     ShieldCheck,
-    Sparkles,
-    Users,
+    Target,
     UsersRound,
     Zap,
 } from 'lucide-react';
-import React, { Suspense, lazy, useState, useSyncExternalStore } from 'react';
+import React, { Suspense, lazy, useSyncExternalStore } from 'react';
 import AppLogo from '@/components/app-logo';
 import LandingFlowLedger, {
     LANDING_STAGES,
@@ -34,91 +26,80 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { dashboard, login, register } from '@/routes';
 
 /**
- * SATU Landing Page: Buku Besar Kolaborasi Redesign
- * Mode: Persuade
- * Editorial, tactile, and institutional web craft.
+ * SATU Landing Page: Modern & Elegant Redesign
+ * Warna patokan: Blue hero gradient (#2563EB / #1D4ED8 / #4F46E5)
+ * Smooth scroll, scroll-triggered animations, elegant icon treatments
  */
+
+const landingTheme = {
+    '--landing-canvas': '#F8FAFC',
+    '--landing-surface': '#FFFFFF',
+    '--landing-ink': '#0F172A',
+    '--landing-muted': '#475569',
+    '--landing-border': '#E2E8F0',
+    '--landing-blue': '#2563EB',
+    '--landing-blue-strong': '#1D4ED8',
+    '--landing-blue-soft': '#EFF6FF',
+    '--landing-lilac': '#4F46E5',
+    '--landing-lilac-soft': '#EEF2FF',
+    '--landing-mint': '#059669',
+    '--landing-mint-soft': '#ECFDF5',
+    '--landing-coral': '#0284C7',
+    '--landing-coral-soft': '#F0F9FF',
+    '--landing-yellow': '#D97706',
+    '--landing-yellow-soft': '#FFFBEB',
+    '--landing-hero-start': '#EFF6FF',
+    '--landing-hero-middle': '#DBEAFE',
+    '--landing-hero-end': '#BFDBFE',
+} as React.CSSProperties;
 
 const roleRows = [
     {
         key: 'student',
         label: 'Mahasiswa',
-        tagline: 'Mulai Kolaborasi & Kendalikan Portofolio',
+        tagline: 'Mulai Kolaborasi & Kendalikan Visibilitas',
         icon: UsersRound,
-        badge: 'Untuk Talenta Kampus',
+        accentIcon: Rocket,
+        badge: 'Untuk Talenta',
         badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+        gradientFrom: 'from-blue-500',
+        gradientTo: 'to-indigo-600',
         description:
-            'Temukan peluang proyek lintas prodi, bentuk tim tanpa circle internal, dan susun kontribusi nyata menjadi portofolio terverifikasi.',
-        features: [
-            'Rekomendasi tim transparan 4 dimensi',
-            'Pencatatan bukti deliverable tugas & commit',
-            'Kendali penuh atas visibilitas portofolio',
-        ],
-        cta: 'Daftar sebagai mahasiswa',
+            'Temukan peluang, bentuk tim, dan susun kontribusi menjadi portofolio yang dapat kamu kendalikan visibilitasnya.',
+        cta: 'Mulai sebagai mahasiswa',
         href: 'register',
     },
     {
         key: 'campus',
-        label: 'Operator Kampus',
+        label: 'Operator kampus',
         tagline: 'Afiliasi & Validasi Terstruktur',
         icon: Landmark,
-        badge: 'Operasi Akademik',
+        accentIcon: BadgeCheck,
+        badge: 'Operasi Kampus',
         badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+        gradientFrom: 'from-indigo-500',
+        gradientTo: 'to-purple-600',
         description:
-            'Kelola afiliasi mahasiswa berbasis NIM, validasi kontribusi proyek, dan simpan riwayat keputusan akademik dalam ledger yang dapat ditinjau.',
-        features: [
-            'Verifikasi otomatis via NIM & WhatsApp',
-            'Tinjauan kontribusi oleh dosen / reviewer',
-            'Rekam jejak keputusan append-only',
-        ],
+            'Kelola afiliasi, validasi kontribusi, dan provenance keputusan dalam alur operasi yang dapat ditinjau.',
         cta: 'Lihat batas operasi',
-        href: '#privasi',
+        href: '#privacy',
     },
     {
         key: 'recruiter',
-        label: 'Perekrut & Mitra',
-        tagline: 'Portofolio Terverifikasi & Privasi Terjaga',
+        label: 'Perekrut',
+        tagline: 'Portofolio Terverifikasi & Privasi Terjamin',
         icon: FileCheck2,
-        badge: 'Talent Portal',
-        badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        accentIcon: Search,
+        badge: 'Talent Scout',
+        badgeColor: 'bg-sky-50 text-sky-700 border-sky-200',
+        gradientFrom: 'from-sky-500',
+        gradientTo: 'to-blue-600',
         description:
-            'Temukan talenta muda berdasarkan proyeksi portofolio yang disetujui mahasiswa, lengkap dengan stempel verifikasi resmi kampus.',
-        features: [
-            'Portofolio tervalidasi dosen pembimbing',
-            'Bukti kerja nyata (bukan resume tanpa konteks)',
-            'Bebas intrusi terhadap data privat mahasiswa',
-        ],
+            'Temukan proyeksi portofolio yang secara eksplisit diizinkan mahasiswa, tanpa membuka ruang privat mereka.',
         cta: 'Lihat batas portofolio',
-        href: '#privasi',
+        href: '#privacy',
     },
 ] as const;
-
-const faqItems = [
-    {
-        question: 'Bagaimana kontribusi mahasiswa divalidasi oleh kampus?',
-        answer: 'Setelah tugas atau proyek selesai, mahasiswa mengunggah tautan bukti kerja (seperti Pull Request Git, prototipe Figma, atau laporan teknis). Reviewer kampus atau dosen pembimbing akan meninjau bukti tersebut dan menyematkan stempel validasi resmi yang tercatat secara permanen di ledger SATU.',
-    },
-    {
-        question:
-            'Apakah perekrut dapat melihat nomor WhatsApp atau percakapan tim saya?',
-        answer: 'Tidak sama sekali. SATU menerapkan prinsip zero-leakage: nomor telepon WhatsApp, username autentikasi, percakapan internal tim, dan log audit mentah disimpan secara privat dan tidak pernah diekspos ke publik atau akun perekrut.',
-    },
-    {
-        question:
-            'Bagaimana mahasiswa baru dapat menemukan tim tanpa perlu memiliki circle?',
-        answer: 'SATU menyediakan sistem pencocokan kolaborasi transparan berbasis 4 dimensi: kecocokan skill (skill fit), kebutuhan peran proyek, ketersediaan jam kerja, dan peluang konektivitas baru. Mahasiswa dapat langsung mendaftar ke peluang yang terbuka tanpa harus saling mengenal sebelumnya.',
-    },
-    {
-        question:
-            'Apakah portofolio di SATU bisa digunakan untuk keperluan SKS atau MBKM?',
-        answer: 'Bisa. Setiap entri portofolio yang telah diverifikasi oleh dosen pembimbing memuat referensi hash dan tanda tangan peninjau resmi, sehingga dapat dijadikan lampiran bukti nyata untuk konversi SKS, sidang tugas akhir, maupun program MBKM.',
-    },
-    {
-        question:
-            'Apakah data yang ditampilkan pada demo di halaman ini nyata?',
-        answer: 'Semua record pada demo interaktif halaman ini adalah Data synthetic untuk mendemonstrasikan cara kerja platform, dan tidak mengklaim data pilot, harga, atau hasil yang belum terbukti.',
-    },
-];
 
 const LandingDemoGraph = lazy(() => import('@/components/LandingDemoGraph'));
 
@@ -137,22 +118,43 @@ function useIsHydrated(): boolean {
 function LandingDemoGraphFallback() {
     return (
         <div
-            className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)]"
+            className="grid gap-5 p-4 lg:grid-cols-[minmax(0,1fr)_21rem] lg:p-6"
             aria-busy="true"
             role="status"
         >
             <div className="space-y-4">
                 <div className="flex items-center justify-between gap-4">
-                    <Skeleton className="h-8 w-48 bg-slate-200/80" />
-                    <Skeleton className="h-8 w-24 bg-slate-200/80" />
+                    <Skeleton className="h-8 w-40 bg-blue-100/60" />
+                    <Skeleton className="h-9 w-28 bg-blue-100/60" />
                 </div>
-                <Skeleton className="h-[340px] w-full rounded-2xl bg-slate-200/80 sm:h-[400px]" />
+                <Skeleton className="h-[320px] w-full rounded-2xl bg-blue-100/60 lg:h-[420px]" />
             </div>
             <div className="space-y-4">
-                <Skeleton className="h-28 w-full rounded-2xl bg-slate-200/80" />
-                <Skeleton className="h-44 w-full rounded-2xl bg-slate-200/80" />
+                <Skeleton className="h-8 w-32 bg-blue-100/60" />
+                <Skeleton className="h-16 w-full rounded-xl bg-blue-100/60" />
+                <Skeleton className="h-16 w-full rounded-xl bg-blue-100/60" />
             </div>
             <span className="sr-only">Menyiapkan demo kolaborasi...</span>
+        </div>
+    );
+}
+
+/** Trust indicator pills for hero section */
+function TrustIndicator({
+    icon: Icon,
+    label,
+}: {
+    icon: React.ElementType;
+    label: string;
+}) {
+    return (
+        <div className="flex items-center gap-2.5 rounded-2xl border border-white/60 bg-white/50 p-3 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/80 hover:shadow-md">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm">
+                <Icon aria-hidden="true" className="size-4" />
+            </div>
+            <span className="text-sm font-semibold text-slate-700">
+                {label}
+            </span>
         </div>
     );
 }
@@ -160,54 +162,48 @@ function LandingDemoGraphFallback() {
 export default function Welcome() {
     const { auth } = usePage().props;
     const isHydrated = useIsHydrated();
-    const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-
-    const toggleFaq = (index: number) => {
-        setOpenFaqIndex((prev) => (prev === index ? null : index));
-    };
 
     return (
         <>
-            <Head title="Sistem Aktivitas Talenta Universitas (SATU)" />
+            <Head title="Sistem Aktivitas Talenta Universitas" />
             <div
                 id="top"
                 data-landing-surface
                 data-motion-ready="true"
-                className="landing-page-canvas min-h-screen bg-[#F7F9FC] text-foreground selection:bg-blue-100 selection:text-primary"
+                className="landing-page-canvas min-h-screen overflow-x-clip text-[var(--landing-ink)] selection:bg-blue-200/60"
+                style={{ ...landingTheme, colorScheme: 'light' }}
             >
                 {/* ============================================ */}
-                {/* Sticky Header Navigation                      */}
+                {/* Header Navigation - Glassmorphism             */}
                 {/* ============================================ */}
-                <header className="landing-glass landing-glass-border sticky top-0 z-50 w-full shadow-2xs">
-                    <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
+                <header className="landing-glass landing-glass-border sticky top-0 z-50 w-full shadow-sm">
+                    <div className="mx-auto flex min-h-16 max-w-[110rem] items-center justify-between gap-6 px-5 sm:px-6 lg:px-20">
                         <a
                             href="#top"
                             aria-label="SATU: kembali ke awal halaman"
-                            className="group flex items-center gap-2 transition-opacity duration-200 hover:opacity-90 motion-reduce:transition-none"
+                            className="group flex items-center gap-2 transition-opacity duration-300 hover:opacity-90 motion-reduce:transition-none"
                         >
                             <AppLogo
                                 compact
-                                className="text-slate-900"
-                                ruleClassName="bg-primary"
+                                className="text-[var(--landing-ink)]"
+                                ruleClassName="bg-blue-600"
                             />
                         </a>
 
                         <nav
                             aria-label="Navigasi landing"
-                            className="hidden items-center gap-1 md:flex"
+                            className="hidden items-center gap-1 lg:flex"
                         >
                             {[
-                                { href: '#cara-kerja', label: 'Cara Kerja' },
-                                { href: '#demo', label: 'Demo Synthetic' },
-                                { href: '#peran', label: 'Untuk Siapa' },
-                                { href: '#privasi', label: 'Batas Privasi' },
-                                { href: '#pilar', label: 'Pilar Platform' },
-                                { href: '#faq', label: 'Tanya Jawab' },
+                                { href: '#cara-kerja', label: 'Cara kerja' },
+                                { href: '#demo', label: 'Demo synthetic' },
+                                { href: '#peran', label: 'Untuk siapa' },
+                                { href: '#privacy', label: 'Batas privasi' },
                             ].map((link) => (
                                 <a
                                     key={link.href}
                                     href={link.href}
-                                    className="rounded-lg px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition-colors duration-200 hover:bg-slate-100 hover:text-primary motion-reduce:transition-none"
+                                    className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-blue-50/80 hover:text-blue-600 motion-reduce:transition-none"
                                 >
                                     {link.label}
                                 </a>
@@ -219,7 +215,7 @@ export default function Welcome() {
                                 <Button
                                     asChild
                                     size="sm"
-                                    className="rounded-lg bg-primary font-semibold text-white shadow-2xs hover:bg-primary/90"
+                                    className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 font-medium text-white shadow-md shadow-blue-500/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30 motion-reduce:transition-none"
                                 >
                                     <Link href={dashboard()} prefetch>
                                         Buka dashboard
@@ -229,14 +225,14 @@ export default function Welcome() {
                                 <>
                                     <Link
                                         href={login()}
-                                        className="text-xs font-semibold text-slate-600 transition-colors duration-200 hover:text-primary sm:inline-flex"
+                                        className="hidden text-sm font-medium text-slate-600 transition-colors duration-200 hover:text-blue-600 motion-reduce:transition-none sm:inline-flex"
                                     >
                                         Masuk
                                     </Link>
                                     <Button
                                         asChild
                                         size="sm"
-                                        className="rounded-lg bg-primary font-semibold text-white shadow-2xs hover:bg-primary/90"
+                                        className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 font-medium text-white shadow-md shadow-blue-500/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30 motion-reduce:transition-none"
                                     >
                                         <Link href={register()} prefetch>
                                             Daftar mahasiswa
@@ -254,338 +250,317 @@ export default function Welcome() {
                     {/* ============================================ */}
                     <section
                         aria-labelledby="landing-heading"
-                        className="relative isolate border-b border-slate-200/90 bg-gradient-to-b from-white via-[#F7F9FC] to-[#EFF6FF]/40 pt-10 pb-16 sm:pt-16 sm:pb-24"
+                        className="landing-blue-hero relative isolate overflow-hidden"
                     >
-                        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                            <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-14">
-                                {/* Left: Editorial Hero Content */}
-                                <div>
-                                    {/* Institutional Kicker Reference */}
-                                    <div className="landing-motion-rise flex items-center gap-2">
-                                        <span className="rounded-md border border-primary/20 bg-blue-50 px-2.5 py-1 font-label text-[0.68rem] font-bold tracking-wider text-primary">
-                                            DOKUMEN PUBLIK // SATU-2026
-                                        </span>
-                                        <span className="font-label text-xs font-medium text-slate-500">
-                                            Buku Besar Kolaborasi Universitas
-                                        </span>
-                                    </div>
+                        {/* Decorative gradient orbs */}
+                        <div
+                            aria-hidden="true"
+                            className="landing-glow-orb pointer-events-none absolute -top-32 right-[10%] size-[30rem] rounded-full bg-blue-300/20 blur-[100px]"
+                        />
+                        <div
+                            aria-hidden="true"
+                            className="landing-glow-orb pointer-events-none absolute bottom-0 left-[5%] size-[25rem] rounded-full bg-indigo-300/15 blur-[80px] [animation-delay:2s]"
+                        />
 
-                                    {/* Main Heading */}
-                                    <h1
-                                        id="landing-heading"
-                                        className="landing-motion-rise mt-6 text-[clamp(2.4rem,4.8vw,4rem)] leading-[1.08] font-bold tracking-tight text-slate-950"
-                                    >
-                                        Kolaborasi Kampus yang Menjadi{' '}
-                                        <span className="text-primary underline decoration-blue-300 decoration-wavy underline-offset-8">
-                                            Rekam Jejak
-                                        </span>{' '}
-                                        Terverifikasi.
-                                    </h1>
+                        {/* Floating dots */}
+                        <div
+                            aria-hidden="true"
+                            className="landing-orbit-dot pointer-events-none absolute top-[25%] right-[12%] size-3 rounded-full bg-blue-400/60 shadow-lg shadow-blue-400/20"
+                        />
+                        <div
+                            aria-hidden="true"
+                            className="landing-orbit-dot pointer-events-none absolute top-[15%] right-[30%] size-2 rounded-full bg-indigo-400/50 [animation-delay:1.2s]"
+                        />
+                        <div
+                            aria-hidden="true"
+                            className="landing-orbit-dot pointer-events-none absolute bottom-[20%] left-[8%] size-2.5 rounded-full bg-blue-500/40 [animation-delay:2.4s]"
+                        />
 
-                                    {/* Subtitle */}
-                                    <p className="landing-motion-rise mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
-                                        SATU menghubungkan pembentukan tim
-                                        lintas prodi, pencatatan aktivitas kerja
-                                        nyata, dan validasi resmi kampus menjadi
-                                        portofolio yang dapat dipercaya.
-                                        Mahasiswa membangun karya, kampus
-                                        memvalidasi, dan perekrut melihat hanya
-                                        proyeksi yang diizinkan.
-                                    </p>
+                        {/* Grid pattern overlay */}
+                        <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(37,99,235,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(37,99,235,0.03)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_30%,black_20%,transparent_100%)] bg-[size:60px_60px]"
+                        />
 
-                                    {/* Primary and Secondary CTA Buttons */}
-                                    <div className="landing-motion-rise mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                                        <Button
-                                            asChild
-                                            size="lg"
-                                            className="group h-12 rounded-xl bg-primary px-7 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary/95 hover:shadow-md"
-                                        >
-                                            <Link href={register()} prefetch>
-                                                Mulai Daftar Mahasiswa
-                                                <ArrowRight
-                                                    aria-hidden="true"
-                                                    className="ml-2 size-4 transition-transform group-hover:translate-x-1"
-                                                />
-                                            </Link>
-                                        </Button>
-
-                                        <a
-                                            href="#cara-kerja"
-                                            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 shadow-2xs transition-colors hover:bg-slate-50 hover:text-primary"
-                                        >
-                                            Jelajahi Cara Kerja
-                                            <ArrowDown
-                                                aria-hidden="true"
-                                                className="size-4 text-slate-500"
-                                            />
-                                        </a>
-                                    </div>
-
-                                    {/* Mini Footnote */}
-                                    <p className="landing-motion-rise mt-4 flex items-center gap-2 text-xs text-slate-500">
-                                        <CheckCircle2
+                        <div className="relative mx-auto grid min-h-[calc(100svh-4rem)] max-w-[110rem] items-center gap-12 px-5 py-16 sm:px-6 sm:py-20 lg:min-h-[calc(100svh-14rem)] lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:gap-16 lg:px-20 lg:pt-4 lg:pb-8">
+                            <div className="relative z-10 max-w-2xl">
+                                {/* Kicker badge */}
+                                <div
+                                    className="landing-motion-rise flex flex-wrap items-center gap-2.5"
+                                    style={
+                                        {
+                                            '--landing-delay': '40ms',
+                                        } as React.CSSProperties
+                                    }
+                                >
+                                    <span className="inline-flex items-center gap-2 rounded-full border border-blue-200/60 bg-white/70 px-4 py-1.5 font-label text-[0.68rem] font-semibold tracking-wider text-blue-700 shadow-sm">
+                                        <span
                                             aria-hidden="true"
-                                            className="size-4 text-emerald-600"
-                                        />
-                                        <span>
-                                            Registrasi terbuka untuk mahasiswa
-                                            aktif tanpa biaya.
+                                            className="flex size-2 items-center justify-center rounded-full bg-blue-500"
+                                        >
+                                            <span className="size-1 animate-ping rounded-full bg-blue-400" />
                                         </span>
-                                    </p>
+                                        BUKU BESAR KOLABORASI
+                                    </span>
+                                    <span className="text-xs font-medium text-slate-500">
+                                        5 momen yang saling terhubung
+                                    </span>
                                 </div>
 
-                                {/* Right: Tangible Live Mechanism Preview + Mascot */}
-                                <div
-                                    className="landing-motion-rise relative"
-                                    data-testid="landing-hero-illustration"
+                                {/* Main heading */}
+                                <h1
+                                    id="landing-heading"
+                                    className="landing-motion-rise mt-8 max-w-[14ch] text-[clamp(2.8rem,6.5vw,5.2rem)] leading-[0.96] font-bold tracking-tight"
+                                    style={
+                                        {
+                                            '--landing-delay': '120ms',
+                                        } as React.CSSProperties
+                                    }
                                 >
-                                    {/* Sample Verified Contribution Mini-Docket */}
-                                    <div className="relative overflow-hidden rounded-2xl border border-slate-300/90 bg-white p-5 shadow-lg">
-                                        {/* Docket Header */}
-                                        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                                            <div className="flex items-center gap-2">
-                                                <FileText
-                                                    aria-hidden="true"
-                                                    className="size-4 text-primary"
-                                                />
-                                                <span className="font-label text-xs font-bold tracking-wider text-slate-800">
-                                                    LEMBAR BUKTI RESMI // CONTOH
-                                                </span>
-                                            </div>
-                                            <span className="landing-stamp">
-                                                TERVERIFIKASI
-                                            </span>
-                                        </div>
+                                    <span className="text-slate-900">
+                                        Kolaborasi yang{' '}
+                                    </span>
+                                    <span className="landing-section-heading">
+                                        menjadi bukti.
+                                    </span>
+                                </h1>
 
-                                        {/* Docket Body */}
-                                        <div className="mt-4 space-y-3">
-                                            <div>
-                                                <span className="font-label text-[0.62rem] text-slate-400">
-                                                    PROYEK KOLABORASI
-                                                </span>
-                                                <h4 className="text-sm font-bold text-slate-950">
-                                                    Pengembangan Sistem Portal
-                                                    Edukasi Terpadu
-                                                </h4>
-                                            </div>
+                                {/* Subtitle */}
+                                <p
+                                    className="landing-motion-rise mt-7 max-w-xl text-base leading-7 text-slate-500 sm:text-lg sm:leading-8"
+                                    style={
+                                        {
+                                            '--landing-delay': '200ms',
+                                        } as React.CSSProperties
+                                    }
+                                >
+                                    SATU menghubungkan peluang, kerja tim, dan
+                                    kontribusi nyata menjadi portofolio yang
+                                    punya konteks. Mahasiswa membangun karya,
+                                    kampus memvalidasi, dan perekrut melihat
+                                    hanya proyeksi yang diizinkan.
+                                </p>
 
-                                            <div className="grid grid-cols-2 gap-2 text-xs">
-                                                <div className="rounded-lg border border-slate-200/70 bg-slate-50 p-2">
-                                                    <span className="font-label text-[0.6rem] text-slate-400">
-                                                        KONTRIBUTOR
-                                                    </span>
-                                                    <p className="truncate font-bold text-slate-800">
-                                                        Budi Pratama
-                                                        (Informatika)
-                                                    </p>
-                                                    <p className="text-[0.65rem] text-slate-500">
-                                                        Lead Frontend Engineer
-                                                    </p>
-                                                </div>
-                                                <div className="rounded-lg border border-slate-200/70 bg-slate-50 p-2">
-                                                    <span className="font-label text-[0.6rem] text-slate-400">
-                                                        REVIEWER KAMPUS
-                                                    </span>
-                                                    <p className="truncate font-bold text-slate-800">
-                                                        Dr. Hendra, M.Kom.
-                                                    </p>
-                                                    <p className="text-[0.65rem] font-semibold text-emerald-700">
-                                                        Stempel Disetujui
-                                                    </p>
-                                                </div>
-                                            </div>
+                                {/* CTA buttons */}
+                                <div
+                                    className="landing-motion-rise mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center"
+                                    style={
+                                        {
+                                            '--landing-delay': '280ms',
+                                        } as React.CSSProperties
+                                    }
+                                >
+                                    <Button
+                                        asChild
+                                        size="lg"
+                                        className="group h-13 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 font-semibold text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/30 motion-reduce:transition-none"
+                                    >
+                                        <Link href={register()} prefetch>
+                                            Mulai membangun portofolio
+                                            <ArrowRight
+                                                aria-hidden="true"
+                                                className="ml-1 size-4 transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none"
+                                            />
+                                        </Link>
+                                    </Button>
+                                    <a
+                                        href="#cara-kerja"
+                                        className="group inline-flex h-13 items-center gap-2 rounded-2xl border border-slate-200/80 bg-white/60 px-6 text-sm font-semibold text-slate-700 transition-all duration-300 hover:border-blue-200 hover:bg-white hover:text-blue-600 hover:shadow-md motion-reduce:transition-none"
+                                    >
+                                        Lihat cara kerja
+                                        <ArrowDown
+                                            aria-hidden="true"
+                                            className="size-4 transition-transform duration-300 group-hover:translate-y-1 motion-reduce:transition-none"
+                                        />
+                                    </a>
+                                </div>
 
-                                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-600">
-                                                <div className="flex items-center justify-between font-label text-[0.62rem] text-slate-500">
-                                                    <span>
-                                                        EVIDENCE: PR #42 & FIGMA
-                                                    </span>
-                                                    <span>
-                                                        STATUS: APPEND-ONLY
-                                                    </span>
-                                                </div>
-                                                <p className="mt-1 text-[0.72rem] leading-4 text-slate-700">
-                                                    &quot;Tugas diselesaikan
-                                                    sesuai spesifikasi rekayasa
-                                                    dan diakui dalam portofolio
-                                                    resmi.&quot;
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {/* Mascot Context Layer */}
-                                        <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-3">
-                                            <div className="flex items-center gap-2">
-                                                <img
-                                                    src="/images/landing-mascot-accessories.webp"
-                                                    alt="Maskot kolaborasi SATU"
-                                                    width={36}
-                                                    height={36}
-                                                    className="size-9 object-contain"
-                                                />
-                                                <div className="text-[0.7rem]">
-                                                    <p className="font-bold text-slate-900">
-                                                        SATU Verification Guard
-                                                    </p>
-                                                    <p className="text-slate-500">
-                                                        Provenance terjamin
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <span className="font-label text-[0.65rem] font-bold text-primary">
-                                                HASH: #E84F-99B2
-                                            </span>
-                                        </div>
-                                    </div>
+                                {/* Trust indicators */}
+                                <div
+                                    className="landing-motion-rise mt-12 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-3"
+                                    style={
+                                        {
+                                            '--landing-delay': '400ms',
+                                        } as React.CSSProperties
+                                    }
+                                >
+                                    <TrustIndicator
+                                        icon={ShieldCheck}
+                                        label="Validasi terlihat"
+                                    />
+                                    <TrustIndicator
+                                        icon={LockKeyhole}
+                                        label="Visibilitas terkendali"
+                                    />
+                                    <TrustIndicator
+                                        icon={FileCheck2}
+                                        label="Bukti punya konteks"
+                                    />
                                 </div>
                             </div>
 
-                            {/* Trust Ribbon */}
-                            <div className="mt-16 grid gap-4 border-t border-slate-200/80 pt-8 sm:grid-cols-3">
-                                <div className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-white/70 p-4 shadow-2xs">
-                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-primary">
-                                        <ShieldCheck
-                                            aria-hidden="true"
-                                            className="size-5"
-                                        />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xs font-bold text-slate-900">
-                                            Validasi Berbasis NIM Kampus
-                                        </h4>
-                                        <p className="mt-0.5 text-xs text-slate-500">
-                                            Afiliasi dan kontribusi dicocokkan
-                                            langsung dengan data akademik resmi.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-white/70 p-4 shadow-2xs">
-                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-primary">
-                                        <LockKeyhole
-                                            aria-hidden="true"
-                                            className="size-5"
-                                        />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xs font-bold text-slate-900">
-                                            Kendali Penuh Visibilitas
-                                        </h4>
-                                        <p className="mt-0.5 text-xs text-slate-500">
-                                            Mahasiswa memegang hak menentukan
-                                            kapan portofolio dibuka ke perekrut.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-white/70 p-4 shadow-2xs">
-                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-primary">
-                                        <FileCheck2
-                                            aria-hidden="true"
-                                            className="size-5"
-                                        />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xs font-bold text-slate-900">
-                                            Rekam Jejak Append-Only
-                                        </h4>
-                                        <p className="mt-0.5 text-xs text-slate-500">
-                                            Setiap bukti kerja dan stempel
-                                            tersimpan permanen tanpa manipulasi.
-                                        </p>
-                                    </div>
-                                </div>
+                            <div
+                                className="landing-hero-illustration relative z-10"
+                                data-testid="landing-hero-illustration"
+                            >
+                                <figure className="landing-mascot-stage relative flex aspect-square items-center justify-center overflow-hidden rounded-[2rem] p-3 sm:p-6">
+                                    <img
+                                        src="/images/landing-mascot-accessories.webp"
+                                        alt="Maskot buku besar SATU dengan node kolaborasi dan lencana validasi."
+                                        width={1200}
+                                        height={800}
+                                        fetchPriority="high"
+                                        decoding="async"
+                                        className="relative z-10 w-full max-w-[39rem] object-contain drop-shadow-[0_24px_18px_rgba(23,70,176,0.24)]"
+                                    />
+                                </figure>
                             </div>
                         </div>
+
+                        {/* Section transition wave */}
+                        <div className="absolute right-0 bottom-0 left-0 h-24 bg-gradient-to-t from-white to-transparent" />
                     </section>
 
                     {/* ============================================ */}
-                    {/* Section 2: Cara Kerja (5 Lifecycle Stages)    */}
+                    {/* Section: Cara Kerja (Lifecycle)               */}
                     {/* ============================================ */}
                     <section
                         id="cara-kerja"
                         aria-labelledby="lifecycle-heading"
-                        className="scroll-mt-16 border-b border-slate-200/90 bg-white py-16 sm:py-24"
+                        className="landing-section-surface landing-section-surface--paper relative scroll-mt-16 py-24 sm:py-32"
                     >
-                        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                            <div className="max-w-2xl">
-                                <div className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-blue-50 px-2.5 py-1 font-label text-[0.68rem] font-bold tracking-wider text-primary">
-                                    <Layers
-                                        aria-hidden="true"
-                                        className="size-3.5"
-                                    />
-                                    CARA KERJA SISTEM
+                        <div className="mx-auto max-w-[110rem] px-5 sm:px-6 lg:px-20">
+                            {/* Section header */}
+                            <div className="landing-scroll-reveal grid gap-6 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] lg:items-end lg:gap-14">
+                                <div>
+                                    <div className="inline-flex items-center gap-2.5 rounded-full border border-blue-100 bg-blue-50/80 px-4 py-1.5 font-label text-[0.65rem] font-semibold tracking-wider text-blue-700">
+                                        <Layers
+                                            aria-hidden="true"
+                                            className="size-3.5"
+                                        />
+                                        CARA KERJA
+                                    </div>
+                                    <h2
+                                        id="lifecycle-heading"
+                                        className="mt-5 text-[clamp(1.9rem,3.5vw,3rem)] leading-[1.06] font-bold tracking-tight"
+                                    >
+                                        <span className="landing-section-heading">
+                                            Dari peluang menjadi bukti.
+                                        </span>{' '}
+                                        <span className="text-slate-900">
+                                            Lima momen yang saling menguatkan.
+                                        </span>
+                                    </h2>
                                 </div>
-                                <h2
-                                    id="lifecycle-heading"
-                                    className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl"
-                                >
-                                    Dari Peluang Menjadi Bukti Nyata.{' '}
-                                    <br className="hidden sm:block" />
-                                    Lima Tahap Kolaborasi yang Saling
-                                    Menguatkan.
-                                </h2>
-                                <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
+                                <p className="text-base leading-7 text-slate-500 sm:text-lg sm:leading-8">
                                     Setiap tahap meninggalkan konteks untuk
                                     orang berikutnya. Bukan sekadar aktivitas
-                                    bebas, tetapi alur kerja terstruktur yang
-                                    bisa diverifikasi dari awal pembentukan tim
-                                    hingga portofolio siap diproyeksikan.
+                                    bebas, tetapi alur kerja yang bisa
+                                    diverifikasi dari awal pembentukan sampai
+                                    bukti siap diproyeksikan.
                                 </p>
                             </div>
 
-                            <div className="mt-10">
-                                <LandingFlowLedger />
+                            {/* Flow ledger interaktif dipindahkan dari hero. */}
+                            <div className="landing-scroll-reveal mt-14 grid gap-8 xl:grid-cols-[minmax(0,1fr)_17rem] xl:items-start xl:gap-12">
+                                <LandingFlowLedger className="landing-workflow-ledger min-w-0" />
+
+                                <aside className="border-y border-blue-200/80 py-6 xl:mt-8">
+                                    <p className="font-label text-[0.65rem] font-semibold tracking-wider text-blue-700">
+                                        CARA MEMBACA ALUR
+                                    </p>
+                                    <h3 className="mt-3 text-xl font-bold tracking-tight text-slate-900">
+                                        Setiap tahap meninggalkan jejak.
+                                    </h3>
+                                    <ol className="mt-6 space-y-4 text-sm leading-6 text-slate-600">
+                                        <li className="flex gap-3">
+                                            <span className="font-label text-xs font-semibold text-blue-700">
+                                                01
+                                            </span>
+                                            <span>
+                                                Pilih tahap untuk membaca
+                                                konteks dan asal bukti.
+                                            </span>
+                                        </li>
+                                        <li className="flex gap-3">
+                                            <span className="font-label text-xs font-semibold text-blue-700">
+                                                02
+                                            </span>
+                                            <span>
+                                                Catatan dalam ledger menjelaskan
+                                                apa yang berlanjut.
+                                            </span>
+                                        </li>
+                                        <li className="flex gap-3">
+                                            <span className="font-label text-xs font-semibold text-blue-700">
+                                                03
+                                            </span>
+                                            <span>
+                                                Visibilitas portofolio tetap
+                                                berada pada kendali mahasiswa.
+                                            </span>
+                                        </li>
+                                    </ol>
+                                </aside>
                             </div>
                         </div>
                     </section>
 
                     {/* ============================================ */}
-                    {/* Section 3: Demo Interaktif (Synthetic Graph)  */}
+                    {/* Section: Demo Interaktif                      */}
                     {/* ============================================ */}
                     <section
                         id="demo"
                         aria-labelledby="demo-heading"
-                        className="scroll-mt-16 border-b border-slate-200/90 bg-[#F7F9FC] py-16 sm:py-24"
+                        className="landing-section-surface landing-section-surface--blue relative scroll-mt-16 overflow-hidden py-24 sm:py-32"
                     >
-                        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+                        {/* Background decoration */}
+                        <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(37,99,235,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(37,99,235,0.02)_1px,transparent_1px)] bg-[size:48px_48px]"
+                        />
+
+                        <div className="relative mx-auto max-w-[110rem] px-5 sm:px-6 lg:px-20">
+                            <div className="landing-scroll-reveal flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
                                 <div className="max-w-2xl">
-                                    <div className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-blue-50 px-2.5 py-1 font-label text-[0.68rem] font-bold tracking-wider text-primary">
+                                    <div className="inline-flex items-center gap-2.5 rounded-full border border-blue-100 bg-blue-50/80 px-4 py-1.5 font-label text-[0.65rem] font-semibold tracking-wider text-blue-700">
                                         <Network
                                             aria-hidden="true"
                                             className="size-3.5"
                                         />
-                                        DEMO SYNTHETIC INTERAKTIF
+                                        DEMO INTERAKTIF
                                     </div>
                                     <h2
                                         id="demo-heading"
-                                        className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl"
+                                        className="mt-5 text-[clamp(1.9rem,3.5vw,3rem)] leading-[1.06] font-bold tracking-tight"
                                     >
-                                        Jelajahi Bagaimana Relasi Kolaborasi
-                                        Tumbuh.
+                                        <span className="landing-section-heading">
+                                            Lihat hubungan tumbuh
+                                        </span>{' '}
+                                        <span className="text-slate-900">
+                                            dari satu kontribusi.
+                                        </span>
                                     </h2>
-                                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                                        Pilih node pada graf untuk membaca
-                                        relasi yang terbentuk. Tabel di samping
-                                        menjadi cara baca yang setara untuk
-                                        pengguna keyboard dan pembaca layar.
-                                    </p>
                                 </div>
-
-                                <div className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs">
-                                    <Info
-                                        aria-hidden="true"
-                                        className="size-4 text-primary"
-                                    />
+                                <div className="flex items-center gap-2.5 rounded-xl border border-blue-100 bg-white/80 px-4 py-2.5 text-xs font-medium text-blue-800 shadow-sm">
+                                    <span className="relative flex size-2 shrink-0">
+                                        <span className="absolute inline-flex size-full animate-ping rounded-full bg-blue-400 opacity-75" />
+                                        <span className="relative inline-flex size-2 rounded-full bg-blue-500" />
+                                    </span>
                                     <span>
-                                        Data synthetic // Non-diagnostik
+                                        Semua record pada demo ini adalah Data
+                                        synthetic.
                                     </span>
                                 </div>
                             </div>
 
-                            <div className="mt-8">
+                            <p className="landing-scroll-reveal mt-5 max-w-2xl text-base leading-7 text-slate-500 sm:text-lg sm:leading-8">
+                                Pilih node untuk membaca hubungan yang
+                                terbentuk. Tabel di samping menjadi cara baca
+                                yang setara untuk keyboard dan screen reader.
+                            </p>
+
+                            <div className="landing-scroll-reveal mt-10 overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-2 shadow-lg shadow-slate-200/50 sm:p-3">
                                 <div data-testid="landing-demo-region">
                                     {isHydrated ? (
                                         <Suspense
@@ -604,114 +579,111 @@ export default function Welcome() {
                     </section>
 
                     {/* ============================================ */}
-                    {/* Section 4: Untuk Siapa (Role Ecosystem)       */}
+                    {/* Section: Untuk Siapa (Roles)                  */}
                     {/* ============================================ */}
                     <section
                         id="peran"
                         aria-labelledby="roles-heading"
-                        className="scroll-mt-16 border-b border-slate-200/90 bg-white py-16 sm:py-24"
+                        className="landing-section-surface landing-section-surface--paper relative scroll-mt-16 py-24 sm:py-32"
                     >
-                        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                            <div className="max-w-2xl">
-                                <div className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-blue-50 px-2.5 py-1 font-label text-[0.68rem] font-bold tracking-wider text-primary">
-                                    <Users
+                        <div className="mx-auto max-w-[110rem] px-5 sm:px-6 lg:px-20">
+                            <div className="landing-scroll-reveal max-w-2xl">
+                                <div className="inline-flex items-center gap-2.5 rounded-full border border-blue-100 bg-blue-50/80 px-4 py-1.5 font-label text-[0.65rem] font-semibold tracking-wider text-blue-700">
+                                    <Target
                                         aria-hidden="true"
                                         className="size-3.5"
                                     />
-                                    EKOSISTEM SATU
+                                    UNTUK SIAPA
                                 </div>
                                 <h2
                                     id="roles-heading"
-                                    className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl"
+                                    className="mt-5 text-[clamp(1.9rem,3.5vw,3rem)] leading-[1.06] font-bold tracking-tight"
                                 >
-                                    Satu Platform Kolaborasi, Tiga Peran yang
-                                    Saling Melengkapi.
+                                    <span className="landing-section-heading">
+                                        Satu alur,
+                                    </span>{' '}
+                                    <span className="text-slate-900">
+                                        pengalaman yang tetap personal.
+                                    </span>
                                 </h2>
-                                <p className="mt-2 text-sm leading-6 text-slate-600">
-                                    SATU menyatukan kerja kolaboratif kampus
-                                    tanpa menyamakan kebutuhan atau hak akses
-                                    semua orang.
+                                <p className="mt-5 text-base leading-7 text-slate-500 sm:text-lg sm:leading-8">
+                                    SATU menyatukan kerja kolaboratif tanpa
+                                    menyamakan kebutuhan atau hak akses semua
+                                    orang.
                                 </p>
                             </div>
 
-                            {/* 3 Institutional File Cards */}
-                            <div className="mt-10 grid gap-6 md:grid-cols-3">
+                            {/* Role cards with elegant design */}
+                            <div className="mt-14 grid gap-6 lg:grid-cols-3">
                                 {roleRows.map((role) => {
                                     const RoleIcon = role.icon;
+                                    const AccentIcon = role.accentIcon;
 
                                     return (
                                         <article
                                             key={role.key}
-                                            className="group flex flex-col justify-between rounded-2xl border border-slate-300/80 bg-white p-6 shadow-xs transition-all hover:border-primary/40 hover:shadow-md"
+                                            className="landing-bento-card landing-role-row landing-scroll-reveal group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-7 shadow-sm sm:p-8"
                                         >
-                                            <div>
+                                            {/* Background gradient accent on hover */}
+                                            <div
+                                                aria-hidden="true"
+                                                className={`pointer-events-none absolute -top-12 -right-12 size-40 rounded-full bg-gradient-to-br ${role.gradientFrom} ${role.gradientTo} opacity-0 blur-3xl transition-opacity duration-700 group-hover:opacity-10`}
+                                            />
+
+                                            <div className="relative">
                                                 <div className="flex items-center justify-between gap-3">
-                                                    <div className="flex size-11 items-center justify-center rounded-xl border border-primary/20 bg-blue-50 text-primary">
+                                                    <div
+                                                        className={`flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br ${role.gradientFrom} ${role.gradientTo} text-white shadow-lg shadow-blue-500/10 transition-transform duration-300 group-hover:scale-105`}
+                                                    >
                                                         <RoleIcon
                                                             aria-hidden="true"
-                                                            className="size-5"
+                                                            className="size-6"
                                                         />
                                                     </div>
                                                     <span
-                                                        className={`rounded-md border px-2.5 py-0.5 font-label text-[0.62rem] font-bold ${role.badgeColor}`}
+                                                        className={`rounded-full border px-3 py-1 font-label text-[0.62rem] font-semibold tracking-wider ${role.badgeColor}`}
                                                     >
                                                         {role.badge}
                                                     </span>
                                                 </div>
 
-                                                <h3 className="mt-5 text-lg font-bold text-slate-900">
+                                                <h3 className="mt-6 text-xl font-bold tracking-tight text-slate-900">
                                                     {role.label}
                                                 </h3>
-                                                <p className="mt-1 font-label text-xs font-semibold text-primary">
+                                                <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-blue-600">
+                                                    <AccentIcon
+                                                        aria-hidden="true"
+                                                        className="size-3.5"
+                                                    />
                                                     {role.tagline}
                                                 </p>
-                                                <p className="mt-3 text-xs leading-5 text-slate-600">
+                                                <p className="mt-4 text-sm leading-6 text-slate-500">
                                                     {role.description}
                                                 </p>
-
-                                                {/* Features Checklist */}
-                                                <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
-                                                    {role.features.map(
-                                                        (feature, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                className="flex items-start gap-2 text-xs text-slate-700"
-                                                            >
-                                                                <Check
-                                                                    aria-hidden="true"
-                                                                    className="mt-0.5 size-3.5 shrink-0 text-emerald-600"
-                                                                />
-                                                                <span>
-                                                                    {feature}
-                                                                </span>
-                                                            </div>
-                                                        ),
-                                                    )}
-                                                </div>
                                             </div>
 
-                                            <div className="mt-6 border-t border-slate-200 pt-4">
+                                            <div className="relative mt-8 border-t border-slate-100 pt-5">
                                                 {role.href === 'register' ? (
                                                     <Link
                                                         href={register()}
                                                         prefetch
-                                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
+                                                        className="group/cta inline-flex items-center gap-2 text-sm font-semibold text-blue-600 transition-colors hover:text-blue-700"
                                                     >
                                                         {role.cta}
                                                         <ArrowRight
                                                             aria-hidden="true"
-                                                            className="size-3.5"
+                                                            className="landing-role-arrow size-4 transition-transform duration-300 motion-reduce:transition-none"
                                                         />
                                                     </Link>
                                                 ) : (
                                                     <a
                                                         href={role.href}
-                                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
+                                                        className="group/cta inline-flex items-center gap-2 text-sm font-semibold text-blue-600 transition-colors hover:text-blue-700"
                                                     >
                                                         {role.cta}
                                                         <ArrowRight
                                                             aria-hidden="true"
-                                                            className="size-3.5"
+                                                            className="landing-role-arrow size-4 transition-transform duration-300 motion-reduce:transition-none"
                                                         />
                                                     </a>
                                                 )}
@@ -720,349 +692,145 @@ export default function Welcome() {
                                     );
                                 })}
                             </div>
-                        </div>
-                    </section>
 
-                    {/* ============================================ */}
-                    {/* Section 5: Batas Privasi & Proyeksi Data      */}
-                    {/* ============================================ */}
-                    <section
-                        id="privasi"
-                        aria-labelledby="privacy-heading"
-                        className="scroll-mt-16 border-b border-slate-200/90 bg-[#F7F9FC] py-16 sm:py-24"
-                    >
-                        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                            <div className="overflow-hidden rounded-2xl border border-slate-300/90 bg-white shadow-sm">
-                                <div className="border-b border-slate-200 bg-slate-50/80 p-6 sm:p-8">
-                                    <div className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-blue-50 px-2.5 py-1 font-label text-[0.68rem] font-bold tracking-wider text-primary">
-                                        <LockKeyhole
-                                            aria-hidden="true"
-                                            className="size-3.5"
-                                        />
-                                        BATAS PROYEKSI // ZERO-LEAKAGE
+                            {/* ============================================ */}
+                            {/* Privacy & Projection Boundaries               */}
+                            {/* ============================================ */}
+                            <div
+                                id="privacy"
+                                className="landing-scroll-reveal mt-16 overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50/60 via-white to-indigo-50/40 p-8 shadow-sm sm:p-10"
+                            >
+                                <div className="grid gap-10 lg:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] lg:items-center lg:gap-16">
+                                    <div>
+                                        <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/20">
+                                            <LockKeyhole
+                                                aria-hidden="true"
+                                                className="size-6"
+                                            />
+                                        </div>
+                                        <p className="mt-6 font-label text-[0.68rem] font-bold tracking-wider text-blue-700">
+                                            BATAS PROYEKSI
+                                        </p>
+                                        <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                                            Data yang terlihat{' '}
+                                            <span className="landing-section-heading">
+                                                punya tujuan.
+                                            </span>
+                                        </h3>
+                                        <p className="mt-4 text-sm leading-6 text-slate-500">
+                                            Portofolio hanya diproyeksikan
+                                            ketika mahasiswa mengizinkannya.
+                                            Username, nomor WhatsApp, diskusi
+                                            privat, dan raw audit tidak pernah
+                                            diekspos ke publik atau perekrut.
+                                        </p>
                                     </div>
-                                    <h2
-                                        id="privacy-heading"
-                                        className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl"
-                                    >
-                                        Data yang Terlihat Memiliki Izin. Ruang
-                                        Privat Tetap Terkunci.
-                                    </h2>
-                                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                                        Portofolio hanya diproyeksikan ketika
-                                        mahasiswa mengizinkannya secara
-                                        eksplisit. Nomor WhatsApp, percakapan
-                                        tim, dan detail internal tidak pernah
-                                        diekspos ke publik atau akun perekrut.
-                                    </p>
-                                </div>
 
-                                <div className="grid gap-6 p-6 sm:p-8 md:grid-cols-2">
-                                    {/* Public / Recruiter Projection Column */}
-                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/30 p-5">
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-800">
-                                                <BadgeCheck
+                                    <div className="grid gap-5 sm:grid-cols-2">
+                                        <div className="group rounded-2xl border border-emerald-200/60 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+                                            <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-sm">
+                                                <ShieldCheck
                                                     aria-hidden="true"
-                                                    className="size-4"
+                                                    className="size-5"
                                                 />
                                             </div>
-                                            <h3 className="text-sm font-bold text-emerald-950">
-                                                Dapat Diproyeksikan ke Publik /
-                                                Perekrut
-                                            </h3>
+                                            <p className="mt-4 text-sm font-bold text-slate-900">
+                                                Yang dapat diproyeksikan
+                                            </p>
+                                            <p className="mt-2 text-xs leading-5 text-slate-500">
+                                                Entry portofolio dan kontribusi
+                                                terverifikasi yang dipilih.
+                                            </p>
                                         </div>
-                                        <ul className="mt-4 space-y-2.5 text-xs text-slate-700">
-                                            <li className="flex items-start gap-2">
-                                                <Check
-                                                    aria-hidden="true"
-                                                    className="mt-0.5 size-3.5 shrink-0 text-emerald-600"
-                                                />
-                                                <span>
-                                                    Judul proyek dan peran
-                                                    mahasiswa yang diizinkan
-                                                </span>
-                                            </li>
-                                            <li className="flex items-start gap-2">
-                                                <Check
-                                                    aria-hidden="true"
-                                                    className="mt-0.5 size-3.5 shrink-0 text-emerald-600"
-                                                />
-                                                <span>
-                                                    Lencana verifikasi resmi dan
-                                                    nama dosen peninjau
-                                                </span>
-                                            </li>
-                                            <li className="flex items-start gap-2">
-                                                <Check
-                                                    aria-hidden="true"
-                                                    className="mt-0.5 size-3.5 shrink-0 text-emerald-600"
-                                                />
-                                                <span>
-                                                    Ringkasan deskripsi tugas
-                                                    dan bukti deliverable publik
-                                                </span>
-                                            </li>
-                                        </ul>
-                                    </div>
-
-                                    {/* Locked Private Workspace Column */}
-                                    <div className="rounded-xl border border-slate-300 bg-slate-50/50 p-5">
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex size-7 items-center justify-center rounded-lg bg-slate-200 text-slate-800">
+                                        <div className="group rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+                                            <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 text-white shadow-sm">
                                                 <EyeOff
                                                     aria-hidden="true"
-                                                    className="size-4"
+                                                    className="size-5"
                                                 />
                                             </div>
-                                            <h3 className="text-sm font-bold text-slate-900">
-                                                Terkunci Aman di Ruang Privat
-                                                Kampus
-                                            </h3>
+                                            <p className="mt-4 text-sm font-bold text-slate-900">
+                                                Yang tetap privat
+                                            </p>
+                                            <p className="mt-2 text-xs leading-5 text-slate-500">
+                                                Percakapan internal, nomor
+                                                WhatsApp, username, dan detail
+                                                audit mentah.
+                                            </p>
                                         </div>
-                                        <ul className="mt-4 space-y-2.5 text-xs text-slate-700">
-                                            <li className="flex items-start gap-2">
-                                                <LockKeyhole
-                                                    aria-hidden="true"
-                                                    className="mt-0.5 size-3.5 shrink-0 text-slate-500"
-                                                />
-                                                <span>
-                                                    Nomor telepon WhatsApp dan
-                                                    kontak pribadi mahasiswa
-                                                </span>
-                                            </li>
-                                            <li className="flex items-start gap-2">
-                                                <LockKeyhole
-                                                    aria-hidden="true"
-                                                    className="mt-0.5 size-3.5 shrink-0 text-slate-500"
-                                                />
-                                                <span>
-                                                    Percakapan internal, pesan
-                                                    chat, dan diskusi tim
-                                                </span>
-                                            </li>
-                                            <li className="flex items-start gap-2">
-                                                <LockKeyhole
-                                                    aria-hidden="true"
-                                                    className="mt-0.5 size-3.5 shrink-0 text-slate-500"
-                                                />
-                                                <span>
-                                                    Log audit mentah dan sinyal
-                                                    jejaring internal kampus
-                                                </span>
-                                            </li>
-                                        </ul>
                                     </div>
                                 </div>
-
-                                <div className="border-t border-slate-200 bg-slate-50 px-6 py-3 text-xs text-slate-500 sm:px-8">
-                                    <span>
-                                        Catatan Evaluator: SATU tidak menjual
-                                        data mahasiswa, tidak menganalisis
-                                        psikologis/sentimen pesan, dan melabeli
-                                        semua data demo sebagai synthetic.
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* ============================================ */}
-                    {/* Section 6: Pilar Platform (Integritas)        */}
-                    {/* ============================================ */}
-                    <section
-                        id="pilar"
-                        aria-labelledby="pillars-heading"
-                        className="scroll-mt-16 border-b border-slate-200/90 bg-white py-16 sm:py-24"
-                    >
-                        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                            <div className="max-w-2xl">
-                                <div className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-blue-50 px-2.5 py-1 font-label text-[0.68rem] font-bold tracking-wider text-primary">
-                                    <Scale
-                                        aria-hidden="true"
-                                        className="size-3.5"
-                                    />
-                                    INTEGRITAS PLATFORM
-                                </div>
-                                <h2
-                                    id="pillars-heading"
-                                    className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl"
-                                >
-                                    Prinsip Arsitektur yang Menjaga Kepercayaan.
-                                </h2>
-                                <p className="mt-2 text-sm leading-6 text-slate-600">
-                                    SATU dibangun dengan batas-batas teknis yang
-                                    jelas agar kolaborasi tetap objektif dan
-                                    bebas manipulasi.
-                                </p>
                             </div>
 
-                            <div className="mt-10 grid gap-6 md:grid-cols-3">
-                                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-6">
-                                    <div className="flex size-10 items-center justify-center rounded-xl bg-blue-100 text-primary">
-                                        <Sparkles
-                                            aria-hidden="true"
-                                            className="size-5"
-                                        />
-                                    </div>
-                                    <h3 className="mt-4 text-base font-bold text-slate-900">
-                                        Matching Transparan 4 Dimensi
-                                    </h3>
-                                    <p className="mt-2 text-xs leading-5 text-slate-600">
-                                        Rekomendasi kolaborasi dihitung
-                                        berdasarkan kesesuaian skill, kebutuhan
-                                        proyek, ketersediaan waktu, dan peluang
-                                        konektivitas baru, tanpa algoritma kotak
-                                        hitam.
-                                    </p>
-                                </div>
-
-                                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-6">
-                                    <div className="flex size-10 items-center justify-center rounded-xl bg-blue-100 text-primary">
-                                        <FileCheck2
-                                            aria-hidden="true"
-                                            className="size-5"
-                                        />
-                                    </div>
-                                    <h3 className="mt-4 text-base font-bold text-slate-900">
-                                        Audit Trail Append-Only
-                                    </h3>
-                                    <p className="mt-2 text-xs leading-5 text-slate-600">
-                                        Setiap pencatatan tugas, tinjauan
-                                        reviewer, dan riwayat persetujuan
-                                        tersimpan permanen dengan catatan waktu
-                                        yang tidak dapat dimanipulasi.
-                                    </p>
-                                </div>
-
-                                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-6">
-                                    <div className="flex size-10 items-center justify-center rounded-xl bg-blue-100 text-primary">
-                                        <Award
-                                            aria-hidden="true"
-                                            className="size-5"
-                                        />
-                                    </div>
-                                    <h3 className="mt-4 text-base font-bold text-slate-900">
-                                        Bebas Gamifikasi Manipulatif
-                                    </h3>
-                                    <p className="mt-2 text-xs leading-5 text-slate-600">
-                                        Tidak ada peringkat yang menekan mental
-                                        mahasiswa atau poin buatan. Nilai
-                                        portofolio berakar murni dari kualitas
-                                        bukti kontribusi yang tervalidasi.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* ============================================ */}
-                    {/* Section 7: FAQ Accordion                      */}
-                    {/* ============================================ */}
-                    <section
-                        id="faq"
-                        aria-labelledby="faq-heading"
-                        className="scroll-mt-16 border-b border-slate-200/90 bg-[#F7F9FC] py-16 sm:py-24"
-                    >
-                        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-                            <div className="text-center">
-                                <div className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-blue-50 px-2.5 py-1 font-label text-[0.68rem] font-bold tracking-wider text-primary">
-                                    <HelpCircle
-                                        aria-hidden="true"
-                                        className="size-3.5"
-                                    />
-                                    TANYA JAWAB
-                                </div>
-                                <h2
-                                    id="faq-heading"
-                                    className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl"
-                                >
-                                    Pertanyaan yang Sering Diajukan Seputar
-                                    SATU.
-                                </h2>
-                            </div>
-
-                            <div className="mt-10 space-y-3">
-                                {faqItems.map((item, index) => {
-                                    const isOpen = openFaqIndex === index;
-
-                                    return (
-                                        <div
-                                            key={index}
-                                            className="overflow-hidden rounded-xl border border-slate-300/80 bg-white shadow-2xs"
-                                        >
-                                            <button
-                                                type="button"
-                                                onClick={() => toggleFaq(index)}
-                                                aria-expanded={isOpen}
-                                                className="flex w-full items-center justify-between gap-4 p-5 text-left font-bold text-slate-900 transition-colors hover:bg-slate-50"
-                                            >
-                                                <span className="text-sm sm:text-base">
-                                                    {item.question}
-                                                </span>
-                                                {isOpen ? (
-                                                    <ChevronUp
-                                                        aria-hidden="true"
-                                                        className="size-4 shrink-0 text-primary"
-                                                    />
-                                                ) : (
-                                                    <ChevronDown
-                                                        aria-hidden="true"
-                                                        className="size-4 shrink-0 text-slate-400"
-                                                    />
-                                                )}
-                                            </button>
-                                            {isOpen && (
-                                                <div className="border-t border-slate-100 p-5 pt-3 text-xs leading-6 text-slate-600 sm:text-sm">
-                                                    <p>{item.answer}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* ============================================ */}
-                    {/* Section 8: Final CTA Action Banner            */}
-                    {/* ============================================ */}
-                    <section className="relative overflow-hidden bg-gradient-to-br from-[#0D2866] via-primary to-[#1B357A] py-16 text-white sm:py-24">
-                        <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-                            <div className="inline-flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1 font-label text-[0.68rem] font-bold tracking-wider text-blue-100 backdrop-blur-xs">
-                                <Zap aria-hidden="true" className="size-3.5" />
-                                MULAI HARI INI
-                            </div>
-                            <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                                Siap Mengubah Setiap Kerja Kolaborasi Menjadi
-                                Portofolio Terpercaya?
-                            </h2>
-                            <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-blue-100/90 sm:text-base">
-                                Bergabunglah dengan mahasiswa lainnya dan mulai
-                                kolaborasi pertamamu. Kontribusimu akan
-                                tervalidasi oleh kampus dan siap diproyeksikan
-                                ke perekrut.
+                            <p className="mt-8 flex items-start gap-2.5 text-xs leading-5 text-slate-400">
+                                <FileCheck2
+                                    aria-hidden="true"
+                                    className="mt-0.5 size-4 shrink-0 text-blue-500"
+                                />
+                                <span>
+                                    Untuk evaluator: demo ini memakai Data
+                                    synthetic dan tidak menyatakan pelanggan,
+                                    harga, hasil pilot, atau dampak yang belum
+                                    terbukti.
+                                </span>
                             </p>
-                            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                                <Button
-                                    asChild
-                                    size="lg"
-                                    className="h-12 rounded-xl bg-white px-7 font-bold text-primary shadow-md hover:bg-blue-50"
-                                >
-                                    <Link href={register()} prefetch>
-                                        Daftar Mahasiswa Sekarang
-                                        <ArrowRight
-                                            aria-hidden="true"
-                                            className="ml-2 size-4"
-                                        />
-                                    </Link>
-                                </Button>
-                                <a
-                                    href="#cara-kerja"
-                                    className="inline-flex h-12 items-center justify-center rounded-xl border border-white/30 bg-white/10 px-6 text-sm font-semibold text-white transition-colors hover:bg-white/20"
-                                >
-                                    Pelajari Alur Validasi
-                                </a>
+                        </div>
+                    </section>
+
+                    {/* ============================================ */}
+                    {/* CTA Section                                   */}
+                    {/* ============================================ */}
+                    <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 py-20 sm:py-28">
+                        {/* Decorative elements */}
+                        <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:48px_48px]"
+                        />
+                        <div
+                            aria-hidden="true"
+                            className="landing-glow-orb pointer-events-none absolute top-0 right-[20%] size-[30rem] rounded-full bg-white/5 blur-[100px]"
+                        />
+
+                        <div className="relative mx-auto max-w-4xl px-5 text-center sm:px-6 lg:px-8">
+                            <div className="landing-scroll-reveal">
+                                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 font-label text-[0.65rem] font-semibold tracking-wider text-blue-100">
+                                    <Zap
+                                        aria-hidden="true"
+                                        className="size-3.5"
+                                    />
+                                    MULAI SEKARANG
+                                </div>
+                                <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                                    Siap membangun portofolio
+                                    <br className="hidden sm:block" /> yang
+                                    punya konteks?
+                                </h2>
+                                <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-blue-100/80 sm:text-lg">
+                                    Daftar gratis sebagai mahasiswa dan mulai
+                                    kolaborasi pertamamu. Kontribusimu akan
+                                    tervalidasi dan siap diproyeksikan.
+                                </p>
+                                <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                                    <Button
+                                        asChild
+                                        size="lg"
+                                        className="group h-13 rounded-2xl bg-white px-8 font-semibold text-blue-700 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-blue-50 hover:shadow-xl motion-reduce:transition-none"
+                                    >
+                                        <Link href={register()} prefetch>
+                                            Daftar mahasiswa
+                                            <ArrowRight
+                                                aria-hidden="true"
+                                                className="ml-1 size-4 transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none"
+                                            />
+                                        </Link>
+                                    </Button>
+                                    <a
+                                        href="#cara-kerja"
+                                        className="inline-flex h-13 items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-6 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/20 motion-reduce:transition-none"
+                                    >
+                                        Pelajari lebih lanjut
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -1070,25 +838,37 @@ export default function Welcome() {
 
                 {/* Accessible Noscript Fallback */}
                 <noscript>
-                    <section className="border-b border-slate-200 bg-slate-50 px-4 py-10">
-                        <div className="mx-auto max-w-7xl">
-                            <h2 className="text-xl font-bold text-slate-900">
-                                Alur Kolaborasi SATU
+                    <section className="border-b border-slate-200 bg-slate-50 px-5 py-12 sm:px-6">
+                        <div className="mx-auto max-w-[110rem]">
+                            <p className="font-label text-[0.65rem] tracking-wider text-blue-700">
+                                DATA SYNTHETIC
+                            </p>
+                            <h2 className="mt-3 text-2xl font-bold text-slate-900">
+                                Alur kolaborasi SATU
                             </h2>
-                            <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white">
-                                <table className="min-w-full text-left text-xs">
+                            <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                                <table className="min-w-full text-left text-sm">
                                     <caption className="sr-only">
                                         Tabel alur kolaborasi synthetic SATU
                                     </caption>
                                     <thead className="bg-slate-100 text-slate-900">
                                         <tr>
-                                            <th className="px-4 py-2 font-semibold">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 font-semibold"
+                                            >
                                                 Tahap
                                             </th>
-                                            <th className="px-4 py-2 font-semibold">
-                                                Deskripsi
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 font-semibold"
+                                            >
+                                                Arti
                                             </th>
-                                            <th className="px-4 py-2 font-semibold">
+                                            <th
+                                                scope="col"
+                                                className="px-4 py-3 font-semibold"
+                                            >
                                                 Kelanjutan
                                             </th>
                                         </tr>
@@ -1096,13 +876,16 @@ export default function Welcome() {
                                     <tbody className="divide-y divide-slate-200 text-slate-600">
                                         {LANDING_STAGES.map((stage) => (
                                             <tr key={stage.key}>
-                                                <th className="px-4 py-2 font-semibold text-slate-900">
+                                                <th
+                                                    scope="row"
+                                                    className="px-4 py-3 font-semibold text-slate-900"
+                                                >
                                                     {stage.label}
                                                 </th>
-                                                <td className="px-4 py-2">
+                                                <td className="px-4 py-3">
                                                     {stage.shortDescription}
                                                 </td>
-                                                <td className="px-4 py-2">
+                                                <td className="px-4 py-3">
                                                     {stage.outcome}
                                                 </td>
                                             </tr>
@@ -1117,56 +900,32 @@ export default function Welcome() {
                 {/* ============================================ */}
                 {/* Footer                                        */}
                 {/* ============================================ */}
-                <footer className="border-t border-slate-200/90 bg-white py-12 text-slate-600">
-                    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                        <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
-                            <div className="space-y-2">
+                <footer className="landing-section-surface landing-section-surface--footer border-t border-slate-200/80 py-10 sm:py-12">
+                    <div className="mx-auto max-w-[110rem] px-5 sm:px-6 lg:px-20">
+                        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                            <div className="flex items-center gap-3">
                                 <AppLogo
                                     compact
-                                    className="text-slate-900"
-                                    ruleClassName="bg-primary"
+                                    className="text-slate-800"
+                                    ruleClassName="bg-blue-600"
                                 />
-                                <p className="max-w-md text-xs text-slate-500">
-                                    Platform kolaborasi kampus dan validasi
-                                    kontribusi talenta mahasiswa berbasis rekam
-                                    jejak terpercaya.
-                                </p>
                             </div>
-
-                            <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-600">
-                                <a
-                                    href="#cara-kerja"
-                                    className="hover:text-primary"
-                                >
-                                    Cara Kerja
-                                </a>
-                                <a href="#demo" className="hover:text-primary">
-                                    Demo Synthetic
-                                </a>
-                                <a href="#peran" className="hover:text-primary">
-                                    Untuk Siapa
-                                </a>
-                                <a
-                                    href="#privasi"
-                                    className="hover:text-primary"
-                                >
-                                    Batas Privasi
-                                </a>
-                                <a href="#faq" className="hover:text-primary">
-                                    Tanya Jawab
-                                </a>
+                            <div className="flex items-center gap-2.5 text-xs font-medium text-slate-400">
+                                <div className="flex size-6 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
+                                    <LockKeyhole
+                                        aria-hidden="true"
+                                        className="size-3"
+                                    />
+                                </div>
+                                <span>
+                                    Data portofolio dibagikan secara eksplisit.
+                                </span>
                             </div>
                         </div>
-
-                        <div className="mt-8 flex flex-col gap-4 border-t border-slate-200/80 pt-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-                            <p className="font-label text-[0.68rem]">
-                                &copy; {new Date().getFullYear()} SATU (Sistem
-                                Aktivitas Talenta Universitas). Semua hak cipta
-                                dilindungi.
-                            </p>
-                            <p className="text-[0.68rem] text-slate-400">
-                                Seluruh demo menggunakan Data synthetic sesuai
-                                standar privasi SATU.
+                        <div className="mt-8 border-t border-slate-200/60 pt-6">
+                            <p className="font-label text-[0.68rem] tracking-wider text-slate-400">
+                                &copy; {new Date().getFullYear()} SATU Platform.
+                                Semua hak cipta dilindungi.
                             </p>
                         </div>
                     </div>
