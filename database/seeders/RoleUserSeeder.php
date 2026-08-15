@@ -2,9 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Enums\AffiliationMatchResult;
+use App\Enums\AffiliationRequestStatus;
 use App\Enums\ContactRequestStatus;
 use App\Enums\ContributionReviewDecision;
 use App\Enums\ContributionStatus;
+use App\Enums\InstitutionDomainStatus;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
 use App\Enums\InstitutionMembershipVerificationMethod;
@@ -77,7 +80,7 @@ class RoleUserSeeder extends Seeder
 
         InstitutionDomain::firstOrCreate(
             ['institution_id' => $institution->id, 'domain' => 'satu.ac.id'],
-            ['status' => \App\Enums\InstitutionDomainStatus::Verified, 'verified_at' => now()]
+            ['status' => InstitutionDomainStatus::Verified, 'verified_at' => now()]
         );
 
         // ============================================================
@@ -192,8 +195,8 @@ class RoleUserSeeder extends Seeder
                 'user_id' => $budi->id,
             ],
             [
-                'status' => \App\Enums\AffiliationRequestStatus::Approved,
-                'match_result' => \App\Enums\AffiliationMatchResult::ExactMatch,
+                'status' => AffiliationRequestStatus::Verified,
+                'match_result' => AffiliationMatchResult::Exact,
                 'roster_id' => $roster->id,
                 'roster_row_id' => $budiRosterRow->id,
                 'submitted_at' => now()->subDays(30),
@@ -291,7 +294,7 @@ class RoleUserSeeder extends Seeder
                     'institution_id' => $institution->id,
                 ],
                 [
-                    'public_identifier' => 'SID-' . strtoupper(Str::random(8)),
+                    'public_identifier' => 'SID-'.strtoupper(Str::random(8)),
                     'study_program' => $data['program'],
                     'study_year' => $data['year'],
                     'bio' => $data['bio'],
@@ -319,7 +322,7 @@ class RoleUserSeeder extends Seeder
         // ============================================================
         // 6. Realistic Collaboration Projects in Universitas SATU
         // ============================================================
-        
+
         // Project 1: AI Plant Identifier
         $project1 = Project::firstOrCreate(
             [
@@ -385,7 +388,6 @@ class RoleUserSeeder extends Seeder
                 'status' => TaskStatus::Done,
                 'priority' => TaskPriority::High,
                 'created_by_id' => $studentUsers['siti_rahma']->id,
-                'assigned_to_id' => $studentUsers['siti_rahma']->id,
             ]
         );
 
@@ -411,21 +413,23 @@ class RoleUserSeeder extends Seeder
             ]
         );
 
-        ContributionVersion::firstOrCreate(
+        $version1 = ContributionVersion::firstOrCreate(
             ['contribution_id' => $contrib1->id, 'version_number' => 1],
             [
                 'created_by_id' => $studentUsers['siti_rahma']->id,
                 'task_id' => $task1->id,
                 'claim' => 'Penyelesaian Pipeline Model Computer Vision Akurasi 96.4%',
                 'summary' => 'Berhasil membangun arsitektur model Convolutional Neural Network dan mengoptimasi waktu inferensi di bawah 120ms.',
+                'declaration' => 'Saya menyatakan bahwa kontribusi ini adalah karya asli saya.',
             ]
         );
 
         ContributionReview::firstOrCreate(
-            ['contribution_id' => $contrib1->id, 'reviewer_id' => $campusVerifier->id],
+            ['contribution_version_id' => $version1->id, 'reviewer_id' => $campusVerifier->id],
             [
                 'decision' => ContributionReviewDecision::Approved,
-                'feedback' => 'Kontribusi sangat solid, hasil evaluasi model teruji dengan metodologi valid.',
+                'policy_version' => '1.0',
+                'reason' => 'Kontribusi sangat solid, hasil evaluasi model teruji dengan metodologi valid.',
                 'reviewed_at' => now()->subDays(5),
             ]
         );
@@ -437,10 +441,12 @@ class RoleUserSeeder extends Seeder
             ],
             [
                 'institution_id' => $institution->id,
+                'contribution_version_id' => $version1->id,
                 'title' => 'Arsitektur Pipeline Computer Vision Tanaman Obat',
-                'description' => 'Penyelesaian pipeline model machine learning dengan akurasi 96.4% yang divalidasi resmi oleh kampus.',
+                'summary' => 'Penyelesaian pipeline model machine learning dengan akurasi 96.4% yang divalidasi resmi oleh kampus.',
                 'verification_level' => PortfolioVerificationLevel::InstitutionVerified,
-                'verified_at' => now()->subDays(5),
+                'visibility' => PortfolioVisibility::Recruiter,
+                'published_at' => now()->subDays(5),
             ]
         );
 
@@ -492,7 +498,6 @@ class RoleUserSeeder extends Seeder
                 'status' => TaskStatus::Done,
                 'priority' => TaskPriority::High,
                 'created_by_id' => $studentUsers['ahmad_fauzi']->id,
-                'assigned_to_id' => $studentUsers['ahmad_fauzi']->id,
             ]
         );
 
@@ -504,7 +509,7 @@ class RoleUserSeeder extends Seeder
                 'owner_id' => $studentUsers['ahmad_fauzi']->id,
             ],
             [
-                'status' => ContributionStatus::PendingReview,
+                'status' => ContributionStatus::Pending,
             ]
         );
 
@@ -515,6 +520,7 @@ class RoleUserSeeder extends Seeder
                 'task_id' => $task2->id,
                 'claim' => 'Penyusunan Modul Routing Engine Logistik dan REST API',
                 'summary' => 'Menyelesaikan modul kalkulasi jarak rute terpendek antar gedung kampus dan dokumentasi endpoint API.',
+                'declaration' => 'Saya menyatakan bahwa kontribusi ini adalah karya asli saya.',
             ]
         );
 
