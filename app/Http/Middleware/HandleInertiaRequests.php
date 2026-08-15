@@ -171,7 +171,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         $membership = $user->institutionMemberships()
-            ->with(['institution:id,name,status', 'affiliationRequest.roster:id,nim'])
+            ->with(['institution:id,name,status', 'affiliationRequest'])
             ->whereRelation('institution', 'status', InstitutionStatus::Active)
             ->where('role', InstitutionMembershipRole::Student)
             ->latest('requested_at')
@@ -225,7 +225,7 @@ class HandleInertiaRequests extends Middleware
             'skillsCount' => $profile === null ? 0 : (int) $profile->skills_count,
             'availabilityCount' => $profile === null ? 0 : (int) $profile->availability_windows_count,
             'institutions' => $institutions,
-            'nim' => (string) ($membership?->affiliationRequest?->roster?->nim ?? ''),
+            'nim' => (string) ($membership?->affiliationRequest->nim ?? ''),
         ];
     }
 }

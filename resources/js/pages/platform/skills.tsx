@@ -1,7 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import {
     Briefcase,
-    Check,
     CheckCircle2,
     Clock,
     Database,
@@ -9,7 +8,6 @@ import {
     Pencil,
     Plus,
     Search,
-    Shield,
     ShieldAlert,
     ShieldCheck,
     Sparkles,
@@ -148,7 +146,10 @@ export default function PlatformSkillsIndex({
 
     function handleEditSubmit(e: React.FormEvent) {
         e.preventDefault();
-        if (!editingSkill) return;
+
+        if (!editingSkill) {
+            return;
+        }
 
         editForm.patch(`/platform/skills/${editingSkill.id}`, {
             onSuccess: () => {

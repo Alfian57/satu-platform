@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Enums\AffiliationMatchResult;
 use App\Enums\AffiliationRequestStatus;
+use App\Enums\AffiliationReviewDecision;
+use App\Enums\AffiliationReviewReason;
 use App\Enums\ContactRequestStatus;
 use App\Enums\ContributionReviewDecision;
 use App\Enums\ContributionStatus;
@@ -26,6 +28,7 @@ use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Enums\TeamMembershipStatus;
 use App\Models\AffiliationRequest;
+use App\Models\AffiliationReview;
 use App\Models\Contribution;
 use App\Models\ContributionReview;
 use App\Models\ContributionVersion;
@@ -47,6 +50,7 @@ use App\Models\TalentCandidateProjection;
 use App\Models\Task;
 use App\Models\TeamMembership;
 use App\Models\User;
+use App\Support\InstitutionalIdentifier;
 use App\Support\PhoneIdentity;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -189,19 +193,36 @@ class RoleUserSeeder extends Seeder
             ]
         );
 
-        AffiliationRequest::firstOrCreate(
+        $budiAffiliation = AffiliationRequest::firstOrCreate(
             [
                 'institution_id' => $institution->id,
                 'user_id' => $budi->id,
             ],
             [
+                'institution_membership_id' => $budiMembership->id,
                 'status' => AffiliationRequestStatus::Verified,
                 'match_result' => AffiliationMatchResult::Exact,
                 'roster_id' => $roster->id,
                 'roster_row_id' => $budiRosterRow->id,
+                'nim_hash' => InstitutionalIdentifier::hash('2024001001'),
+                'nim' => InstitutionalIdentifier::normalize('2024001001'),
                 'submitted_at' => now()->subDays(30),
                 'resolved_at' => now()->subDays(30),
-                'resolved_by_id' => $campusVerifier->id,
+            ]
+        );
+
+        AffiliationReview::firstOrCreate(
+            ['affiliation_request_id' => $budiAffiliation->id],
+            [
+                'institution_id' => $institution->id,
+                'reviewer_id' => $campusVerifier->id,
+                'decision' => AffiliationReviewDecision::Approve,
+                'reason_code' => AffiliationReviewReason::RecordsConfirmed,
+                'note' => 'Diverifikasi melalui kecocokan roster.',
+                'policy_version' => 'affiliation-review-v1',
+                'previous_status' => AffiliationRequestStatus::PendingReview,
+                'new_status' => AffiliationRequestStatus::Verified,
+                'request_version' => 1,
             ]
         );
 

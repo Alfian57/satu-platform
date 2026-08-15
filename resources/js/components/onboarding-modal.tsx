@@ -11,13 +11,10 @@ import {
     Globe,
     GraduationCap,
     Info,
-    Lock,
     Plus,
     Search,
-    Shield,
     Trash2,
     User,
-    Users,
 } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -194,12 +191,8 @@ export function OnboardingModal() {
         const query = searchQuery.trim();
 
         if (query.length === 0) {
-            setSearchResults([]);
-            setSearchLoading(false);
             return;
         }
-
-        setSearchLoading(true);
 
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -209,6 +202,8 @@ export function OnboardingModal() {
         abortControllerRef.current = controller;
 
         const timer = setTimeout(async () => {
+            setSearchLoading(true);
+
             try {
                 const response = await fetch(
                     `/api/skills/taxonomy?query=${encodeURIComponent(query)}`,
@@ -287,7 +282,10 @@ export function OnboardingModal() {
     // LinkedIn-style dynamic skill creation
     async function handleCreateNewSkill(name: string) {
         const trimmed = name.trim();
-        if (!trimmed || isCreatingSkill) return;
+
+        if (!trimmed || isCreatingSkill) {
+            return;
+        }
 
         setIsCreatingSkill(true);
         setErrorMessage(null);
@@ -313,6 +311,7 @@ export function OnboardingModal() {
 
             if (res.ok) {
                 const json = (await res.json()) as { data: Taxonomy };
+
                 if (json.data) {
                     addSkill(json.data);
                 }
@@ -385,26 +384,36 @@ export function OnboardingModal() {
         if (currentStep === 1) {
             if (!institutionId) {
                 setErrorMessage('Silakan pilih institusi/kampus.');
+
                 return;
             }
+
             if (!nim.trim()) {
                 setErrorMessage('Nomor Induk Mahasiswa (NIM) wajib diisi.');
+
                 return;
             }
+
             if (!studyProgram.trim()) {
                 setErrorMessage('Program studi wajib diisi.');
+
                 return;
             }
+
             if (!studyYear) {
                 setErrorMessage('Tahun studi / angkatan wajib dipilih.');
+
                 return;
             }
+
             setCurrentStep(2);
         } else if (currentStep === 2) {
             if (skills.length === 0) {
                 setErrorMessage('Tambahkan minimal 1 skill utama.');
+
                 return;
             }
+
             setCurrentStep(3);
         }
     }
@@ -420,6 +429,7 @@ export function OnboardingModal() {
         // Only allow form submit if on Step 3
         if (currentStep < 3) {
             handleNextStep();
+
             return;
         }
 
@@ -427,6 +437,7 @@ export function OnboardingModal() {
 
         if (availabilityDays.length === 0) {
             setErrorMessage('Pilih minimal 1 hari ketersediaan kolaborasi.');
+
             return;
         }
 
@@ -860,6 +871,7 @@ export function OnboardingModal() {
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault();
+
                                                         if (
                                                             searchResults.length >
                                                             0

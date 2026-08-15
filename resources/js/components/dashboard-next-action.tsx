@@ -10,7 +10,6 @@ import {
     Clock3,
     Compass,
     FileText,
-    PencilLine,
     Sparkles,
     UserRound,
 } from 'lucide-react';
