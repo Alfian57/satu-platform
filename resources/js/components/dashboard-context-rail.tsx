@@ -7,7 +7,6 @@ import {
     Clock3,
     Compass,
     EyeOff,
-    FileCheck2,
     Lightbulb,
     RefreshCw,
     SearchX,
