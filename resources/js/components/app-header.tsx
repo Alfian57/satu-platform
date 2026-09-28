@@ -16,10 +16,10 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     );
 
     return (
-        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-sidebar-border bg-background px-3 md:px-5 lg:px-6">
+        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-white/80 bg-background/85 px-3 backdrop-blur-xl md:px-5 lg:px-6">
             <div className="flex min-w-0 items-center gap-3">
                 <SidebarTrigger
-                    className="size-control-lg min-h-control-lg min-w-control-lg shrink-0 rounded-sm md:size-control-md md:min-h-control-md md:min-w-control-md"
+                    className="size-control-lg min-h-control-lg min-w-control-lg shrink-0 rounded-full bg-white/80 md:size-control-md md:min-h-control-md md:min-w-control-md"
                     data-test="sidebar-trigger"
                 />
 

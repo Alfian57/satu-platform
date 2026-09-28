@@ -89,26 +89,23 @@ function RegistrationOtpStep({
     registration: RegistrationState;
 }) {
     const [otp, setOtp] = useState('');
-    const [secondsLeft, setSecondsLeft] = useState(() =>
-        Math.max(
-            0,
-            (registration.resendAvailableAt ?? 0) -
-                Math.floor(Date.now() / 1000),
-        ),
+    const [now, setNow] = useState(() => Date.now());
+    const secondsLeft = Math.max(
+        0,
+        Math.ceil(((registration.resendAvailableAt ?? 0) * 1000 - now) / 1000),
     );
     const maskedPhone = registration.maskedPhone ?? 'nomor WhatsApp Anda';
 
     useEffect(() => {
-        if (secondsLeft <= 0) {
-            return;
-        }
+        const updateClock = () => setNow(Date.now());
+        const timer = window.setInterval(updateClock, 1000);
+        document.addEventListener('visibilitychange', updateClock);
 
-        const timer = window.setInterval(() => {
-            setSecondsLeft((current) => Math.max(0, current - 1));
-        }, 1000);
-
-        return () => window.clearInterval(timer);
-    }, [secondsLeft]);
+        return () => {
+            window.clearInterval(timer);
+            document.removeEventListener('visibilitychange', updateClock);
+        };
+    }, []);
 
     return (
         <div className="grid gap-6" data-test="register-otp-step">
@@ -146,7 +143,11 @@ function RegistrationOtpStep({
                                 name="otp"
                                 value={otp}
                                 onChange={setOtp}
-                                describedBy="registration-otp-help registration-otp-error"
+                                describedBy={
+                                    errors.otp
+                                        ? 'registration-otp-help registration-otp-error'
+                                        : 'registration-otp-help'
+                                }
                                 disabled={processing}
                                 autoFocus
                             />
@@ -275,8 +276,17 @@ export default function Register({ passwordRules, registration }: Props) {
                                         name="name"
                                         placeholder="Masukkan nama lengkap"
                                         className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        aria-invalid={Boolean(errors.name)}
+                                        aria-describedby={
+                                            errors.name
+                                                ? 'register-name-error'
+                                                : undefined
+                                        }
                                     />
-                                    <InputError message={errors.name} />
+                                    <InputError
+                                        id="register-name-error"
+                                        message={errors.name}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -293,8 +303,13 @@ export default function Register({ passwordRules, registration }: Props) {
                                         autoComplete="username"
                                         name="username"
                                         placeholder="Masukkan nama pengguna"
-                                        aria-describedby="register-username-help"
+                                        aria-describedby={
+                                            errors.username
+                                                ? 'register-username-help register-username-error'
+                                                : 'register-username-help'
+                                        }
                                         className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        aria-invalid={Boolean(errors.username)}
                                     />
                                     <p
                                         id="register-username-help"
@@ -303,7 +318,10 @@ export default function Register({ passwordRules, registration }: Props) {
                                         Nama pengguna hanya untuk masuk ke SATU,
                                         bukan untuk profil publik.
                                     </p>
-                                    <InputError message={errors.username} />
+                                    <InputError
+                                        id="register-username-error"
+                                        message={errors.username}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -321,8 +339,13 @@ export default function Register({ passwordRules, registration }: Props) {
                                         inputMode="numeric"
                                         name="phone"
                                         placeholder="08xxxxxxxxxx"
-                                        aria-describedby="register-phone-help"
+                                        aria-describedby={
+                                            errors.phone
+                                                ? 'register-phone-help register-phone-error'
+                                                : 'register-phone-help'
+                                        }
                                         className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        aria-invalid={Boolean(errors.phone)}
                                     />
                                     <p
                                         id="register-phone-help"
@@ -332,7 +355,10 @@ export default function Register({ passwordRules, registration }: Props) {
                                         dikirim, nomor akan ditampilkan secara
                                         tersamar.
                                     </p>
-                                    <InputError message={errors.phone} />
+                                    <InputError
+                                        id="register-phone-error"
+                                        message={errors.phone}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -350,8 +376,17 @@ export default function Register({ passwordRules, registration }: Props) {
                                         placeholder="Masukkan password"
                                         passwordrules={passwordRules}
                                         className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        aria-invalid={Boolean(errors.password)}
+                                        aria-describedby={
+                                            errors.password
+                                                ? 'register-password-error'
+                                                : undefined
+                                        }
                                     />
-                                    <InputError message={errors.password} />
+                                    <InputError
+                                        id="register-password-error"
+                                        message={errors.password}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -369,8 +404,17 @@ export default function Register({ passwordRules, registration }: Props) {
                                         placeholder="Ulangi password"
                                         passwordrules={passwordRules}
                                         className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        aria-invalid={Boolean(
+                                            errors.password_confirmation,
+                                        )}
+                                        aria-describedby={
+                                            errors.password_confirmation
+                                                ? 'register-password_confirmation-error'
+                                                : undefined
+                                        }
                                     />
                                     <InputError
+                                        id="register-password_confirmation-error"
                                         message={errors.password_confirmation}
                                     />
                                 </div>

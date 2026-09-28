@@ -10,6 +10,10 @@ Hindari pada student dan recruiter UI: `rentan`, `terisolasi`, `bermasalah`, dia
 
 Jangan gunakan Unicode em dash pada UI atau dokumentasi first-party.
 
+Jangan gunakan emoji pada UI, label, pesan status, atau dokumentasi produk.
+Gunakan icon dari library yang sudah dipasang, disertai teks bila icon menyatakan
+status atau aksi.
+
 ## Canonical Terminology
 
 | Konsep                 | Istilah UI                                                 |

@@ -20,17 +20,19 @@ const noticeStyles: Record<
 > = {
     error: {
         icon: ShieldAlert,
-        className: 'border-rose-200 bg-rose-50/70 text-rose-950',
-        iconClass: 'text-rose-600',
+        className:
+            'border-correction/30 bg-correction-subtle text-correction-subtle-foreground',
+        iconClass: 'text-correction',
     },
     pending: {
         icon: Clock3,
-        className: 'border-amber-200 bg-amber-50/70 text-amber-950',
-        iconClass: 'text-amber-600',
+        className:
+            'border-pending/30 bg-pending-subtle text-pending-subtle-foreground',
+        iconClass: 'text-pending',
     },
     stale: {
         icon: RefreshCw,
-        className: 'border-blue-200 bg-blue-50/70 text-blue-950',
+        className: 'border-primary/20 bg-accent text-accent-foreground',
         iconClass: 'text-primary',
     },
 };
@@ -49,7 +51,7 @@ export function DashboardStateNotice({
         <div
             aria-live={notice.tone === 'error' ? undefined : 'polite'}
             className={cn(
-                'flex flex-col gap-4 rounded-2xl border p-4.5 shadow-xs sm:flex-row sm:items-center sm:justify-between',
+                'flex flex-col gap-4 rounded-3xl border p-4.5 shadow-xs sm:flex-row sm:items-center sm:justify-between',
                 style.className,
             )}
             data-dashboard-notice={notice.tone}
@@ -80,9 +82,11 @@ export function DashboardStateNotice({
                     asChild
                     variant="outline"
                     size="sm"
-                    className="w-full shrink-0 rounded-xl border-current bg-white/70 font-semibold text-current shadow-2xs hover:bg-white sm:w-auto"
+                    className="min-h-11 w-full shrink-0 cursor-pointer rounded-full border-current bg-white/70 font-semibold text-current shadow-2xs hover:bg-white sm:w-auto"
                 >
-                    <Link href={actionHref}>{action.label}</Link>
+                    <Link href={actionHref} className="cursor-pointer">
+                        {action.label}
+                    </Link>
                 </Button>
             )}
             {action && actionHref === null && (
@@ -90,7 +94,7 @@ export function DashboardStateNotice({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="w-full shrink-0 rounded-xl border-current bg-white/70 font-semibold text-current shadow-2xs hover:bg-white sm:w-auto"
+                    className="min-h-11 w-full shrink-0 cursor-pointer rounded-full border-current bg-white/70 font-semibold text-current shadow-2xs hover:bg-white sm:w-auto"
                     onClick={() => onAction(action)}
                 >
                     {action.label}

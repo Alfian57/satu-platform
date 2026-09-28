@@ -26,14 +26,25 @@ export default function ConfirmPassword() {
                                 placeholder="Password"
                                 autoComplete="current-password"
                                 autoFocus
+                                required
+                                disabled={processing}
+                                aria-invalid={Boolean(errors.password)}
+                                aria-describedby={
+                                    errors.password
+                                        ? 'confirm-password-password-error'
+                                        : undefined
+                                }
                             />
 
-                            <InputError message={errors.password} />
+                            <InputError
+                                id="confirm-password-password-error"
+                                message={errors.password}
+                            />
                         </div>
 
                         <div className="flex items-center">
                             <Button
-                                className="w-full"
+                                className="w-full cursor-pointer disabled:cursor-not-allowed"
                                 disabled={processing}
                                 data-test="confirm-password-button"
                             >

@@ -20,7 +20,7 @@ export default function StudentLayout({
     return (
         <AppShell>
             <StudentSidebar />
-            <AppContent className="bg-linear-to-b from-blue-50 from-0% via-[#f5f8fe] via-35% to-slate-50 to-100%">
+            <AppContent className="bg-background">
                 <StudentHeader breadcrumbs={breadcrumbs} />
                 {children}
             </AppContent>

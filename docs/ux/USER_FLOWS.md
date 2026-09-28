@@ -8,7 +8,10 @@ Recovery:
 
 - OTP terlambat atau expired: resend dengan cooldown dan attempt feedback.
 - Phone sudah dipakai: tampilkan account recovery tanpa mengungkap detail account.
-- NIM atau phone mismatch: buat manual review dan jelaskan kemampuan yang masih tersedia.
+- NIM atau nomor WhatsApp tidak cocok dengan roster: kirim afiliasi untuk
+  manual review dan simpan draft onboarding. Tampilkan status menunggu review,
+  jangan mengirim profile sebelum membership berstatus verified, dan sediakan
+  tindakan untuk memeriksa status lagi.
 - Roster belum tersedia: simpan request tanpa menyatakan student tidak sah.
 
 ## 2. Recommendation sampai Active Team

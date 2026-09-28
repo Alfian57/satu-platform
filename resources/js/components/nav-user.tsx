@@ -27,7 +27,7 @@ export function NavUser() {
             <DropdownMenuTrigger asChild>
                 <Button
                     aria-label={`Buka menu ${workspace.accountLabel} ${auth.user.name}`}
-                    className="h-control-lg min-h-control-lg max-w-56 min-w-control-lg gap-2 rounded-sm px-2 md:h-control-md md:min-h-control-md"
+                    className="h-control-lg min-h-control-lg max-w-56 min-w-control-lg gap-2 rounded-full bg-white/70 px-2 md:h-control-md md:min-h-control-md"
                     data-test="user-menu-button"
                     variant="ghost"
                 >

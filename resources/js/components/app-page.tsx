@@ -35,7 +35,7 @@ export function AppPage({
             {contextRail && (
                 <aside
                     aria-label={contextRailLabel}
-                    className="min-w-0 border-t border-border px-4 py-6 md:px-6 lg:py-8 xl:border-t-0 xl:border-l xl:px-6"
+                    className="min-w-0 px-4 pt-0 pb-6 md:px-6 lg:pb-8 xl:py-6 xl:pr-6 xl:pl-0"
                 >
                     {contextRail}
                 </aside>

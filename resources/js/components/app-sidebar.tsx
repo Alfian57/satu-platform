@@ -160,16 +160,16 @@ function CampusWorkspaceContext({
     return (
         <div
             aria-label="Konteks operasi kampus"
-            className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3"
+            className="flex items-start gap-3 rounded-2xl border border-white bg-white/80 px-3 py-3"
         >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
                 <Building2 aria-hidden="true" className="size-4" />
             </span>
             <span className="min-w-0">
-                <span className="block text-xs font-medium text-slate-500">
+                <span className="block text-xs font-medium text-muted-foreground">
                     Operasi kampus
                 </span>
-                <span className="mt-0.5 block truncate text-sm font-semibold text-slate-950">
+                <span className="mt-0.5 block truncate text-sm font-semibold text-foreground">
                     {institutionName}
                 </span>
             </span>
@@ -181,16 +181,16 @@ function PlatformWorkspaceContext() {
     return (
         <div
             aria-label="Konteks operasi platform"
-            className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3"
+            className="flex items-start gap-3 rounded-2xl border border-white bg-white/80 px-3 py-3"
         >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
                 <ShieldCheck aria-hidden="true" className="size-4" />
             </span>
             <span className="min-w-0">
-                <span className="block text-xs font-medium text-slate-500">
+                <span className="block text-xs font-medium text-muted-foreground">
                     Operasi platform
                 </span>
-                <span className="mt-0.5 block truncate text-sm font-semibold text-slate-950">
+                <span className="mt-0.5 block truncate text-sm font-semibold text-foreground">
                     Lintas institusi SATU
                 </span>
             </span>
@@ -206,16 +206,16 @@ function RecruiterWorkspaceContext({
     return (
         <div
             aria-label="Konteks ruang perekrut"
-            className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3"
+            className="flex items-start gap-3 rounded-2xl border border-white bg-white/80 px-3 py-3"
         >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
                 <BriefcaseBusiness aria-hidden="true" className="size-4" />
             </span>
             <span className="min-w-0">
-                <span className="block text-xs font-medium text-slate-500">
+                <span className="block text-xs font-medium text-muted-foreground">
                     Ruang perekrut
                 </span>
-                <span className="mt-0.5 block truncate text-sm font-semibold text-slate-950">
+                <span className="mt-0.5 block truncate text-sm font-semibold text-foreground">
                     {organizationName}
                 </span>
             </span>
@@ -323,9 +323,9 @@ export function AppSidebar() {
         <Sidebar
             collapsible="offcanvas"
             variant="sidebar"
-            className="border-r border-slate-200 bg-white text-slate-950"
+            className="border-r border-sidebar-border/70 bg-sidebar text-sidebar-foreground"
         >
-            <SidebarHeader className="h-16 shrink-0 flex-row items-center border-b border-slate-200 p-0 px-4">
+            <SidebarHeader className="h-20 shrink-0 flex-row items-center p-0 px-5">
                 <Link
                     aria-label={
                         isPlatformAdmin
@@ -348,17 +348,17 @@ export function AppSidebar() {
                                 : dashboard()
                     }
                     prefetch
-                    className="flex items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+                    className="flex cursor-pointer items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                 >
                     <AppLogo
                         className="text-slate-950"
-                        logoClassName="size-9 rounded-lg"
+                        logoClassName="size-10 rounded-2xl"
                         ruleClassName="bg-blue-600"
                     />
                 </Link>
             </SidebarHeader>
 
-            <SidebarContent className="py-5">
+            <SidebarContent className="gap-8 py-4">
                 <NavMain
                     items={visibleMainNavItems}
                     ariaLabel={
@@ -382,7 +382,7 @@ export function AppSidebar() {
                 />
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-slate-200 p-4">
+            <SidebarFooter className="p-4">
                 {isPlatformAdmin ? (
                     <PlatformWorkspaceContext />
                 ) : isCampusWorkspace ? (

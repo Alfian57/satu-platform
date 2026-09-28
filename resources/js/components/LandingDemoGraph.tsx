@@ -82,12 +82,12 @@ const TYPE_COLORS: Record<SyntheticNodeType, string> = {
 };
 
 const TYPE_BADGE_CLASSES: Record<SyntheticNodeType, string> = {
-    opportunity: 'bg-[var(--landing-blue-soft)] text-[var(--landing-blue)]',
-    student: 'bg-[var(--landing-lilac-soft)] text-[#1D5FAE]',
-    team: 'bg-[var(--landing-mint-soft)] text-[#18559C]',
-    work: 'bg-[var(--landing-coral-soft)] text-[#1E69BF]',
-    validation: 'bg-[var(--landing-yellow-soft)] text-[#276DAF]',
-    portfolio: 'bg-[var(--landing-blue-soft)] text-[var(--landing-blue)]',
+    opportunity: 'bg-[var(--landing-blue-soft)] text-[#1454C4]',
+    student: 'bg-[var(--landing-lilac-soft)] text-[#4C4BB3]',
+    team: 'bg-[var(--landing-mint-soft)] text-[#176B4C]',
+    work: 'bg-[var(--landing-coral-soft)] text-[#9E4934]',
+    validation: 'bg-[var(--landing-yellow-soft)] text-[#805000]',
+    portfolio: 'bg-[var(--landing-blue-soft)] text-[#1454C4]',
 };
 
 function getComputedToken(name: string, scope?: Element | null): string {
@@ -346,7 +346,7 @@ export default function LandingDemoGraph() {
     if (hasError) {
         return (
             <div
-                className="flex min-h-[320px] flex-col items-center justify-center gap-4 rounded-2xl border border-[#C9E2FC] bg-[var(--landing-coral-soft)] p-8 text-center sm:p-12"
+                className="flex min-h-[320px] flex-col items-center justify-center gap-4 rounded-2xl border border-[var(--landing-border)] bg-[var(--landing-coral-soft)] p-8 text-center sm:p-12"
                 data-testid="landing-demo-error"
                 role="alert"
             >
@@ -360,7 +360,7 @@ export default function LandingDemoGraph() {
                 <button
                     type="button"
                     onClick={handleRetry}
-                    className="inline-flex h-control-md items-center gap-2 rounded-xl bg-[var(--landing-blue)] px-4 text-sm font-semibold text-white transition-[background-color,transform] duration-fast hover:-translate-y-0.5 hover:bg-[var(--landing-blue-strong)] motion-reduce:transition-none"
+                    className="inline-flex h-control-md cursor-pointer items-center gap-2 rounded-xl bg-[var(--landing-blue)] px-4 text-sm font-semibold text-white transition-[background-color,transform] duration-fast hover:-translate-y-0.5 hover:bg-[var(--landing-blue-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0] motion-reduce:transition-none"
                 >
                     <RotateCcw aria-hidden="true" className="size-4" />
                     Coba lagi
@@ -415,7 +415,7 @@ export default function LandingDemoGraph() {
                                     event.target.value as FilterType,
                                 )
                             }
-                            className="h-control-sm rounded-xl border border-[var(--landing-border)] bg-[var(--landing-canvas)] px-3 text-xs text-[var(--landing-ink)] focus-visible:border-[var(--landing-blue)]"
+                            className="h-control-sm rounded-xl border border-[#7892AE] bg-[var(--landing-canvas)] px-3 text-xs text-[var(--landing-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0]"
                         >
                             {Object.entries(TYPE_LABELS).map(
                                 ([value, label]) => (
@@ -431,7 +431,7 @@ export default function LandingDemoGraph() {
                                 setSelectedType('all');
                                 clearFocus();
                             }}
-                            className="inline-flex h-control-sm items-center gap-2 rounded-xl border border-[var(--landing-border)] bg-[var(--landing-blue-soft)] px-3 text-xs font-semibold text-[var(--landing-blue)] transition-[background-color,transform] duration-fast hover:-translate-y-0.5 hover:bg-[#E1E6FF] motion-reduce:transition-none"
+                            className="inline-flex h-control-sm cursor-pointer items-center gap-2 rounded-xl border border-[var(--landing-border)] bg-[var(--landing-blue-soft)] px-3 text-xs font-semibold text-[#1454C4] transition-[background-color,transform] duration-fast hover:-translate-y-0.5 hover:bg-[#D9EBFF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0] motion-reduce:transition-none"
                         >
                             <RotateCcw
                                 aria-hidden="true"
@@ -523,7 +523,7 @@ export default function LandingDemoGraph() {
                                                 onClick={() =>
                                                     focusNode(node.data.id)
                                                 }
-                                                className="flex min-h-12 w-full items-center gap-2 px-4 py-3 text-left font-semibold text-[var(--landing-ink)]"
+                                                className="flex min-h-12 w-full cursor-pointer items-center gap-2 px-4 py-3 text-left font-semibold text-[var(--landing-ink)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#1746B0]"
                                             >
                                                 {isActive ? (
                                                     <Check

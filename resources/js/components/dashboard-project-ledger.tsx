@@ -25,90 +25,48 @@ type Props = {
     onAction: (action: DashboardAction) => void;
 };
 
-function MobileProjectFacts({ project }: { project: DashboardActiveProject }) {
-    return (
-        <span
-            className="grid min-w-0 gap-2 border-l border-slate-200/80 bg-slate-50/60 px-4 py-3 md:hidden"
-            data-test="dashboard-project-mobile-facts"
-        >
-            <span className="grid min-w-0 gap-1 sm:grid-cols-[4.75rem_minmax(0,1fr)] sm:gap-3">
-                <span className="font-label text-xs font-bold text-slate-400 uppercase">
-                    Proyek
-                </span>
-                <span className="min-w-0 font-semibold wrap-anywhere text-slate-800">
-                    {project.name}
-                </span>
-            </span>
-            <span className="grid min-w-0 gap-1 sm:grid-cols-[4.75rem_minmax(0,1fr)] sm:gap-3">
-                <span className="font-label text-xs font-bold text-slate-400 uppercase">
-                    Berikutnya
-                </span>
-                <span className="min-w-0 text-sm wrap-anywhere text-slate-600">
-                    {project.nextTask}
-                </span>
-            </span>
-            <span className="grid min-w-0 gap-1 sm:grid-cols-[4.75rem_minmax(0,1fr)] sm:items-center sm:gap-3">
-                <span className="font-label text-xs font-bold text-slate-400 uppercase">
-                    Batas
-                </span>
-                <span
-                    className={cn(
-                        'inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold',
-                        project.deadlineTone === 'correction'
-                            ? 'text-rose-700'
-                            : 'text-slate-700',
-                    )}
-                >
-                    <CalendarDays aria-hidden="true" className="size-3.5" />
-                    <time dateTime={project.deadlineIso}>
-                        {project.deadline}
-                    </time>
-                </span>
-            </span>
-        </span>
-    );
-}
-
 function ProjectRow({ project }: { project: DashboardActiveProject }) {
     return (
         <li data-test="dashboard-project-row">
             <Link
                 href={projectShow(project.id)}
-                className="group grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)] items-stretch px-3 py-0 transition-colors hover:bg-blue-50/50 motion-reduce:transition-none md:grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_7.5rem_2.5rem] md:items-center md:py-3.5"
-                aria-label={`Buka project ${project.name}`}
+                className="group flex min-w-0 cursor-pointer items-start gap-3 rounded-2xl border border-white bg-card p-4 shadow-xs transition-[transform,border-color,box-shadow] hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transform-none motion-reduce:transition-none sm:items-center sm:gap-4 sm:p-5"
+                aria-label={`Buka proyek ${project.name}`}
             >
-                <span className="my-3 flex size-7 items-center justify-center self-start rounded-lg border border-primary/20 bg-blue-50 font-label text-xs font-bold text-primary md:my-0 md:size-8 md:self-auto">
-                    {project.index}
-                </span>
-                <span className="hidden min-w-0 border-l border-slate-200/80 px-4 py-1 font-bold wrap-anywhere text-slate-900 md:block">
-                    {project.name}
-                </span>
-                <span className="hidden min-w-0 border-l border-slate-200/80 px-4 py-1 text-sm wrap-anywhere text-slate-600 md:block">
-                    {project.nextTask}
-                </span>
                 <span
-                    className={cn(
-                        'hidden items-center gap-1.5 border-l border-slate-200/80 px-4 py-1 text-xs font-semibold md:flex',
-                        project.deadlineTone === 'correction'
-                            ? 'text-rose-700'
-                            : 'text-slate-700',
-                    )}
+                    aria-hidden="true"
+                    className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-linear-to-br from-sky-100 to-blue-200 text-primary sm:size-16"
                 >
-                    <CalendarDays
-                        aria-hidden="true"
-                        className="size-3.5 text-slate-400"
-                    />
-                    <time dateTime={project.deadlineIso}>
-                        {project.deadline}
-                    </time>
+                    <FolderOpen className="size-6 -rotate-6 transition-transform group-hover:rotate-0 motion-reduce:transform-none sm:size-8" />
                 </span>
-                <span className="hidden items-center justify-center md:flex">
-                    <ChevronRight
-                        aria-hidden="true"
-                        className="size-4 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-primary"
-                    />
+                <span className="grid min-w-0 flex-1 gap-1.5">
+                    <span className="text-sm font-bold wrap-anywhere text-foreground sm:text-base">
+                        {project.name}
+                    </span>
+                    <span className="text-xs leading-5 wrap-anywhere text-muted-foreground">
+                        {project.nextTask}
+                    </span>
+                    <span
+                        className={cn(
+                            'inline-flex items-center gap-1.5 text-xs font-medium',
+                            project.deadlineTone === 'correction'
+                                ? 'text-correction'
+                                : 'text-muted-foreground',
+                        )}
+                    >
+                        <CalendarDays
+                            aria-hidden="true"
+                            className="size-3.5 shrink-0"
+                        />
+                        Batas{' '}
+                        <time dateTime={project.deadlineIso}>
+                            {project.deadline}
+                        </time>
+                    </span>
                 </span>
-                <MobileProjectFacts project={project} />
+                <span className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground sm:mt-0 sm:size-10">
+                    <ChevronRight aria-hidden="true" className="size-4" />
+                </span>
             </Link>
         </li>
     );
@@ -131,7 +89,7 @@ function RegionAction({
                 asChild
                 variant="outline"
                 size="lg"
-                className="w-full shrink-0 rounded-xl border-slate-300 font-bold text-primary hover:border-primary hover:bg-blue-50 hover:text-primary sm:w-auto"
+                className="min-h-11 w-full shrink-0 rounded-full border-border bg-white font-semibold text-primary hover:border-primary hover:bg-accent hover:text-primary sm:w-auto"
             >
                 <Link href={href}>
                     {action.label}
@@ -146,7 +104,7 @@ function RegionAction({
             type="button"
             variant="outline"
             size="lg"
-            className="w-full shrink-0 rounded-xl border-slate-300 font-bold text-primary hover:border-primary hover:bg-blue-50 hover:text-primary sm:w-auto"
+            className="min-h-11 w-full shrink-0 rounded-full border-border bg-white font-semibold text-primary hover:border-primary hover:bg-accent hover:text-primary sm:w-auto"
             onClick={() => onAction(action)}
         >
             {action.label}
@@ -171,27 +129,27 @@ function ProjectRegionState({
 
     return (
         <div
-            className="flex flex-col gap-4 rounded-2xl border border-slate-300/80 bg-white p-5 shadow-xs sm:flex-row sm:items-center sm:justify-between sm:p-6"
+            className="flex flex-col gap-4 rounded-3xl border border-white bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6"
             data-test={`dashboard-projects-${region.state}`}
             role={region.state === 'error' ? 'alert' : undefined}
         >
             <div className="flex min-w-0 items-start gap-4">
-                <span className="shrink-0 rounded-xl border border-primary/20 bg-blue-50 p-3 text-primary">
+                <span className="shrink-0 rounded-2xl bg-accent p-3 text-primary">
                     <Icon
                         aria-hidden="true"
                         className={cn(
                             'size-6',
                             region.state === 'error'
-                                ? 'text-rose-600'
+                                ? 'text-correction'
                                 : 'text-primary',
                         )}
                     />
                 </span>
                 <div className="min-w-0">
-                    <p className="text-base font-bold text-slate-900">
+                    <p className="text-base font-bold text-foreground">
                         {region.title}
                     </p>
-                    <p className="mt-1 max-w-[65ch] text-xs leading-5 text-slate-500">
+                    <p className="mt-1 max-w-[65ch] text-xs leading-5 text-muted-foreground">
                         {region.description}
                     </p>
                 </div>
@@ -212,7 +170,7 @@ function ProjectLoading({ announcement }: { announcement: string }) {
         <div
             aria-busy="true"
             aria-live="polite"
-            className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white"
+            className="overflow-hidden rounded-3xl border border-white bg-card shadow-sm"
             data-test="dashboard-projects-loading"
             role="status"
         >
@@ -221,7 +179,7 @@ function ProjectLoading({ announcement }: { announcement: string }) {
                 {[0, 1].map((index) => (
                     <div
                         key={index}
-                        className="grid grid-cols-[2.75rem_minmax(0,1fr)] border-b border-slate-100 px-3 py-4 last:border-b-0 md:grid-cols-[3.25rem_minmax(0,1fr)_minmax(0,1fr)_6.5rem]"
+                        className="grid grid-cols-[2.75rem_minmax(0,1fr)] border-b border-border/50 px-3 py-4 last:border-b-0 md:grid-cols-[3.25rem_minmax(0,1fr)_minmax(0,1fr)_6.5rem]"
                     >
                         <Skeleton className="h-4 w-5" />
                         <Skeleton className="h-4 w-3/4" />
@@ -254,7 +212,7 @@ export function DashboardProjectLedger({
             <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
                 <h2
                     id="active-projects-heading"
-                    className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl"
+                    className="text-lg font-bold tracking-tight text-foreground sm:text-xl"
                 >
                     Proyek aktif
                 </h2>
@@ -262,7 +220,7 @@ export function DashboardProjectLedger({
                 {totalCount !== undefined && (
                     <span
                         aria-label={`${totalCount} proyek`}
-                        className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-label text-xs font-bold text-slate-700"
+                        className="inline-flex items-center rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground"
                         data-test="dashboard-project-count"
                     >
                         {totalCount} proyek
@@ -285,32 +243,15 @@ export function DashboardProjectLedger({
             )}
 
             {region.state === 'ready' && (
-                <div className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-xs">
-                    <div
-                        aria-hidden="true"
-                        className="hidden grid-cols-[3.25rem_minmax(8rem,0.85fr)_minmax(10rem,1.15fr)_7.5rem_2.5rem] border-b border-slate-200/80 bg-slate-50/80 font-label text-[11px] font-bold tracking-wider text-slate-500 uppercase md:grid"
-                    >
-                        <span />
-                        <span className="border-l border-slate-200/80 px-4 py-2.5">
-                            Proyek
-                        </span>
-                        <span className="border-l border-slate-200/80 px-4 py-2.5">
-                            Berikutnya
-                        </span>
-                        <span className="border-l border-slate-200/80 px-4 py-2.5">
-                            Batas waktu
-                        </span>
-                        <span />
-                    </div>
-
-                    <ol className="divide-y divide-slate-100">
+                <div className="grid gap-3">
+                    <ol className="grid gap-3">
                         {region.projects.map((project) => (
                             <ProjectRow key={project.id} project={project} />
                         ))}
                     </ol>
 
                     {region.remainingActionLabel && (
-                        <div className="border-t border-slate-200/80 bg-slate-50/80 px-4 py-3">
+                        <div className="pt-1">
                             <RegionAction
                                 action={{
                                     key: 'projects',

@@ -11,6 +11,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 
 export type LandingStageKey =
@@ -97,44 +98,44 @@ const stageThemes: Record<
     }
 > = {
     opportunity: {
-        themeColor: 'text-blue-600',
-        accentBg: 'bg-blue-600',
-        badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
-        cardBg: 'from-blue-50/80 via-white to-slate-50/40',
-        borderLight: 'border-blue-200/90',
-        glowColor: 'rgba(37,99,235,0.12)',
+        themeColor: 'text-[#1764E8]',
+        accentBg: 'bg-[#1764E8]',
+        badgeColor: 'border-[#BFD7EC] bg-[#E7F2FF] text-[#1454C4]',
+        cardBg: 'from-[#EAF5FF] via-white to-[#F7FBFF]',
+        borderLight: 'border-[#C9DFF2]',
+        glowColor: 'rgba(23,100,232,0.08)',
     },
     team: {
-        themeColor: 'text-indigo-600',
-        accentBg: 'bg-indigo-600',
-        badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-        cardBg: 'from-indigo-50/80 via-white to-slate-50/40',
-        borderLight: 'border-indigo-200/90',
-        glowColor: 'rgba(79,70,229,0.12)',
+        themeColor: 'text-[#1764B3]',
+        accentBg: 'bg-[#1764B3]',
+        badgeColor: 'border-[#C9DFF2] bg-[#EFF7FF] text-[#345574]',
+        cardBg: 'from-[#EFF7FF] via-white to-[#F7FBFF]',
+        borderLight: 'border-[#D1E3F1]',
+        glowColor: 'rgba(23,100,179,0.08)',
     },
     work: {
-        themeColor: 'text-sky-600',
-        accentBg: 'bg-sky-600',
-        badgeColor: 'bg-sky-50 text-sky-700 border-sky-200',
-        cardBg: 'from-sky-50/80 via-white to-slate-50/40',
-        borderLight: 'border-sky-200/90',
-        glowColor: 'rgba(2,132,199,0.12)',
+        themeColor: 'text-[#1764E8]',
+        accentBg: 'bg-[#1764E8]',
+        badgeColor: 'border-[#C9DFF2] bg-[#EFF7FF] text-[#345574]',
+        cardBg: 'from-[#EFF7FF] via-white to-[#F7FBFF]',
+        borderLight: 'border-[#D1E3F1]',
+        glowColor: 'rgba(23,100,232,0.08)',
     },
     validation: {
-        themeColor: 'text-emerald-600',
-        accentBg: 'bg-emerald-600',
-        badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-        cardBg: 'from-emerald-50/80 via-white to-slate-50/40',
-        borderLight: 'border-emerald-200/90',
-        glowColor: 'rgba(5,150,105,0.12)',
+        themeColor: 'text-[#1764B3]',
+        accentBg: 'bg-[#1764B3]',
+        badgeColor: 'border-[#C9DFF2] bg-[#EFF7FF] text-[#345574]',
+        cardBg: 'from-[#F0F8FF] via-white to-[#F7FBFF]',
+        borderLight: 'border-[#D1E3F1]',
+        glowColor: 'rgba(23,100,179,0.08)',
     },
     portfolio: {
-        themeColor: 'text-amber-600',
-        accentBg: 'bg-amber-600',
-        badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
-        cardBg: 'from-amber-50/80 via-white to-slate-50/40',
-        borderLight: 'border-amber-200/90',
-        glowColor: 'rgba(217,119,6,0.12)',
+        themeColor: 'text-[#1764B3]',
+        accentBg: 'bg-[#1764B3]',
+        badgeColor: 'border-[#C9DFF2] bg-[#EFF7FF] text-[#345574]',
+        cardBg: 'from-[#EFF7FF] via-white to-[#F7FBFF]',
+        borderLight: 'border-[#D1E3F1]',
+        glowColor: 'rgba(23,100,179,0.08)',
     },
 };
 
@@ -217,6 +218,35 @@ export default function LandingFlowLedger({
     const activeStage = LANDING_STAGES[activeIndex];
     const theme = stageThemes[activeStage.key];
 
+    const handleStageKeyDown = (
+        event: KeyboardEvent<HTMLButtonElement>,
+        currentIndex: number,
+    ) => {
+        let nextIndex = currentIndex;
+
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+            nextIndex = (currentIndex + 1) % LANDING_STAGES.length;
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+            nextIndex =
+                (currentIndex - 1 + LANDING_STAGES.length) %
+                LANDING_STAGES.length;
+        } else if (event.key === 'Home') {
+            nextIndex = 0;
+        } else if (event.key === 'End') {
+            nextIndex = LANDING_STAGES.length - 1;
+        } else {
+            return;
+        }
+
+        event.preventDefault();
+        setActiveStageKey(LANDING_STAGES[nextIndex].key);
+        event.currentTarget
+            .closest('[role="tablist"]')
+            ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+            .item(nextIndex)
+            ?.focus();
+    };
+
     const goToPrev = () => {
         const prevIndex =
             (activeIndex - 1 + LANDING_STAGES.length) % LANDING_STAGES.length;
@@ -231,7 +261,7 @@ export default function LandingFlowLedger({
     return (
         <div
             className={cn(
-                'group relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white/90 p-3.5 shadow-[0_24px_80px_-20px_rgba(37,99,235,0.18)] ring-1 ring-white/80 sm:p-5',
+                'group relative overflow-hidden rounded-[1.5rem] border border-[#D9E8F5] bg-white p-3.5 shadow-[0_8px_28px_rgba(23,52,90,0.06)] sm:p-5',
                 className,
             )}
             data-testid="landing-flow-ledger"
@@ -239,36 +269,33 @@ export default function LandingFlowLedger({
             {/* Decorative gradient behind card */}
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -top-20 -right-20 size-60 rounded-full bg-blue-400/5 blur-3xl"
+                className="pointer-events-none absolute -top-20 -right-20 size-60 rounded-full bg-[#B7DFFF]/25 blur-3xl"
             />
 
             {/* Top Toolbar */}
-            <div className="flex items-center justify-between border-b border-slate-100/80 pb-3 sm:pb-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5EEF6] pb-3 sm:pb-3.5">
                 <div className="flex items-center gap-2.5">
                     <div className="flex items-center gap-1.5 pl-1">
-                        <span className="size-2.5 rounded-full bg-rose-400/70" />
-                        <span className="size-2.5 rounded-full bg-amber-400/70" />
-                        <span className="size-2.5 rounded-full bg-emerald-400/70" />
+                        <span className="size-2 rounded-full bg-[#A6C5E2]" />
+                        <span className="size-2 rounded-full bg-[#A6C5E2]" />
+                        <span className="size-2 rounded-full bg-[#A6C5E2]" />
                     </div>
-                    <span className="h-4 w-px bg-slate-200/60" />
-                    <div className="flex items-center gap-1.5 text-xs font-bold tracking-tight text-slate-700">
+                    <span className="h-4 w-px bg-[#D9E8F5]" />
+                    <div className="flex items-center gap-1.5 text-xs font-bold tracking-tight text-[#345574]">
                         <Sparkles
                             aria-hidden="true"
-                            className="size-3.5 text-blue-500"
+                            className="size-3.5 text-[#1764E8]"
                         />
                         <span>Flow ledger / SATU</span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100/80 bg-blue-50/60 px-2.5 py-0.5 font-label text-[0.62rem] font-semibold tracking-wider text-blue-600 backdrop-blur-sm">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C9DFF2] bg-[#EFF7FF] px-2.5 py-1 font-label text-[0.62rem] font-semibold tracking-wider text-[#345574]">
                         <span
                             aria-hidden="true"
-                            className="relative flex size-1.5"
-                        >
-                            <span className="absolute inline-flex size-full animate-ping rounded-full bg-blue-400 opacity-60" />
-                            <span className="relative inline-flex size-1.5 rounded-full bg-blue-500" />
-                        </span>
+                            className="size-1.5 rounded-full bg-[#1764E8]"
+                        />
                         Data synthetic
                     </span>
                 </div>
@@ -276,9 +303,11 @@ export default function LandingFlowLedger({
 
             {/* Stepper Tabs Nav */}
             <div className="mt-3.5">
-                <nav
-                    className="grid grid-cols-5 gap-1 rounded-2xl bg-slate-50/80 p-1.5 ring-1 ring-slate-100/80"
-                    aria-label="Tahap lifecycle SATU"
+                <div
+                    role="tablist"
+                    aria-label="Tahap perjalanan kontribusi"
+                    aria-orientation="horizontal"
+                    className="grid grid-cols-5 gap-1 rounded-xl bg-[#F3F8FD] p-1 ring-1 ring-[#E5EEF6]"
                 >
                     {LANDING_STAGES.map((stage, i) => {
                         const isActive = stage.key === activeStageKey;
@@ -288,54 +317,65 @@ export default function LandingFlowLedger({
                             <button
                                 key={stage.key}
                                 type="button"
-                                aria-pressed={isActive}
+                                id={`landing-stage-tab-${stage.key}`}
+                                role="tab"
+                                aria-label={stage.label}
+                                aria-selected={isActive}
+                                aria-controls="landing-stage-panel"
+                                tabIndex={isActive ? 0 : -1}
                                 className={cn(
-                                    'landing-stage-row relative flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-center transition-all duration-300 motion-reduce:transition-none sm:py-2.5',
+                                    'relative flex min-h-[4.25rem] min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg px-0.5 py-1.5 text-center transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#1746B0] motion-reduce:transition-none sm:gap-1.5 sm:py-2',
                                     isActive
-                                        ? 'bg-white text-slate-900 shadow-md ring-1 ring-slate-200/80'
-                                        : 'text-slate-400 hover:bg-white/60 hover:text-slate-700',
+                                        ? 'bg-white text-[#17345A] shadow-[0_2px_8px_rgba(23,52,90,0.08)] ring-1 ring-[#D9E8F5]'
+                                        : 'text-[#66809A] hover:bg-white/80 hover:text-[#345574]',
                                 )}
                                 data-testid={`landing-stage-${stage.key}`}
+                                onKeyDown={(event) =>
+                                    handleStageKeyDown(event, i)
+                                }
                                 onClick={() => setActiveStageKey(stage.key)}
                             >
                                 <span
                                     className={cn(
-                                        'flex size-8 items-center justify-center rounded-xl transition-all duration-300 sm:size-9',
+                                        'flex size-7 items-center justify-center rounded-lg transition-colors duration-150 sm:size-8',
                                         isActive
                                             ? cn(
                                                   itemTheme.accentBg,
                                                   'text-white shadow-sm',
                                               )
-                                            : 'bg-white text-slate-400 ring-1 ring-slate-200/60',
+                                            : 'bg-white text-[#7892AE] ring-1 ring-[#D9E8F5]',
                                     )}
                                 >
                                     <StageGlyph
                                         stage={stage.key}
-                                        className="size-4 sm:size-4.5"
+                                        className="size-4"
                                     />
                                 </span>
 
-                                <span className="max-w-full truncate text-[0.68rem] font-bold sm:text-xs">
+                                <span className="max-w-full truncate text-[0.6rem] font-bold sm:text-xs">
                                     {stage.label}
                                 </span>
 
-                                <span className="font-label text-[0.55rem] font-semibold tracking-wider text-slate-500">
+                                <span className="sr-only sm:not-sr-only sm:font-label sm:text-[0.55rem] sm:font-semibold sm:tracking-wider sm:text-[#66809A]">
                                     0{i + 1}
                                 </span>
                             </button>
                         );
                     })}
-                </nav>
+                </div>
             </div>
 
             {/* Live Interactive Stage Visual Frame */}
             <div className="mt-3.5">
                 <div
                     key={activeStage.key}
+                    id="landing-stage-panel"
+                    role="tabpanel"
+                    aria-labelledby={`landing-stage-tab-${activeStage.key}`}
+                    tabIndex={0}
                     className={cn(
-                        'landing-stage-detail-enter relative overflow-hidden rounded-2xl border p-4.5 transition-all duration-300 sm:p-5',
+                        'relative overflow-hidden rounded-xl border bg-linear-to-b p-4 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0] motion-reduce:transition-none sm:p-5',
                         theme.borderLight,
-                        'bg-linear-to-b',
                         theme.cardBg,
                     )}
                     data-testid="landing-stage-detail"
@@ -345,7 +385,7 @@ export default function LandingFlowLedger({
                         <div className="flex items-start gap-3">
                             <span
                                 className={cn(
-                                    'flex size-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-xs ring-1 ring-slate-200/80 sm:size-12',
+                                    'flex size-11 shrink-0 items-center justify-center rounded-xl bg-white ring-1 ring-[#D9E8F5] sm:size-12',
                                     theme.themeColor,
                                 )}
                             >
@@ -364,7 +404,7 @@ export default function LandingFlowLedger({
                                     >
                                         TAHAP {activeStage.index}
                                     </span>
-                                    <span className="flex items-center gap-1 font-label text-[0.62rem] font-semibold text-slate-500">
+                                    <span className="flex items-center gap-1 font-label text-[0.62rem] font-semibold text-[#526B85]">
                                         <span
                                             aria-hidden="true"
                                             className={cn(
@@ -375,59 +415,57 @@ export default function LandingFlowLedger({
                                         tercatat
                                     </span>
                                 </div>
-                                <h3 className="mt-1 text-base font-bold tracking-tight text-slate-900 sm:text-lg">
+                                <h3 className="mt-1 text-base font-bold tracking-tight text-[#17345A] sm:text-lg">
                                     {activeStage.title}
                                 </h3>
                             </div>
                         </div>
 
-                        <span className="hidden rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-2xs ring-1 ring-slate-200/60 sm:inline-block">
+                        <span className="hidden rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#526B85] ring-1 ring-[#D9E8F5] sm:inline-block">
                             {activeStage.shortDescription}
                         </span>
                     </div>
 
-                    <p className="mt-2.5 text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">
+                    <p className="mt-2.5 text-xs leading-5 text-[#526B85] sm:text-sm sm:leading-6">
                         {activeStage.description}
                     </p>
 
                     {/* Rich Mock Visual Ledger Entry per Stage */}
-                    <div className="mt-3.5 rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs">
+                    <div className="mt-3.5 rounded-xl border border-[#D9E8F5] bg-white p-3.5">
                         {activeStage.key === 'opportunity' && (
                             <div className="space-y-2.5">
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
                                         <FolderGit2
                                             aria-hidden="true"
-                                            className="size-4 text-blue-600"
+                                            className="size-4 text-[#1764E8]"
                                         />
-                                        <span className="text-xs font-bold text-slate-900">
+                                        <span className="text-xs font-bold text-[#17345A]">
                                             Sistem Monitoring Energi Cerdas
                                         </span>
                                     </div>
-                                    <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[0.62rem] font-bold text-emerald-700 ring-1 ring-emerald-200/60">
-                                        Peluang Terbuka
+                                    <span className="rounded-full bg-[#E7F2FF] px-2.5 py-0.5 text-[0.62rem] font-bold text-[#1454C4] ring-1 ring-[#C9DFF2]">
+                                        Contoh peluang
                                     </span>
                                 </div>
-                                <div className="flex flex-wrap items-center gap-1.5 text-[0.68rem] text-slate-600">
-                                    <span className="font-semibold text-slate-700">
+                                <div className="flex flex-wrap items-center gap-1.5 text-[0.68rem] text-[#526B85]">
+                                    <span className="font-semibold text-[#345574]">
                                         Kebutuhan Tim:
                                     </span>
-                                    <span className="rounded-md bg-slate-100 px-2 py-0.5 font-medium">
+                                    <span className="rounded-md bg-[#F1F6FB] px-2 py-0.5 font-medium">
                                         UI/UX Design
                                     </span>
-                                    <span className="rounded-md bg-slate-100 px-2 py-0.5 font-medium">
+                                    <span className="rounded-md bg-[#F1F6FB] px-2 py-0.5 font-medium">
                                         Backend API
                                     </span>
-                                    <span className="rounded-md bg-slate-100 px-2 py-0.5 font-medium">
+                                    <span className="rounded-md bg-[#F1F6FB] px-2 py-0.5 font-medium">
                                         IoT Engineer
                                     </span>
                                 </div>
-                                <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[0.65rem] text-slate-500">
-                                    <span>
-                                        Penyelenggara: Lab Riset Informatika
-                                    </span>
-                                    <span className="font-bold text-blue-600">
-                                        Match Score: 94%
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E5EEF6] pt-2 text-[0.65rem] text-[#66809A]">
+                                    <span>Contoh proyek kolaborasi</span>
+                                    <span className="font-bold text-[#1764B3]">
+                                        Kebutuhan peran terlihat
                                     </span>
                                 </div>
                             </div>
@@ -439,45 +477,45 @@ export default function LandingFlowLedger({
                                     <div className="flex items-center gap-2">
                                         <Users
                                             aria-hidden="true"
-                                            className="size-4 text-indigo-600"
+                                            className="size-4 text-[#1764E8]"
                                         />
-                                        <span className="text-xs font-bold text-slate-900">
+                                        <span className="text-xs font-bold text-[#17345A]">
                                             Squad Inovasi Hijau
                                         </span>
                                     </div>
-                                    <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[0.62rem] font-bold text-indigo-700 ring-1 ring-indigo-200/60">
+                                    <span className="rounded-full bg-[#EFF7FF] px-2.5 py-0.5 text-[0.62rem] font-bold text-[#345574] ring-1 ring-[#D9E8F5]">
                                         3 Mahasiswa Tergabung
                                     </span>
                                 </div>
                                 <div className="grid grid-cols-3 gap-2 text-center text-[0.68rem]">
-                                    <div className="rounded-lg bg-slate-50 p-2 ring-1 ring-slate-100">
-                                        <p className="font-bold text-slate-900">
+                                    <div className="rounded-lg bg-[#F3F8FD] p-2 ring-1 ring-[#E5EEF6]">
+                                        <p className="font-bold text-[#17345A]">
                                             Budi S.
                                         </p>
-                                        <p className="text-[0.62rem] text-slate-500">
+                                        <p className="text-[0.62rem] text-[#66809A]">
                                             Lead Frontend
                                         </p>
                                     </div>
-                                    <div className="rounded-lg bg-slate-50 p-2 ring-1 ring-slate-100">
-                                        <p className="font-bold text-slate-900">
+                                    <div className="rounded-lg bg-[#F3F8FD] p-2 ring-1 ring-[#E5EEF6]">
+                                        <p className="font-bold text-[#17345A]">
                                             Siti R.
                                         </p>
-                                        <p className="text-[0.62rem] text-slate-500">
+                                        <p className="text-[0.62rem] text-[#66809A]">
                                             Backend API
                                         </p>
                                     </div>
-                                    <div className="rounded-lg bg-slate-50 p-2 ring-1 ring-slate-100">
-                                        <p className="font-bold text-slate-900">
+                                    <div className="rounded-lg bg-[#F3F8FD] p-2 ring-1 ring-[#E5EEF6]">
+                                        <p className="font-bold text-[#17345A]">
                                             Dimas P.
                                         </p>
-                                        <p className="text-[0.62rem] text-slate-500">
+                                        <p className="text-[0.62rem] text-[#66809A]">
                                             IoT Hardware
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[0.65rem] text-slate-500">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E5EEF6] pt-2 text-[0.65rem] text-[#66809A]">
                                     <span>Ketersediaan tim: 12 jam/minggu</span>
-                                    <span className="font-bold text-indigo-600">
+                                    <span className="font-bold text-[#1764B3]">
                                         Peran Terdefinisi
                                     </span>
                                 </div>
@@ -490,42 +528,40 @@ export default function LandingFlowLedger({
                                     <div className="flex items-center gap-2">
                                         <Code2
                                             aria-hidden="true"
-                                            className="size-4 text-sky-600"
+                                            className="size-4 text-[#1764E8]"
                                         />
-                                        <span className="text-xs font-bold text-slate-900">
+                                        <span className="text-xs font-bold text-[#17345A]">
                                             Task: Arsitektur API & UI Component
                                         </span>
                                     </div>
-                                    <span className="rounded-full bg-sky-50 px-2.5 py-0.5 text-[0.62rem] font-bold text-sky-700 ring-1 ring-sky-200/60">
-                                        Evidence Siap
+                                    <span className="rounded-full bg-[#E7F2FF] px-2.5 py-0.5 text-[0.62rem] font-bold text-[#1454C4] ring-1 ring-[#C9DFF2]">
+                                        Contoh evidence
                                     </span>
                                 </div>
-                                <div className="space-y-1.5 text-[0.68rem] text-slate-700">
+                                <div className="space-y-1.5 text-[0.68rem] text-[#345574]">
                                     <div className="flex items-center gap-2">
                                         <CheckCircle2
                                             aria-hidden="true"
-                                            className="size-3.5 text-emerald-500"
+                                            className="size-3.5 text-[#18734F]"
                                         />
                                         <span>
-                                            PR #42: Integrasi Endpoint Realtime
-                                            (Merged)
+                                            Catatan integrasi endpoint realtime
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <CheckCircle2
                                             aria-hidden="true"
-                                            className="size-3.5 text-emerald-500"
+                                            className="size-3.5 text-[#18734F]"
                                         />
                                         <span>
-                                            Figma Design System UI (100%
-                                            Selesai)
+                                            Dokumentasi komponen antarmuka
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[0.65rem] text-slate-500">
-                                    <span>Owner: Budi & Tim Alpha</span>
-                                    <span className="font-bold text-sky-600">
-                                        Tercatat di Ledger
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E5EEF6] pt-2 text-[0.65rem] text-[#66809A]">
+                                    <span>Pekerjaan tim</span>
+                                    <span className="font-bold text-[#1764B3]">
+                                        Kontribusi tercatat
                                     </span>
                                 </div>
                             </div>
@@ -537,31 +573,29 @@ export default function LandingFlowLedger({
                                     <div className="flex items-center gap-2">
                                         <ShieldCheck
                                             aria-hidden="true"
-                                            className="size-4 text-emerald-600"
+                                            className="size-4 text-[#1764E8]"
                                         />
-                                        <span className="text-xs font-bold text-slate-900">
+                                        <span className="text-xs font-bold text-[#17345A]">
                                             Tinjauan Dosen & Reviewer Kampus
                                         </span>
                                     </div>
-                                    <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[0.62rem] font-bold text-emerald-700 ring-1 ring-emerald-200/60">
-                                        Tervalidasi Resmi
+                                    <span className="rounded-full bg-[#E7F2FF] px-2.5 py-0.5 text-[0.62rem] font-bold text-[#1454C4] ring-1 ring-[#C9DFF2]">
+                                        Contoh keputusan
                                     </span>
                                 </div>
-                                <div className="rounded-lg bg-emerald-50/60 p-2.5 text-[0.68rem] text-slate-700 ring-1 ring-emerald-200/50">
-                                    <p className="font-bold text-emerald-950">
-                                        Dr. Aris Subagyo, M.T. (Dosen
-                                        Pembimbing)
+                                <div className="rounded-lg bg-[#F3F8FD] p-2.5 text-[0.68rem] text-[#345574] ring-1 ring-[#E5EEF6]">
+                                    <p className="font-bold text-[#17345A]">
+                                        Reviewer kampus meninjau kontribusi
                                     </p>
-                                    <p className="mt-0.5 text-[0.62rem] text-slate-600">
-                                        &quot;Kontribusi memenuhi standar
-                                        rekayasa software dan diakui untuk 3 SKS
-                                        ekuivalensi.&quot;
+                                    <p className="mt-0.5 text-[0.62rem] text-[#526B85]">
+                                        Status, alasan keputusan, dan riwayat
+                                        validasi tersimpan bersama evidence.
                                     </p>
                                 </div>
-                                <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[0.65rem] text-slate-500">
-                                    <span>Status: Validasi Permanen</span>
-                                    <span className="font-bold text-emerald-700">
-                                        Hash: #A7F9-88E2
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E5EEF6] pt-2 text-[0.65rem] text-[#66809A]">
+                                    <span>Riwayat validasi</span>
+                                    <span className="font-bold text-[#1764B3]">
+                                        Dapat ditinjau
                                     </span>
                                 </div>
                             </div>
@@ -573,35 +607,35 @@ export default function LandingFlowLedger({
                                     <div className="flex items-center gap-2">
                                         <Award
                                             aria-hidden="true"
-                                            className="size-4 text-amber-600"
+                                            className="size-4 text-[#1764E8]"
                                         />
-                                        <span className="text-xs font-bold text-slate-900">
+                                        <span className="text-xs font-bold text-[#17345A]">
                                             Portofolio Terverifikasi Siap Kerja
                                         </span>
                                     </div>
-                                    <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[0.62rem] font-bold text-amber-700 ring-1 ring-amber-200/60">
-                                        Visibilitas Aktif
+                                    <span className="rounded-full bg-[#E7F2FF] px-2.5 py-0.5 text-[0.62rem] font-bold text-[#1454C4] ring-1 ring-[#C9DFF2]">
+                                        Contoh pengaturan
                                     </span>
                                 </div>
-                                <div className="flex items-center justify-between rounded-lg bg-slate-50 p-2.5 text-[0.68rem] ring-1 ring-slate-100">
+                                <div className="flex items-center justify-between rounded-lg bg-[#F3F8FD] p-2.5 text-[0.68rem] ring-1 ring-[#E5EEF6]">
                                     <div>
-                                        <p className="font-bold text-slate-900">
-                                            Lead Frontend - Smart Campus
+                                        <p className="font-bold text-[#17345A]">
+                                            Contoh entry portofolio
                                         </p>
-                                        <p className="text-[0.62rem] text-slate-500">
-                                            Terbuka untuk Perekrut Mitra
+                                        <p className="text-[0.62rem] text-[#526B85]">
+                                            Visibilitas dipilih mahasiswa
                                         </p>
                                     </div>
-                                    <span className="rounded-md bg-blue-600 px-2.5 py-1 font-semibold text-white shadow-2xs">
-                                        Siap Diproyeksikan
+                                    <span className="rounded-md bg-[#1764E8] px-2.5 py-1 font-semibold text-white">
+                                        Portofolio
                                     </span>
                                 </div>
-                                <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[0.65rem] text-slate-500">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E5EEF6] pt-2 text-[0.65rem] text-[#66809A]">
                                     <span>
                                         Privasi: Chat & Kontak Terlindungi
                                     </span>
-                                    <span className="font-bold text-amber-600">
-                                        Verified Badge
+                                    <span className="font-bold text-[#1764B3]">
+                                        Izin tersimpan
                                     </span>
                                 </div>
                             </div>
@@ -609,20 +643,20 @@ export default function LandingFlowLedger({
                     </div>
 
                     {/* Metadata Provenance Bar */}
-                    <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-200/70 pt-2.5 text-[0.68rem]">
+                    <div className="mt-3 grid grid-cols-2 gap-3 border-t border-[#D9E8F5] pt-2.5 text-[0.68rem]">
                         <div>
-                            <span className="font-label text-[0.6rem] font-bold tracking-wider text-slate-400">
+                            <span className="font-label text-[0.6rem] font-bold tracking-wider text-[#66809A]">
                                 SUMBER
                             </span>
-                            <p className="mt-0.5 truncate font-semibold text-slate-800">
+                            <p className="mt-0.5 truncate font-semibold text-[#345574]">
                                 {activeStage.source}
                             </p>
                         </div>
                         <div>
-                            <span className="font-label text-[0.6rem] font-bold tracking-wider text-slate-400">
+                            <span className="font-label text-[0.6rem] font-bold tracking-wider text-[#66809A]">
                                 BERIKUTNYA
                             </span>
-                            <p className="mt-0.5 truncate font-semibold text-slate-800">
+                            <p className="mt-0.5 truncate font-semibold text-[#345574]">
                                 {activeStage.outcome}
                             </p>
                         </div>
@@ -631,9 +665,9 @@ export default function LandingFlowLedger({
             </div>
 
             {/* Bottom Controls Bar */}
-            <div className="mt-3.5 flex items-center justify-between rounded-2xl bg-slate-50/60 px-3.5 py-2.5 ring-1 ring-slate-100/80">
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-                    <div className="flex size-6 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
+            <div className="mt-3.5 flex items-center justify-between gap-3 rounded-xl bg-[#F3F8FD] px-3.5 py-2.5 ring-1 ring-[#E5EEF6]">
+                <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-[#526B85]">
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-white text-[#1764B3]">
                         <LockKeyhole aria-hidden="true" className="size-3" />
                     </div>
                     <span className="text-[0.72rem]">
@@ -646,7 +680,7 @@ export default function LandingFlowLedger({
                         type="button"
                         onClick={goToPrev}
                         aria-label="Tahap sebelumnya"
-                        className="flex size-8 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-200/60 transition-all duration-200 hover:bg-slate-50 hover:text-slate-800 hover:shadow-md"
+                        className="flex size-9 cursor-pointer items-center justify-center rounded-lg bg-white text-[#526B85] ring-1 ring-[#D9E8F5] transition-colors duration-150 hover:bg-[#E7F2FF] hover:text-[#1454C4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0] motion-reduce:transition-none"
                     >
                         <ChevronLeft aria-hidden="true" className="size-3.5" />
                     </button>
@@ -654,7 +688,7 @@ export default function LandingFlowLedger({
                         type="button"
                         onClick={goToNext}
                         aria-label="Tahap selanjutnya"
-                        className="flex size-8 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-200/60 transition-all duration-200 hover:bg-slate-50 hover:text-slate-800 hover:shadow-md"
+                        className="flex size-9 cursor-pointer items-center justify-center rounded-lg bg-white text-[#526B85] ring-1 ring-[#D9E8F5] transition-colors duration-150 hover:bg-[#E7F2FF] hover:text-[#1454C4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0] motion-reduce:transition-none"
                     >
                         <ChevronRight aria-hidden="true" className="size-3.5" />
                     </button>

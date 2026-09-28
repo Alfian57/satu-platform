@@ -125,7 +125,6 @@ export default [
             '.codex/**',
             '.github/hooks/**',
             '.github/skills/**',
-            '.impeccable/**',
             'vendor',
             'node_modules',
             'public',

@@ -7,79 +7,21 @@ SATU (Sistem Aktivitas Talenta Universitas) is a collaboration and verified-tale
 
 ## AI Entry and Source of Truth
 
-Immediately after this file, read `START_HERE.md`, then the selected GitHub issue and only the sources linked by that issue. GitHub issues and milestones are the execution source of truth.
+Immediately after this file, read `START_HERE.md`, then the documents relevant to the user's request. Read a GitHub issue only when the user identifies one.
 
-`START_HERE.md` controls work scope, not product truth. Within its referenced sources, use this precedence:
+`START_HERE.md` controls task scope, not product truth. Within the referenced sources, use this precedence:
 
 1. `PRODUCT.md` for durable product truth and non-negotiable boundaries.
 2. `docs/product/PRD.md` for requirements, scope, and acceptance criteria.
 3. `DESIGN.md` for global visual authority.
-4. `docs/ux/` and the matching `.impeccable/surfaces/*.md` brief for UI behavior.
+4. `docs/ux/` for UI behavior, content, and accessibility.
 5. `docs/engineering/` for architecture, data, security, and privacy contracts.
-6. The selected GitHub issue and `docs/implementation/ROADMAP.md` for execution and verification.
-7. `docs/governance/DECISIONS.md` for accepted decisions and open gates.
-8. `docs/reference/proposal_lomba.md` is historical input, not a runtime specification.
+6. The user's request and, when provided, the GitHub issue for execution scope and acceptance criteria.
+7. `docs/implementation/ROADMAP.md` for roadmap context.
+8. `docs/governance/DECISIONS.md` for accepted decisions and open gates.
+9. `docs/reference/proposal_lomba.md` is historical input, not a runtime specification.
 
 When documents conflict, the earlier source wins. Update the owning source instead of silently overriding it in code.
-
-## GitHub Issue Workflow
-
-- Work on exactly one selected GitHub issue unless the issue explicitly defines a coordinated delivery slice.
-- Check `Blocked by`, gate labels, and acceptance criteria before editing. Do not invent substitute behavior for an unmet prerequisite.
-- Create a separate branch named `<type>/<issue-number>-<slug>` and a pull request that closes the issue.
-- Untuk issue independen, buat pull request setelah seluruh pekerjaan selesai. Untuk issue stacked atau early visibility, buka sebagai **draft** lebih awal. Review hanya diminta setelah seluruh AC terpenuhi dan PR dikonversi ke **Ready for review**.
-- Do not expand into adjacent issues as cleanup or convenience work.
-- At `gate:human`, `gate:external`, or `gate:conditional`, present inspectable evidence and stop until the gate is resolved.
-- Issue state, milestone, labels, linked pull request, and comments are the only task-status source. Documentation describes contracts, not task progress.
-- Saat seluruh pekerjaan selesai dan PR siap direview:
-    1. Konversi PR dari draft ke **Ready for review**.
-    2. Komentar di PR dengan tag `@Alfian57` yang menyatakan PR siap direview.
-    3. Pastikan CI hijau, label `needs-review` terpasang, dan body PR lengkap (evidence, screenshot jika UI).
-- Setelah menyelesaikan revisi yang diminta reviewer:
-    1. Tag `@Alfian57` di komentar PR bahwa revisi sudah selesai.
-    2. Pastikan CI tetap hijau setelah perubahan terbaru.
-
-## PR Review Workflow
-
-Saat berperan sebagai project manager yang mereview pull request di remote repository:
-
-### Inspeksi Awal
-
-- Gunakan `gh pr list --state open` untuk melihat semua PR terbuka, lalu `gh pr view <number>` per PR untuk detail (body, files, commits, CI, reviews, merge state).
-- Baca issue GitHub yang dirujuk oleh PR dan bandingkan acceptance criteria, labels, gate, prerequisite, dan metadata-nya secara diam-diam. Hanya sebutkan ketidaksesuaian jika ditemukan.
-- Reviewer default adalah **Alfian57**. Gunakan `gh pr edit <number> --add-reviewer Alfian57`.
-
-### Proses Review
-
-1. **Status merge**: Jika `BEHIND`, minta author rebase/update terhadap `main` dengan kalimat kasual. Jangan pernah meng-update branch milik contributor lain terhadap `main` (tanpa rebase/merge/push ke branch mereka). Bantuan yang boleh diberikan hanya pada label dan status PR, misalnya menambahkan atau menghapus label seperti `needs-review`, atau mengubah draft/ready state.
-2. **CI checks**: Harus SUCCESS semua. Jika ada yang gagal, laporkan.
-3. **Draft PR**: Issue biasanya meminta PR dibuka sebagai draft. Jika PR langsung open atau masih berlabel `in-progress`, tanyakan apakah pekerjaan sudah benar-benar selesai dan siap review penuh.
-4. **UI screenshot**: PR dengan perubahan UI wajib menyertakan screenshot mobile/desktop dan state penting di body.
-5. **Gate dan prerequisite**: Jika issue memiliki `gate:conditional` atau prerequisite, tanyakan statusnya di komentar.
-6. **Preview komentar**: Sebelum mengirim komentar ke PR, tampilkan dulu preview komentar tersebut di chat untuk dikonfirmasi oleh user.
-
-### Gaya Bahasa Komentar
-
-- Gunakan **Bahasa Indonesia kasual** dan natural.
-- Tag author dengan `@username` di awal komentar.
-- Hindari karakter **em dash (Unicode U+2014)** di semua komentar PR. Gunakan koma, titik, atau bullet list sebagai gantinya.
-- Gunakan variasi apresiasi untuk implementasi yang sudah sesuai: "mantap", "approved", "LGTM", "udah solid", "on point", "implementasi udah sesuai sama issue".
-- Jangan gunakan kata "ganjalan" atau "kece" di komentar PR. Pakai alternatif seperti "hal yang perlu dirapikan", "poin", "catatan", dan apresiasi netral seperti "udah solid".
-- Jangan berikan perbandingan panjang dengan issue. Langsung sebutkan kesalahan atau ketidaksesuaian saja jika ada.
-- Contoh gaya komentar:
-    > @dzakyard, tolong update branch ini terhadap `main` terbaru dulu ya, soalnya status merge saat ini **BEHIND**. Ada beberapa hal yang perlu dirapikan:
-    >
-    > - Issue minta PR dibuka sebagai **draft**, ini langsung open.
-    > - Belum ada screenshot mobile/desktop di body PR.
-    >
-    > Selain itu implementasi-nya udah solid. LGTM buat kontennya.
-
-### Keputusan Akhir
-
-- Jika PR memiliki CI hijau, semua AC terpenuhi, tidak ada ketidaksesuaian dengan issue, dan tidak ada hal lain yang perlu diperbaiki:
-    1. Tulis komentar review dengan `gh pr review <number> --approve --body "..."` berisi apresiasi.
-    2. Merge dengan `gh pr merge <number> --squash --delete-branch`.
-- Jika ada ketidaksesuaian yang perlu diperbaiki, gunakan `gh pr review <number> --request-changes --body "..."` dan jangan merge.
 
 ## Product Invariants
 
@@ -113,8 +55,8 @@ Saat berperan sebagai project manager yang mereview pull request di remote repos
 
 ## UI/UX Workflow
 
-- Before any UI change, read `PRODUCT.md`, `docs/product/PRD.md`, `DESIGN.md`, `docs/ux/SCREEN_INVENTORY.md`, and the matching surface brief.
-- If a new surface has no brief, run `$impeccable shape <surface>`, confirm it, and persist its surface brief before implementation.
+- Before any UI change, read `PRODUCT.md`, `docs/product/PRD.md`, `DESIGN.md`, `docs/ux/SCREEN_INVENTORY.md`, `docs/ux/CONTENT_ACCESSIBILITY.md`, and relevant UX sources for the surface.
+- For a new or changed surface, document its audience, job, outcome, boundaries, interactions, and applicable states in `docs/ux/SCREEN_INVENTORY.md` and the relevant UX source before implementation.
 - Application surfaces use `Operate`; public portfolio may use `Experience`; landing pages use `Persuade`.
 - The visual world is **Buku Besar Kolaborasi**. The Laravel starter, neutral shadcn defaults, and placeholder dashboard are scaffolding, not SATU's identity.
 - A local feature inherits `DESIGN.md`; do not create a new visual identity per page.
@@ -124,20 +66,21 @@ Saat berperan sebagai project manager yang mereview pull request di remote repos
 - Do not use the Unicode em dash character in first-party UI or documentation. Use a period, comma, colon, or parentheses according to the sentence meaning.
 - Every enabled clickable or tappable target must show a pointer cursor. Disabled targets must show a not-allowed cursor.
 - Never use labels such as “vulnerable”, “isolated”, or mental-health inference in student/recruiter UI.
-- After the first real SATU surface establishes tokens and components, run `$impeccable document` to replace the seed `DESIGN.md`.
-- Before UI release, use scoped `$impeccable audit`, `$impeccable harden`, and `$impeccable polish`.
+- After the first real SATU surface establishes tokens and components, update `DESIGN.md` to record the implemented visual tokens and components.
+- Before UI release, inspect the implementation against `DESIGN.md`, WCAG 2.2 AA, the shared state matrix, responsive behavior, and applicable UX acceptance criteria.
 - Jika surface membutuhkan asset bitmap dan belum ada asset yang disetujui, agent boleh membuat asset gambar sendiri. Ikuti kebijakan asset pada `docs/ux/README.md`.
+- Untuk generate gambar maskot, gunakan `resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png` sebagai acuan identitas dan empat sudut pandang. Gunakan `resources/images/mascot/reference/maskot-01-burung-arsip.png` sebagai acuan material dan ekspresi. Pertahankan bentuk, warna, pola bulu, dan tas maskot kecuali pengguna memilih perubahan.
 
 ## Documentation Maintenance
 
 - Product change: update `PRODUCT.md`.
 - Requirement/scope change: update PRD and traceability.
 - Global visual change: update `DESIGN.md`.
-- Route-specific UX change: update its surface brief and relevant UX document.
+- Route-specific UX change: update `docs/ux/SCREEN_INVENTORY.md` and the relevant UX document.
 - Entity/event/permission/integration change: update the relevant engineering document.
 - Roadmap, issue workflow, or release-gate change: update `docs/implementation/` and the owning GitHub issue or milestone.
 - Governance decision: update `docs/governance/DECISIONS.md` and security/privacy documentation.
-- Task state or completion: update only the owning GitHub issue, linked pull request, and milestone.
+- Task scope or acceptance criteria: update the owning GitHub issue when the user asks for an issue change.
 
 Do not close an `open` decision in `docs/governance/DECISIONS.md` by assumption.
 
@@ -146,7 +89,7 @@ Do not close an `open` decision in `docs/governance/DECISIONS.md` by assumption.
 - Every runtime change is verified through static checks and inspection before it is considered complete.
 - Use `vendor/bin/pint --dirty --format agent` for PHP formatting, `npm run lint:check` and `npm run format:check` for frontend checks, and `npm run types:check` (Wayfinder + TypeScript) and PHPStan for static analysis.
 - Jangan menjalankan `npm run build` kecuali pengguna memintanya secara eksplisit atau build diperlukan untuk mendiagnosis error Vite. Untuk perubahan biasa, lint dan typecheck yang relevan sudah cukup.
-- Documentation changes must pass Prettier, internal-link review, surface-brief resolution, and `git diff --check`.
+- Documentation changes must pass Prettier, internal-link and UX-reference checks, and `git diff --check`.
 - An issue is not complete until every acceptance criterion in its body passes.
 
 </satu-project-context>
@@ -270,7 +213,6 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Inertia creates fully client-side rendered SPAs without modern SPA complexity, leveraging existing server-side patterns.
 - Components live in `resources/js/pages` (unless specified in `vite.config.js`). Use `Inertia::render()` for server-side routing instead of Blade views.
 - ALWAYS use `search-docs` tool for version-specific Inertia documentation and updated code examples.
-- IMPORTANT: Activate `inertia-react-development` when working with Inertia client-side patterns.
 
 # Inertia v3
 
@@ -326,7 +268,5 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 === inertia-react/core rules ===
 
 # Inertia + React
-
-- IMPORTANT: Activate `inertia-react-development` when working with Inertia React client-side patterns.
 
 </laravel-boost-guidelines>
