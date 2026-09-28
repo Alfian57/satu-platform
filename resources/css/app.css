@@ -9,14 +9,13 @@
 
 @theme inline {
     --font-sans:
-        'Familjen Grotesk', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'Familjen Grotesk', ui-sans-serif, system-ui, sans-serif, 'Noto Sans',
+        'Liberation Sans', sans-serif;
     --font-label:
         'Azeret Mono', ui-monospace, 'SFMono-Regular', Consolas,
         'Liberation Mono', monospace;
 
-    --text-display: 3rem;
+    --text-display: clamp(2.5rem, 5vw, 4.5rem);
     --text-display--line-height: 1.05;
     --text-display--letter-spacing: -0.03em;
     --text-headline: 2rem;
@@ -35,25 +34,25 @@
     --spacing-density-working: 0.75rem;
     --spacing-density-focused: 1rem;
     --spacing-control-sm: 2.25rem;
-    --spacing-control-md: 2.5rem;
-    --spacing-control-lg: 2.75rem;
+    --spacing-control-md: 2.75rem;
+    --spacing-control-lg: 3rem;
 
-    --radius-xs: 0.125rem;
-    --radius-sm: 0.25rem;
-    --radius-md: 0.375rem;
-    --radius-lg: 0.5rem;
-    --radius-xl: 0.5rem;
-    --radius-2xl: 0.5rem;
-    --radius-3xl: 0.5rem;
-    --radius-4xl: 0.5rem;
+    --radius-xs: 0.25rem;
+    --radius-sm: 0.375rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+    --radius-2xl: 1.5rem;
+    --radius-3xl: 1.75rem;
+    --radius-4xl: 2rem;
 
     --shadow-2xs: 0 0 #0000;
-    --shadow-xs: 0 0 #0000;
-    --shadow-sm: 0 1px 2px rgb(17 24 39 / 0.06);
-    --shadow-md: 0 8px 24px rgb(17 24 39 / 0.14);
-    --shadow-lg: 0 16px 40px rgb(17 24 39 / 0.18);
-    --shadow-xl: 0 16px 40px rgb(17 24 39 / 0.18);
-    --shadow-2xl: 0 16px 40px rgb(17 24 39 / 0.18);
+    --shadow-xs: 0 2px 8px rgb(23 52 90 / 0.04);
+    --shadow-sm: 0 4px 14px rgb(23 52 90 / 0.045);
+    --shadow-md: 0 12px 32px rgb(23 52 90 / 0.09);
+    --shadow-lg: 0 20px 60px rgb(23 52 90 / 0.14);
+    --shadow-xl: 0 20px 60px rgb(23 52 90 / 0.14);
+    --shadow-2xl: 0 24px 72px rgb(23 52 90 / 0.18);
 
     --ease-ledger: cubic-bezier(0.2, 0.8, 0.2, 1);
 
@@ -106,6 +105,17 @@
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
 
+    --color-satu-canvas: #f3f9ff;
+    --color-satu-ink: #17345a;
+    --color-satu-muted: #526b85;
+    --color-satu-blue: #1764e8;
+    --color-satu-blue-hover: #1454c4;
+    --color-satu-blue-focus: #1746b0;
+    --color-satu-blue-soft: #e7f2ff;
+    --color-satu-border-soft: #d9e8f5;
+    --color-satu-input: #7892ae;
+    --color-satu-feather: #ffb85c;
+
     --color-slate-400: #5b6b84;
     --color-slate-500: #4c5c75;
 
@@ -122,20 +132,20 @@
 :root {
     color-scheme: light;
 
-    --background: #f7f9fc;
-    --foreground: #111827;
+    --background: #f3f9ff;
+    --foreground: #17345a;
     --card: #ffffff;
-    --card-foreground: #111827;
+    --card-foreground: #17345a;
     --popover: #ffffff;
-    --popover-foreground: #111827;
-    --primary: #1746b0;
+    --popover-foreground: #17345a;
+    --primary: #1764e8;
     --primary-foreground: #ffffff;
-    --secondary: #e9eef6;
-    --secondary-foreground: #172033;
-    --muted: #eef2f7;
-    --muted-foreground: #526077;
-    --accent: #e6edfb;
-    --accent-foreground: #123a91;
+    --secondary: #e7f2ff;
+    --secondary-foreground: #17345a;
+    --muted: #edf5fc;
+    --muted-foreground: #526b85;
+    --accent: #e7f2ff;
+    --accent-foreground: #1454c4;
     --destructive: #a72b27;
     --destructive-foreground: #ffffff;
     --verified: #16734a;
@@ -150,26 +160,27 @@
     --correction-foreground: #ffffff;
     --correction-subtle: #fde8e7;
     --correction-subtle-foreground: #9c2b23;
-    --border: #c7d0df;
-    --input: #718097;
-    --ring: #1e5bd7;
-    --chart-1: #1746b0;
+    --border: #d9e8f5;
+    --input: #7892ae;
+    --ring: #1746b0;
+    --chart-1: #1764e8;
     --chart-2: #16734a;
     --chart-3: #8a5100;
     --chart-4: #b42318;
-    --chart-5: #526077;
-    --sidebar: #f9fbfe;
-    --sidebar-foreground: #111827;
-    --sidebar-primary: #1746b0;
+    --chart-5: #526b85;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #17345a;
+    --sidebar-primary: #1764e8;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #e9eef6;
-    --sidebar-accent-foreground: #172033;
-    --sidebar-border: #c7d0df;
-    --sidebar-ring: #1e5bd7;
+    --sidebar-accent: #e7f2ff;
+    --sidebar-accent-foreground: #1454c4;
+    --sidebar-border: #d9e8f5;
+    --sidebar-ring: #1746b0;
 
-    --duration-fast: 120ms;
-    --duration-standard: 180ms;
-    --duration-deliberate: 260ms;
+    --duration-fast: 140ms;
+    --duration-standard: 220ms;
+    --duration-deliberate: 420ms;
+    --ease-satu: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .dark {
@@ -358,20 +369,95 @@
 }
 
 @layer components {
+    .satu-mascot {
+        position: relative;
+        display: block;
+        min-width: 0;
+        overflow: visible;
+    }
+
+    .satu-mascot__image {
+        display: block;
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+        transform-origin: 54% 76%;
+        animation: satu-mascot-enter 420ms var(--ease-satu) both;
+        filter: drop-shadow(0 16px 20px rgb(23 52 90 / 0.14));
+    }
+
+    .satu-mascot__trigger {
+        position: relative;
+        display: block;
+        width: 100%;
+        overflow: visible;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        cursor: pointer;
+    }
+
+    .satu-mascot__trigger:focus-visible {
+        border-radius: 1.5rem;
+        outline: 3px solid var(--ring);
+        outline-offset: 4px;
+    }
+
+    .satu-mascot__greeting {
+        position: absolute;
+        z-index: 5;
+        top: 4%;
+        right: 0;
+        max-width: min(15rem, 76vw);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        padding: 0.65rem 0.9rem;
+        background: white;
+        color: var(--foreground);
+        box-shadow: var(--shadow-md);
+        font-size: 0.875rem;
+        font-weight: 600;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(0.35rem) scale(0.98);
+        transform-origin: 80% 100%;
+        transition:
+            opacity var(--duration-fast) var(--ease-satu),
+            transform var(--duration-fast) var(--ease-satu);
+    }
+
+    .satu-mascot[data-greeting='true'] .satu-mascot__greeting {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    .satu-mascot[data-greeting='true'] .satu-mascot__image {
+        animation: satu-mascot-greet 420ms var(--ease-satu) both;
+    }
+
+    .satu-mascot[data-pose='peek'] .satu-mascot__image {
+        transform: scale(0.94) translateY(0.03em);
+    }
+
+    .satu-mascot[data-pose='celebrate'][data-greeting='true']
+        .satu-mascot__image {
+        animation-duration: 560ms;
+    }
+
     .dashboard-page-canvas {
-        background-color: #f8fafc;
+        background-color: var(--background);
         background-image:
             radial-gradient(
                 ellipse 85% 55% at 8% 0%,
-                rgba(191, 219, 254, 0.48) 0%,
+                rgb(208 232 255 / 0.52) 0%,
                 transparent 68%
             ),
             radial-gradient(
                 ellipse 70% 50% at 92% 32%,
-                rgba(224, 231, 255, 0.55) 0%,
+                rgb(231 242 255 / 0.62) 0%,
                 transparent 70%
             ),
-            linear-gradient(180deg, #f8fbff 0%, #eff6ff 48%, #f8fafc 100%);
+            linear-gradient(180deg, #fafdff 0%, #f3f9ff 55%, #f5faff 100%);
         background-attachment: fixed;
     }
 
@@ -578,7 +664,39 @@
     }
 }
 
+@keyframes satu-mascot-enter {
+    from {
+        opacity: 0;
+        transform: translateY(1rem) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes satu-mascot-greet {
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg) scale(1);
+    }
+
+    35% {
+        transform: translateY(-0.25rem) rotate(-2deg) scale(1.015);
+    }
+
+    70% {
+        transform: translateY(-0.1rem) rotate(1deg) scale(1.01);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
+    .satu-mascot__image {
+        animation: none !important;
+        transform: none !important;
+    }
+
     [data-landing-surface] .landing-motion-rise,
     [data-landing-surface] .landing-blue-hero,
     [data-landing-surface] .landing-hero-illustration,

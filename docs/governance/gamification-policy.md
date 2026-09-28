@@ -188,7 +188,7 @@ Anti-abuse review mencakup:
 - MAJOR: perubahan aturan score, source XP, atau scope leaderboard.
 - MINOR: perubahan badge taxonomy, rule version, atau anti-abuse criteria.
 - PATCH: klarifikasi, perbaikan bahasa, atau penyesuaian non-substantif.
-- Setiap perubahan policy wajib melalui pull request dengan approval audit owner.
+- Setiap perubahan policy wajib menaikkan version dan mendapat approval audit owner.
 
 ### 6.2 Audit Owner
 
@@ -222,4 +222,3 @@ Perubahan yang tidak diizinkan tanpa governance gate baru:
 - [DATA_MODEL.md](../engineering/DATA_MODEL.md): Schema gamification.
 - [SECURITY_PRIVACY.md](../engineering/SECURITY_PRIVACY.md): Gamification integrity dan anti-abuse.
 - [DECISIONS.md](./DECISIONS.md): Accepted decisions dan open gates.
-- [route-leaderboards.md](../../.impeccable/surfaces/route-leaderboards.md): Surface brief leaderboard.

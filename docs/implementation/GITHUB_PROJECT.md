@@ -24,7 +24,7 @@ Project memakai view berikut. Layout dan filter boleh disesuaikan secara manual 
 | ---------------- | ------- | --------------------------------------------------------------- |
 | `Backlog`        | Table   | Daftar lengkap issue dan Pull Request dengan metadata delivery. |
 | `Priority board` | Board   | Melihat item berdasarkan field `Status` dan prioritas.          |
-| `Team items`     | Table   | Meninjau owner, assignee, reviewer, milestone, dan label.       |
+| `Team items`     | Table   | Melihat owner, assignee, reviewer, milestone, dan label.        |
 | `Roadmap`        | Roadmap | Melihat urutan milestone dan target waktu jika tersedia.        |
 | `My items`       | Table   | Fokus pada item yang ditugaskan kepada pengguna aktif.          |
 
@@ -70,7 +70,7 @@ Workflow berjalan pada:
 
 Status label issue workflow menggunakan `GITHUB_TOKEN` dan sekarang merespons event issue serta Pull Request yang sama. Perubahan label oleh workflow tidak selalu memicu event `labeled` baru, sehingga schedule dan manual reconciliation Project tetap diperlukan.
 
-GitHub Assignees adalah source of truth ownership. `Team items` dan `My items` hanya projection workload. AI agent harus menjalankan ownership gate pada [DEPENDENCY_WORKFLOW.md](./DEPENDENCY_WORKFLOW.md) sebelum membuat branch.
+GitHub Assignees adalah source of truth ownership. `Team items` dan `My items` hanya projection workload.
 
 ## Credential dan Variables
 
@@ -138,9 +138,8 @@ Jika GitHub API mengalami rate limit, tunggu window reset lalu jalankan reconcil
 - Script berada di `.github/scripts/sync-satu-project.cjs` dan mengelola mapping, idempotency, dry-run, konfigurasi, dan API error.
 - Action `actions/github-script@v9.0.0` dan `actions/checkout@v7.0.1` dipin ke immutable commit SHA.
 - Tidak ada runtime dependency baru.
-- Perubahan permission harus direview sebagai security-sensitive change.
-- Pull Request wajib draft dahulu dan hanya di-merge dengan `Squash and merge` setelah required CI lulus dan conversation selesai.
+- Perubahan permission termasuk perubahan security-sensitive.
 
 ## Handoff
 
-Consumer berikutnya memakai GitHub Project untuk triage dan workload view, tetapi tetap membaca issue body untuk `Blocked by`, gate, acceptance criteria, dan handoff. Developer yang mengubah status mapping wajib memperbarui script, issue contract, dan bagian mapping dokumen ini dalam Pull Request yang sama.
+GitHub Project menyediakan triage dan workload view. Issue body tetap menyimpan `Blocked by`, gate, acceptance criteria, dan handoff. Perubahan status mapping perlu memperbarui script, issue contract, dan bagian mapping dokumen ini bersama-sama.

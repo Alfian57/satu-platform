@@ -18,7 +18,7 @@ export function NavMain({
 
     return (
         <nav aria-label={ariaLabel} className="px-3">
-            <p className="px-3 text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
+            <p className="px-3 text-xs font-semibold text-muted-foreground">
                 {label}
             </p>
             <ul className="mt-3 grid gap-1.5">
@@ -39,10 +39,10 @@ export function NavMain({
                                     }
                                 }}
                                 className={cn(
-                                    'flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 data-loading:opacity-60',
+                                    'flex min-h-11 cursor-pointer items-center gap-3 rounded-2xl px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-loading:opacity-60 motion-reduce:transition-none',
                                     isActive
-                                        ? 'bg-blue-600 text-white'
-                                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                                        ? 'bg-sidebar-accent text-primary shadow-xs'
+                                        : 'text-muted-foreground hover:bg-white hover:text-primary',
                                 )}
                             >
                                 {Icon && (
@@ -50,8 +50,8 @@ export function NavMain({
                                         className={cn(
                                             'flex size-7 shrink-0 items-center justify-center rounded-lg transition-colors',
                                             isActive
-                                                ? 'bg-white/20 text-white'
-                                                : 'bg-slate-100 text-slate-500',
+                                                ? 'bg-white text-primary'
+                                                : 'bg-white/70 text-muted-foreground',
                                         )}
                                     >
                                         <Icon

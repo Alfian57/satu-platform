@@ -2,7 +2,7 @@
 
 ## Strategy
 
-Delivery memakai ten GitHub milestones. Milestone menyatakan urutan outcome, sedangkan GitHub issues tetap atomic unit. Work dapat paralel jika hard dependency tidak dilanggar atau consumer memakai stacked workflow setelah contract checkpoint upstream tersedia. Detailnya ada pada [DEPENDENCY_WORKFLOW.md](./DEPENDENCY_WORKFLOW.md).
+Delivery memakai ten GitHub milestones. Milestone menyatakan urutan outcome, sedangkan GitHub issues menyimpan task, acceptance criteria, dan dependencies.
 
 ## Milestones
 
@@ -25,7 +25,7 @@ Delivery memakai ten GitHub milestones. Milestone menyatakan urutan outcome, sed
 M0 -> M1 -> M2 -> M3 -> M4 -> M5 -> M6 -> M7 -> M8 -> M9
 ```
 
-UX shaping dalam M0/M1 dapat berjalan paralel dengan approved governance work. Talent projection bergantung pada contribution/portfolio. Gamification bergantung pada contribution validation. Inclusion activation dan real academic provider tetap gated walau implementation dapat selesai dengan synthetic/sandbox data. Stacked branch hanya mempercepat development dan review, bukan merge atau release gate.
+UX work dalam M0/M1 dapat berjalan bersama governance work yang sudah disetujui. Talent projection bergantung pada contribution/portfolio. Gamification bergantung pada contribution validation. Inclusion activation dan real academic provider tetap gated walau implementation dapat selesai dengan synthetic/sandbox data.
 
 ## Release Definition
 
@@ -35,7 +35,7 @@ Competition release mencakup target PRD untuk satu institution tenant. Multi-ins
 
 - M0: repository workflow and decision ownership.
 - M1: human approval visual reference.
-- M2: identity threat model, OTP abuse review, roster and invitation recovery.
+- M2: identity threat model, OTP abuse assessment, roster and invitation recovery.
 - M4: explainable/versioned matching and cross-tenant denial.
 - M5: channel authorization and reconnect recovery.
 - M6: contribution integrity and gamification fairness.

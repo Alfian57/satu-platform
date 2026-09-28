@@ -83,25 +83,23 @@ function RecoveryDeliveryStatus({
 
 function RecoveryOtpStep({ recovery }: { recovery: RecoveryState }) {
     const [otp, setOtp] = useState('');
-    const [secondsLeft, setSecondsLeft] = useState(() =>
-        Math.max(
-            0,
-            (recovery.resendAvailableAt ?? 0) - Math.floor(Date.now() / 1000),
-        ),
+    const [now, setNow] = useState(() => Date.now());
+    const secondsLeft = Math.max(
+        0,
+        Math.ceil(((recovery.resendAvailableAt ?? 0) * 1000 - now) / 1000),
     );
     const maskedPhone = recovery.maskedPhone ?? 'nomor WhatsApp Anda';
 
     useEffect(() => {
-        if (secondsLeft <= 0) {
-            return;
-        }
+        const updateClock = () => setNow(Date.now());
+        const timer = window.setInterval(updateClock, 1000);
+        document.addEventListener('visibilitychange', updateClock);
 
-        const timer = window.setInterval(() => {
-            setSecondsLeft((current) => Math.max(0, current - 1));
-        }, 1000);
-
-        return () => window.clearInterval(timer);
-    }, [secondsLeft]);
+        return () => {
+            window.clearInterval(timer);
+            document.removeEventListener('visibilitychange', updateClock);
+        };
+    }, []);
 
     return (
         <div className="grid gap-6" data-test="recovery-otp-step">
@@ -134,7 +132,11 @@ function RecoveryOtpStep({ recovery }: { recovery: RecoveryState }) {
                                 name="otp"
                                 value={otp}
                                 onChange={setOtp}
-                                describedBy="recovery-otp-help recovery-otp-error"
+                                describedBy={
+                                    errors.otp
+                                        ? 'recovery-otp-help recovery-otp-error'
+                                        : 'recovery-otp-help'
+                                }
                                 disabled={processing}
                                 autoFocus
                             />
@@ -237,8 +239,17 @@ function RecoveryResetStep() {
                             autoFocus
                             autoComplete="new-password"
                             placeholder="Password baru"
+                            aria-invalid={Boolean(errors.password)}
+                            aria-describedby={
+                                errors.password
+                                    ? 'recover-password-error'
+                                    : undefined
+                            }
                         />
-                        <InputError message={errors.password} />
+                        <InputError
+                            id="recover-password-error"
+                            message={errors.password}
+                        />
                     </div>
 
                     <div className="grid gap-2">
@@ -251,8 +262,17 @@ function RecoveryResetStep() {
                             required
                             autoComplete="new-password"
                             placeholder="Ulangi password baru"
+                            aria-invalid={Boolean(errors.password_confirmation)}
+                            aria-describedby={
+                                errors.password_confirmation
+                                    ? 'recover-password_confirmation-error'
+                                    : undefined
+                            }
                         />
-                        <InputError message={errors.password_confirmation} />
+                        <InputError
+                            id="recover-password_confirmation-error"
+                            message={errors.password_confirmation}
+                        />
                     </div>
 
                     <Button
@@ -293,7 +313,12 @@ function RecoveryPhoneStep({ status }: { status: RecoveryState['status'] }) {
                             autoComplete="tel"
                             inputMode="numeric"
                             placeholder="08xxxxxxxxxx"
-                            aria-describedby="recovery-phone-help"
+                            aria-describedby={
+                                errors.phone
+                                    ? 'recovery-phone-help recover-phone-error'
+                                    : 'recovery-phone-help'
+                            }
+                            aria-invalid={Boolean(errors.phone)}
                         />
                         <p
                             id="recovery-phone-help"
@@ -303,7 +328,10 @@ function RecoveryPhoneStep({ status }: { status: RecoveryState['status'] }) {
                             terdaftar, kode recovery akan dikirim melalui
                             WhatsApp.
                         </p>
-                        <InputError message={errors.phone} />
+                        <InputError
+                            id="recover-phone-error"
+                            message={errors.phone}
+                        />
                     </div>
 
                     <Button

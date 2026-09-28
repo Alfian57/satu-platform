@@ -3,24 +3,23 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import {
     ArrowLeft,
     ArrowRight,
-    Briefcase,
-    Building2,
     Check,
-    Clock,
-    CreditCard,
-    Globe,
+    CheckCheck,
+    Clock3,
     GraduationCap,
-    Info,
+    LockKeyhole,
     Plus,
+    RefreshCw,
     Search,
+    ShieldCheck,
     Trash2,
-    User,
 } from 'lucide-react';
-import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import type { FormEvent } from 'react';
+import Mascot from '@/components/mascot';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -31,40 +30,39 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { store as storeAffiliation } from '@/routes/institution-memberships';
-import studentProfiles from '@/routes/student-profiles';
+import {
+    index as searchTaxonomy,
+    store as createTaxonomy,
+} from '@/routes/skills/taxonomy';
+import {
+    show as showProfile,
+    store as storeProfile,
+    update as updateProfile,
+} from '@/routes/student-profiles';
+import { update as updateAvailability } from '@/routes/student-profiles/availability';
+import { update as updateVisibility } from '@/routes/student-profiles/visibility';
 import type { Auth, ShellContext } from '@/types';
 
 type Proficiency = 'beginner' | 'intermediate' | 'advanced' | 'expert';
-type PortfolioVisibility = 'private' | 'institution' | 'recruiter' | 'public';
-
+type Visibility = 'private' | 'institution' | 'recruiter' | 'public';
 type Taxonomy = {
     id: number;
     name: string;
     category: string;
-    description: string | null;
+    description?: string | null;
 };
-
 type DraftSkill = {
     taxonomy_id: number;
     name: string;
-    category?: string;
     proficiency: Proficiency;
 };
-
-type DraftAvailability = {
+type Availability = {
     day_of_week: number;
     starts_at: string;
     ends_at: string;
     timezone: string;
 };
-
-type ProfileResponse = {
-    data: {
-        id: number;
-    };
-};
-
-type StudentProfileFormPayload = {
+type ProfilePayload = {
     institution_id: number;
     study_program: string;
     study_year: number;
@@ -74,11 +72,19 @@ type StudentProfileFormPayload = {
         proficiency: Proficiency;
         evidence_metadata: Record<string, string | number | boolean | null>[];
     }[];
-    availability_windows: DraftAvailability[];
-    portfolio_visibility: PortfolioVisibility;
+    availability_windows: Availability[];
+    portfolio_visibility: Visibility;
     recruiter_discoverable: boolean;
 };
-
+type ProfileResponse = {
+    data: {
+        id: number;
+        skills?: DraftSkill[];
+        availability_windows?: Availability[];
+        portfolio_visibility?: Visibility;
+        recruiter_discoverable?: boolean;
+    };
+};
 type OnboardingState = {
     required: boolean;
     institutionId: number | null;
@@ -93,82 +99,178 @@ type OnboardingState = {
     institutions?: { id: number; name: string }[];
     nim?: string;
 };
-
-type PagePropsWithOnboarding = {
+type OnboardingProps = {
     auth: Auth;
     shell: ShellContext;
     onboarding?: OnboardingState | null;
     [key: string]: unknown;
 };
+type Phase =
+    | 'editing'
+    | 'affiliation'
+    | 'pending'
+    | 'pending-check'
+    | 'profile'
+    | 'availability'
+    | 'visibility'
+    | 'refresh'
+    | 'complete';
+type SaveProgress = {
+    key: string;
+    institutionId: number;
+    profileId: number | null;
+    finished: Set<string>;
+};
 
+const steps = ['Kampusmu', 'Keahlianmu', 'Cara berkolaborasi'];
 const proficiencyLabels: Record<Proficiency, string> = {
     beginner: 'Pemula',
     intermediate: 'Menengah',
     advanced: 'Lanjutan',
     expert: 'Mahir',
 };
-
-const stepLabels = [
-    { step: 1, title: 'Kampus & Akademik', subtitle: 'Identitas & Afiliasi' },
-    { step: 2, title: 'Keahlian & Minat', subtitle: 'Skill & Profil Singkat' },
-    { step: 3, title: 'Jadwal & Visibilitas', subtitle: 'Waktu & Izin Akses' },
+const days = [
+    { value: 1, label: 'Sen', full: 'Senin' },
+    { value: 2, label: 'Sel', full: 'Selasa' },
+    { value: 3, label: 'Rab', full: 'Rabu' },
+    { value: 4, label: 'Kam', full: 'Kamis' },
+    { value: 5, label: 'Jum', full: 'Jumat' },
+    { value: 6, label: 'Sab', full: 'Sabtu' },
+    { value: 0, label: 'Min', full: 'Minggu' },
 ];
+const visibilityChoices: {
+    value: Visibility;
+    label: string;
+    detail: string;
+}[] = [
+    {
+        value: 'private',
+        label: 'Hanya saya',
+        detail: 'Simpan portofolio untuk dirimu dahulu.',
+    },
+    {
+        value: 'institution',
+        label: 'Kampus',
+        detail: 'Bagikan dalam lingkup kampusmu.',
+    },
+    {
+        value: 'recruiter',
+        label: 'Recruiter',
+        detail: 'Izinkan akses melalui Talent Portal.',
+    },
+    {
+        value: 'public',
+        label: 'Publik',
+        detail: 'Portofolio dapat dibuka melalui tautan publik.',
+    },
+];
+const phaseLabels: Partial<Record<Phase, string>> = {
+    affiliation: 'Memeriksa afiliasi...',
+    'pending-check': 'Memeriksa status afiliasi...',
+    profile: 'Menyimpan profil...',
+    availability: 'Menyimpan jadwal...',
+    visibility: 'Menyimpan izin akses...',
+    refresh: 'Memeriksa hasil...',
+};
 
-function defaultTimezone(): string {
-    try {
-        return (
-            Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta'
-        );
-    } catch {
-        return 'Asia/Jakarta';
-    }
+function timezoneName(): string {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
+}
+
+function firstError(errors: Record<string, unknown>, fallback: string): string {
+    const error = Object.values(errors)[0];
+
+    return typeof error === 'string'
+        ? error
+        : Array.isArray(error) && typeof error[0] === 'string'
+          ? error[0]
+          : fallback;
+}
+
+function refreshOnboarding(): Promise<OnboardingState | null> {
+    return new Promise((resolve, reject) => {
+        router.reload({
+            only: ['onboarding', 'shell'],
+            onSuccess: (page) =>
+                resolve(
+                    (page.props.onboarding as OnboardingState | undefined) ??
+                        null,
+                ),
+            onError: () =>
+                reject(new Error('Status belum dapat diperbarui. Coba lagi.')),
+            onHttpException: () => {
+                reject(new Error('Status belum dapat diperbarui. Coba lagi.'));
+
+                return false;
+            },
+            onNetworkError: () => {
+                reject(
+                    new Error(
+                        'Koneksi terputus. Data isianmu tetap tersedia di halaman ini.',
+                    ),
+                );
+
+                return false;
+            },
+            onCancel: () =>
+                reject(new Error('Pemeriksaan dibatalkan. Coba lagi.')),
+        });
+    });
 }
 
 export function OnboardingModal() {
-    const { onboarding } = usePage<PagePropsWithOnboarding>().props;
-    const isRequired = Boolean(onboarding?.required);
-
-    // Multi-step form step state (1, 2, 3)
-    const [currentStep, setCurrentStep] = useState(1);
-
-    // Step 1: Kampus & Data Akademik
-    const [institutionId, setInstitutionId] = useState<string>(
+    const { onboarding } = usePage<OnboardingProps>().props;
+    const [step, setStep] = useState(0);
+    const [institutionId, setInstitutionId] = useState(
         onboarding?.institutionId ? String(onboarding.institutionId) : '',
     );
-    const [nim, setNim] = useState<string>(onboarding?.nim || '');
+    const [nim, setNim] = useState(onboarding?.nim ?? '');
     const [studyProgram, setStudyProgram] = useState(
-        onboarding?.studyProgram || '',
+        onboarding?.studyProgram ?? '',
     );
-    const [studyYear, setStudyYear] = useState<string>(
-        onboarding?.studyYear ? String(onboarding.studyYear) : '',
+    const [studyYear, setStudyYear] = useState(
+        String(onboarding?.studyYear || 1),
     );
-
-    // Step 2: Bio & Keahlian (Skills)
-    const [bio, setBio] = useState(onboarding?.bio || '');
+    const [bio, setBio] = useState(onboarding?.bio ?? '');
     const [skills, setSkills] = useState<DraftSkill[]>([]);
-
-    // Step 3: Ketersediaan Waktu & Visibilitas
     const [availabilityDays, setAvailabilityDays] = useState<number[]>([]);
     const [startsAt, setStartsAt] = useState('09:00');
     const [endsAt, setEndsAt] = useState('17:00');
-
-    // Multi-entity checkbox states
-    const [allowCampus, setAllowCampus] = useState(false);
-    const [allowRecruiter, setAllowRecruiter] = useState(false);
-    const [allowPublic, setAllowPublic] = useState(false);
-
-    // Skill search state
+    const [timezone] = useState(timezoneName);
+    const [visibility, setVisibility] = useState<Visibility>('private');
+    const [discoverable, setDiscoverable] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<Taxonomy[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
-    const [isCreatingSkill, setIsCreatingSkill] = useState(false);
-    const [searchOpen, setSearchOpen] = useState(false);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [searchError, setSearchError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [phase, setPhase] = useState<Phase>('editing');
+    const [holdOpen, setHoldOpen] = useState(false);
+    const titleRef = useRef<HTMLHeadingElement>(null);
+    const errorRef = useRef<HTMLDivElement>(null);
+    const draftTouched = useRef(false);
+    const savingRef = useRef(false);
+    const verifiedAffiliation = useRef<string | null>(
+        onboarding?.membershipStatus === 'verified' &&
+            onboarding.institutionId &&
+            onboarding.nim
+            ? `${onboarding.institutionId}:${onboarding.nim.trim().toLowerCase()}`
+            : null,
+    );
+    const pendingAffiliation = useRef<string | null>(
+        onboarding?.membershipStatus === 'pending' &&
+            onboarding.institutionId &&
+            onboarding.nim
+            ? `${onboarding.institutionId}:${onboarding.nim.trim().toLowerCase()}`
+            : null,
+    );
+    const saveProgress = useRef<SaveProgress | null>(null);
+    const needsReconciliation = useRef(false);
+    const busy = Boolean(phaseLabels[phase]);
+    const institutions = onboarding?.institutions ?? [];
 
-    const abortControllerRef = useRef<AbortController | null>(null);
-
-    const form = useHttp<StudentProfileFormPayload, ProfileResponse>({
-        institution_id: onboarding?.institutionId || 1,
+    const profileForm = useHttp<ProfilePayload, ProfileResponse>({
+        institution_id: 0,
         study_program: '',
         study_year: 1,
         bio: '',
@@ -177,1134 +279,1377 @@ export function OnboardingModal() {
         portfolio_visibility: 'private',
         recruiter_discoverable: false,
     });
+    const availabilityForm = useHttp<
+        { windows: Availability[]; timezone: string },
+        ProfileResponse
+    >({ windows: [], timezone });
+    const visibilityForm = useHttp<
+        { portfolio_visibility: Visibility; recruiter_discoverable: boolean },
+        ProfileResponse
+    >({ portfolio_visibility: 'private', recruiter_discoverable: false });
+    const skillForm = useHttp<
+        { name: string; category: string },
+        { data: Taxonomy }
+    >({ name: '', category: 'software' });
 
-    const affiliationForm = useHttp<
-        { institution_id: number; nim: string },
-        unknown
-    >({
-        institution_id: 1,
-        nim: '',
-    });
-
-    // Reliable debounced skill search using fetch API with AbortController
     useEffect(() => {
         const query = searchQuery.trim();
 
-        if (query.length === 0) {
+        if (!query) {
             return;
         }
 
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-
         const controller = new AbortController();
-        abortControllerRef.current = controller;
-
-        const timer = setTimeout(async () => {
+        const timer = window.setTimeout(async () => {
             setSearchLoading(true);
+            setSearchError(null);
 
             try {
                 const response = await fetch(
-                    `/api/skills/taxonomy?query=${encodeURIComponent(query)}`,
+                    searchTaxonomy.url({ query: { query } }),
                     {
                         signal: controller.signal,
-                        headers: {
-                            Accept: 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
+                        headers: { Accept: 'application/json' },
                     },
                 );
 
-                if (response.ok) {
-                    const json = (await response.json()) as {
-                        data: Taxonomy[];
-                    };
-                    setSearchResults(json.data || []);
+                if (!response.ok) {
+                    throw new Error(
+                        'Keahlian belum dapat dimuat. Coba ketik kembali.',
+                    );
                 }
-            } catch (err: unknown) {
-                if (err instanceof DOMException && err.name === 'AbortError') {
-                    return;
+
+                const result = (await response.json()) as { data: Taxonomy[] };
+
+                if (!controller.signal.aborted) {
+                    setSearchResults(result.data);
+                }
+            } catch (failure) {
+                if (!controller.signal.aborted) {
+                    setSearchError(
+                        failure instanceof Error
+                            ? failure.message
+                            : 'Keahlian belum dapat dimuat.',
+                    );
                 }
             } finally {
-                setSearchLoading(false);
+                if (!controller.signal.aborted) {
+                    setSearchLoading(false);
+                }
             }
-        }, 150);
+        }, 180);
 
         return () => {
-            clearTimeout(timer);
+            window.clearTimeout(timer);
             controller.abort();
         };
     }, [searchQuery]);
 
-    if (!isRequired) {
+    useEffect(() => {
+        if (!onboarding?.required || !onboarding.profileId) {
+            return;
+        }
+
+        const controller = new AbortController();
+        fetch(showProfile.url(onboarding.profileId), {
+            signal: controller.signal,
+            headers: { Accept: 'application/json' },
+        })
+            .then(async (response) => {
+                if (!response.ok) {
+                    return;
+                }
+
+                const result = (await response.json()) as ProfileResponse;
+
+                if (controller.signal.aborted || draftTouched.current) {
+                    return;
+                }
+
+                setSkills(result.data.skills ?? []);
+                const windows = result.data.availability_windows ?? [];
+                setAvailabilityDays(
+                    windows.map((window) => window.day_of_week),
+                );
+
+                if (windows[0]) {
+                    setStartsAt(windows[0].starts_at.slice(0, 5));
+                    setEndsAt(windows[0].ends_at.slice(0, 5));
+                }
+
+                setVisibility(result.data.portfolio_visibility ?? 'private');
+                setDiscoverable(result.data.recruiter_discoverable ?? false);
+            })
+            .catch(() => {
+                /* The user's draft remains editable if the existing profile cannot be read. */
+            });
+
+        return () => controller.abort();
+    }, [onboarding?.profileId, onboarding?.required]);
+
+    if (phase === 'complete' || (!onboarding?.required && !holdOpen)) {
         return null;
     }
 
-    const institutionsList =
-        onboarding?.institutions && onboarding.institutions.length > 0
-            ? onboarding.institutions
-            : [
-                  {
-                      id: 1,
-                      name: onboarding?.institutionName || 'Universitas SATU',
-                  },
-              ];
-
-    function handleSearchChange(value: string) {
-        setSearchQuery(value);
-        setSearchOpen(true);
-
-        if (!value.trim()) {
-            setSearchResults([]);
-        }
+    function moveTo(next: number) {
+        setStep(next);
+        setError(null);
+        window.requestAnimationFrame(() => titleRef.current?.focus());
     }
 
-    function addSkill(item: { id: number; name: string; category?: string }) {
-        if (!skills.some((s) => s.taxonomy_id === item.id)) {
-            setSkills((prev) => [
-                ...prev,
-                {
-                    taxonomy_id: item.id,
-                    name: item.name,
-                    category: item.category,
-                    proficiency: 'intermediate',
-                },
-            ]);
+    function showError(message: string) {
+        setError(message);
+        window.requestAnimationFrame(() => errorRef.current?.focus());
+    }
+
+    function validateStep(): boolean {
+        if (step === 0) {
+            if (
+                !institutionId ||
+                !institutions.some(
+                    (institution) => String(institution.id) === institutionId,
+                )
+            ) {
+                showError('Pilih kampus yang tersedia untuk melanjutkan.');
+
+                return false;
+            }
+
+            if (!nim.trim() || !studyProgram.trim()) {
+                showError('Lengkapi NIM dan program studimu.');
+
+                return false;
+            }
         }
 
+        if (step === 1 && skills.length === 0) {
+            showError('Tambahkan minimal satu keahlianmu.');
+
+            return false;
+        }
+
+        return true;
+    }
+
+    function addSkill(item: Taxonomy) {
+        draftTouched.current = true;
+        setSkills((current) =>
+            current.some((skill) => skill.taxonomy_id === item.id)
+                ? current
+                : [
+                      ...current,
+                      {
+                          taxonomy_id: item.id,
+                          name: item.name,
+                          proficiency: 'intermediate',
+                      },
+                  ],
+        );
         setSearchQuery('');
         setSearchResults([]);
-        setSearchOpen(false);
-        setErrorMessage(null);
+        setSearchLoading(false);
+        setSearchError(null);
     }
 
-    // LinkedIn-style dynamic skill creation
-    async function handleCreateNewSkill(name: string) {
-        const trimmed = name.trim();
-
-        if (!trimmed || isCreatingSkill) {
+    async function createSkill() {
+        if (!searchQuery.trim() || skillForm.processing) {
             return;
         }
 
-        setIsCreatingSkill(true);
-        setErrorMessage(null);
+        skillForm.transform(() => ({
+            name: searchQuery.trim(),
+            category: 'software',
+        }));
+        let message = 'Keahlian belum dapat ditambahkan. Coba lagi.';
 
         try {
-            const csrfToken =
-                document
-                    .querySelector('meta[name="csrf-token"]')
-                    ?.getAttribute('content') || '';
-            const res = await fetch('/api/skills/taxonomy', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
+            const result = await skillForm.post(createTaxonomy.url(), {
+                onError: (errors) => {
+                    message = firstError(errors, message);
                 },
-                body: JSON.stringify({
-                    name: trimmed,
-                    category: 'software',
-                }),
+                onHttpException: () => false,
+                onNetworkError: () => false,
             });
-
-            if (res.ok) {
-                const json = (await res.json()) as { data: Taxonomy };
-
-                if (json.data) {
-                    addSkill(json.data);
-                }
-            }
+            addSkill(result.data);
         } catch {
-            setErrorMessage('Gagal menambahkan skill baru. Coba lagi.');
+            setSearchError(message);
+        }
+    }
+
+    async function checkPendingStatus() {
+        if (savingRef.current) {
+            return;
+        }
+
+        savingRef.current = true;
+        setPhase('pending-check');
+        setError(null);
+
+        try {
+            const latest = await refreshOnboarding();
+            const affiliationKey = `${institutionId}:${nim.trim().toLowerCase()}`;
+            const matches =
+                latest?.institutionId === Number(institutionId) &&
+                latest.nim?.trim().toLowerCase() === nim.trim().toLowerCase();
+
+            if (matches && latest.membershipStatus === 'verified') {
+                pendingAffiliation.current = null;
+                verifiedAffiliation.current = affiliationKey;
+                setPhase('editing');
+            } else if (matches && latest.membershipStatus === 'pending') {
+                pendingAffiliation.current = affiliationKey;
+                setPhase('pending');
+            } else {
+                pendingAffiliation.current = null;
+                setPhase('editing');
+                showError(
+                    'Status afiliasi untuk isian ini belum dapat dipastikan. Periksa kembali kampus dan NIM sebelum mengirim permintaan.',
+                );
+            }
+        } catch (failure) {
+            setPhase('pending');
+            showError(
+                failure instanceof Error
+                    ? failure.message
+                    : 'Status belum dapat dimuat.',
+            );
         } finally {
-            setIsCreatingSkill(false);
+            savingRef.current = false;
         }
     }
 
-    function removeSkill(taxonomyId: number) {
-        setSkills((prev) => prev.filter((s) => s.taxonomy_id !== taxonomyId));
-    }
+    async function save(event: FormEvent) {
+        event.preventDefault();
 
-    function updateSkillProficiency(
-        taxonomyId: number,
-        proficiency: Proficiency,
-    ) {
-        setSkills((prev) =>
-            prev.map((s) =>
-                s.taxonomy_id === taxonomyId ? { ...s, proficiency } : s,
-            ),
-        );
-    }
-
-    function toggleDay(day: number) {
-        setAvailabilityDays((prev) =>
-            prev.includes(day)
-                ? prev.filter((d) => d !== day)
-                : [...prev, day].sort(),
-        );
-        setErrorMessage(null);
-    }
-
-    function resolvePortfolioVisibility(): {
-        visibility: PortfolioVisibility;
-        discoverable: boolean;
-    } {
-        if (allowPublic) {
-            return {
-                visibility: 'public',
-                discoverable: allowRecruiter,
-            };
+        if (savingRef.current || skillForm.processing) {
+            return;
         }
 
-        if (allowRecruiter) {
-            return {
-                visibility: 'recruiter',
-                discoverable: true,
-            };
+        if (!validateStep()) {
+            return;
         }
 
-        if (allowCampus) {
-            return {
-                visibility: 'institution',
-                discoverable: false,
-            };
-        }
-
-        return {
-            visibility: 'private',
-            discoverable: false,
-        };
-    }
-
-    function handleNextStep() {
-        setErrorMessage(null);
-
-        if (currentStep === 1) {
-            if (!institutionId) {
-                setErrorMessage('Silakan pilih institusi/kampus.');
-
-                return;
-            }
-
-            if (!nim.trim()) {
-                setErrorMessage('Nomor Induk Mahasiswa (NIM) wajib diisi.');
-
-                return;
-            }
-
-            if (!studyProgram.trim()) {
-                setErrorMessage('Program studi wajib diisi.');
-
-                return;
-            }
-
-            if (!studyYear) {
-                setErrorMessage('Tahun studi / angkatan wajib dipilih.');
-
-                return;
-            }
-
-            setCurrentStep(2);
-        } else if (currentStep === 2) {
-            if (skills.length === 0) {
-                setErrorMessage('Tambahkan minimal 1 skill utama.');
-
-                return;
-            }
-
-            setCurrentStep(3);
-        }
-    }
-
-    function handlePrevStep() {
-        setErrorMessage(null);
-        setCurrentStep((prev) => Math.max(1, prev - 1));
-    }
-
-    function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
-
-        // Only allow form submit if on Step 3
-        if (currentStep < 3) {
-            handleNextStep();
+        if (step < 2) {
+            moveTo(step + 1);
 
             return;
         }
 
-        setErrorMessage(null);
-
-        if (availabilityDays.length === 0) {
-            setErrorMessage('Pilih minimal 1 hari ketersediaan kolaborasi.');
+        if (!availabilityDays.length) {
+            showError('Pilih minimal satu hari untuk berkolaborasi.');
 
             return;
         }
 
-        const selectedInstitutionId =
-            Number(institutionId) || onboarding?.institutionId || 1;
-        const timezone = defaultTimezone();
+        if (endsAt <= startsAt) {
+            showError('Jam selesai harus setelah jam mulai.');
 
-        const availabilityWindows: DraftAvailability[] = availabilityDays.map(
-            (day) => ({
+            return;
+        }
+
+        savingRef.current = true;
+        setHoldOpen(true);
+        setError(null);
+        const selectedInstitution = Number(institutionId);
+        const affiliationKey = `${institutionId}:${nim.trim().toLowerCase()}`;
+        const payload: ProfilePayload = {
+            institution_id: selectedInstitution,
+            study_program: studyProgram.trim(),
+            study_year: Number(studyYear),
+            bio: bio.trim(),
+            skills: skills.map((skill) => ({
+                taxonomy_id: skill.taxonomy_id,
+                proficiency: skill.proficiency,
+                evidence_metadata: [],
+            })),
+            availability_windows: availabilityDays.map((day) => ({
                 day_of_week: day,
                 starts_at: startsAt,
                 ends_at: endsAt,
                 timezone,
-            }),
-        );
-
-        const { visibility, discoverable } = resolvePortfolioVisibility();
-
-        // Submit affiliation request with NIM if needed
-        if (nim.trim() && selectedInstitutionId) {
-            affiliationForm.setData({
-                institution_id: selectedInstitutionId,
-                nim: nim.trim(),
-            });
-            affiliationForm.post(storeAffiliation.url(), {});
-        }
-
-        const payload: StudentProfileFormPayload = {
-            institution_id: selectedInstitutionId,
-            study_program: studyProgram.trim(),
-            study_year: Number(studyYear),
-            bio: bio.trim(),
-            skills: skills.map((s) => ({
-                taxonomy_id: s.taxonomy_id,
-                proficiency: s.proficiency,
-                evidence_metadata: [],
             })),
-            availability_windows: availabilityWindows,
             portfolio_visibility: visibility,
-            recruiter_discoverable: discoverable,
+            recruiter_discoverable:
+                (visibility === 'recruiter' || visibility === 'public') &&
+                discoverable,
         };
+        let latest = onboarding ?? null;
+        let failureMessage =
+            'Profil belum selesai disimpan. Data isianmu tetap tersedia. Coba lagi.';
 
-        form.setData(payload);
+        try {
+            if (verifiedAffiliation.current !== affiliationKey) {
+                if (pendingAffiliation.current === affiliationKey) {
+                    setPhase('refresh');
+                    latest = await refreshOnboarding();
+                } else {
+                    setPhase('affiliation');
+                    latest = await new Promise<OnboardingState | null>(
+                        (resolve, reject) => {
+                            router.post(
+                                storeAffiliation.url(),
+                                {
+                                    institution_id: selectedInstitution,
+                                    nim: nim.trim(),
+                                },
+                                {
+                                    preserveState: true,
+                                    preserveScroll: true,
+                                    onSuccess: (page) =>
+                                        resolve(
+                                            (page.props.onboarding as
+                                                OnboardingState | undefined) ??
+                                                null,
+                                        ),
+                                    onError: (errors) =>
+                                        reject(
+                                            new Error(
+                                                firstError(
+                                                    errors,
+                                                    'Afiliasi belum dapat diproses. Periksa data kampusmu.',
+                                                ),
+                                            ),
+                                        ),
+                                    onHttpException: () => {
+                                        reject(
+                                            new Error(
+                                                'Afiliasi belum dapat diproses. Periksa akses akunmu dan coba lagi.',
+                                            ),
+                                        );
 
-        if (onboarding?.profileId) {
-            form.patch(studentProfiles.update.url(onboarding.profileId), {
-                onSuccess: () => {
-                    router.reload();
-                },
-                onError: (errors) => {
-                    const firstError = Object.values(errors)[0];
+                                        return false;
+                                    },
+                                    onNetworkError: () => {
+                                        reject(
+                                            new Error(
+                                                'Koneksi terputus. Periksa koneksi lalu coba lagi.',
+                                            ),
+                                        );
 
-                    setErrorMessage(
-                        typeof firstError === 'string'
-                            ? firstError
-                            : 'Gagal memperbarui profil. Periksa kembali input Anda.',
+                                        return false;
+                                    },
+                                    onCancel: () =>
+                                        reject(
+                                            new Error(
+                                                'Penyimpanan dibatalkan. Isianmu tetap tersedia.',
+                                            ),
+                                        ),
+                                },
+                            );
+                        },
                     );
-                },
-            });
-        } else {
-            form.post(studentProfiles.store.url(), {
-                onSuccess: () => {
-                    router.reload();
-                },
-                onError: (errors) => {
-                    const firstError = Object.values(errors)[0];
+                }
 
-                    setErrorMessage(
-                        typeof firstError === 'string'
-                            ? firstError
-                            : 'Gagal menyimpan profil. Periksa kembali input Anda.',
+                const matches =
+                    latest?.institutionId === selectedInstitution &&
+                    latest.nim?.trim().toLowerCase() ===
+                        nim.trim().toLowerCase();
+
+                if (!matches) {
+                    throw new Error(
+                        'Afiliasi belum dapat dikonfirmasi. Periksa nomor WhatsApp terverifikasi dan data kampusmu.',
                     );
+                }
+
+                if (latest?.membershipStatus === 'pending') {
+                    pendingAffiliation.current = affiliationKey;
+                    setPhase('pending');
+
+                    return;
+                }
+
+                if (latest?.membershipStatus !== 'verified') {
+                    throw new Error(
+                        'Afiliasi belum terverifikasi. Periksa kembali akses kampusmu.',
+                    );
+                }
+
+                pendingAffiliation.current = null;
+                verifiedAffiliation.current = affiliationKey;
+            }
+
+            if (needsReconciliation.current) {
+                setPhase('refresh');
+                latest = await refreshOnboarding();
+                needsReconciliation.current = false;
+            }
+
+            const key = JSON.stringify(payload);
+
+            if (saveProgress.current?.key !== key) {
+                saveProgress.current = {
+                    key,
+                    institutionId: selectedInstitution,
+                    profileId:
+                        saveProgress.current?.institutionId ===
+                        selectedInstitution
+                            ? saveProgress.current.profileId
+                            : latest?.institutionId === selectedInstitution
+                              ? latest.profileId
+                              : null,
+                    finished: new Set(),
+                };
+            }
+
+            const progress = saveProgress.current;
+
+            if (
+                !progress.profileId &&
+                latest?.institutionId === selectedInstitution
+            ) {
+                progress.profileId = latest.profileId;
+            }
+
+            const options = {
+                onError: (errors: Record<string, unknown>) => {
+                    failureMessage = firstError(errors, failureMessage);
                 },
-            });
+                onHttpException: () => false,
+                onNetworkError: () => false,
+            };
+
+            if (!progress.finished.has('profile')) {
+                setPhase('profile');
+                profileForm.transform(() => payload);
+                let response: ProfileResponse;
+
+                if (progress.profileId) {
+                    response = await profileForm.patch(
+                        updateProfile.url(progress.profileId),
+                        options,
+                    );
+                } else {
+                    needsReconciliation.current = true;
+                    response = await profileForm.post(
+                        storeProfile.url(),
+                        options,
+                    );
+                    needsReconciliation.current = false;
+                    progress.finished.add('availability');
+                    progress.finished.add('visibility');
+                }
+
+                progress.profileId = response.data.id;
+                progress.finished.add('profile');
+            }
+
+            if (!progress.profileId) {
+                throw new Error('Profil belum dapat dikonfirmasi. Coba lagi.');
+            }
+
+            if (!progress.finished.has('availability')) {
+                setPhase('availability');
+                availabilityForm.transform(() => ({
+                    windows: payload.availability_windows,
+                    timezone,
+                }));
+                await availabilityForm.put(
+                    updateAvailability.url(progress.profileId),
+                    options,
+                );
+                progress.finished.add('availability');
+            }
+
+            if (!progress.finished.has('visibility')) {
+                setPhase('visibility');
+                visibilityForm.transform(() => ({
+                    portfolio_visibility: payload.portfolio_visibility,
+                    recruiter_discoverable: payload.recruiter_discoverable,
+                }));
+                await visibilityForm.patch(
+                    updateVisibility.url(progress.profileId),
+                    options,
+                );
+                progress.finished.add('visibility');
+            }
+
+            setPhase('refresh');
+            const confirmed = await refreshOnboarding();
+
+            if (
+                confirmed?.institutionId !== selectedInstitution ||
+                confirmed.required
+            ) {
+                throw new Error(
+                    'Data tersimpan, tetapi profil belum dinyatakan lengkap. Periksa kembali isianmu.',
+                );
+            }
+
+            setHoldOpen(false);
+            setPhase('complete');
+        } catch (failure) {
+            setPhase('editing');
+            const knownMessage =
+                failure instanceof Error && failure.constructor === Error
+                    ? failure.message
+                    : failureMessage;
+            showError(knownMessage);
+        } finally {
+            savingRef.current = false;
         }
     }
 
-    const hasExactMatch = searchResults.some(
-        (r) => r.name.toLowerCase() === searchQuery.trim().toLowerCase(),
-    );
-
     return (
-        <DialogPrimitive.Root open={true}>
+        <DialogPrimitive.Root open>
             <DialogPrimitive.Portal>
-                {/* Backdrop Blur */}
-                <DialogPrimitive.Overlay className="fixed inset-0 z-50 animate-in bg-slate-950/70 backdrop-blur-sm duration-200 fade-in-0" />
-
+                <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-sm" />
                 <DialogPrimitive.Content
-                    className="fixed top-1/2 left-1/2 z-50 flex max-h-[96vh] w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-2xl duration-200 sm:p-8"
-                    onEscapeKeyDown={(e) => e.preventDefault()}
-                    onPointerDownOutside={(e) => e.preventDefault()}
+                    onEscapeKeyDown={(event) => event.preventDefault()}
+                    onPointerDownOutside={(event) => event.preventDefault()}
+                    className="fixed top-1/2 left-1/2 z-50 flex h-[94svh] max-h-[94svh] w-[calc(100%-1.5rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[2rem] border border-white bg-white shadow-2xl focus:outline-none lg:flex-row"
                 >
-                    {/* Header Section with Step Progress */}
-                    <div className="shrink-0 space-y-4 border-b border-slate-100 pb-5">
-                        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="flex size-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                        <Building2 className="size-4" />
-                                    </span>
-                                    <span className="text-xs font-bold tracking-wider text-blue-700 uppercase">
-                                        {onboarding?.institutionName ||
-                                            'Universitas SATU'}
-                                    </span>
-                                </div>
-                                <h2 className="mt-1.5 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                                    Lengkapi Profil Mahasiswa
-                                </h2>
-                            </div>
-
-                            <span className="self-start rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1 text-xs font-bold text-blue-700 sm:self-auto">
-                                Langkah {currentStep} dari 3
+                    <div
+                        aria-hidden="true"
+                        className="relative h-16 shrink-0 bg-gradient-to-r from-[#e7f4ff] via-[#d7efff] to-[#b9e6ff] lg:hidden"
+                    >
+                        <Mascot
+                            pose={
+                                phase === 'pending' || phase === 'pending-check'
+                                    ? 'peek'
+                                    : 'guide'
+                            }
+                            className="absolute -top-5 right-5 w-28"
+                        />
+                    </div>
+                    <aside className="relative hidden w-72 shrink-0 flex-col justify-between bg-[#e7f4ff] p-7 lg:flex">
+                        <div>
+                            <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold text-blue-800">
+                                <GraduationCap
+                                    aria-hidden="true"
+                                    className="size-4"
+                                />
+                                Kenalan dulu, yuk.
                             </span>
+                            <h2 className="mt-6 text-3xl leading-tight font-bold tracking-tight text-slate-950">
+                                Cerita hebat dimulai dari{' '}
+                                <span className="text-blue-600">dirimu.</span>
+                            </h2>
+                            <p className="mt-4 text-sm leading-6 text-slate-600">
+                                Bantu SATU mengenali keahlian dan waktu luangmu
+                                untuk kolaborasi yang lebih cocok.
+                            </p>
                         </div>
-
-                        {/* Visual Step Progress Indicator */}
-                        <div className="grid grid-cols-3 gap-2 pt-1 sm:gap-4">
-                            {stepLabels.map((s) => {
-                                const isCurrent = currentStep === s.step;
-                                const isCompleted = currentStep > s.step;
-
-                                return (
-                                    <div
-                                        key={s.step}
-                                        className={cn(
-                                            'flex items-center gap-2.5 rounded-xl border p-2 transition-all duration-200 sm:px-3 sm:py-2.5',
-                                            isCurrent
-                                                ? 'border-blue-600 bg-blue-50/60 shadow-2xs'
-                                                : isCompleted
-                                                  ? 'border-emerald-200 bg-emerald-50/40'
-                                                  : 'border-slate-200/80 bg-slate-50/50 opacity-60',
-                                        )}
+                        <div className="relative mt-24 h-48 rounded-[1.75rem] bg-gradient-to-br from-sky-200 to-blue-200">
+                            <Mascot
+                                pose={
+                                    phase === 'pending' ||
+                                    phase === 'pending-check'
+                                        ? 'peek'
+                                        : 'guide'
+                                }
+                                interactive
+                                className="absolute -top-16 left-1/2 w-64 -translate-x-1/2"
+                            />
+                        </div>
+                        <p className="mt-7 flex items-start gap-2 text-xs leading-5 text-slate-600">
+                            <LockKeyhole
+                                aria-hidden="true"
+                                className="mt-0.5 size-4 shrink-0 text-blue-600"
+                            />
+                            Portofoliomu privat sampai kamu memilih untuk
+                            membagikannya.
+                        </p>
+                    </aside>
+                    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                        <header className="shrink-0 px-5 pt-6 pb-5 sm:px-8">
+                            <p className="mb-2 text-xs font-bold tracking-[0.12em] text-blue-700 uppercase">
+                                Ruang untuk bertumbuh
+                            </p>
+                            <DialogPrimitive.Title
+                                ref={titleRef}
+                                tabIndex={-1}
+                                className="text-2xl font-bold tracking-tight text-slate-950 outline-none sm:text-3xl"
+                            >
+                                {phase === 'pending' ||
+                                phase === 'pending-check'
+                                    ? 'Kampus sedang meninjau.'
+                                    : steps[step]}
+                            </DialogPrimitive.Title>
+                            <DialogPrimitive.Description className="mt-2 text-sm leading-6 text-slate-600">
+                                {phase === 'pending' ||
+                                phase === 'pending-check'
+                                    ? 'Permintaan afiliasimu sudah diterima. Profil belum disimpan hingga afiliasi terverifikasi.'
+                                    : 'Lengkapi tiga langkah untuk menyiapkan ruang kolaborasimu.'}
+                            </DialogPrimitive.Description>
+                            <ol
+                                aria-label="Tahapan profil"
+                                className="mt-5 flex gap-2"
+                            >
+                                {steps.map((label, index) => (
+                                    <li
+                                        key={label}
+                                        aria-current={
+                                            step === index ? 'step' : undefined
+                                        }
+                                        className="flex min-w-0 flex-1 items-center gap-2"
                                     >
-                                        <div
+                                        <span
                                             className={cn(
-                                                'flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-colors sm:size-8',
-                                                isCurrent
+                                                'flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+                                                index <= step
                                                     ? 'bg-blue-600 text-white'
-                                                    : isCompleted
-                                                      ? 'bg-emerald-600 text-white'
-                                                      : 'bg-slate-200 text-slate-600',
+                                                    : 'bg-slate-100 text-slate-600',
                                             )}
                                         >
-                                            {isCompleted ? (
-                                                <Check className="size-4" />
+                                            {index < step ? (
+                                                <Check
+                                                    aria-hidden="true"
+                                                    className="size-4"
+                                                />
                                             ) : (
-                                                s.step
+                                                index + 1
                                             )}
-                                        </div>
-                                        <div className="hidden min-w-0 sm:block">
-                                            <p
-                                                className={cn(
-                                                    'truncate text-xs leading-tight font-bold',
-                                                    isCurrent
-                                                        ? 'text-blue-950'
-                                                        : isCompleted
-                                                          ? 'text-emerald-950'
-                                                          : 'text-slate-600',
-                                                )}
-                                            >
-                                                {s.title}
-                                            </p>
-                                            <p className="mt-0.5 truncate text-[0.6875rem] leading-none text-slate-400">
-                                                {s.subtitle}
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Error Alert */}
-                    {errorMessage && (
-                        <Alert className="my-3 shrink-0 rounded-xl border-rose-200 bg-rose-50/90 px-3.5 py-2 text-rose-900">
-                            <AlertDescription className="text-xs leading-5 font-semibold text-rose-800 sm:text-sm">
-                                {errorMessage}
-                            </AlertDescription>
-                        </Alert>
-                    )}
-
-                    {/* Multi-Step Body */}
-                    <form
-                        onSubmit={handleSubmit}
-                        onKeyDown={(e) => {
-                            if (
-                                e.key === 'Enter' &&
-                                currentStep < 3 &&
-                                e.target instanceof HTMLInputElement
-                            ) {
-                                e.preventDefault();
-                            }
-                        }}
-                        className="flex flex-1 flex-col justify-between overflow-y-auto pt-4"
-                    >
-                        {/* STEP 1: Kampus & Data Akademik */}
-                        {currentStep === 1 && (
-                            <div className="space-y-5">
-                                <div className="space-y-4 rounded-2xl border border-slate-200/90 bg-slate-50/50 p-5 shadow-2xs sm:p-6">
-                                    <div className="flex items-center gap-2">
-                                        <GraduationCap className="size-5 text-blue-600" />
-                                        <div>
-                                            <h3 className="text-base font-bold text-slate-900">
-                                                Afiliasi Kampus & Identitas
-                                                Akademik
-                                            </h3>
-                                            <p className="text-xs text-slate-500">
-                                                Pilih institusi kampus Anda dan
-                                                masukkan NIM untuk verifikasi
-                                                data mahasiswa.
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
-                                        {/* Pilihan Kampus */}
-                                        <div className="space-y-1.5">
-                                            <label
-                                                htmlFor="institution_id"
-                                                className="flex items-center justify-between text-sm font-semibold text-slate-800"
-                                            >
-                                                <span className="flex items-center gap-1.5">
-                                                    <Building2 className="size-4 text-blue-600" />
-                                                    Kampus / Institusi
-                                                </span>
-                                                <span className="text-xs font-bold text-rose-500">
-                                                    *Wajib
-                                                </span>
-                                            </label>
-                                            <Select
-                                                value={institutionId}
-                                                onValueChange={(val) => {
-                                                    setInstitutionId(val);
-                                                    setErrorMessage(null);
-                                                }}
-                                            >
-                                                <SelectTrigger
-                                                    id="institution_id"
-                                                    className="h-11 w-full rounded-xl border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-900 shadow-2xs focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                                                >
-                                                    <SelectValue placeholder="Pilih kampus" />
-                                                </SelectTrigger>
-                                                <SelectContent className="rounded-xl border-slate-200">
-                                                    {institutionsList.map(
-                                                        (inst) => (
-                                                            <SelectItem
-                                                                key={inst.id}
-                                                                value={String(
-                                                                    inst.id,
-                                                                )}
-                                                            >
-                                                                {inst.name}
-                                                            </SelectItem>
-                                                        ),
-                                                    )}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        {/* Input NIM */}
-                                        <div className="space-y-1.5">
-                                            <label
-                                                htmlFor="nim"
-                                                className="flex items-center justify-between text-sm font-semibold text-slate-800"
-                                            >
-                                                <span className="flex items-center gap-1.5">
-                                                    <CreditCard className="size-4 text-blue-600" />
-                                                    Nomor Induk Mahasiswa (NIM)
-                                                </span>
-                                                <span className="text-xs font-bold text-rose-500">
-                                                    *Wajib
-                                                </span>
-                                            </label>
-                                            <Input
-                                                id="nim"
-                                                value={nim}
-                                                onChange={(e) => {
-                                                    setNim(e.target.value);
-                                                    setErrorMessage(null);
-                                                }}
-                                                placeholder="Masukkan NIM terdaftar"
-                                                className="h-11 w-full rounded-xl border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-900 shadow-2xs focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                                                required
-                                            />
-                                        </div>
-
-                                        {/* Program Studi */}
-                                        <div className="space-y-1.5">
-                                            <label
-                                                htmlFor="study_program"
-                                                className="flex items-center justify-between text-sm font-semibold text-slate-800"
-                                            >
-                                                <span className="flex items-center gap-1.5">
-                                                    <GraduationCap className="size-4 text-blue-600" />
-                                                    Program Studi
-                                                </span>
-                                                <span className="text-xs font-bold text-rose-500">
-                                                    *Wajib
-                                                </span>
-                                            </label>
-                                            <Input
-                                                id="study_program"
-                                                value={studyProgram}
-                                                onChange={(e) => {
-                                                    setStudyProgram(
-                                                        e.target.value,
-                                                    );
-                                                    setErrorMessage(null);
-                                                }}
-                                                placeholder="Contoh: Teknik Informatika"
-                                                className="h-11 w-full rounded-xl border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-900 shadow-2xs focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                                                required
-                                            />
-                                        </div>
-
-                                        {/* Tahun Studi / Angkatan */}
-                                        <div className="space-y-1.5">
-                                            <label
-                                                htmlFor="study_year"
-                                                className="flex items-center justify-between text-sm font-semibold text-slate-800"
-                                            >
-                                                <span className="flex items-center gap-1.5">
-                                                    <User className="size-4 text-blue-600" />
-                                                    Tahun Studi / Angkatan
-                                                </span>
-                                                <span className="text-xs font-bold text-rose-500">
-                                                    *Wajib
-                                                </span>
-                                            </label>
-                                            <Select
-                                                value={studyYear}
-                                                onValueChange={(val) => {
-                                                    setStudyYear(val);
-                                                    setErrorMessage(null);
-                                                }}
-                                            >
-                                                <SelectTrigger
-                                                    id="study_year"
-                                                    className="h-11 w-full rounded-xl border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-900 shadow-2xs focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                                                >
-                                                    <SelectValue placeholder="Pilih tahun studi" />
-                                                </SelectTrigger>
-                                                <SelectContent className="rounded-xl border-slate-200">
-                                                    <SelectItem value="1">
-                                                        Tahun ke-1 (Tingkat 1 /
-                                                        Semester 1-2)
-                                                    </SelectItem>
-                                                    <SelectItem value="2">
-                                                        Tahun ke-2 (Tingkat 2 /
-                                                        Semester 3-4)
-                                                    </SelectItem>
-                                                    <SelectItem value="3">
-                                                        Tahun ke-3 (Tingkat 3 /
-                                                        Semester 5-6)
-                                                    </SelectItem>
-                                                    <SelectItem value="4">
-                                                        Tahun ke-4 (Tingkat 4 /
-                                                        Semester 7-8)
-                                                    </SelectItem>
-                                                    <SelectItem value="5">
-                                                        Tahun ke-5+ (Tingkat
-                                                        Akhir)
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
+                                        </span>
+                                        <span
+                                            className={cn(
+                                                'hidden text-xs font-semibold sm:block',
+                                                index === step
+                                                    ? 'text-blue-800'
+                                                    : 'text-slate-600',
+                                            )}
+                                        >
+                                            {label}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ol>
+                        </header>
+                        <div className="min-h-0 overflow-y-auto px-5 pb-6 sm:px-8">
+                            {error && (
+                                <div
+                                    ref={errorRef}
+                                    tabIndex={-1}
+                                    role="alert"
+                                    className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-800"
+                                >
+                                    {error}
                                 </div>
-                            </div>
-                        )}
-
-                        {/* STEP 2: Keahlian & Minat */}
-                        {currentStep === 2 && (
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-                                    {/* Left: Bio Singkat */}
-                                    <div className="space-y-3 rounded-2xl border border-slate-200/90 bg-slate-50/50 p-5 shadow-2xs">
-                                        <div className="flex items-center gap-2">
-                                            <User className="size-5 text-blue-600" />
-                                            <div>
-                                                <h3 className="text-base font-bold text-slate-900">
-                                                    Bio & Fokus Minat
-                                                </h3>
-                                                <p className="text-xs text-slate-500">
-                                                    Ceritakan ringkasan fokus
-                                                    keahlian atau proyek yang
-                                                    ingin Anda kembangkan.
+                            )}
+                            {phase === 'pending' ||
+                            phase === 'pending-check' ? (
+                                <div className="space-y-5 py-3">
+                                    <div
+                                        role="status"
+                                        aria-live="polite"
+                                        className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950"
+                                    >
+                                        <Clock3
+                                            aria-hidden="true"
+                                            className="mt-1 size-5 shrink-0"
+                                        />
+                                        <p className="text-sm leading-6">
+                                            Data kampusmu memerlukan peninjauan.
+                                            Isian profil masih tersimpan di
+                                            halaman ini. Kamu dapat memeriksa
+                                            status tanpa mengirim permintaan
+                                            baru.
+                                        </p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        className="w-full cursor-pointer"
+                                        onClick={checkPendingStatus}
+                                        disabled={phase === 'pending-check'}
+                                    >
+                                        {phase === 'pending-check' ? (
+                                            <Spinner />
+                                        ) : (
+                                            <RefreshCw
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                        )}
+                                        {phase === 'pending-check'
+                                            ? 'Memeriksa status afiliasi...'
+                                            : 'Periksa status afiliasi'}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="w-full cursor-pointer"
+                                        onClick={() => setPhase('editing')}
+                                        disabled={phase === 'pending-check'}
+                                    >
+                                        Periksa kembali isian
+                                    </Button>
+                                </div>
+                            ) : (
+                                <form
+                                    onSubmit={save}
+                                    onChange={() => {
+                                        draftTouched.current = true;
+                                    }}
+                                >
+                                    <fieldset
+                                        disabled={busy}
+                                        className="space-y-5 disabled:opacity-70"
+                                    >
+                                        <legend className="sr-only">
+                                            {steps[step]}
+                                        </legend>
+                                        {step === 0 && (
+                                            <div className="grid gap-5 sm:grid-cols-2">
+                                                <div className="grid gap-2 sm:col-span-2">
+                                                    <Label htmlFor="institution_id">
+                                                        Kampus
+                                                    </Label>
+                                                    <Select
+                                                        value={institutionId}
+                                                        onValueChange={(
+                                                            value,
+                                                        ) => {
+                                                            draftTouched.current = true;
+                                                            setInstitutionId(
+                                                                value,
+                                                            );
+                                                        }}
+                                                        disabled={
+                                                            busy ||
+                                                            institutions.length ===
+                                                                0
+                                                        }
+                                                    >
+                                                        <SelectTrigger
+                                                            id="institution_id"
+                                                            className="h-12 w-full rounded-xl"
+                                                        >
+                                                            <SelectValue placeholder="Pilih kampusmu" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {institutions.map(
+                                                                (
+                                                                    institution,
+                                                                ) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            institution.id
+                                                                        }
+                                                                        value={String(
+                                                                            institution.id,
+                                                                        )}
+                                                                    >
+                                                                        {
+                                                                            institution.name
+                                                                        }
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {institutions.length ===
+                                                        0 && (
+                                                        <p
+                                                            role="status"
+                                                            className="text-sm text-slate-600"
+                                                        >
+                                                            Belum ada kampus
+                                                            yang tersedia.
+                                                            Hubungi pengelola
+                                                            SATU untuk
+                                                            melanjutkan.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="nim">
+                                                        Nomor Induk Mahasiswa
+                                                    </Label>
+                                                    <Input
+                                                        id="nim"
+                                                        value={nim}
+                                                        onChange={(event) =>
+                                                            setNim(
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        placeholder="NIM terdaftar"
+                                                        maxLength={50}
+                                                        required
+                                                        className="h-12 rounded-xl"
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="study_year">
+                                                        Tahun studi
+                                                    </Label>
+                                                    <Select
+                                                        value={studyYear}
+                                                        onValueChange={(
+                                                            value,
+                                                        ) => {
+                                                            draftTouched.current = true;
+                                                            setStudyYear(value);
+                                                        }}
+                                                        disabled={busy}
+                                                    >
+                                                        <SelectTrigger
+                                                            id="study_year"
+                                                            className="h-12 w-full rounded-xl"
+                                                        >
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {[
+                                                                1, 2, 3, 4, 5,
+                                                            ].map((year) => (
+                                                                <SelectItem
+                                                                    key={year}
+                                                                    value={String(
+                                                                        year,
+                                                                    )}
+                                                                >
+                                                                    Tahun ke-
+                                                                    {year}
+                                                                    {year === 5
+                                                                        ? ' atau lebih'
+                                                                        : ''}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="grid gap-2 sm:col-span-2">
+                                                    <Label htmlFor="study_program">
+                                                        Program studi
+                                                    </Label>
+                                                    <Input
+                                                        id="study_program"
+                                                        value={studyProgram}
+                                                        onChange={(event) =>
+                                                            setStudyProgram(
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
+                                                        placeholder="Contoh: Teknik Informatika"
+                                                        required
+                                                        className="h-12 rounded-xl"
+                                                    />
+                                                </div>
+                                                <p className="flex items-start gap-2 rounded-2xl bg-blue-50 p-4 text-sm leading-6 text-blue-900 sm:col-span-2">
+                                                    <ShieldCheck
+                                                        aria-hidden="true"
+                                                        className="mt-1 size-4 shrink-0"
+                                                    />
+                                                    NIM dan nomor WhatsApp
+                                                    terverifikasi digunakan
+                                                    untuk mencocokkan afiliasimu
+                                                    dengan data kampus.
                                                 </p>
                                             </div>
-                                        </div>
-
-                                        <textarea
-                                            id="bio"
-                                            value={bio}
-                                            onChange={(e) =>
-                                                setBio(e.target.value)
-                                            }
-                                            rows={5}
-                                            placeholder="Tuliskan ringkasan minat utama, keahlian khusus, atau proyek yang ingin kamu kembangkan bersama tim..."
-                                            className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3.5 text-sm leading-relaxed text-slate-900 shadow-2xs transition-all placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none"
-                                        />
-                                    </div>
-
-                                    {/* Right: Skill & Kemahiran (LinkedIn-Style Search & Create) */}
-                                    <div className="space-y-3 rounded-2xl border border-slate-200/90 bg-slate-50/50 p-5 shadow-2xs">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <Briefcase className="size-5 text-blue-600" />
-                                                <h3 className="text-base font-bold text-slate-900">
-                                                    Skill & Kemahiran Utama
-                                                </h3>
-                                            </div>
-                                            <span className="rounded-md bg-blue-100/80 px-2.5 py-0.5 text-xs font-bold text-blue-800">
-                                                {skills.length} Terpilih
-                                            </span>
-                                        </div>
-
-                                        {/* Search Input with Auto-Create */}
-                                        <div className="relative">
-                                            <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400" />
-                                            <Input
-                                                value={searchQuery}
-                                                onChange={(e) =>
-                                                    handleSearchChange(
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                onFocus={() =>
-                                                    setSearchOpen(true)
-                                                }
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault();
-
-                                                        if (
-                                                            searchResults.length >
-                                                            0
-                                                        ) {
-                                                            addSkill(
-                                                                searchResults[0],
-                                                            );
-                                                        } else if (
-                                                            searchQuery.trim()
-                                                                .length > 0
-                                                        ) {
-                                                            handleCreateNewSkill(
-                                                                searchQuery.trim(),
-                                                            );
+                                        )}
+                                        {step === 1 && (
+                                            <div className="space-y-5">
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="bio">
+                                                        Tentang dirimu{' '}
+                                                        <span className="font-normal text-slate-500">
+                                                            (opsional)
+                                                        </span>
+                                                    </Label>
+                                                    <textarea
+                                                        id="bio"
+                                                        value={bio}
+                                                        onChange={(event) =>
+                                                            setBio(
+                                                                event.target
+                                                                    .value,
+                                                            )
                                                         }
-                                                    }
-                                                }}
-                                                placeholder="Ketik untuk mencari atau membuat skill baru..."
-                                                className="h-11 w-full rounded-xl border-slate-200 bg-white pr-10 pl-10 text-sm shadow-2xs placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                                            />
-                                            {(searchLoading ||
-                                                isCreatingSkill) && (
-                                                <span className="absolute top-1/2 right-3.5 -translate-y-1/2">
-                                                    <Spinner className="size-4 text-blue-600" />
-                                                </span>
-                                            )}
-
-                                            {searchOpen &&
-                                                searchQuery.trim().length >
-                                                    0 && (
-                                                    <div className="absolute z-20 mt-1 max-h-52 w-full space-y-1 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
-                                                        {/* Existing matching results */}
-                                                        {searchResults.map(
-                                                            (item) => (
-                                                                <button
-                                                                    key={
-                                                                        item.id
-                                                                    }
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        addSkill(
-                                                                            item,
-                                                                        )
-                                                                    }
-                                                                    className="flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-slate-800 transition-colors hover:bg-blue-50 hover:text-blue-700"
-                                                                >
-                                                                    <span className="font-semibold">
+                                                        rows={3}
+                                                        className="w-full resize-y rounded-xl border border-input bg-white p-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                                        placeholder="Apa yang ingin kamu pelajari atau bangun bersama?"
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="skill-search">
+                                                        Keahlianmu
+                                                    </Label>
+                                                    <div className="relative">
+                                                        <Search
+                                                            aria-hidden="true"
+                                                            className="absolute top-4 left-3 size-4 text-slate-500"
+                                                        />
+                                                        <Input
+                                                            id="skill-search"
+                                                            value={searchQuery}
+                                                            onChange={(
+                                                                event,
+                                                            ) => {
+                                                                setSearchQuery(
+                                                                    event.target
+                                                                        .value,
+                                                                );
+                                                                setSearchResults(
+                                                                    [],
+                                                                );
+                                                                setSearchLoading(
+                                                                    Boolean(
+                                                                        event.target.value.trim(),
+                                                                    ),
+                                                                );
+                                                                setSearchError(
+                                                                    null,
+                                                                );
+                                                            }}
+                                                            placeholder="Cari desain, pemrograman, dan lainnya"
+                                                            aria-describedby="skill-search-help"
+                                                            className="h-12 rounded-xl pl-10"
+                                                        />
+                                                    </div>
+                                                    <p
+                                                        id="skill-search-help"
+                                                        className="text-xs leading-5 text-slate-600"
+                                                    >
+                                                        Pilih minimal satu
+                                                        keahlian. Kamu bisa
+                                                        menambahkan yang belum
+                                                        tersedia.
+                                                    </p>
+                                                </div>
+                                                {searchQuery.trim() && (
+                                                    <div
+                                                        className="space-y-2 rounded-2xl border border-blue-100 bg-blue-50/50 p-3"
+                                                        aria-label="Hasil pencarian keahlian"
+                                                    >
+                                                        {searchLoading && (
+                                                            <p
+                                                                role="status"
+                                                                className="flex items-center gap-2 p-2 text-sm text-slate-600"
+                                                            >
+                                                                <Spinner />
+                                                                Mencari
+                                                                keahlian...
+                                                            </p>
+                                                        )}
+                                                        {searchError && (
+                                                            <p
+                                                                role="alert"
+                                                                className="p-2 text-sm text-red-700"
+                                                            >
+                                                                {searchError}
+                                                            </p>
+                                                        )}
+                                                        {!searchLoading &&
+                                                            searchResults.map(
+                                                                (item) => (
+                                                                    <button
+                                                                        key={
+                                                                            item.id
+                                                                        }
+                                                                        type="button"
+                                                                        disabled={skills.some(
+                                                                            (
+                                                                                skill,
+                                                                            ) =>
+                                                                                skill.taxonomy_id ===
+                                                                                item.id,
+                                                                        )}
+                                                                        onClick={() =>
+                                                                            addSkill(
+                                                                                item,
+                                                                            )
+                                                                        }
+                                                                        className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                                                                    >
                                                                         {
                                                                             item.name
                                                                         }
-                                                                    </span>
-                                                                    <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500 capitalize">
-                                                                        {
-                                                                            item.category
-                                                                        }
-                                                                    </span>
-                                                                </button>
-                                                            ),
-                                                        )}
-
-                                                        {/* LinkedIn-Style: Create New Skill Option if not exact match */}
-                                                        {!hasExactMatch && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    handleCreateNewSkill(
-                                                                        searchQuery.trim(),
-                                                                    )
-                                                                }
-                                                                disabled={
-                                                                    isCreatingSkill
-                                                                }
-                                                                className="flex w-full cursor-pointer items-center justify-between rounded-xl border border-dashed border-blue-300 bg-blue-50/80 px-3 py-2.5 text-left text-sm text-blue-900 transition-colors hover:bg-blue-100"
-                                                            >
-                                                                <span className="flex items-center gap-2 truncate font-bold">
-                                                                    <Plus className="size-4 shrink-0 text-blue-600" />
-                                                                    <span>
-                                                                        Buat
-                                                                        skill
-                                                                        baru:{' '}
-                                                                        <strong className="underline">
-                                                                            "
-                                                                            {searchQuery.trim()}
-                                                                            "
-                                                                        </strong>
-                                                                    </span>
-                                                                </span>
-                                                                <span className="shrink-0 rounded bg-blue-600 px-2 py-0.5 text-[0.6875rem] font-bold text-white uppercase">
-                                                                    + Tambah
-                                                                </span>
-                                                            </button>
-                                                        )}
+                                                                        <Plus
+                                                                            aria-hidden="true"
+                                                                            className="size-4"
+                                                                        />
+                                                                    </button>
+                                                                ),
+                                                            )}
+                                                        {!searchLoading &&
+                                                            !searchError &&
+                                                            !searchResults.some(
+                                                                (item) =>
+                                                                    item.name.toLowerCase() ===
+                                                                    searchQuery
+                                                                        .trim()
+                                                                        .toLowerCase(),
+                                                            ) && (
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    className="h-auto min-h-11 w-full justify-start text-left whitespace-normal"
+                                                                    onClick={
+                                                                        createSkill
+                                                                    }
+                                                                    disabled={
+                                                                        skillForm.processing
+                                                                    }
+                                                                >
+                                                                    {skillForm.processing ? (
+                                                                        <Spinner />
+                                                                    ) : (
+                                                                        <Plus
+                                                                            aria-hidden="true"
+                                                                            className="size-4"
+                                                                        />
+                                                                    )}
+                                                                    Tambahkan “
+                                                                    {searchQuery.trim()}
+                                                                    ”
+                                                                </Button>
+                                                            )}
                                                     </div>
                                                 )}
-                                        </div>
-
-                                        {/* Selected Skills List */}
-                                        {skills.length === 0 ? (
-                                            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white/70 px-4 py-6 text-center">
-                                                <Briefcase className="mb-1 size-5 text-slate-300" />
-                                                <p className="text-sm font-semibold text-slate-700">
-                                                    Belum ada skill yang
-                                                    ditambahkan
-                                                </p>
-                                                <p className="mt-0.5 text-xs text-slate-500">
-                                                    Ketik nama skill di atas
-                                                    untuk mencari atau membuat
-                                                    skill baru.
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <div className="max-h-40 space-y-2 overflow-y-auto pr-0.5">
-                                                {skills.map((skill) => (
-                                                    <div
-                                                        key={skill.taxonomy_id}
-                                                        className="flex items-center justify-between rounded-xl border border-slate-200/90 bg-white px-3 py-2 shadow-2xs"
-                                                    >
-                                                        <span className="truncate text-sm font-bold text-slate-900">
-                                                            {skill.name}
-                                                        </span>
-
-                                                        <div className="flex shrink-0 items-center gap-2">
-                                                            <Select
-                                                                value={
-                                                                    skill.proficiency
+                                                {skills.length > 0 && (
+                                                    <ul className="space-y-3">
+                                                        {skills.map((skill) => (
+                                                            <li
+                                                                key={
+                                                                    skill.taxonomy_id
                                                                 }
-                                                                onValueChange={(
-                                                                    val: Proficiency,
-                                                                ) =>
-                                                                    updateSkillProficiency(
-                                                                        skill.taxonomy_id,
-                                                                        val,
-                                                                    )
-                                                                }
+                                                                className="flex flex-wrap items-center gap-3 rounded-2xl border border-blue-100 bg-white p-3"
                                                             >
-                                                                <SelectTrigger className="h-8 w-32 rounded-lg border-slate-200 text-xs font-semibold text-slate-700">
-                                                                    <SelectValue />
-                                                                </SelectTrigger>
-                                                                <SelectContent className="rounded-lg border-slate-200">
-                                                                    <SelectItem value="beginner">
-                                                                        {
-                                                                            proficiencyLabels.beginner
-                                                                        }
-                                                                    </SelectItem>
-                                                                    <SelectItem value="intermediate">
-                                                                        {
-                                                                            proficiencyLabels.intermediate
-                                                                        }
-                                                                    </SelectItem>
-                                                                    <SelectItem value="advanced">
-                                                                        {
-                                                                            proficiencyLabels.advanced
-                                                                        }
-                                                                    </SelectItem>
-                                                                    <SelectItem value="expert">
-                                                                        {
-                                                                            proficiencyLabels.expert
-                                                                        }
-                                                                    </SelectItem>
-                                                                </SelectContent>
-                                                            </Select>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    removeSkill(
-                                                                        skill.taxonomy_id,
-                                                                    )
-                                                                }
-                                                                className="cursor-pointer rounded p-1 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
-                                                                aria-label={`Hapus skill ${skill.name}`}
-                                                            >
-                                                                <Trash2 className="size-4" />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                                <span className="min-w-0 flex-1 text-sm font-semibold break-words text-slate-800">
+                                                                    {skill.name}
+                                                                </span>
+                                                                <Select
+                                                                    value={
+                                                                        skill.proficiency
+                                                                    }
+                                                                    onValueChange={(
+                                                                        value: Proficiency,
+                                                                    ) => {
+                                                                        draftTouched.current = true;
+                                                                        setSkills(
+                                                                            (
+                                                                                current,
+                                                                            ) =>
+                                                                                current.map(
+                                                                                    (
+                                                                                        item,
+                                                                                    ) =>
+                                                                                        item.taxonomy_id ===
+                                                                                        skill.taxonomy_id
+                                                                                            ? {
+                                                                                                  ...item,
+                                                                                                  proficiency:
+                                                                                                      value,
+                                                                                              }
+                                                                                            : item,
+                                                                                ),
+                                                                        );
+                                                                    }}
+                                                                    disabled={
+                                                                        busy
+                                                                    }
+                                                                >
+                                                                    <SelectTrigger
+                                                                        aria-label={`Tingkat keahlian ${skill.name}`}
+                                                                        className="w-32 rounded-xl"
+                                                                    >
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        {Object.entries(
+                                                                            proficiencyLabels,
+                                                                        ).map(
+                                                                            ([
+                                                                                value,
+                                                                                label,
+                                                                            ]) => (
+                                                                                <SelectItem
+                                                                                    key={
+                                                                                        value
+                                                                                    }
+                                                                                    value={
+                                                                                        value
+                                                                                    }
+                                                                                >
+                                                                                    {
+                                                                                        label
+                                                                                    }
+                                                                                </SelectItem>
+                                                                            ),
+                                                                        )}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        draftTouched.current = true;
+                                                                        setSkills(
+                                                                            (
+                                                                                current,
+                                                                            ) =>
+                                                                                current.filter(
+                                                                                    (
+                                                                                        item,
+                                                                                    ) =>
+                                                                                        item.taxonomy_id !==
+                                                                                        skill.taxonomy_id,
+                                                                                ),
+                                                                        );
+                                                                    }}
+                                                                    aria-label={`Hapus keahlian ${skill.name}`}
+                                                                    className="flex size-10 cursor-pointer items-center justify-center rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-700"
+                                                                >
+                                                                    <Trash2
+                                                                        aria-hidden="true"
+                                                                        className="size-4"
+                                                                    />
+                                                                </button>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                )}
                                             </div>
                                         )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* STEP 3: Jadwal & Visibilitas Portofolio */}
-                        {currentStep === 3 && (
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-                                    {/* Left: Ketersediaan Waktu */}
-                                    <div className="space-y-4 rounded-2xl border border-slate-200/90 bg-slate-50/50 p-5 shadow-2xs">
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <Clock className="size-5 text-blue-600" />
-                                                <h3 className="text-base font-bold text-slate-900">
-                                                    Ketersediaan Waktu
-                                                    Kolaborasi
-                                                </h3>
-                                            </div>
-                                            <p className="mt-1 text-xs text-slate-500">
-                                                Pilih hari dan jam aktif Anda
-                                                untuk rekomendasi proyek tim
-                                                yang cocok.
-                                            </p>
-                                        </div>
-
-                                        {/* Day buttons */}
-                                        <div className="flex w-full gap-1.5 pt-1">
-                                            {[
-                                                { day: 1, label: 'Sen' },
-                                                { day: 2, label: 'Sel' },
-                                                { day: 3, label: 'Rab' },
-                                                { day: 4, label: 'Kam' },
-                                                { day: 5, label: 'Jum' },
-                                                { day: 6, label: 'Sab' },
-                                                { day: 0, label: 'Min' },
-                                            ].map((d) => {
-                                                const isSelected =
-                                                    availabilityDays.includes(
-                                                        d.day,
-                                                    );
-
-                                                return (
-                                                    <button
-                                                        key={d.day}
-                                                        type="button"
-                                                        onClick={() =>
-                                                            toggleDay(d.day)
-                                                        }
-                                                        className={cn(
-                                                            'flex h-9 flex-1 cursor-pointer items-center justify-center rounded-xl text-xs font-bold transition-all duration-150 sm:text-sm',
-                                                            isSelected
-                                                                ? 'border border-blue-600 bg-blue-600 text-white shadow-xs'
-                                                                : 'border border-slate-200 bg-white text-slate-700 shadow-2xs hover:border-slate-300 hover:bg-slate-50',
+                                        {step === 2 && (
+                                            <div className="space-y-6">
+                                                <fieldset className="space-y-3">
+                                                    <legend className="mb-3 text-sm font-semibold text-slate-800">
+                                                        Kapan kamu bisa
+                                                        berkolaborasi?
+                                                    </legend>
+                                                    <div className="grid grid-cols-7 gap-1.5">
+                                                        {days.map((day) => (
+                                                            <button
+                                                                key={day.value}
+                                                                type="button"
+                                                                aria-pressed={availabilityDays.includes(
+                                                                    day.value,
+                                                                )}
+                                                                aria-label={
+                                                                    day.full
+                                                                }
+                                                                onClick={() => {
+                                                                    draftTouched.current = true;
+                                                                    setAvailabilityDays(
+                                                                        (
+                                                                            current,
+                                                                        ) =>
+                                                                            current.includes(
+                                                                                day.value,
+                                                                            )
+                                                                                ? current.filter(
+                                                                                      (
+                                                                                          value,
+                                                                                      ) =>
+                                                                                          value !==
+                                                                                          day.value,
+                                                                                  )
+                                                                                : [
+                                                                                      ...current,
+                                                                                      day.value,
+                                                                                  ].sort(),
+                                                                    );
+                                                                }}
+                                                                className={cn(
+                                                                    'flex min-h-11 cursor-pointer items-center justify-center rounded-xl border text-xs font-semibold transition-colors',
+                                                                    availabilityDays.includes(
+                                                                        day.value,
+                                                                    )
+                                                                        ? 'border-blue-600 bg-blue-600 text-white'
+                                                                        : 'border-slate-200 bg-white text-slate-600 hover:border-blue-400',
+                                                                )}
+                                                            >
+                                                                {day.label}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="availability-start">
+                                                                Jam mulai
+                                                            </Label>
+                                                            <Input
+                                                                id="availability-start"
+                                                                type="time"
+                                                                value={startsAt}
+                                                                onChange={(
+                                                                    event,
+                                                                ) =>
+                                                                    setStartsAt(
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                required
+                                                                className="h-12 rounded-xl"
+                                                            />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="availability-end">
+                                                                Jam selesai
+                                                            </Label>
+                                                            <Input
+                                                                id="availability-end"
+                                                                type="time"
+                                                                value={endsAt}
+                                                                onChange={(
+                                                                    event,
+                                                                ) =>
+                                                                    setEndsAt(
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                required
+                                                                className="h-12 rounded-xl"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs text-slate-600">
+                                                        Zona waktu: {timezone}.
+                                                        Jam yang sama berlaku
+                                                        pada hari pilihanmu.
+                                                    </p>
+                                                </fieldset>
+                                                <fieldset>
+                                                    <legend className="mb-3 text-sm font-semibold text-slate-800">
+                                                        Siapa yang boleh melihat
+                                                        portofoliomu?
+                                                    </legend>
+                                                    <div className="grid gap-2 sm:grid-cols-2">
+                                                        {visibilityChoices.map(
+                                                            (choice) => (
+                                                                <label
+                                                                    key={
+                                                                        choice.value
+                                                                    }
+                                                                    className={cn(
+                                                                        'flex cursor-pointer items-start gap-3 rounded-2xl border p-3',
+                                                                        visibility ===
+                                                                            choice.value
+                                                                            ? 'border-blue-500 bg-blue-50'
+                                                                            : 'border-slate-200 bg-white',
+                                                                    )}
+                                                                >
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="portfolio-visibility"
+                                                                        value={
+                                                                            choice.value
+                                                                        }
+                                                                        checked={
+                                                                            visibility ===
+                                                                            choice.value
+                                                                        }
+                                                                        onChange={() =>
+                                                                            setVisibility(
+                                                                                choice.value,
+                                                                            )
+                                                                        }
+                                                                        className="mt-1 size-4 accent-blue-600"
+                                                                    />
+                                                                    <span>
+                                                                        <span className="block text-sm font-semibold text-slate-800">
+                                                                            {
+                                                                                choice.label
+                                                                            }
+                                                                        </span>
+                                                                        <span className="mt-1 block text-xs leading-5 text-slate-600">
+                                                                            {
+                                                                                choice.detail
+                                                                            }
+                                                                        </span>
+                                                                    </span>
+                                                                </label>
+                                                            ),
                                                         )}
-                                                    >
-                                                        {d.label}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-
-                                        {/* Time range */}
-                                        <div className="flex items-center gap-2.5 pt-1">
-                                            <span className="text-sm font-semibold text-slate-600">
-                                                Pukul:
-                                            </span>
-                                            <Input
-                                                type="time"
-                                                value={startsAt}
-                                                onChange={(e) =>
-                                                    setStartsAt(e.target.value)
-                                                }
-                                                className="h-10 flex-1 rounded-xl border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                                            />
-                                            <span className="text-sm font-medium text-slate-400">
-                                                s/d
-                                            </span>
-                                            <Input
-                                                type="time"
-                                                value={endsAt}
-                                                onChange={(e) =>
-                                                    setEndsAt(e.target.value)
-                                                }
-                                                className="h-10 flex-1 rounded-xl border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                                            />
-                                            <span className="rounded-lg bg-slate-100 px-2 py-1.5 text-xs font-bold text-slate-600">
-                                                WIB
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Right: Visibilitas Checkboxes */}
-                                    <div className="space-y-4 rounded-2xl border border-slate-200/90 bg-slate-50/50 p-5 shadow-2xs">
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <Globe className="size-5 text-blue-600" />
-                                                <h3 className="text-base font-bold text-slate-900">
-                                                    Izin Akses & Visibilitas
-                                                    Portofolio
-                                                </h3>
+                                                    </div>
+                                                </fieldset>
+                                                {(visibility === 'recruiter' ||
+                                                    visibility ===
+                                                        'public') && (
+                                                    <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-blue-50 p-4">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={
+                                                                discoverable
+                                                            }
+                                                            onChange={(event) =>
+                                                                setDiscoverable(
+                                                                    event.target
+                                                                        .checked,
+                                                                )
+                                                            }
+                                                            className="mt-1 size-4 accent-blue-600"
+                                                        />
+                                                        <span className="text-sm leading-6 text-slate-700">
+                                                            Tampilkan profil
+                                                            saya dalam pencarian
+                                                            recruiter. Pilihan
+                                                            ini dapat diubah
+                                                            nanti.
+                                                        </span>
+                                                    </label>
+                                                )}
                                             </div>
-                                            <p className="mt-1 text-xs text-slate-500">
-                                                Pilih target entitas yang
-                                                diizinkan melihat portofolio
-                                                terverifikasi Anda.
-                                            </p>
-                                        </div>
-
-                                        <div className="grid grid-cols-3 gap-2 pt-1 sm:gap-2.5">
-                                            {/* Checkbox 1: Kampus */}
-                                            <label
-                                                className={cn(
-                                                    'flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-3 text-sm shadow-2xs transition-all duration-150 select-none',
-                                                    allowCampus
-                                                        ? 'border-blue-500 bg-blue-50/80 font-bold text-blue-950'
-                                                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50',
-                                                )}
+                                        )}
+                                    </fieldset>
+                                    <footer className="sticky -bottom-6 mt-7 flex items-center justify-between gap-3 border-t border-slate-100 bg-white py-5">
+                                        {step > 0 ? (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="cursor-pointer"
+                                                onClick={() => moveTo(step - 1)}
+                                                disabled={busy}
                                             >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={allowCampus}
-                                                    onChange={(e) =>
-                                                        setAllowCampus(
-                                                            e.target.checked,
-                                                        )
-                                                    }
-                                                    className="size-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                                <ArrowLeft
+                                                    aria-hidden="true"
+                                                    className="size-4"
                                                 />
-                                                <div className="min-w-0">
-                                                    <span className="block truncate text-sm font-bold">
-                                                        Kampus
-                                                    </span>
-                                                    <span className="mt-0.5 block text-[0.7rem] leading-none font-normal text-slate-500">
-                                                        Internal
-                                                    </span>
-                                                </div>
-                                            </label>
-
-                                            {/* Checkbox 2: Perekrut */}
-                                            <label
-                                                className={cn(
-                                                    'flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-3 text-sm shadow-2xs transition-all duration-150 select-none',
-                                                    allowRecruiter
-                                                        ? 'border-blue-500 bg-blue-50/80 font-bold text-blue-950'
-                                                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50',
-                                                )}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={allowRecruiter}
-                                                    onChange={(e) =>
-                                                        setAllowRecruiter(
-                                                            e.target.checked,
-                                                        )
-                                                    }
-                                                    className="size-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <div className="min-w-0">
-                                                    <span className="block truncate text-sm font-bold">
-                                                        Perekrut
-                                                    </span>
-                                                    <span className="mt-0.5 block text-[0.7rem] leading-none font-normal text-slate-500">
-                                                        Industri
-                                                    </span>
-                                                </div>
-                                            </label>
-
-                                            {/* Checkbox 3: Publik */}
-                                            <label
-                                                className={cn(
-                                                    'flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-3 text-sm shadow-2xs transition-all duration-150 select-none',
-                                                    allowPublic
-                                                        ? 'border-blue-500 bg-blue-50/80 font-bold text-blue-950'
-                                                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50',
-                                                )}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={allowPublic}
-                                                    onChange={(e) =>
-                                                        setAllowPublic(
-                                                            e.target.checked,
-                                                        )
-                                                    }
-                                                    className="size-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <div className="min-w-0">
-                                                    <span className="block truncate text-sm font-bold">
-                                                        Publik
-                                                    </span>
-                                                    <span className="mt-0.5 block text-[0.7rem] leading-none font-normal text-slate-500">
-                                                        Tautan luar
-                                                    </span>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Footer Navigation Bar */}
-                        <div className="mt-4 flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 pt-5">
-                            {currentStep > 1 ? (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={handlePrevStep}
-                                    className="h-11 cursor-pointer rounded-xl border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 shadow-2xs hover:bg-slate-50"
-                                >
-                                    <ArrowLeft className="mr-1.5 size-4" />
-                                    Kembali
-                                </Button>
-                            ) : (
-                                <div className="flex hidden items-center gap-1.5 text-xs text-slate-500 sm:flex">
-                                    <Info className="size-4 shrink-0 text-slate-400" />
-                                    <span>
-                                        Lengkapi data akademik untuk
-                                        melanjutkan.
-                                    </span>
-                                </div>
-                            )}
-
-                            {currentStep < 3 ? (
-                                <Button
-                                    type="button"
-                                    onClick={handleNextStep}
-                                    className="ml-auto h-11 min-w-[160px] cursor-pointer rounded-xl bg-blue-600 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition-all hover:bg-blue-700"
-                                >
-                                    Lanjutkan
-                                    <ArrowRight className="ml-1.5 size-4" />
-                                </Button>
-                            ) : (
-                                <Button
-                                    type="submit"
-                                    size="lg"
-                                    disabled={form.processing}
-                                    className="ml-auto h-11 min-w-[160px] cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg disabled:cursor-not-allowed"
-                                >
-                                    {form.processing ? (
-                                        <>
-                                            <Spinner className="mr-1.5 size-4 text-white" />
-                                            Menyimpan...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Check className="mr-1.5 size-4" />
-                                            Simpan Profil
-                                        </>
+                                                Kembali
+                                            </Button>
+                                        ) : (
+                                            <span className="text-xs text-slate-600">
+                                                Langkah {step + 1} dari 3
+                                            </span>
+                                        )}
+                                        <Button
+                                            type="submit"
+                                            disabled={
+                                                busy ||
+                                                skillForm.processing ||
+                                                institutions.length === 0
+                                            }
+                                            className="min-h-12 cursor-pointer rounded-xl px-5"
+                                        >
+                                            {busy ? (
+                                                <>
+                                                    <Spinner />
+                                                    {phaseLabels[phase]}
+                                                </>
+                                            ) : step < 2 ? (
+                                                <>
+                                                    Lanjutkan
+                                                    <ArrowRight
+                                                        aria-hidden="true"
+                                                        className="size-4"
+                                                    />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    Simpan profil
+                                                    <CheckCheck
+                                                        aria-hidden="true"
+                                                        className="size-4"
+                                                    />
+                                                </>
+                                            )}
+                                        </Button>
+                                    </footer>
+                                    {busy && (
+                                        <p role="status" className="sr-only">
+                                            {phaseLabels[phase]}
+                                        </p>
                                     )}
-                                </Button>
+                                </form>
                             )}
                         </div>
-                    </form>
+                    </div>
                 </DialogPrimitive.Content>
             </DialogPrimitive.Portal>
         </DialogPrimitive.Root>

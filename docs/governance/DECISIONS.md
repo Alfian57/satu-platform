@@ -2,40 +2,40 @@
 
 ## Aturan
 
-Accepted decision adalah product atau architecture contract. Open gate hanya dapat ditutup oleh owner yang berwenang melalui GitHub issue dan pull request yang memperbarui owning document. Implementer tidak boleh menutup gate melalui asumsi.
+Accepted decision adalah product atau architecture contract. Open gate hanya dapat ditutup oleh owner yang berwenang melalui keputusan eksplisit yang dicatat pada issue dan dokumen pemilik. Implementer tidak boleh menutup gate melalui asumsi.
 
 ## Accepted Decisions
 
-| ID      | Keputusan                                                                          | Dampak                                                                                                                                                                       |
-| ------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DEC-001 | Produk perlombaan adalah SATU, bukan competition-management system                 | Seluruh backlog membangun platform SATU                                                                                                                                      |
-| DEC-002 | Rilis mencakup proposal kecuali Bab 4.2                                            | Talent, gamification, academic sandbox, inclusion, dan landing masuk release                                                                                                 |
-| DEC-003 | Satu kampus pilot lebih dahulu                                                     | Model tetap institution-aware, rollout lintas kampus ditunda                                                                                                                 |
-| DEC-004 | Tidak ada email pada target flow                                                   | Identity memakai private username, password, dan verified WhatsApp phone                                                                                                     |
-| DEC-005 | Roster exact match memakai NIM dan verified phone                                  | Mismatch atau ambiguity masuk manual review                                                                                                                                  |
-| DEC-006 | Platform admin menyetujui institution dan mengundang campus admin via WhatsApp     | Privileged role tidak tersedia lewat open registration                                                                                                                       |
-| DEC-007 | Fonnte adalah initial WhatsApp provider melalui backend adapter dan queue          | SATU membuat OTP; tidak memakai unofficial Fonnte package                                                                                                                    |
-| DEC-008 | In-app notification center adalah canonical                                        | WhatsApp hanya untuk approved important purpose                                                                                                                              |
-| DEC-009 | Campus reviewer memvalidasi contribution langsung                                  | Team confirmation tidak diperlukan                                                                                                                                           |
-| DEC-010 | Hybrid leaderboard memakai group default dan individual opt-in                     | Average verified XP, semester, cohort minimal 5, shared rank                                                                                                                 |
-| DEC-011 | Inclusion tidak menjadi leaderboard input                                          | Mencegah stigma dan feedback loop yang tidak adil                                                                                                                            |
-| DEC-012 | Inclusion engine/UI production-ready di balik feature flag                         | Synthetic demo diperbolehkan, real activation menunggu governance                                                                                                            |
-| DEC-013 | Talent Portal memakai verified organization dan internal entitlement               | Billing provider serta pricing di luar release                                                                                                                               |
-| DEC-014 | Academic integration baseline adalah contract plus sandbox                         | Real campus API adalah external gate                                                                                                                                         |
-| DEC-015 | Native Laravel Policies/Gates adalah authorization baseline                        | Role berasal dari membership dan tenant context                                                                                                                              |
-| DEC-016 | Gunakan mature library ketika fit dan kompatibel                                   | Issue wajib menyebut package atau framework-native decision                                                                                                                  |
-| DEC-017 | GitHub issues/milestones adalah execution truth                                    | Phase files dan progress file dipensiunkan setelah migration audit                                                                                                           |
-| DEC-018 | Main memakai protected pull-request workflow dengan owner admin bypass             | Required CI, resolved conversations, no force/delete, dan **Squash and merge**; contributor non-owner memerlukan 1 approval, owner boleh self-review dan merge sebagai admin |
-| DEC-019 | Owner ditandai label role, bukan assignee sementara                                | Assignee ditambahkan setelah komposisi tim final                                                                                                                             |
-| DEC-020 | Consumer boleh development dengan stacked branch setelah contract checkpoint       | Parent diberi label `contract-ready`; consumer memakai `Stacked on: #<issue>` dan base branch parent; merge tetap menunggu seluruh hard dependency closed                    |
-| DEC-021 | Satu institution pilot untuk rilis perlombaan                                      | Model tenant tetap institution-aware tanpa hardcoded single-tenant; ekspansi lintas institusi tidak memerlukan perubahan model keamanan                                      |
-| DEC-022 | Roster adalah milik institution dan disediakan dalam CSV/spreadsheet               | Institution bertanggung jawab atas kebenaran data; SATU hanya mengimpor, memvalidasi, dan tidak memodifikasi roster yang sudah committed                                     |
-| DEC-023 | Exact match NIM dan verified phone pada roster aktif adalah jalur verifikasi utama | Normalized NIM dan nomor WhatsApp E.164 dibandingkan terhadap roster; mismatch, ambiguity, atau record tidak aktif masuk manual review                                       |
-| DEC-024 | Active member didefinisikan per semester per institution                           | Student dengan verified affiliation, terdaftar pada roster semester aktif, serta memiliki minimal satu approved contribution pada semester tersebut                          |
-| DEC-025 | Manual review affiliation memiliki SLA 3 hari kerja                                | Campus reviewer menindaklanjuti affiliation queue dalam 3 hari kerja; eskalasi ke platform admin setelah 5 hari kerja tanpa tindakan                                         |
-| DEC-026 | Roster import bersifat immutable setelah committed                                 | Setiap import menyimpan checksum, source filename, timestamp, dan batch identity; correction atau penambahan masuk sebagai batch baru, bukan modifikasi in-place             |
-| DEC-027 | Tenant isolation mencakup seluruh layer                                            | Institution-scoped queries, Policies, jobs, cache keys, storage paths, exports, dan Reverb channels; platform admin memakai explicit audited cross-tenant scope              |
-| DEC-028 | XP, badge, dan leaderboard policy versioned dalam dokumen terpisah                  | Seluruh aturan gamification dikonsolidasi di `docs/governance/gamification-policy.md` dengan semantic versioning, audit owner, dan approval gate                              |
+| ID      | Keputusan                                                                          | Dampak                                                                                                                                                           |
+| ------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DEC-001 | Produk perlombaan adalah SATU, bukan competition-management system                 | Seluruh backlog membangun platform SATU                                                                                                                          |
+| DEC-002 | Rilis mencakup proposal kecuali Bab 4.2                                            | Talent, gamification, academic sandbox, inclusion, dan landing masuk release                                                                                     |
+| DEC-003 | Satu kampus pilot lebih dahulu                                                     | Model tetap institution-aware, rollout lintas kampus ditunda                                                                                                     |
+| DEC-004 | Tidak ada email pada target flow                                                   | Identity memakai private username, password, dan verified WhatsApp phone                                                                                         |
+| DEC-005 | Roster exact match memakai NIM dan verified phone                                  | Mismatch atau ambiguity masuk manual review                                                                                                                      |
+| DEC-006 | Platform admin menyetujui institution dan mengundang campus admin via WhatsApp     | Privileged role tidak tersedia lewat open registration                                                                                                           |
+| DEC-007 | Fonnte adalah initial WhatsApp provider melalui backend adapter dan queue          | SATU membuat OTP; tidak memakai unofficial Fonnte package                                                                                                        |
+| DEC-008 | In-app notification center adalah canonical                                        | WhatsApp hanya untuk approved important purpose                                                                                                                  |
+| DEC-009 | Campus reviewer memvalidasi contribution langsung                                  | Team confirmation tidak diperlukan                                                                                                                               |
+| DEC-010 | Hybrid leaderboard memakai group default dan individual opt-in                     | Average verified XP, semester, cohort minimal 5, shared rank                                                                                                     |
+| DEC-011 | Inclusion tidak menjadi leaderboard input                                          | Mencegah stigma dan feedback loop yang tidak adil                                                                                                                |
+| DEC-012 | Inclusion engine/UI production-ready di balik feature flag                         | Synthetic demo diperbolehkan, real activation menunggu governance                                                                                                |
+| DEC-013 | Talent Portal memakai verified organization dan internal entitlement               | Billing provider serta pricing di luar release                                                                                                                   |
+| DEC-014 | Academic integration baseline adalah contract plus sandbox                         | Real campus API adalah external gate                                                                                                                             |
+| DEC-015 | Native Laravel Policies/Gates adalah authorization baseline                        | Role berasal dari membership dan tenant context                                                                                                                  |
+| DEC-016 | Gunakan mature library ketika fit dan kompatibel                                   | Issue wajib menyebut package atau framework-native decision                                                                                                      |
+| DEC-017 | GitHub issues/milestones adalah execution truth                                    | Phase files dan progress file dipensiunkan setelah migration audit                                                                                               |
+| DEC-018 | Main branch dilindungi oleh required checks                                        | Force push dan penghapusan branch dinonaktifkan                                                                                                                  |
+| DEC-019 | Owner ditandai label role, bukan assignee sementara                                | Assignee ditambahkan setelah komposisi tim final                                                                                                                 |
+| DEC-020 | Consumer boleh development dengan stacked branch setelah contract checkpoint       | Parent diberi label `contract-ready`; consumer memakai `Stacked on: #<issue>` dan base branch parent; merge tetap menunggu seluruh hard dependency closed        |
+| DEC-021 | Satu institution pilot untuk rilis perlombaan                                      | Model tenant tetap institution-aware tanpa hardcoded single-tenant; ekspansi lintas institusi tidak memerlukan perubahan model keamanan                          |
+| DEC-022 | Roster adalah milik institution dan disediakan dalam CSV/spreadsheet               | Institution bertanggung jawab atas kebenaran data; SATU hanya mengimpor, memvalidasi, dan tidak memodifikasi roster yang sudah committed                         |
+| DEC-023 | Exact match NIM dan verified phone pada roster aktif adalah jalur verifikasi utama | Normalized NIM dan nomor WhatsApp E.164 dibandingkan terhadap roster; mismatch, ambiguity, atau record tidak aktif masuk manual review                           |
+| DEC-024 | Active member didefinisikan per semester per institution                           | Student dengan verified affiliation, terdaftar pada roster semester aktif, serta memiliki minimal satu approved contribution pada semester tersebut              |
+| DEC-025 | Manual review affiliation memiliki SLA 3 hari kerja                                | Campus reviewer menindaklanjuti affiliation queue dalam 3 hari kerja; eskalasi ke platform admin setelah 5 hari kerja tanpa tindakan                             |
+| DEC-026 | Roster import bersifat immutable setelah committed                                 | Setiap import menyimpan checksum, source filename, timestamp, dan batch identity; correction atau penambahan masuk sebagai batch baru, bukan modifikasi in-place |
+| DEC-027 | Tenant isolation mencakup seluruh layer                                            | Institution-scoped queries, Policies, jobs, cache keys, storage paths, exports, dan Reverb channels; platform admin memakai explicit audited cross-tenant scope  |
+| DEC-028 | XP, badge, dan leaderboard policy versioned dalam dokumen terpisah                 | Seluruh aturan gamification dikonsolidasi di `docs/governance/gamification-policy.md` dengan semantic versioning, audit owner, dan approval gate                 |
 
 ## Approved Library Direction
 
@@ -53,36 +53,36 @@ Accepted decision adalah product atau architecture contract. Open gate hanya dap
 | Browser accessibility | `@axe-core/playwright`                                    |
 | WhatsApp              | Laravel HTTP Client, Notifications, Queue, Fonnte adapter |
 
-Installasi dependency baru tetap mengikuti approval project dan compatibility/license review pada issue.
+Installasi dependency baru tetap mengikuti approval project dan compatibility/license checks yang dicatat pada issue.
 
 ## Talent Entitlement and Recruiter Verification
 
 ### Accepted Decisions
 
-| ID      | Keputusan                                                                | Dampak                                                                                                                                                                                                                                                               |
-| ------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DEC-021 | Recruiter organization diverifikasi oleh platform admin                 | Recruiter tidak dapat dibuat melalui open registration. Invitation atau application ke recruiter organization memerlukan evidence organisasi dan disetujui oleh platform admin. Recruiter organization adalah tenant-scoped yang terpisah dari institution.          |
-| DEC-022 | Talent Portal access hanya dengan active entitlement                   | Entitlement diterbitkan platform admin per recruiter organization. Tidak ada bayaran, price, atau billing pada rilis kompetisi. Tanpa entitlement active, seluruh search, saved-candidate mutation, dan contact request ditolak.                                     |
+| ID      | Keputusan                                                               | Dampak                                                                                                                                                                                                                                                                 |
+| ------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DEC-021 | Recruiter organization diverifikasi oleh platform admin                 | Recruiter tidak dapat dibuat melalui open registration. Invitation atau application ke recruiter organization memerlukan evidence organisasi dan disetujui oleh platform admin. Recruiter organization adalah tenant-scoped yang terpisah dari institution.            |
+| DEC-022 | Talent Portal access hanya dengan active entitlement                    | Entitlement diterbitkan platform admin per recruiter organization. Tidak ada bayaran, price, atau billing pada rilis kompetisi. Tanpa entitlement active, seluruh search, saved-candidate mutation, dan contact request ditolak.                                       |
 | DEC-023 | Recruiter-safe projection adalah hard boundary                          | Recruiter hanya menerima field yang di-allowlist: display name, program studi, skill, proficiency, portfolio entry yang visible, dan badge. Username, NIM, phone, private evidence, discussion, raw audit, matching input, inclusion signal, dan leaderboard dilarang. |
-| DEC-024 | Contact request memerlukan student consent untuk handoff nomor WhatsApp | Recruiter mengirim contact request tanpa melihat nomor WhatsApp. Student accept menjadi explicit consented handoff; student decline atau cabut visibility menghentikan proyeksi. Visibility withdrawal tidak menghapus data yang sudah di-share sesuai retention.     |
-| DEC-025 | Recruiter membership memiliki lifecycle audit                           | Setiap perubahan status membership (active, suspended, revoked), entitlement issuance, entitlement expiration, contact handoff, dan visibility withdrawal harus diaudit. Audit log mengacu pada SECURITY_PRIVACY.md section 11.                                       |
-| DEC-026 | Cross-organization membership dilarang                                  | Satu user tidak boleh memiliki membership di lebih dari satu recruiter organization secara bersamaan. Skenario pindah organisasi memerlukan proses revoke dan re-verification yang diaudit.                                                                          |
-| DEC-027 | Student mengontrol visibility per portfolio entry                      | Student dapat mengaktifkan, menonaktifkan, atau mencabut visibility per entry. Recruiter discoverability diatur melalui consent eksplisit. Default visibility adalah off (tidak dibagikan ke recruiter).                                                              |
-| DEC-028 | Entitlement expiration menolak aksi baru tanpa menghapus data historis  | Saat entitlement expired, search, saved-candidate mutation, dan contact request baru ditolak. Data historis yang sudah ada (saved candidate, contact request yang sudah dikirim) dipertahankan sesuai retention matrix.                                               |
+| DEC-024 | Contact request memerlukan student consent untuk handoff nomor WhatsApp | Recruiter mengirim contact request tanpa melihat nomor WhatsApp. Student accept menjadi explicit consented handoff; student decline atau cabut visibility menghentikan proyeksi. Visibility withdrawal tidak menghapus data yang sudah di-share sesuai retention.      |
+| DEC-025 | Recruiter membership memiliki lifecycle audit                           | Setiap perubahan status membership (active, suspended, revoked), entitlement issuance, entitlement expiration, contact handoff, dan visibility withdrawal harus diaudit. Audit log mengacu pada SECURITY_PRIVACY.md section 11.                                        |
+| DEC-026 | Cross-organization membership dilarang                                  | Satu user tidak boleh memiliki membership di lebih dari satu recruiter organization secara bersamaan. Skenario pindah organisasi memerlukan proses revoke dan re-verification yang diaudit.                                                                            |
+| DEC-027 | Student mengontrol visibility per portfolio entry                       | Student dapat mengaktifkan, menonaktifkan, atau mencabut visibility per entry. Recruiter discoverability diatur melalui consent eksplisit. Default visibility adalah off (tidak dibagikan ke recruiter).                                                               |
+| DEC-028 | Entitlement expiration menolak aksi baru tanpa menghapus data historis  | Saat entitlement expired, search, saved-candidate mutation, dan contact request baru ditolak. Data historis yang sudah ada (saved candidate, contact request yang sudah dikirim) dipertahankan sesuai retention matrix.                                                |
 
 ### Open
 
-| ID          | Keputusan yang dibutuhkan                                                                                         | Owner                   | Batas                                                              |
-| ----------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------ |
-| GATE-004    | Recruiter verification, entitlement issuance, contact, dan retention policy                                       | Product + legal/privacy | Sebelum recruiter pilot                                            |
-| GATE-004-A  | Dokumen atau evidence apa yang wajib diserahkan recruiter organization untuk verifikasi (NPWP/SIUP/Akta/profil)?  | Product + legal/privacy | Sebelum verifikasi recruiter organization production               |
-| GATE-004-B  | Siapa yang berwenang menyetujui atau menolak recruiter organization (platform admin tunggal atau multi-reviewer)? | Product                 | Sebelum verifikasi recruiter organization production               |
-| GATE-004-C  | Apakah entitlement memiliki tier (misal basic/pro) atau satu tier universal untuk rilis kompetisi?                | Product                 | Sebelum implementasi entitlement                                   |
-| GATE-004-D  | Berapa durasi default entitlement dan apakah ada renewal process?                                                | Product                 | Sebelum implementasi entitlement                                   |
-| GATE-004-E  | Kondisi apa yang memicu revoke otomatis vs manual review untuk membership recruiter?                              | Product + legal/privacy | Sebelum implementasi recruiter membership lifecycle                |
-| GATE-004-F  | Berapa retention period untuk data contact dan saved candidate setelah visibility withdrawal atau membership revoke? | Legal/privacy           | Sebelum recruiter pilot                                            |
-| GATE-004-G  | Apakah recruiter organization bisa di-suspend atau di-revoke oleh platform admin, dan apa dampaknya?              | Product + legal/privacy | Sebelum recruiter pilot                                            |
-| GATE-004-H  | Bagaimana proses pindah recruiter organization (revoke + re-verify), dan apakah ada cooldown period?              | Product                 | Sebelum implementasi recruiter membership cross-organization flow  |
+| ID         | Keputusan yang dibutuhkan                                                                                            | Owner                   | Batas                                                             |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------------------------- |
+| GATE-004   | Recruiter verification, entitlement issuance, contact, dan retention policy                                          | Product + legal/privacy | Sebelum recruiter pilot                                           |
+| GATE-004-A | Dokumen atau evidence apa yang wajib diserahkan recruiter organization untuk verifikasi (NPWP/SIUP/Akta/profil)?     | Product + legal/privacy | Sebelum verifikasi recruiter organization production              |
+| GATE-004-B | Siapa yang berwenang menyetujui atau menolak recruiter organization (platform admin tunggal atau multi-reviewer)?    | Product                 | Sebelum verifikasi recruiter organization production              |
+| GATE-004-C | Apakah entitlement memiliki tier (misal basic/pro) atau satu tier universal untuk rilis kompetisi?                   | Product                 | Sebelum implementasi entitlement                                  |
+| GATE-004-D | Berapa durasi default entitlement dan apakah ada renewal process?                                                    | Product                 | Sebelum implementasi entitlement                                  |
+| GATE-004-E | Kondisi apa yang memicu revoke otomatis vs manual review untuk membership recruiter?                                 | Product + legal/privacy | Sebelum implementasi recruiter membership lifecycle               |
+| GATE-004-F | Berapa retention period untuk data contact dan saved candidate setelah visibility withdrawal atau membership revoke? | Legal/privacy           | Sebelum recruiter pilot                                           |
+| GATE-004-G | Apakah recruiter organization bisa di-suspend atau di-revoke oleh platform admin, dan apa dampaknya?                 | Product + legal/privacy | Sebelum recruiter pilot                                           |
+| GATE-004-H | Bagaimana proses pindah recruiter organization (revoke + re-verify), dan apakah ada cooldown period?                 | Product                 | Sebelum implementasi recruiter membership cross-organization flow |
 
 ## Open Gates
 
@@ -93,7 +93,7 @@ Installasi dependency baru tetap mengikuti approval project dan compatibility/li
 | GATE-003 | Academic credit mapping dan real pilot API contract                                                                                | Product + institution engineering | Sebelum real provider connection |
 | GATE-004 | Recruiter verification, entitlement issuance, contact, dan retention policy                                                        | Product + legal/privacy           | Sebelum recruiter pilot          |
 | GATE-005 | Final visual reference dan competition UAT                                                                                         | Product owner                     | Sebelum release                  |
-| GATE-011 | Approval gamification policy v1.0.0 (XP source, badge taxonomy, leaderboard rules, anti-abuse, dan governance)                      | Product-design                    | Sebelum GM02 (XP ledger)         |
+| GATE-011 | Approval gamification policy v1.0.0 (XP source, badge taxonomy, leaderboard rules, anti-abuse, dan governance)                     | Product-design                    | Sebelum GM02 (XP ledger)         |
 
 ## Pilot Institution and Roster Contract
 
@@ -185,7 +185,7 @@ Item berikut memerlukan konfirmasi eksternal dari pilot institution:
 - [ ] Institution menunjuk campus admin dan nomor WhatsApp yang akan diundang.
 - [ ] Institution mengonfirmasi tenancy boundaries dan isolation contract.
 
-GATE-001 ditutup setelah seluruh item di atas dikonfirmasi oleh institution dan dicatat dalam pull request ini atau issue lanjutan.
+GATE-001 ditutup setelah seluruh item di atas dikonfirmasi oleh institution dan dicatat pada issue atau dokumen pemilik.
 
 ## Academic Credit Mapping and Pilot API
 
@@ -193,20 +193,20 @@ Keputusan berikut membentuk kontrak antara SATU dan kampus pilot untuk integrasi
 
 ### Accepted
 
-| ID       | Keputusan                                                               | Dampak                                                                                                                         |
-| -------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| DEC-021  | Mapping vocabulary distandardisasi dengan tiga entitas inti             | Activity, Badge, dan Credit menjadi vocab yang dapat dipetakan dan diaudit                                                     |
-| DEC-022  | Mapping schema diberi version integer yang disimpan bersama mapping     | Setiap mapping memiliki `version` integer. Version baru tidak otomatis berlaku untuk data historis                             |
-| DEC-023  | Campus admin adalah approver mapping kredit                             | Hanya campus admin dengan permission `manage_credit_mapping` yang dapat membuat, mengubah, dan mengaktifkan mapping            |
-| DEC-024  | Satu activity dapat memiliki maksimal satu mapping aktif per version    | Unique constraint `(activity_id, version)` dengan `active = true`. Duplicate submission ditolak di database layer              |
-| DEC-025  | Mapping history append-only                                             | Perubahan mapping menyimpan versi sebelumnya. Tidak ada hard delete. Soft archive dengan `active = false` dan `archived_at`   |
-| DEC-026  | Sandbox adapter mengembalikan data synthetic yang diberi label          | Tidak menyatakan integrasi kampus nyata telah aktif. Data synthetic mencakup success, partial, dan failure scenarios          |
-| DEC-027  | Sync job memiliki idempotency key unik per external reference           | Key: `{mapping_version}:{external_reference}:{period}`. Duplicate processing ditolak berdasarkan key                           |
-| DEC-028  | Retry exponential backoff 1m, 5m, 15m, 60m, lalu dead-letter           | Max 5 attempt. `maxExceptions: 3` per job class. Timeout per attempt: 30 detik                                                 |
-| DEC-029  | Failure review queue untuk campus admin                                 | Sync yang gagal masuk ke `academic_sync_failures` dengan status, attempt, last_error, dan retry action. Admin dapat retry manual |
-| DEC-030  | Konfigurasi provider disimpan terenkripsi pada server-side env/config   | API key, base URL, dan institution secret disimpan sebagai Laravel encrypted config. Tidak masuk log, browser, atau API response |
-| DEC-031  | External duplicate dikembalikan ke campus admin untuk rekonsiliasi      | Ketika provider eksternal melaporkan data yang sudah ada di SATU, entry akan di-flag `reconciliation_pending` dan masuk queue review |
-| DEC-032  | Sandbox pilot mencakup seluruh kontrak koneksi kecuali auth production  | Sandbox menggunakan fake token, mock endpoint, dan synthetic dataset. Hanya auth production yang digantikan oleh kampus nyata  |
+| ID      | Keputusan                                                              | Dampak                                                                                                                               |
+| ------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| DEC-021 | Mapping vocabulary distandardisasi dengan tiga entitas inti            | Activity, Badge, dan Credit menjadi vocab yang dapat dipetakan dan diaudit                                                           |
+| DEC-022 | Mapping schema diberi version integer yang disimpan bersama mapping    | Setiap mapping memiliki `version` integer. Version baru tidak otomatis berlaku untuk data historis                                   |
+| DEC-023 | Campus admin adalah approver mapping kredit                            | Hanya campus admin dengan permission `manage_credit_mapping` yang dapat membuat, mengubah, dan mengaktifkan mapping                  |
+| DEC-024 | Satu activity dapat memiliki maksimal satu mapping aktif per version   | Unique constraint `(activity_id, version)` dengan `active = true`. Duplicate submission ditolak di database layer                    |
+| DEC-025 | Mapping history append-only                                            | Perubahan mapping menyimpan versi sebelumnya. Tidak ada hard delete. Soft archive dengan `active = false` dan `archived_at`          |
+| DEC-026 | Sandbox adapter mengembalikan data synthetic yang diberi label         | Tidak menyatakan integrasi kampus nyata telah aktif. Data synthetic mencakup success, partial, dan failure scenarios                 |
+| DEC-027 | Sync job memiliki idempotency key unik per external reference          | Key: `{mapping_version}:{external_reference}:{period}`. Duplicate processing ditolak berdasarkan key                                 |
+| DEC-028 | Retry exponential backoff 1m, 5m, 15m, 60m, lalu dead-letter           | Max 5 attempt. `maxExceptions: 3` per job class. Timeout per attempt: 30 detik                                                       |
+| DEC-029 | Failure review queue untuk campus admin                                | Sync yang gagal masuk ke `academic_sync_failures` dengan status, attempt, last_error, dan retry action. Admin dapat retry manual     |
+| DEC-030 | Konfigurasi provider disimpan terenkripsi pada server-side env/config  | API key, base URL, dan institution secret disimpan sebagai Laravel encrypted config. Tidak masuk log, browser, atau API response     |
+| DEC-031 | External duplicate dikembalikan ke campus admin untuk rekonsiliasi     | Ketika provider eksternal melaporkan data yang sudah ada di SATU, entry akan di-flag `reconciliation_pending` dan masuk queue review |
+| DEC-032 | Sandbox pilot mencakup seluruh kontrak koneksi kecuali auth production | Sandbox menggunakan fake token, mock endpoint, dan synthetic dataset. Hanya auth production yang digantikan oleh kampus nyata        |
 
 ### Pilot API Boundaries
 
@@ -215,9 +215,9 @@ Sandbox pilot mencakup:
 - **Connection contract:** Adapter di balik `AcademicGateway` interface. Sandbox implementation disediakan SATU. Production implementation menunggu API key dan endpoint dari kampus.
 - **Authentication:** Sandbox memakai static fake token. Production menggunakan institution-scoped API key yang disediakan kampus, dikirim sebagai `Authorization: Bearer <token>` header.
 - **Endpoint contract:**
-  - `POST /sync/activities` -- kirim aktivitas mahasiswa ke kampus.
-  - `GET /sync/status/{batch_id}` -- cek status batch sync.
-  - `POST /credits/verify` -- verifikasi kredit yang diterima dari kampus.
+    - `POST /sync/activities` -- kirim aktivitas mahasiswa ke kampus.
+    - `GET /sync/status/{batch_id}` -- cek status batch sync.
+    - `POST /credits/verify` -- verifikasi kredit yang diterima dari kampus.
 - **Sync scope:** Aktivitas dengan kontribusi approved. Data mahasiswa mencakup NIM, activity_id, badge_id, period, credit_claim, dan mapping_version. Data diproyeksikan dengan allowlist.
 - **Failure handling:** Delivery failure masuk retry queue. Integration failure (4xx/5xx) dicatat dengan correlation ID dan dapat ditinjau campus admin. Timeout setelah 30 detik.
 - **Rate limit:** Sandbox tidak membatasi. Production mengikuti rate limit yang ditentukan kampus, dengan backpressure pada queue dispatcher.
@@ -246,13 +246,13 @@ Sandbox adapter harus mendemonstrasikan:
 
 ### Open
 
-| ID       | Keputusan yang dibutuhkan                                     | Owner                             | Batas                                |
-| -------- | ------------------------------------------------------------- | --------------------------------- | ------------------------------------ |
-| GATE-006 | Format CSV rosters untuk initial data seeding campus pilot    | Institution engineering           | Sebelum sandbox data seeding         |
-| GATE-007 | Credit type taxonomy dan bobot SKS per aktivitas              | Institution academic office       | Sebelum mapping go-live             |
-| GATE-008 | API base URL, auth mechanism, dan rate limit kampus produksi  | Institution engineering           | Sebelum production provider build   |
-| GATE-009 | Endpoint contract final (field mapping, error codes, format)  | Institution engineering + product | Sebelum production provider build   |
-| GATE-010 | Approval workflow kredit kampus (auto-accept vs manual)       | Institution academic office       | Sebelum mapping go-live             |
+| ID       | Keputusan yang dibutuhkan                                    | Owner                             | Batas                             |
+| -------- | ------------------------------------------------------------ | --------------------------------- | --------------------------------- |
+| GATE-006 | Format CSV rosters untuk initial data seeding campus pilot   | Institution engineering           | Sebelum sandbox data seeding      |
+| GATE-007 | Credit type taxonomy dan bobot SKS per aktivitas             | Institution academic office       | Sebelum mapping go-live           |
+| GATE-008 | API base URL, auth mechanism, dan rate limit kampus produksi | Institution engineering           | Sebelum production provider build |
+| GATE-009 | Endpoint contract final (field mapping, error codes, format) | Institution engineering + product | Sebelum production provider build |
+| GATE-010 | Approval workflow kredit kampus (auto-accept vs manual)      | Institution academic office       | Sebelum mapping go-live           |
 
 ## Gamification Policy
 
@@ -260,19 +260,19 @@ Kebijakan lengkap XP, badge, dan hybrid leaderboard didokumentasikan dalam dokum
 
 ### Accepted
 
-| ID       | Keputusan                                                         | Dampak                                                                                                         |
-| -------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| DEC-028   | XP, badge, dan leaderboard policy dikonsolidasi dalam satu dokumen versioned | Seluruh aturan gamification dikonsolidasi di `docs/governance/gamification-policy.md` dengan semantic versioning, audit owner, dan approval gate |
+| ID      | Keputusan                                                                    | Dampak                                                                                                                                           |
+| ------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| DEC-028 | XP, badge, dan leaderboard policy dikonsolidasi dalam satu dokumen versioned | Seluruh aturan gamification dikonsolidasi di `docs/governance/gamification-policy.md` dengan semantic versioning, audit owner, dan approval gate |
 
 ### Open
 
-| ID       | Keputusan yang dibutuhkan                                         | Owner          | Batas                    |
-| -------- | ----------------------------------------------------------------- | -------------- | ------------------------ |
-| GATE-011 | Approval gamification policy v1.0.0                                | Product-design | Sebelum GM02 (XP ledger) |
+| ID       | Keputusan yang dibutuhkan           | Owner          | Batas                    |
+| -------- | ----------------------------------- | -------------- | ------------------------ |
+| GATE-011 | Approval gamification policy v1.0.0 | Product-design | Sebelum GM02 (XP ledger) |
 
 ## Change Rules
 
 - Product boundary berubah: update `PRODUCT.md` dan PRD.
 - Entity, event, Policy, provider, atau retention berubah: update engineering/security docs.
-- Route behavior berubah: update matching surface brief.
+- Route behavior berubah: update `docs/ux/SCREEN_INVENTORY.md` dan dokumen UX terkait.
 - Task status berubah: update GitHub issue/milestone saja.

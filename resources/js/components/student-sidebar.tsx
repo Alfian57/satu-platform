@@ -63,19 +63,22 @@ const membershipStatusMeta: Record<
 > = {
     unverified: {
         label: 'Belum terverifikasi',
-        className: 'border-slate-200 bg-slate-50 text-slate-600',
+        className: 'border-border bg-muted text-muted-foreground',
     },
     pending: {
         label: 'Menunggu tinjauan',
-        className: 'border-amber-200 bg-amber-50 text-amber-800',
+        className:
+            'border-pending/30 bg-pending-subtle text-pending-subtle-foreground',
     },
     verified: {
         label: 'Terverifikasi',
-        className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+        className:
+            'border-verified/30 bg-verified-subtle text-verified-subtle-foreground',
     },
     suspended: {
         label: 'Akses ditangguhkan',
-        className: 'border-rose-200 bg-rose-50 text-rose-800',
+        className:
+            'border-correction/30 bg-correction-subtle text-correction-subtle-foreground',
     },
 };
 
@@ -90,7 +93,7 @@ function StudentNav() {
 
     return (
         <nav aria-label="Navigasi mahasiswa" className="px-3">
-            <p className="px-3 text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
+            <p className="px-3 text-xs font-semibold text-muted-foreground">
                 Ruang kerja
             </p>
             <ul className="mt-3 grid gap-1.5">
@@ -110,10 +113,10 @@ function StudentNav() {
                                     }
                                 }}
                                 className={cn(
-                                    'flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
+                                    'flex min-h-11 cursor-pointer items-center gap-3 rounded-2xl px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none',
                                     isActive
-                                        ? 'bg-blue-600 text-white'
-                                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                                        ? 'bg-sidebar-accent text-primary shadow-xs'
+                                        : 'text-muted-foreground hover:bg-white hover:text-primary',
                                 )}
                             >
                                 {Icon && (
@@ -121,8 +124,8 @@ function StudentNav() {
                                         className={cn(
                                             'flex size-7 shrink-0 items-center justify-center rounded-lg transition-colors',
                                             isActive
-                                                ? 'bg-white/20 text-white'
-                                                : 'bg-slate-100 text-slate-500',
+                                                ? 'bg-white text-primary'
+                                                : 'bg-white/70 text-muted-foreground',
                                         )}
                                     >
                                         <Icon
@@ -148,16 +151,17 @@ function InstitutionContext({ shell }: { shell: ShellContext }) {
         return (
             <Link
                 href={dashboard()}
-                className="group flex min-h-11 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 transition-colors hover:border-blue-200 hover:bg-blue-50"
+                aria-label="Hubungkan akun dengan kampus"
+                className="group flex min-h-11 cursor-pointer items-center gap-3 rounded-2xl border border-white bg-white/75 px-3 py-3 transition-colors hover:border-blue-200 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none"
             >
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-accent text-primary">
                     <Building2 aria-hidden="true" className="size-4" />
                 </span>
                 <span className="min-w-0">
-                    <span className="block text-xs font-medium text-slate-500">
+                    <span className="block text-xs font-medium text-muted-foreground">
                         Afiliasi kampus
                     </span>
-                    <span className="mt-0.5 block text-sm font-semibold text-slate-950 group-hover:text-blue-700">
+                    <span className="mt-0.5 block text-sm font-semibold text-foreground group-hover:text-primary">
                         Hubungkan kampus
                     </span>
                 </span>
@@ -168,19 +172,19 @@ function InstitutionContext({ shell }: { shell: ShellContext }) {
     const status = membershipStatusMeta[membership.status];
     const content = (
         <>
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-accent text-primary">
                 <ShieldCheck aria-hidden="true" className="size-4" />
             </span>
             <span className="min-w-0">
-                <span className="block text-xs font-medium text-slate-500">
+                <span className="block text-xs font-medium text-muted-foreground">
                     Afiliasi kampus
                 </span>
-                <span className="mt-0.5 block truncate text-sm font-semibold text-slate-950">
+                <span className="mt-0.5 block truncate text-sm font-semibold text-foreground">
                     {membership.institutionName}
                 </span>
                 <span
                     className={cn(
-                        'mt-2 inline-flex rounded-md border px-2 py-1 text-xs font-semibold',
+                        'mt-2 inline-flex rounded-full border px-2 py-1 text-xs font-semibold',
                         status.className,
                     )}
                 >
@@ -191,13 +195,14 @@ function InstitutionContext({ shell }: { shell: ShellContext }) {
     );
 
     return membership.status === 'verified' ? (
-        <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3">
+        <div className="flex items-start gap-3 rounded-2xl border border-white bg-white/75 px-3 py-3">
             {content}
         </div>
     ) : (
         <Link
             href={dashboard()}
-            className="flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 transition-colors hover:border-blue-200 hover:bg-blue-50"
+            aria-label={`Buka status afiliasi ${membership.institutionName}`}
+            className="flex min-h-11 cursor-pointer items-start gap-3 rounded-2xl border border-white bg-white/75 px-3 py-3 transition-colors hover:border-blue-200 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none"
         >
             {content}
         </Link>
@@ -211,28 +216,28 @@ export function StudentSidebar() {
         <Sidebar
             collapsible="offcanvas"
             variant="sidebar"
-            className="border-r border-slate-200 bg-white text-slate-950"
+            className="border-r border-sidebar-border/70 bg-sidebar text-sidebar-foreground"
         >
-            <SidebarHeader className="h-16 shrink-0 flex-row items-center border-b border-slate-200 p-0 px-4">
+            <SidebarHeader className="h-20 shrink-0 flex-row items-center p-0 px-5">
                 <Link
                     aria-label="SATU: Beranda"
                     href={dashboard()}
                     prefetch
-                    className="flex w-full items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+                    className="flex w-full items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                 >
                     <AppLogo
                         className="text-slate-950"
-                        logoClassName="size-9 rounded-lg"
+                        logoClassName="size-10 rounded-2xl"
                         ruleClassName="bg-blue-600"
                     />
                 </Link>
             </SidebarHeader>
 
-            <SidebarContent className="py-5">
+            <SidebarContent className="gap-8 py-4">
                 <StudentNav />
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-slate-200 p-4">
+            <SidebarFooter className="p-4">
                 <InstitutionContext shell={shell} />
             </SidebarFooter>
         </Sidebar>

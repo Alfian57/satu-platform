@@ -1,9 +1,5 @@
 {
-    "agents": [
-        "claude_code",
-        "codex",
-        "opencode"
-    ],
+    "agents": ["claude_code", "codex", "opencode"],
     "cloud": false,
     "guidelines": true,
     "mcp": true,
@@ -13,8 +9,6 @@
         "fortify-development",
         "laravel-best-practices",
         "wayfinder-development",
-        "pest-testing",
-        "inertia-react-development",
-        "tailwindcss-development"
+        "pest-testing"
     ]
 }
