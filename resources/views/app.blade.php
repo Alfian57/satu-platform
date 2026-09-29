@@ -8,7 +8,7 @@
         <style>
             html {
                 color-scheme: light;
-                background-color: #f7f9fc;
+                background-color: #f3f9ff;
             }
 
             html[data-appearance='dark'] {

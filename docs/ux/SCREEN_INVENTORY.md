@@ -2,23 +2,23 @@
 
 ## Inventory
 
-| Surface                   | Audience          | Mode       | Surface brief                                       | Status target                                     |
-| ------------------------- | ----------------- | ---------- | --------------------------------------------------- | ------------------------------------------------- |
-| Landing                   | Public            | Persuade   | `.impeccable/surfaces/route.md`                     | Release                                           |
-| Register, login, recovery | Student           | Operate    | `.impeccable/surfaces/route-login.md`               | Release                                           |
-| Onboarding                | Student           | Operate    | `.impeccable/surfaces/route-onboarding.md`          | Release                                           |
-| Notification center       | Authenticated     | Operate    | `.impeccable/surfaces/route-notifications.md`       | Release                                           |
-| Dashboard                 | Role-aware        | Operate    | dashboard brief dan LOADING_STATES.md               | Reference tersedia, role/data integration planned |
-| Project discovery/detail  | Student           | Operate    | `.impeccable/surfaces/route-projects.md`            | Release                                           |
-| Workspace                 | Team              | Operate    | `.impeccable/surfaces/route-projects-workspace.md`  | Release                                           |
-| Contribution/portfolio    | Student           | Operate    | `.impeccable/surfaces/route-contributions.md`       | Release                                           |
-| Public portfolio          | Public            | Experience | `.impeccable/surfaces/route-p-publicidentifier.md`  | Release                                           |
-| Leaderboard               | Student/campus    | Operate    | `.impeccable/surfaces/route-leaderboards.md`        | Release                                           |
-| Campus operations         | Campus            | Operate    | `.impeccable/surfaces/route-campus.md`              | Release                                           |
-| Inclusion review          | Authorized campus | Operate    | `.impeccable/surfaces/route-campus-inclusion.md`    | Gated                                             |
-| Academic operations       | Campus            | Operate    | `.impeccable/surfaces/route-campus-integrations.md` | Sandbox release                                   |
-| Platform operations       | Platform admin    | Operate    | `.impeccable/surfaces/route-platform.md`            | Release                                           |
-| Talent Portal             | Recruiter/student | Operate    | `.impeccable/surfaces/route-talent.md`              | Release                                           |
+| Surface                   | Audience          | Mode       | Status target                     |
+| ------------------------- | ----------------- | ---------- | --------------------------------- |
+| Landing                   | Public            | Persuade   | Release                           |
+| Register, login, recovery | Student           | Operate    | Release                           |
+| Onboarding                | Student           | Operate    | Release                           |
+| Notification center       | Authenticated     | Operate    | Release                           |
+| Dashboard                 | Student           | Operate    | Release, actual state-driven data |
+| Project discovery/detail  | Student           | Operate    | Release                           |
+| Workspace                 | Team              | Operate    | Release                           |
+| Contribution/portfolio    | Student           | Operate    | Release                           |
+| Public portfolio          | Public            | Experience | Release                           |
+| Leaderboard               | Student/campus    | Operate    | Release                           |
+| Campus operations         | Campus            | Operate    | Release                           |
+| Inclusion review          | Authorized campus | Operate    | Gated                             |
+| Academic operations       | Campus            | Operate    | Sandbox release                   |
+| Platform operations       | Platform admin    | Operate    | Release                           |
+| Talent Portal             | Recruiter/student | Operate    | Release                           |
 
 ## Shared State Matrix
 
@@ -32,7 +32,7 @@ siap digunakan.
 ## Surface Acceptance
 
 - Auth: OTP tidak membocorkan account existence; timer, resend, lockout, dan recovery accessible.
-- Onboarding: affiliation outcome dan manual-review recovery dipahami.
+- Onboarding: affiliation outcome dan manual-review recovery dipahami. Profil hanya disimpan setelah membership verified; draft tetap tersedia saat menunggu review.
 - Project: filter, explanation, capacity, dan permission state jelas.
 - Workspace: keyboard-equivalent commands dan reconnect reconciliation tersedia.
 - Contribution: version, evidence, reviewer reason, dan provenance terbaca.
@@ -42,6 +42,14 @@ siap digunakan.
 - Talent: entitlement dan visibility boundary terlihat sebelum search/contact.
 - Landing: synthetic demo berlabel, motion dapat dikurangi, dan tidak ada invented evidence.
 
+## Arah Redesign Landing, Auth, dan Dashboard Mahasiswa
+
+- Landing memakai maskot burung SATU sebagai focal point pada hero. Maskot boleh melampaui card di ruang yang disediakan, sementara copy dan CTA tetap terlihat. Journey, role selector, dan synthetic graph tetap bisa dipakai dengan keyboard serta memiliki text equivalent.
+- Auth menampilkan form sebagai fokus utama dan maskot sebagai pendamping visual. Alur username/password, WhatsApp OTP, cooldown, anti-enumeration, expired, validation, dan processing tetap sama.
+- Onboarding mempertahankan tiga langkah kampus, skill, dan availability/visibility. Saat afiliasi menunggu review kampus, pertahankan draft, jelaskan bahwa profil belum tersimpan, dan sediakan tindakan untuk memeriksa status.
+- Dashboard menempatkan next action dan active projects berbasis data runtime sebagai konten utama. Recommendation explanation dan semua status deferred tetap mempertahankan state loading, empty, error, forbidden, stale, dan processing.
+- Semua surface mewarisi token global pada DESIGN.md. Maskot tidak menutupi focus ring, copy, input, atau aksi. Layout harus reflow mulai 320px dan tetap dapat dioperasikan pada reduced motion.
+
 ## Build Priority
 
-Urutan delivery ditentukan milestone GitHub M0 sampai M9. UI issue tidak boleh dimulai sebelum surface brief dan backend contract yang menjadi dependency tersedia.
+Urutan delivery ditentukan milestone GitHub M0 sampai M9. UI issue tidak boleh dimulai sebelum behavior surface, acceptance criteria, dan backend contract yang menjadi dependency tersedia pada owning docs dan issue.

@@ -2,48 +2,43 @@
 
 ## Mulai
 
-1. Baca `AGENTS.md` dan `START_HERE.md`.
-2. Baca [AI Execution Guide](implementation/AI_EXECUTION_GUIDE.md) untuk workflow agent.
-3. Jalankan ownership gate GitHub CLI seperti yang dijelaskan pada [Dependency Workflow](implementation/DEPENDENCY_WORKFLOW.md).
-4. Buka selected GitHub issue yang berlabel `ready` atau `stacked` sesuai ownership dan dependency.
-5. Baca hanya owning docs yang ditautkan issue.
-6. Periksa runtime sebelum menyatakan planned capability telah implemented.
+1. Ikuti permintaan pengguna dan baca `AGENTS.md` serta `START_HERE.md`.
+2. Baca dokumen pemilik yang relevan. Baca issue GitHub hanya jika pengguna menunjuk issue tersebut.
+3. Periksa runtime sebelum menyatakan planned capability telah implemented.
 
 ## Source of Truth
 
-| Urutan | Sumber                                 | Pemilik kebenaran                      |
-| ------ | -------------------------------------- | -------------------------------------- |
-| 1      | `PRODUCT.md`                           | Durable product boundary               |
-| 2      | `docs/product/PRD.md`                  | Requirement dan release acceptance     |
-| 3      | `DESIGN.md`                            | Global visual authority                |
-| 4      | `docs/ux/` dan `.impeccable/surfaces/` | Route behavior, content, accessibility |
-| 5      | `docs/engineering/`                    | Architecture, data, security, privacy  |
-| 6      | GitHub issues dan roadmap              | Execution dan verification             |
-| 7      | `docs/governance/DECISIONS.md`         | Accepted decisions dan open gates      |
-| 8      | `docs/reference/proposal_lomba.md`     | Historical input                       |
+| Urutan | Sumber                             | Pemilik kebenaran                      |
+| ------ | ---------------------------------- | -------------------------------------- |
+| 1      | `PRODUCT.md`                       | Durable product boundary               |
+| 2      | `docs/product/PRD.md`              | Requirement dan release acceptance     |
+| 3      | `DESIGN.md`                        | Global visual authority                |
+| 4      | `docs/ux/`                         | Route behavior, content, accessibility |
+| 5      | `docs/engineering/`                | Architecture, data, security, privacy  |
+| 6      | GitHub issues dan roadmap          | Execution dan verification             |
+| 7      | `docs/governance/DECISIONS.md`     | Accepted decisions dan open gates      |
+| 8      | `docs/reference/proposal_lomba.md` | Historical input                       |
 
 ## Struktur
 
 ```text
 docs/
 ├── product/          # PRD dan business flow/model
-├── ux/               # IA, flows, copy, accessibility, inventory
+├── ux/               # IA, flows, copy, accessibility, inventory, surface behavior
 ├── engineering/      # architecture, data, security/privacy
 ├── governance/       # accepted decisions dan open gates
-├── implementation/   # issue workflow dan roadmap
+├── implementation/   # GitHub automation, commit format, dan roadmap
 └── reference/        # historical source material
 ```
 
-Task status tidak disimpan pada Markdown. Gunakan GitHub issues/milestones. Jangan membuat ulang `PROGRESS.md` atau `implementation/phases/`.
-
-Workflow status menggunakan label `ready`, `blocked`, `stacked`, `in-progress`, dan `needs-review`. Dependency yang sudah selesai ditulis sebagai `Prerequisite completed`, bukan `Blocked by`. GitHub Assignees menjadi source of truth ownership.
+GitHub Actions menyinkronkan label status issue dan field Project dari issue serta pull request. Aturan mapping automation dijelaskan di [Implementation](implementation/README.md). GitHub Assignees tetap menjadi data ownership pada GitHub.
 
 ## Maintenance
 
 - Ubah product boundary pada PRODUCT dan PRD.
-- Ubah route behavior pada UX docs dan matching surface brief.
+- Ubah route behavior pada UX docs dan sinkronkan `SCREEN_INVENTORY.md`.
 - Ubah entity/event/Policy/provider pada engineering docs.
 - Ubah gate pada DECISIONS dan owning security/product docs.
 - Ubah task scope/status pada GitHub issue.
 
-Documentation change harus lulus Prettier, internal-link review, surface-brief resolution, Unicode em dash check, dan `git diff --check`.
+Documentation change mengikuti pemeriksaan format, internal-link, dan `git diff --check` yang relevan dengan perubahan.

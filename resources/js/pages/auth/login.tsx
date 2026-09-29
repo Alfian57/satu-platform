@@ -45,8 +45,13 @@ export default function Login({ status }: Props) {
                                     autoFocus
                                     autoComplete="username"
                                     placeholder="Masukkan nama pengguna"
-                                    aria-describedby="username-help"
+                                    aria-describedby={
+                                        errors.username
+                                            ? 'username-help login-username-error'
+                                            : 'username-help'
+                                    }
                                     className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                    aria-invalid={Boolean(errors.username)}
                                 />
                                 <p
                                     id="username-help"
@@ -55,7 +60,10 @@ export default function Login({ status }: Props) {
                                     Nama pengguna hanya untuk masuk ke SATU,
                                     bukan untuk profil publik.
                                 </p>
-                                <InputError message={errors.username} />
+                                <InputError
+                                    id="login-username-error"
+                                    message={errors.username}
+                                />
                             </div>
 
                             <div className="grid gap-2">
@@ -72,8 +80,17 @@ export default function Login({ status }: Props) {
                                     autoComplete="current-password"
                                     placeholder="Masukkan password"
                                     className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                    aria-invalid={Boolean(errors.password)}
+                                    aria-describedby={
+                                        errors.password
+                                            ? 'login-password-error'
+                                            : undefined
+                                    }
                                 />
-                                <InputError message={errors.password} />
+                                <InputError
+                                    id="login-password-error"
+                                    message={errors.password}
+                                />
                             </div>
 
                             <div className="flex items-center justify-between">
@@ -88,7 +105,7 @@ export default function Login({ status }: Props) {
                                 </div>
                                 <TextLink
                                     href={recover()}
-                                    className="text-xs font-semibold text-blue-600 no-underline hover:text-blue-700 hover:underline"
+                                    className="text-sm font-semibold text-blue-600 no-underline hover:text-blue-700 hover:underline"
                                     data-test="forgot-password-link"
                                 >
                                     Lupa password?
@@ -148,7 +165,6 @@ export default function Login({ status }: Props) {
 }
 
 Login.layout = {
-    title: 'Masuk ke akunmu',
-    description:
-        'Masukkan nama pengguna dan password. Nomor WhatsApp dipakai untuk verifikasi dan recovery.',
+    title: 'Senang kamu kembali.',
+    description: 'Masuk untuk melanjutkan karya dan kolaborasimu.',
 };

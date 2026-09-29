@@ -28,7 +28,7 @@ export default function Invitation({ invitation }: Props) {
                 title={isExpired ? 'Undangan tidak tersedia' : 'Undangan SATU'}
             />
 
-            <main
+            <div
                 className="grid gap-6"
                 data-test="invitation-page"
                 data-status={invitation.status}
@@ -51,11 +51,11 @@ export default function Invitation({ invitation }: Props) {
                         </p>
                     </div>
 
-                    <h1 className="text-title font-bold">
+                    <h2 className="text-title font-bold">
                         {isExpired
                             ? 'Undangan ini sudah tidak berlaku'
                             : 'Kamu menerima undangan SATU'}
-                    </h1>
+                    </h2>
 
                     <p className="text-sm leading-relaxed text-muted-foreground">
                         {isExpired
@@ -120,7 +120,7 @@ export default function Invitation({ invitation }: Props) {
                         </div>
                     </>
                 )}
-            </main>
+            </div>
         </>
     );
 }

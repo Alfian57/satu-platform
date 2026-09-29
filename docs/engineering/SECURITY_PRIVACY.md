@@ -114,9 +114,3 @@ DPIA/lawful basis, roster agreement, retention, incident owner, Fonnte notice, b
 ### Production
 
 Threat model review, penetration test plan, provider SLA/recovery, MySQL/load verification, data-right drill, cross-tenant regression review, and final human approval.
-
-## 14. Repository Governance
-
-Pull request ke `main` wajib memakai **Squash and merge**, required CI, dan resolved conversations.
-Contributor non-owner memerlukan minimal satu approval. Repository owner dapat melakukan self-review dan memakai admin bypass tanpa approval reviewer tambahan setelah bukti CI dan penyelesaian conversation tercatat.
-Admin bypass hanya mengubah aturan approval. Branch protection tetap melarang force push dan branch deletion, serta required checks tetap berlaku.

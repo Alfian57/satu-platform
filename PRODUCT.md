@@ -1,7 +1,5 @@
 # Product
 
-<!-- impeccable:product-schema 1 -->
-
 ## Identitas Produk
 
 SATU adalah Sistem Aktivitas Talenta Universitas. Produk yang diajukan pada perlombaan adalah platform SATU, bukan sistem untuk mengelola perlombaan.
@@ -73,7 +71,7 @@ Academic integration memakai contract dan sandbox adapter. Koneksi API kampus ny
 
 ## Truth dan Evidence
 
-Repository saat ini baru mengimplementasikan sebagian visual authority dan identity/tenancy berbasis email. Rebaseline username, WhatsApp, roster, gamification, Talent Portal, academic integration, dan landing masih planned sampai issue terkait selesai.
+Runtime saat ini sudah memakai private username dan password, nomor WhatsApp dengan OTP, alur afiliasi, landing dengan demo synthetic, serta dashboard mahasiswa berbasis data dan state yang dikirim backend. Implementasi sebagian target produk masih berjalan. Kapabilitas lain tetap planned sampai benar-benar tersedia pada route dan kontrak runtime terkait.
 
 Tidak ada pelanggan, harga, testimoni, hasil pilot, benchmark dampak, atau penurunan eksklusi yang telah terbukti. Semua demonstration dataset harus diberi label synthetic. Proposal pada `docs/reference/proposal_lomba.md` adalah input historis, bukan runtime specification.
 
