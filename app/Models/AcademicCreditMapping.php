@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Concerns\InstitutionOwned;
 use App\Enums\CreditMappingStatus;
 use Database\Factories\AcademicCreditMappingFactory;
 use Illuminate\Database\Eloquent\Attributes\Guarded;
@@ -28,7 +29,7 @@ use Illuminate\Support\Carbon;
  * @property-read User|null $approver
  */
 #[Guarded(['id', 'created_at', 'updated_at'])]
-class AcademicCreditMapping extends Model
+class AcademicCreditMapping extends Model implements InstitutionOwned
 {
     /** @use HasFactory<AcademicCreditMappingFactory> */
     use HasFactory;
@@ -39,6 +40,11 @@ class AcademicCreditMapping extends Model
     public function institution(): BelongsTo
     {
         return $this->belongsTo(Institution::class);
+    }
+
+    public function institutionId(): int
+    {
+        return $this->institution_id;
     }
 
     /**

@@ -274,10 +274,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('campus/credit-mappings', [AcademicCreditMappingController::class, 'store'])
         ->name('campus.credit-mappings.store');
 
-    Route::post('campus/credit-mappings/{id}/activate', [AcademicCreditMappingController::class, 'activate'])
+    Route::post('campus/credit-mappings/{mapping}/activate', [AcademicCreditMappingController::class, 'activate'])
         ->name('campus.credit-mappings.activate');
 
-    Route::post('campus/credit-mappings/{id}/retire', [AcademicCreditMappingController::class, 'retire'])
+    Route::post('campus/credit-mappings/{mapping}/retire', [AcademicCreditMappingController::class, 'retire'])
         ->name('campus.credit-mappings.retire');
 
     Route::get('campus/{institution}/overview', [CampusOverviewController::class, 'show'])
