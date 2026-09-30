@@ -75,7 +75,7 @@ Route::get('invitation/{token}', [AuthFlowController::class, 'showInvitation'])
 Route::get('p/{publicIdentifier}', [PortfolioPageController::class, 'share'])
     ->name('portfolio.share');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::prefix('recruiter/talent')->name('recruiter.talent.')->group(function () {
         // Index page for saved candidates
         Route::get('saved', [SavedCandidatesController::class, 'index'])
