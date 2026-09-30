@@ -53,6 +53,14 @@ class Institution extends Model
     }
 
     /**
+     * @return HasMany<PrivilegedInvitation, $this>
+     */
+    public function privilegedInvitations(): HasMany
+    {
+        return $this->hasMany(PrivilegedInvitation::class);
+    }
+
+    /**
      * @return HasMany<InstitutionRoster, $this>
      */
     public function rosters(): HasMany
