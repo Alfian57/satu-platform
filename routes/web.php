@@ -14,6 +14,7 @@ use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlatformAffiliationController;
+use App\Http\Controllers\PlatformInvitationController;
 use App\Http\Controllers\PlatformSkillTaxonomyController;
 use App\Http\Controllers\PortfolioEntryController;
 use App\Http\Controllers\PortfolioPageController;
@@ -69,6 +70,9 @@ Route::middleware('guest')->group(function () {
         ->name('recover.password.update');
 });
 
+Route::middleware('auth')->get('invitation/continue', [AuthFlowController::class, 'showPendingInvitation'])
+    ->name('invitation.pending');
+
 Route::get('invitation/{token}', [AuthFlowController::class, 'showInvitation'])
     ->name('invitation.show');
 
@@ -76,6 +80,9 @@ Route::get('p/{publicIdentifier}', [PortfolioPageController::class, 'share'])
     ->name('portfolio.share');
 
 Route::middleware(['auth'])->group(function () {
+    Route::post('invitation/accept', [AuthFlowController::class, 'acceptPendingInvitation'])
+        ->name('invitation.accept');
+
     Route::prefix('recruiter/talent')->name('recruiter.talent.')->group(function () {
         // Index page for saved candidates
         Route::get('saved', [SavedCandidatesController::class, 'index'])
@@ -241,6 +248,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('platform/affiliations', PlatformAffiliationController::class)
         ->name('platform.affiliations.index');
+
+    Route::post('platform/institutions/{institution}/invitations', [PlatformInvitationController::class, 'store'])
+        ->name('platform.invitations.store');
+
+    Route::post('platform/invitations/{invitation}/revoke', [PlatformInvitationController::class, 'revoke'])
+        ->name('platform.invitations.revoke');
 
     Route::prefix('platform/skills')->name('platform.skills.')->group(function () {
         Route::get('/', [PlatformSkillTaxonomyController::class, 'index'])->name('index');

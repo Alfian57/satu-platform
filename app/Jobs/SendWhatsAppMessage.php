@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\MessageStatus;
 use App\Models\MessageDelivery;
 use App\Models\MessageOutbox;
+use App\Models\PrivilegedInvitation;
 use App\Support\Notification\WhatsAppGateway;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -41,6 +42,7 @@ class SendWhatsAppMessage implements ShouldQueue
 
         if ($outbox->attempts >= $outbox->max_attempts) {
             $outbox->recordFailure('attempts_exhausted');
+            $this->markInvitationDelivery($outbox, 'failed');
 
             return;
         }
@@ -58,6 +60,7 @@ class SendWhatsAppMessage implements ShouldQueue
 
         if ($result['success']) {
             $outbox->recordSent($result['provider_message_id'] ?? '');
+            $this->markInvitationDelivery($outbox, 'sent');
         } else {
             $this->scheduleRetryOrFail($outbox, $result['error'] ?? 'Unknown error');
         }
@@ -113,7 +116,22 @@ class SendWhatsAppMessage implements ShouldQueue
             ]);
         } else {
             $outbox->update(['status' => MessageStatus::Failed]);
+            $this->markInvitationDelivery($outbox, 'failed');
         }
+    }
+
+    private function markInvitationDelivery(MessageOutbox $outbox, string $status): void
+    {
+        $metadata = $outbox->metadata;
+        $invitationId = is_array($metadata) ? ($metadata['privileged_invitation_id'] ?? null) : null;
+
+        if (! is_numeric($invitationId)) {
+            return;
+        }
+
+        PrivilegedInvitation::query()
+            ->whereKey((int) $invitationId)
+            ->update(['delivery_status' => $status]);
     }
 
     private function sanitizeError(?string $error): ?string
@@ -143,6 +161,7 @@ class SendWhatsAppMessage implements ShouldQueue
         }
 
         $outbox->recordFailure('max_retries');
+        $this->markInvitationDelivery($outbox, 'failed');
 
         Log::error('WhatsApp delivery job exhausted retries', [
             'outbox_id' => $outbox->getKey(),
