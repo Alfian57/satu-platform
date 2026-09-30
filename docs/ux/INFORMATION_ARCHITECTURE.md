@@ -47,12 +47,9 @@ Recruiter organization
 
 ## Platform Navigation
 
-- Institution
-- Undangan Campus Admin
-- Recruiter Organization
-- Entitlement
-- Provider Operations
-- Audit
+- Operasi platform, dengan region Institusi, Undangan Campus Admin, Recruiter Organization, Entitlement, Provider Operations, dan Audit
+- Afiliasi kampus
+- Taksonomi skill
 
 ## Recruiter Navigation
 

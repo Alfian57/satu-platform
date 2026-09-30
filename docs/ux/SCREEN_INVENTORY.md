@@ -44,6 +44,15 @@ siap digunakan.
 - Talent: entitlement dan visibility boundary terlihat sebelum search/contact.
 - Landing: synthetic demo berlabel, motion dapat dikurangi, dan tidak ada invented evidence.
 
+## Platform Operations
+
+- Audience: admin platform terautentikasi.
+- Job: menyetujui atau menangguhkan institusi, mengirim dan mencabut undangan admin kampus, serta memantau antrean recruiter, pengiriman provider, dan jejak audit lintas tenant.
+- Outcome: operasi institusi dan undangan dapat diselesaikan dari satu ruang kendali. Area recruiter dan entitlement tetap terlihat sebagai antrean terkunci sampai GATE-004 diselesaikan.
+- Boundaries: nomor WhatsApp selalu dimasking. Payload provider, token, NIM, evidence privat, dan ringkasan audit mentah tidak diproyeksikan ke browser. Semua command mutasi memerlukan otorisasi server, alasan eksplisit, dan audit append-only.
+- Interactions: filter institusi berdasarkan nama atau status, buka dialog command, konfirmasi dampak, kirim command melalui named route Wayfinder, lalu pertahankan konteks daftar setelah respons.
+- States: empty per region, processing dan validation error di dialog, success melalui flash, forbidden di server, undangan kedaluwarsa, kegagalan provider, destructive confirmation untuk penangguhan atau pencabutan, serta gated state untuk recruiter dan entitlement.
+
 ## Arah Redesign Landing, Auth, dan Dashboard Mahasiswa
 
 - Landing memakai maskot burung SATU sebagai focal point pada hero. Maskot boleh melampaui card di ruang yang disediakan, sementara copy dan CTA tetap terlihat. Journey, role selector, dan synthetic graph tetap bisa dipakai dengan keyboard serta memiliki text equivalent.

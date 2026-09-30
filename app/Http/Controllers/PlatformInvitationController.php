@@ -13,6 +13,8 @@ use App\Models\Institution;
 use App\Models\PrivilegedInvitation;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
 
 final class PlatformInvitationController extends Controller
 {
@@ -20,7 +22,7 @@ final class PlatformInvitationController extends Controller
         IssueInvitationRequest $request,
         Institution $institution,
         IssueInvitation $issueInvitation,
-    ): JsonResponse {
+    ): JsonResponse|RedirectResponse {
         $user = $request->user();
 
         abort_unless($user instanceof User, 403);
@@ -31,6 +33,15 @@ final class PlatformInvitationController extends Controller
             phone: (string) $request->validated('phone'),
             intendedRole: InstitutionMembershipRole::CampusAdmin->value,
         );
+
+        if ($request->header('X-Inertia') === 'true' || ! $request->expectsJson()) {
+            Inertia::flash('toast', [
+                'type' => 'success',
+                'message' => 'Undangan admin kampus telah dijadwalkan untuk dikirim melalui WhatsApp.',
+            ]);
+
+            return back();
+        }
 
         return response()->json([
             'data' => [
@@ -46,7 +57,7 @@ final class PlatformInvitationController extends Controller
         RevokeInvitationRequest $request,
         PrivilegedInvitation $invitation,
         RevokeInvitation $revokeInvitation,
-    ): JsonResponse {
+    ): JsonResponse|RedirectResponse {
         $user = $request->user();
 
         abort_unless($user instanceof User, 403);
@@ -56,6 +67,15 @@ final class PlatformInvitationController extends Controller
             invitation: $invitation,
             reason: (string) $request->validated('reason'),
         );
+
+        if ($request->header('X-Inertia') === 'true' || ! $request->expectsJson()) {
+            Inertia::flash('toast', [
+                'type' => 'success',
+                'message' => 'Undangan admin kampus telah dicabut dan dicatat pada audit.',
+            ]);
+
+            return back();
+        }
 
         return response()->json([
             'data' => [

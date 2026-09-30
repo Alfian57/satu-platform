@@ -33,6 +33,7 @@ import { show as campusRoster } from '@/routes/campus/roster';
 import { index as contributionsIndex } from '@/routes/contributions';
 import { index as leaderboardsIndex } from '@/routes/leaderboards';
 import { index as platformAffiliationsIndex } from '@/routes/platform/affiliations';
+import { index as platformOperationsIndex } from '@/routes/platform/operations';
 import { index as platformSkillsIndex } from '@/routes/platform/skills';
 import { index as portfolioIndex } from '@/routes/portfolio';
 import { index as projectsIndex } from '@/routes/projects';
@@ -241,6 +242,11 @@ export function AppSidebar() {
     const visibleMainNavItems = isPlatformAdmin
         ? [
               {
+                  title: 'Operasi platform',
+                  href: platformOperationsIndex(),
+                  icon: ShieldCheck,
+              },
+              {
                   title: 'Afiliasi kampus',
                   href: platformAffiliationsIndex(),
                   icon: Building2,
@@ -338,7 +344,7 @@ export function AppSidebar() {
                     }
                     href={
                         isPlatformAdmin
-                            ? platformAffiliationsIndex()
+                            ? platformOperationsIndex()
                             : isCampusWorkspace
                               ? campusOverview({
                                     institution: campusInstitution.id,

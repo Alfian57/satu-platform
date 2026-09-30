@@ -14,7 +14,9 @@ use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlatformAffiliationController;
+use App\Http\Controllers\PlatformInstitutionController;
 use App\Http\Controllers\PlatformInvitationController;
+use App\Http\Controllers\PlatformOperationsController;
 use App\Http\Controllers\PlatformSkillTaxonomyController;
 use App\Http\Controllers\PortfolioEntryController;
 use App\Http\Controllers\PortfolioPageController;
@@ -245,6 +247,15 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('notifications/{id}/navigate', [NotificationController::class, 'navigate'])
         ->name('notifications.navigate');
+
+    Route::get('platform', [PlatformOperationsController::class, 'index'])
+        ->name('platform.operations.index');
+
+    Route::post('platform/institutions/{institution}/approve', [PlatformInstitutionController::class, 'approve'])
+        ->name('platform.institutions.approve');
+
+    Route::post('platform/institutions/{institution}/suspend', [PlatformInstitutionController::class, 'suspend'])
+        ->name('platform.institutions.suspend');
 
     Route::get('platform/affiliations', PlatformAffiliationController::class)
         ->name('platform.affiliations.index');
