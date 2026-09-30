@@ -42,7 +42,7 @@ class RecruiterContactRequestController extends Controller
 
         $organization = $membership?->organization;
 
-        if ($organization === null && ! $user->is_platform_admin) {
+        if ($organization === null) {
             return Inertia::render('talent/contact-requests', [
                 'requests' => [],
                 'entitlement' => ['has_entitlement' => false],
@@ -50,10 +50,7 @@ class RecruiterContactRequestController extends Controller
         }
 
         /** @var RecruiterOrganization $activeOrg */
-        $activeOrg = $organization ?? RecruiterOrganization::query()->firstOrCreate(
-            ['name' => 'Platform Admin Org'],
-            ['status' => 'verified']
-        );
+        $activeOrg = $organization;
 
         $hasEntitlement = $this->verifyEntitlement->check(
             $activeOrg,
@@ -106,15 +103,12 @@ class RecruiterContactRequestController extends Controller
 
         $organization = $membership?->organization;
 
-        if ($organization === null && ! $user->is_platform_admin) {
+        if ($organization === null) {
             abort(403, 'Anda bukan anggota aktif dari organization perekrut.');
         }
 
         /** @var RecruiterOrganization $activeOrg */
-        $activeOrg = $organization ?? RecruiterOrganization::query()->firstOrCreate(
-            ['name' => 'Platform Admin Org'],
-            ['status' => 'verified']
-        );
+        $activeOrg = $organization;
 
         try {
             $this->sendAction->execute(
@@ -149,15 +143,12 @@ class RecruiterContactRequestController extends Controller
 
         $organization = $membership?->organization;
 
-        if ($organization === null && ! $user->is_platform_admin) {
+        if ($organization === null) {
             abort(403, 'Anda bukan anggota aktif dari organization perekrut.');
         }
 
         /** @var RecruiterOrganization $activeOrg */
-        $activeOrg = $organization ?? RecruiterOrganization::query()->firstOrCreate(
-            ['name' => 'Platform Admin Org'],
-            ['status' => 'verified']
-        );
+        $activeOrg = $organization;
 
         try {
             $this->cancelAction->execute(
