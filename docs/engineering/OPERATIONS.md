@@ -30,6 +30,7 @@ Sebelum start, pastikan variabel berikut terdefinisi. Laravel gagal cepat (fail 
 | `BROADCAST_CONNECTION`                                            | `reverb`                                 | Realtime delivery                                        |
 | `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`            | random unique                            | Kredensial aplikasi Reverb                               |
 | `REVERB_HOST`, `REVERB_PORT`, `REVERB_SCHEME`                     | valid                                    | Alamat publik yang dihubungi klien                       |
+| `REVERB_ALLOWED_ORIGINS`                                          | `app.example.com`                        | Daftar host origin Reverb, dipisahkan koma               |
 | `FILESYSTEM_DISK`                                                 | `local` atau `s3`                        | Disk default untuk storage privat                        |
 | `MAIL_MAILER`                                                     | `log` default; `smtp` bila dikonfigurasi | Driver mail                                              |
 
@@ -38,6 +39,7 @@ Sebelum start, pastikan variabel berikut terdefinisi. Laravel gagal cepat (fail 
 - `APP_KEY`, `REVERB_APP_SECRET`, `DB_PASSWORD`, `MAIL_PASSWORD`, dan kredensial provider disimpan sebagai server secret, bukan di repository, `.env`, atau log.
 - Dilarang me-log OTP, password, token, full phone, full NIM, message body, private evidence URL, inclusion detail, atau provider raw payload.
 - Gunakan kredensial terpisah antara environment (local, staging, production).
+- `REVERB_ALLOWED_ORIGINS` hanya berisi host origin yang sah, tanpa scheme atau port. Jika tidak diisi, konfigurasi memakai host dari `APP_URL`.
 
 ### 2.3 Fail Fast pada Missing Environment
 
