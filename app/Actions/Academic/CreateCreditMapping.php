@@ -11,6 +11,7 @@ use App\Models\Institution;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use InvalidArgumentException;
 
 final class CreateCreditMapping
@@ -31,6 +32,8 @@ final class CreateCreditMapping
         float $creditAmount,
         ?string $reason = null,
     ): AcademicCreditMapping {
+        Gate::forUser($operator)->authorize('create', [AcademicCreditMapping::class, $institution]);
+
         if ($creditAmount <= 0 || $creditAmount > 24) {
             throw new InvalidArgumentException('Jumlah kredit harus antara 0.5 dan 24.');
         }
