@@ -27,6 +27,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { index as affiliationIndex } from '@/routes/campus/affiliations';
 import { index as campusContributionsIndex } from '@/routes/campus/contributions';
+import { index as inclusionIndex } from '@/routes/campus/inclusion';
+import { store as storeInclusionReview } from '@/routes/campus/inclusion/reviews';
 import { show as campusRoster } from '@/routes/campus/roster';
 
 interface InclusionReviewItem {
@@ -211,7 +213,7 @@ export default function CampusInclusion({
         e.preventDefault();
         startTransition(() => {
             router.get(
-                `/campus/${institution.id}/inclusion`,
+                inclusionIndex({ institution: institution.id }).url,
                 {
                     period: period || undefined,
                     restricted_only: restrictedOnly ? '1' : '0',
@@ -227,7 +229,7 @@ export default function CampusInclusion({
     const handleSelectSignal = (signalId: number) => {
         startTransition(() => {
             router.get(
-                `/campus/${institution.id}/inclusion`,
+                inclusionIndex({ institution: institution.id }).url,
                 {
                     period: period || undefined,
                     restricted_only: restrictedOnly ? '1' : '0',
@@ -258,7 +260,10 @@ export default function CampusInclusion({
         }
 
         post(
-            `/campus/${institution.id}/inclusion/${selectedSignal.id}/reviews`,
+            storeInclusionReview({
+                institution: institution.id,
+                signal: selectedSignal.id,
+            }).url,
             {
                 onSuccess: () => {
                     reset('reason', 'support_action');

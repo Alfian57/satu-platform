@@ -19,7 +19,10 @@ import { index as talentSearch } from '@/actions/App/Http/Controllers/TalentSear
 import { AppPage } from '@/components/app-page';
 import { Button } from '@/components/ui/button';
 import { saved as savedCandidates } from '@/routes/recruiter/talent';
-import { index as contactRequestsIndex } from '@/routes/recruiter/talent/contact-requests';
+import {
+    cancel,
+    index as contactRequestsIndex,
+} from '@/routes/recruiter/talent/contact-requests';
 
 interface ContactRequestItem {
     id: number;
@@ -220,7 +223,7 @@ export default function RecruiterContactRequests({
 
     const handleCancel = (requestId: number) => {
         startTransition(() => {
-            router.delete(`/recruiter/talent/contact-requests/${requestId}`, {
+            router.delete(cancel(requestId).url, {
                 preserveState: true,
                 preserveScroll: true,
             });

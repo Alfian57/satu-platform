@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { Award, CheckCircle2, Plus, Shield, XCircle } from 'lucide-react';
 import React, { useState, useTransition } from 'react';
+import { activate, retire, store } from '@/routes/campus/credit-mappings';
 
 interface CreditMappingItem {
     id: number;
@@ -36,7 +37,7 @@ export default function CampusCreditMappings({
 
         startTransition(() => {
             router.post(
-                '/campus/credit-mappings',
+                store.url(),
                 {
                     activity_type: activityType,
                     credit_amount: parseFloat(creditAmount),
@@ -53,7 +54,7 @@ export default function CampusCreditMappings({
     const handleActivate = (id: number) => {
         startTransition(() => {
             router.post(
-                `/campus/credit-mappings/${id}/activate`,
+                activate(id).url,
                 {},
                 {
                     preserveState: true,
@@ -66,7 +67,7 @@ export default function CampusCreditMappings({
     const handleRetire = (id: number) => {
         startTransition(() => {
             router.post(
-                `/campus/credit-mappings/${id}/retire`,
+                retire(id).url,
                 {},
                 {
                     preserveState: true,
