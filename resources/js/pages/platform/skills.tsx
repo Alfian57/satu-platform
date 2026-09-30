@@ -30,6 +30,10 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import {
+    destroy as destroySkill,
+    toggleVerification,
+} from '@/routes/platform/skills';
 
 type SkillItem = {
     id: number;
@@ -161,7 +165,7 @@ export default function PlatformSkillsIndex({
 
     function handleToggleVerification(skill: SkillItem) {
         router.patch(
-            `/platform/skills/${skill.id}/toggle-verification`,
+            toggleVerification(skill.id).url,
             {},
             {
                 preserveScroll: true,
@@ -170,7 +174,7 @@ export default function PlatformSkillsIndex({
     }
 
     function handleDelete(skill: SkillItem) {
-        router.delete(`/platform/skills/${skill.id}`, {
+        router.delete(destroySkill(skill.id).url, {
             preserveScroll: true,
             onSuccess: () => setDeletingSkill(null),
         });
