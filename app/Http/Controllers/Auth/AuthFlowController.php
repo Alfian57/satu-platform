@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Actions\Auth\DispatchAuthOtp;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Actions\Institution\AcceptInvitation;
 use App\Actions\Otp\VerifyOtp;
 use App\Enums\InvitationStatus;
 use App\Enums\MessageStatus;
@@ -22,6 +23,7 @@ use App\Models\PhoneNumber;
 use App\Models\PrivilegedInvitation;
 use App\Models\User;
 use App\Support\PhoneIdentity;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,6 +42,7 @@ class AuthFlowController extends Controller
 {
     public function __construct(
         private readonly DispatchAuthOtp $dispatchAuthOtp,
+        private readonly AcceptInvitation $acceptInvitation,
         private readonly VerifyOtp $verifyOtp,
         private readonly CreateNewUser $createNewUser,
         private readonly ResetUserPassword $resetUserPassword,
@@ -196,10 +199,13 @@ class AuthFlowController extends Controller
 
         event(new Registered($user));
         Auth::login($user);
+        $request->session()->put('auth.last_authenticated_at', Carbon::now()->timestamp);
         $request->session()->forget('auth.registration');
         $request->session()->regenerate();
 
-        return to_route('dashboard');
+        return $request->session()->has('auth.invitation')
+            ? to_route('invitation.pending')
+            : to_route('dashboard');
     }
 
     public function showRecovery(Request $request): Response
@@ -365,7 +371,7 @@ class AuthFlowController extends Controller
         );
     }
 
-    public function showInvitation(string $token): Response
+    public function showInvitation(Request $request, string $token): Response
     {
         $invitation = $this->findInvitation($token);
 
@@ -374,21 +380,95 @@ class AuthFlowController extends Controller
             || $invitation->status !== InvitationStatus::Issued
             || $invitation->isExpired()
         ) {
-            return Inertia::render('auth/invitation', [
-                'invitation' => [
-                    'status' => 'expired',
-                ],
+            $request->session()->forget('auth.invitation');
+
+            return $this->renderInvitationPage($request);
+        }
+
+        $request->session()->put('auth.invitation', [
+            'token' => Crypt::encryptString($token),
+        ]);
+
+        return $this->renderInvitationPage($request, $invitation);
+    }
+
+    public function showPendingInvitation(Request $request): Response|RedirectResponse
+    {
+        $token = $this->invitationToken($request);
+
+        if ($token === null) {
+            return to_route('dashboard');
+        }
+
+        $invitation = $this->findInvitation($token);
+
+        if (
+            $invitation === null
+            || $invitation->status !== InvitationStatus::Issued
+            || $invitation->isExpired()
+        ) {
+            $request->session()->forget('auth.invitation');
+
+            return $this->renderInvitationPage($request);
+        }
+
+        return $this->renderInvitationPage($request, $invitation);
+    }
+
+    public function acceptPendingInvitation(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+
+        $token = $this->invitationToken($request);
+
+        if ($token === null) {
+            return to_route('dashboard');
+        }
+
+        if (! $this->hasRecentAuthentication($request)) {
+            return to_route('invitation.pending')->withErrors([
+                'invitation' => 'Masuk kembali sebelum menerima undangan ini.',
             ]);
         }
 
+        try {
+            $this->acceptInvitation->handle($user, $token);
+        } catch (AuthorizationException) {
+            return to_route('invitation.pending')->withErrors([
+                'invitation' => 'Nomor WhatsApp terverifikasi pada akun ini tidak sesuai dengan undangan.',
+            ]);
+        } catch (RuntimeException) {
+            return to_route('invitation.pending')->withErrors([
+                'invitation' => 'Undangan tidak dapat diterima. Minta pengelola platform mengirim undangan baru.',
+            ]);
+        }
+
+        $request->session()->forget('auth.invitation');
+
+        return to_route('dashboard')->with(
+            'status',
+            'Akses admin kampus berhasil diaktifkan.',
+        );
+    }
+
+    private function renderInvitationPage(
+        Request $request,
+        ?PrivilegedInvitation $invitation = null,
+    ): Response {
         return Inertia::render('auth/invitation', [
-            'invitation' => [
-                'status' => 'valid',
-                'institutionName' => $invitation->institution?->name,
-                'maskedPhone' => $this->maskInvitationPhone($invitation->phone),
-                'intendedRole' => $invitation->intended_role,
-                'expiresAt' => $invitation->expires_at->toIso8601String(),
-            ],
+            'invitation' => $invitation === null
+                ? ['status' => 'expired']
+                : [
+                    'status' => 'valid',
+                    'institutionName' => $invitation->institution?->name,
+                    'maskedPhone' => $this->maskInvitationPhone($invitation->phone),
+                    'intendedRole' => $invitation->intended_role,
+                    'expiresAt' => $invitation->expires_at->toIso8601String(),
+                    'isAuthenticated' => $request->user() instanceof User,
+                    'canAccept' => $request->user() instanceof User
+                        && $this->hasRecentAuthentication($request),
+                ],
         ]);
     }
 
@@ -547,6 +627,26 @@ class AuthFlowController extends Controller
         }
 
         return null;
+    }
+
+    private function invitationToken(Request $request): ?string
+    {
+        $invitation = $request->session()->get('auth.invitation');
+
+        if (! is_array($invitation)) {
+            return null;
+        }
+
+        return $this->decrypt($invitation['token'] ?? null);
+    }
+
+    private function hasRecentAuthentication(Request $request): bool
+    {
+        $authenticatedAt = $request->session()->get('auth.last_authenticated_at');
+        $now = (int) Carbon::now()->timestamp;
+
+        return is_numeric($authenticatedAt)
+            && $now - (int) $authenticatedAt <= (int) config('auth.password_timeout', 10800);
     }
 
     private function maskInvitationPhone(string $phone): ?string

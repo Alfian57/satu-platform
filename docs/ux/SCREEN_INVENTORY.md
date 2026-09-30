@@ -2,23 +2,24 @@
 
 ## Inventory
 
-| Surface                   | Audience          | Mode       | Status target                     |
-| ------------------------- | ----------------- | ---------- | --------------------------------- |
-| Landing                   | Public            | Persuade   | Release                           |
-| Register, login, recovery | Student           | Operate    | Release                           |
-| Onboarding                | Student           | Operate    | Release                           |
-| Notification center       | Authenticated     | Operate    | Release                           |
-| Dashboard                 | Student           | Operate    | Release, actual state-driven data |
-| Project discovery/detail  | Student           | Operate    | Release                           |
-| Workspace                 | Team              | Operate    | Release                           |
-| Contribution/portfolio    | Student           | Operate    | Release                           |
-| Public portfolio          | Public            | Experience | Release                           |
-| Leaderboard               | Student/campus    | Operate    | Release                           |
-| Campus operations         | Campus            | Operate    | Release                           |
-| Inclusion review          | Authorized campus | Operate    | Gated                             |
-| Academic operations       | Campus            | Operate    | Sandbox release                   |
-| Platform operations       | Platform admin    | Operate    | Release                           |
-| Talent Portal             | Recruiter/student | Operate    | Release                           |
+| Surface                   | Audience                                     | Mode       | Status target                     |
+| ------------------------- | -------------------------------------------- | ---------- | --------------------------------- |
+| Landing                   | Public                                       | Persuade   | Release                           |
+| Register, login, recovery | Student                                      | Operate    | Release                           |
+| Onboarding                | Student                                      | Operate    | Release                           |
+| Notification center       | Authenticated                                | Operate    | Release                           |
+| Dashboard                 | Student                                      | Operate    | Release, actual state-driven data |
+| Project discovery/detail  | Student                                      | Operate    | Release                           |
+| Workspace                 | Team                                         | Operate    | Release                           |
+| Contribution/portfolio    | Student                                      | Operate    | Release                           |
+| Public portfolio          | Public                                       | Experience | Release                           |
+| Leaderboard               | Student/campus                               | Operate    | Release                           |
+| Campus operations         | Campus                                       | Operate    | Release                           |
+| Inclusion review          | Authorized campus                            | Operate    | Gated                             |
+| Academic operations       | Campus                                       | Operate    | Sandbox release                   |
+| Platform operations       | Platform admin                               | Operate    | Release                           |
+| Undangan admin kampus     | Admin platform dan operator kampus terundang | Operate    | Release                           |
+| Talent Portal             | Recruiter/student                            | Operate    | Release                           |
 
 ## Shared State Matrix
 
@@ -32,6 +33,7 @@ siap digunakan.
 ## Surface Acceptance
 
 - Auth: OTP tidak membocorkan account existence; timer, resend, lockout, dan recovery accessible.
+- Undangan admin kampus: pengiriman WhatsApp, token sekali pakai, kecocokan nomor terverifikasi, autentikasi terbaru, persetujuan eksplisit, serta pemulihan untuk kedaluwarsa, penggunaan ulang, dan nomor yang tidak cocok.
 - Onboarding: affiliation outcome dan manual-review recovery dipahami. Profil hanya disimpan setelah membership verified; draft tetap tersedia saat menunggu review.
 - Project: filter, explanation, capacity, dan permission state jelas.
 - Workspace: keyboard-equivalent commands dan reconnect reconciliation tersedia.

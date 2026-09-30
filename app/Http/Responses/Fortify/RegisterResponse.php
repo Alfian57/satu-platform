@@ -4,6 +4,7 @@ namespace App\Http\Responses\Fortify;
 
 use Illuminate\Http\JsonResponse;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
+use Laravel\Fortify\Fortify;
 
 class RegisterResponse implements RegisterResponseContract
 {
@@ -14,8 +15,14 @@ class RegisterResponse implements RegisterResponseContract
      */
     public function toResponse($request)
     {
-        return $request->wantsJson()
-            ? new JsonResponse('', 201)
-            : redirect()->route('dashboard');
+        if ($request->wantsJson()) {
+            return new JsonResponse('', 201);
+        }
+
+        if ($request->session()->has('auth.invitation')) {
+            return redirect()->route('invitation.pending');
+        }
+
+        return redirect()->intended(Fortify::redirects('register'));
     }
 }
