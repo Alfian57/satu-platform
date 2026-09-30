@@ -43,7 +43,7 @@ class SavedCandidatesController extends Controller
 
         $organization = $membership?->organization;
 
-        if ($organization === null && ! $user->is_platform_admin) {
+        if ($organization === null) {
             return Inertia::render('talent/saved', [
                 'candidates' => [
                     'data' => [],
@@ -60,10 +60,7 @@ class SavedCandidatesController extends Controller
         }
 
         /** @var RecruiterOrganization $activeOrg */
-        $activeOrg = $organization ?? RecruiterOrganization::query()->firstOrCreate(
-            ['name' => 'Platform Admin Org'],
-            ['status' => 'verified']
-        );
+        $activeOrg = $organization;
 
         $hasEntitlement = $this->verifyEntitlement->check(
             $activeOrg,
@@ -128,15 +125,12 @@ class SavedCandidatesController extends Controller
 
         $organization = $membership?->organization;
 
-        if ($organization === null && ! $user->is_platform_admin) {
+        if ($organization === null) {
             abort(403, 'Anda bukan anggota aktif dari organization perekrut.');
         }
 
         /** @var RecruiterOrganization $activeOrg */
-        $activeOrg = $organization ?? RecruiterOrganization::query()->firstOrCreate(
-            ['name' => 'Platform Admin Org'],
-            ['status' => 'verified']
-        );
+        $activeOrg = $organization;
 
         try {
             $this->saveAction->execute(
@@ -169,15 +163,12 @@ class SavedCandidatesController extends Controller
 
         $organization = $membership?->organization;
 
-        if ($organization === null && ! $user->is_platform_admin) {
+        if ($organization === null) {
             abort(403, 'Anda bukan anggota aktif dari organization perekrut.');
         }
 
         /** @var RecruiterOrganization $activeOrg */
-        $activeOrg = $organization ?? RecruiterOrganization::query()->firstOrCreate(
-            ['name' => 'Platform Admin Org'],
-            ['status' => 'verified']
-        );
+        $activeOrg = $organization;
 
         try {
             $this->unsaveAction->execute(
