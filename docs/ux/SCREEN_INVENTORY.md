@@ -40,6 +40,7 @@ siap digunakan.
 - Contribution: version, evidence, reviewer reason, dan provenance terbaca.
 - Leaderboard: period, denominator, cohort rule, opt-in, tie, dan calculation explanation terlihat.
 - Campus/platform: queue dapat dipindai dan action memiliki reason serta audit consequence.
+- Academic operations: nama institusi aktif terlihat pada workspace, dan daftar maupun command mapping serta sync membawa konteks institusi yang sama.
 - Inclusion: restricted, non-diagnostic, human review, feature disabled, dan synthetic state terlihat.
 - Talent: entitlement dan visibility boundary terlihat sebelum search/contact.
 - Landing: synthetic demo berlabel, motion dapat dikurangi, dan tidak ada invented evidence.

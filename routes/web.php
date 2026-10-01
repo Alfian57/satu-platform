@@ -292,16 +292,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('student/contact-requests/{id}/decline', [StudentContactRequestController::class, 'decline'])
         ->name('student.contact-requests.decline');
 
-    Route::get('campus/credit-mappings', [AcademicCreditMappingController::class, 'index'])
+    Route::get('campus/{institution}/credit-mappings', [AcademicCreditMappingController::class, 'index'])
         ->name('campus.credit-mappings.index');
 
-    Route::post('campus/credit-mappings', [AcademicCreditMappingController::class, 'store'])
+    Route::post('campus/{institution}/credit-mappings', [AcademicCreditMappingController::class, 'store'])
         ->name('campus.credit-mappings.store');
 
-    Route::post('campus/credit-mappings/{mapping}/activate', [AcademicCreditMappingController::class, 'activate'])
+    Route::post('campus/{institution}/credit-mappings/{mapping}/activate', [AcademicCreditMappingController::class, 'activate'])
         ->name('campus.credit-mappings.activate');
 
-    Route::post('campus/credit-mappings/{mapping}/retire', [AcademicCreditMappingController::class, 'retire'])
+    Route::post('campus/{institution}/credit-mappings/{mapping}/retire', [AcademicCreditMappingController::class, 'retire'])
         ->name('campus.credit-mappings.retire');
 
     Route::get('campus/{institution}/overview', [CampusOverviewController::class, 'show'])
@@ -345,13 +345,13 @@ Route::middleware(['auth'])->group(function () {
         )->name('campus.affiliations.decisions.store');
     });
 
-    Route::get('campus/integrations', [AcademicIntegrationController::class, 'index'])
+    Route::get('campus/{institution}/integrations', [AcademicIntegrationController::class, 'index'])
         ->name('campus.integrations.index');
 
-    Route::post('campus/integrations/syncs/{id}/retry', [AcademicIntegrationController::class, 'retry'])
+    Route::post('campus/{institution}/integrations/syncs/{id}/retry', [AcademicIntegrationController::class, 'retry'])
         ->name('campus.integrations.syncs.retry');
 
-    Route::post('campus/integrations/syncs/{id}/reconcile', [AcademicIntegrationController::class, 'reconcile'])
+    Route::post('campus/{institution}/integrations/syncs/{id}/reconcile', [AcademicIntegrationController::class, 'reconcile'])
         ->name('campus.integrations.syncs.reconcile');
 
     Route::get('api/skills/taxonomy', [SkillTaxonomyController::class, 'index'])

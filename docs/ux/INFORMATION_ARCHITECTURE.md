@@ -74,11 +74,12 @@ Recruiter organization
 /contributions
 /portfolio
 /leaderboards
-/campus
-/campus/affiliations
-/campus/contributions
-/campus/inclusion
-/campus/integrations
+/campus/{institution}/overview
+/campus/{institution}/affiliations
+/campus/{institution}/contributions
+/campus/{institution}/inclusion
+/campus/{institution}/credit-mappings
+/campus/{institution}/integrations
 /platform
 /talent
 /talent/candidates/{candidate}

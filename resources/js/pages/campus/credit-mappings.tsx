@@ -21,7 +21,7 @@ interface CampusCreditMappingsProps {
     institution: {
         id: number;
         name: string;
-    } | null;
+    };
 }
 
 export default function CampusCreditMappings({
@@ -38,7 +38,7 @@ export default function CampusCreditMappings({
 
         startTransition(() => {
             router.post(
-                store.url(),
+                store.url({ institution: institution.id }),
                 {
                     activity_type: activityType,
                     credit_amount: parseFloat(creditAmount),
@@ -55,7 +55,7 @@ export default function CampusCreditMappings({
     const handleActivate = (id: number) => {
         startTransition(() => {
             router.post(
-                activate(id).url,
+                activate({ institution: institution.id, mapping: id }).url,
                 {},
                 {
                     preserveState: true,
@@ -68,7 +68,7 @@ export default function CampusCreditMappings({
     const handleRetire = (id: number) => {
         startTransition(() => {
             router.post(
-                retire(id).url,
+                retire({ institution: institution.id, mapping: id }).url,
                 {},
                 {
                     preserveState: true,
