@@ -7,6 +7,7 @@ namespace App\Actions\Academic;
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\CreditMappingStatus;
 use App\Models\AcademicCreditMapping;
+use App\Models\Institution;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Carbon;
@@ -33,6 +34,15 @@ final class RetireCreditMapping
         Gate::forUser($operator)->authorize('retire', $mapping);
 
         return DB::transaction(function () use ($operator, $mapping, $reason) {
+            $institution = Institution::query()
+                ->whereKey($mapping->institution_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($institution === null) {
+                throw new InvalidArgumentException('Institusi pemetaan kredit tidak ditemukan.');
+            }
+
             $mapping = AcademicCreditMapping::query()
                 ->whereKey($mapping->getKey())
                 ->lockForUpdate()
@@ -49,6 +59,11 @@ final class RetireCreditMapping
             }
 
             $now = Carbon::now();
+            $before = [
+                'activity_type' => $mapping->activity_type,
+                'version' => $mapping->version,
+                'status' => CreditMappingStatus::Active->value,
+            ];
 
             $mapping->update([
                 'status' => CreditMappingStatus::Retired,
@@ -60,8 +75,11 @@ final class RetireCreditMapping
                 operation: 'academic_credit_mapping.retired',
                 auditable: $mapping,
                 actor: $operator,
-                before: ['status' => CreditMappingStatus::Active->value],
+                institution: $institution,
+                before: $before,
                 after: [
+                    'activity_type' => $mapping->activity_type,
+                    'version' => $mapping->version,
                     'status' => CreditMappingStatus::Retired->value,
                     'effective_to' => $now->toIso8601String(),
                 ],

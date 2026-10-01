@@ -48,6 +48,7 @@ class AcademicCreditMappingController extends Controller
                 return [
                     'id' => $map->id,
                     'activity_type' => $map->activity_type,
+                    'version' => $map->version,
                     'credit_amount' => $map->credit_amount,
                     'status' => $map->status->value,
                     'effective_from' => $map->effective_from?->toIso8601String(),
