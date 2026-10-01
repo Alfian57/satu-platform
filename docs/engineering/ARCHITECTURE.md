@@ -62,7 +62,7 @@ Authorization memakai native Laravel Policies dan Gates. `spatie/laravel-permiss
 
 ## 6. Tenant Context
 
-Active institution ditentukan server-side dari verified membership. Institution scope wajib diterapkan pada query, route binding, Policy, job payload, cache key, storage path, export, notification, broadcast channel, dan observability context. Platform operation harus eksplisit, diaudit, dan tidak menggunakan hidden bypass.
+Active institution ditentukan server-side dari verified membership dan dibawa eksplisit pada route campus melalui parameter `{institution}`. Institution scope wajib diterapkan pada query, route binding, Policy, job payload, cache key, storage path, export, notification, broadcast channel, dan observability context. Platform operation harus eksplisit, diaudit, dan tidak menggunakan hidden bypass atau fallback ke institusi pertama.
 
 ## 7. Realtime
 

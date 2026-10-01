@@ -7,10 +7,12 @@ import {
     ClipboardCheck,
     FileCheck2,
     FileSpreadsheet,
+    GraduationCap,
     LayoutDashboard,
     ListOrdered,
     Network,
     Search,
+    RefreshCw,
     SendHorizontal,
     ShieldCheck,
     Sparkles,
@@ -27,7 +29,9 @@ import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as affiliationIndex } from '@/routes/campus/affiliations';
 import { index as campusContributionsIndex } from '@/routes/campus/contributions';
+import { index as campusCreditMappingsIndex } from '@/routes/campus/credit-mappings';
 import { index as campusInclusionIndex } from '@/routes/campus/inclusion';
+import { index as campusIntegrationsIndex } from '@/routes/campus/integrations';
 import { show as campusOverview } from '@/routes/campus/overview';
 import { show as campusRoster } from '@/routes/campus/roster';
 import { index as contributionsIndex } from '@/routes/contributions';
@@ -293,6 +297,20 @@ export function AppSidebar() {
                         institution: campusInstitution.id,
                     }),
                     icon: Network,
+                },
+                {
+                    title: 'Pemetaan kredit',
+                    href: campusCreditMappingsIndex({
+                        institution: campusInstitution.id,
+                    }),
+                    icon: GraduationCap,
+                },
+                {
+                    title: 'Sinkronisasi akademik',
+                    href: campusIntegrationsIndex({
+                        institution: campusInstitution.id,
+                    }),
+                    icon: RefreshCw,
                 },
             ]
           : isRecruiterWorkspace

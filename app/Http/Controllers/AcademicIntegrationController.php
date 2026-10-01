@@ -6,11 +6,8 @@ namespace App\Http\Controllers;
 
 use App\Actions\Integration\ReconcileIntegrationSync;
 use App\Actions\Integration\RetryIntegrationSync;
-use App\Enums\InstitutionMembershipRole;
-use App\Enums\InstitutionMembershipStatus;
 use App\Enums\IntegrationSyncStatus;
 use App\Models\Institution;
-use App\Models\InstitutionMembership;
 use App\Models\IntegrationConnection;
 use App\Models\IntegrationSync;
 use App\Models\User;
@@ -33,15 +30,14 @@ class AcademicIntegrationController extends Controller
     /**
      * Display the academic sync status and review queue for a campus operator.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, Institution $institution): Response
     {
         $user = $request->user();
         assert($user !== null);
 
-        $institution = $this->resolveInstitution($user);
-
-        if ($institution === null || ! $user->is_platform_admin && ! $this->isCampusOperator($user, $institution)) {
+        if (! Gate::forUser($user)->allows('viewAny', [IntegrationConnection::class, $institution])) {
             return Inertia::render('campus/integrations', [
+                'institution' => null,
                 'connections' => [],
                 'syncs' => $this->emptyPaginatedSyncs(),
                 'filters' => $this->emptyFilters(),
@@ -70,6 +66,10 @@ class AcademicIntegrationController extends Controller
             ->withQueryString();
 
         return Inertia::render('campus/integrations', [
+            'institution' => [
+                'id' => $institution->getKey(),
+                'name' => $institution->name,
+            ],
             'connections' => $connections->map(fn ($c) => $this->serializer->connection($c))->values(),
             'syncs' => [
                 'data' => $syncQuery->items()
@@ -96,14 +96,16 @@ class AcademicIntegrationController extends Controller
         ]);
     }
 
-    public function retry(Request $request, int $id): RedirectResponse
+    public function retry(Request $request, Institution $institution, int $id): RedirectResponse
     {
         $user = $request->user();
         assert($user !== null);
 
+        $this->authorizeInstitution($user, $institution);
         $sync = IntegrationSync::query()->with('connection')->findOrFail($id);
+        abort_unless($sync->connection->institution_id === $institution->getKey(), 404);
 
-        Gate::authorize('update', $sync);
+        Gate::forUser($user)->authorize('update', $sync);
 
         try {
             $this->retryAction->execute($user, $sync);
@@ -114,18 +116,21 @@ class AcademicIntegrationController extends Controller
         return back()->with('success', 'Sync dijalankan ulang dan masuk antrean pemrosesan.');
     }
 
-    public function reconcile(Request $request, int $id): RedirectResponse
+    public function reconcile(Request $request, Institution $institution, int $id): RedirectResponse
     {
         $user = $request->user();
         assert($user !== null);
+
+        $this->authorizeInstitution($user, $institution);
 
         $validated = $request->validate([
             'reason' => ['required', 'string', 'max:1000'],
         ]);
 
         $sync = IntegrationSync::query()->with('connection')->findOrFail($id);
+        abort_unless($sync->connection->institution_id === $institution->getKey(), 404);
 
-        Gate::authorize('update', $sync);
+        Gate::forUser($user)->authorize('update', $sync);
 
         try {
             $this->reconcileAction->execute($user, $sync, (string) $validated['reason']);
@@ -136,37 +141,12 @@ class AcademicIntegrationController extends Controller
         return back()->with('success', 'Sync ditandai sebagai telah direkonsiliasi.');
     }
 
-    /**
-     * Resolve the active institution for a campus operator.
-     */
-    private function resolveInstitution(User $user): ?Institution
+    private function authorizeInstitution(User $user, Institution $institution): void
     {
-        $membership = InstitutionMembership::query()
-            ->where('user_id', $user->id)
-            ->where('status', InstitutionMembershipStatus::Verified)
-            ->first();
-
-        $institution = $membership?->institution;
-
-        if ($institution !== null) {
-            return $institution;
-        }
-
-        if ($user->is_platform_admin) {
-            return Institution::query()->first();
-        }
-
-        return null;
-    }
-
-    private function isCampusOperator(User $user, Institution $institution): bool
-    {
-        return InstitutionMembership::query()
-            ->forInstitution($institution)
-            ->where('user_id', $user->id)
-            ->where('status', InstitutionMembershipStatus::Verified)
-            ->where('role', InstitutionMembershipRole::CampusAdmin)
-            ->exists();
+        Gate::forUser($user)->authorize(
+            'viewAny',
+            [IntegrationConnection::class, $institution],
+        );
     }
 
     private function isValidStatus(string $status): bool
