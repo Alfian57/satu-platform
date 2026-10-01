@@ -42,10 +42,24 @@ final class CreateCreditMapping
             throw new InvalidArgumentException('Tipe aktivitas wajib diisi.');
         }
 
+        $activityType = trim($activityType);
+
         return DB::transaction(function () use ($operator, $institution, $activityType, $creditAmount, $reason) {
+            $institution = Institution::query()
+                ->whereKey($institution->getKey())
+                ->lockForUpdate()
+                ->first()
+                ?? throw new InvalidArgumentException('Institusi tidak ditemukan.');
+
+            $nextVersion = ((int) AcademicCreditMapping::query()
+                ->where('institution_id', $institution->getKey())
+                ->where('activity_type', $activityType)
+                ->max('version')) + 1;
+
             $mapping = AcademicCreditMapping::query()->create([
-                'institution_id' => $institution->id,
-                'activity_type' => trim($activityType),
+                'institution_id' => $institution->getKey(),
+                'activity_type' => $activityType,
+                'version' => $nextVersion,
                 'credit_amount' => $creditAmount,
                 'status' => CreditMappingStatus::Draft,
                 'reason' => $reason !== null ? trim($reason) : null,
@@ -55,10 +69,12 @@ final class CreateCreditMapping
                 operation: 'academic_credit_mapping.created',
                 auditable: $mapping,
                 actor: $operator,
+                institution: $institution,
                 before: [],
                 after: [
-                    'institution_id' => $institution->id,
+                    'institution_id' => $institution->getKey(),
                     'activity_type' => $mapping->activity_type,
+                    'version' => $mapping->version,
                     'credit_amount' => $mapping->credit_amount,
                     'status' => CreditMappingStatus::Draft->value,
                 ],

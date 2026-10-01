@@ -151,7 +151,9 @@ Projection tidak memuat username, phone sebelum consent handoff, NIM, inclusion,
 ## 10. Academic Integration
 
 - `integration_connections`: institution, provider key, mode sandbox/real, encrypted config reference, status.
-- `credit_mappings` dan immutable mapping versions.
+- `academic_credit_mappings` menyimpan mapping tenant-owned dengan integer `version` yang immutable setelah dibuat. Kombinasi `institution_id`, `activity_type`, dan `version` unik agar setiap draft atau riwayat memiliki identitas stabil.
+- Status `draft`, `active`, dan `retired` merepresentasikan lifecycle mapping. Aktivasi menutup mapping aktif sebelumnya untuk activity type yang sama dengan `effective_to`, tanpa menghapus histori.
+- Setiap pembuatan dan transisi versi dicatat pada audit append-only dengan konteks institusi. Sync historis membawa `mapping_version` dari mapping yang digunakan.
 - `integration_syncs`: source, mapping version, idempotency key, payload digest, status, external reference, attempt timestamps.
 - `integration_sync_events`: append-only status/retry/reconcile history.
 - `integration_sync_metrics`: institution-scoped aggregate health per connection (total syncs, succeeded, reconciled, dead-letter, retry volume, queue age). Alert threshold dievaluasi lewat scheduled command `integration:alert-sync-anomalies`.

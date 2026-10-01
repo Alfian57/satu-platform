@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $institution_id
  * @property string $activity_type
+ * @property int $version
  * @property float $credit_amount
  * @property CreditMappingStatus $status
  * @property Carbon|null $effective_from
@@ -61,6 +62,7 @@ class AcademicCreditMapping extends Model implements InstitutionOwned
     protected function casts(): array
     {
         return [
+            'version' => 'integer',
             'credit_amount' => 'float',
             'status' => CreditMappingStatus::class,
             'effective_from' => 'datetime',

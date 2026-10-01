@@ -8,7 +8,6 @@ use App\Enums\CreditMappingStatus;
 use App\Models\AcademicCreditMapping;
 use App\Models\Institution;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Carbon;
 
 /**
  * @extends Factory<AcademicCreditMapping>
@@ -27,9 +26,10 @@ class AcademicCreditMappingFactory extends Factory
         return [
             'institution_id' => Institution::factory(),
             'activity_type' => $this->faker->randomElement(['project', 'competition', 'research', 'organization']),
+            'version' => 1,
             'credit_amount' => $this->faker->randomElement([2.0, 3.0, 4.0, 6.0]),
             'status' => CreditMappingStatus::Draft,
-            'effective_from' => Carbon::now(),
+            'effective_from' => null,
             'effective_to' => null,
             'approver_user_id' => null,
             'reason' => 'Curriculum credit allocation policy update.',

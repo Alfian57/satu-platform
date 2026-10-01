@@ -6,6 +6,7 @@ import { activate, retire, store } from '@/routes/campus/credit-mappings';
 interface CreditMappingItem {
     id: number;
     activity_type: string;
+    version: number;
     credit_amount: number;
     status: string;
     effective_from: string | null;
@@ -227,6 +228,9 @@ export default function CampusCreditMappings({
                                                 </h3>
                                                 <span className="rounded-lg border border-blue-900 bg-blue-950 px-2.5 py-0.5 text-xs font-semibold text-blue-300">
                                                     {map.credit_amount} SKS
+                                                </span>
+                                                <span className="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-slate-300">
+                                                    Versi {map.version}
                                                 </span>
                                                 <span
                                                     className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
