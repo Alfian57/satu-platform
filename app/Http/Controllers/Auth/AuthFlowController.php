@@ -38,6 +38,8 @@ use Inertia\Response;
 use RuntimeException;
 use Throwable;
 
+use App\Actions\Consent\ConsentRecorder;
+
 class AuthFlowController extends Controller
 {
     public function __construct(
@@ -46,6 +48,7 @@ class AuthFlowController extends Controller
         private readonly VerifyOtp $verifyOtp,
         private readonly CreateNewUser $createNewUser,
         private readonly ResetUserPassword $resetUserPassword,
+        private readonly ConsentRecorder $consentRecorder,
     ) {}
 
     /**
@@ -190,6 +193,13 @@ class AuthFlowController extends Controller
                     'status' => PhoneNumberStatus::Verified,
                     'verified_at' => Carbon::now(),
                 ])->save();
+
+                $this->consentRecorder->grant(
+                    $user,
+                    'registration.terms',
+                    'v1.0',
+                    'registration',
+                );
 
                 return $user;
             });
