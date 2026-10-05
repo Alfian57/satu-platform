@@ -11,3 +11,10 @@ Artisan::command('inspire', function () {
 Schedule::command('message:dispatch-due')
     ->everyMinute()
     ->withoutOverlapping();
+
+Schedule::call(function () {
+    $period = date('Y').'-S1';
+    foreach (\App\Models\Institution::all() as $institution) {
+        \App\Jobs\CalculateInstitutionInclusionSignals::dispatch($institution, $period);
+    }
+})->daily()->withoutOverlapping();

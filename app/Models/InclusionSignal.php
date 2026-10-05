@@ -19,7 +19,24 @@ class InclusionSignal extends Model
         'evidence_summary' => 'array',
         'restricted_feature_state' => 'boolean',
         'data_sufficiency_met' => 'boolean',
+        'is_synthetic' => 'boolean',
     ];
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<InclusionSignal>  $query
+     */
+    public function scopeRealOnly(\Illuminate\Database\Eloquent\Builder $query): void
+    {
+        $query->where('is_synthetic', false);
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<InclusionSignal>  $query
+     */
+    public function scopeSyntheticOnly(\Illuminate\Database\Eloquent\Builder $query): void
+    {
+        $query->where('is_synthetic', true);
+    }
 
     /**
      * @return BelongsTo<Institution, $this>
