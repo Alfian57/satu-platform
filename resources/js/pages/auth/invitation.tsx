@@ -1,7 +1,9 @@
-import { Head, Link } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowRight, Clock3, ShieldCheck } from 'lucide-react';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { home, login, register } from '@/routes';
+import { accept } from '@/routes/invitation';
 
 type Invitation = {
     status: 'valid' | 'expired';
@@ -9,6 +11,8 @@ type Invitation = {
     maskedPhone?: string | null;
     intendedRole?: string | null;
     expiresAt?: string | null;
+    isAuthenticated?: boolean;
+    canAccept?: boolean;
 };
 
 type Props = {
@@ -101,23 +105,57 @@ export default function Invitation({ invitation }: Props) {
                             </div>
                         </dl>
 
-                        <div className="grid gap-3">
-                            <Button asChild className="w-full cursor-pointer">
-                                <Link href={login()}>
-                                    Masuk untuk melanjutkan
-                                    <ArrowRight />
-                                </Link>
-                            </Button>
-                            <Button
-                                asChild
-                                variant="outline"
-                                className="w-full cursor-pointer"
+                        {invitation.isAuthenticated && invitation.canAccept ? (
+                            <Form
+                                action={accept.url()}
+                                method="post"
+                                className="grid gap-3"
                             >
-                                <Link href={register()}>
-                                    Buat akun mahasiswa
-                                </Link>
-                            </Button>
-                        </div>
+                                {({ errors, processing }) => (
+                                    <>
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                            className="w-full cursor-pointer"
+                                        >
+                                            {processing
+                                                ? 'Memproses undangan...'
+                                                : 'Terima undangan admin kampus'}
+                                            <ArrowRight />
+                                        </Button>
+                                        <InputError
+                                            message={errors.invitation}
+                                        />
+                                    </>
+                                )}
+                            </Form>
+                        ) : invitation.isAuthenticated ? (
+                            <p className="text-sm leading-relaxed text-muted-foreground">
+                                Masuk kembali untuk memperbarui sesi keamanan
+                                sebelum menerima undangan ini.
+                            </p>
+                        ) : (
+                            <div className="grid gap-3">
+                                <Button
+                                    asChild
+                                    className="w-full cursor-pointer"
+                                >
+                                    <Link href={login()}>
+                                        Masuk untuk melanjutkan
+                                        <ArrowRight />
+                                    </Link>
+                                </Button>
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    className="w-full cursor-pointer"
+                                >
+                                    <Link href={register()}>
+                                        Buat akun mahasiswa
+                                    </Link>
+                                </Button>
+                            </div>
+                        )}
                     </>
                 )}
             </div>

@@ -7,9 +7,12 @@ namespace App\Actions\Academic;
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\CreditMappingStatus;
 use App\Models\AcademicCreditMapping;
+use App\Models\Institution;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use InvalidArgumentException;
 
 final class RetireCreditMapping
@@ -21,25 +24,46 @@ final class RetireCreditMapping
     /**
      * Retire an active credit mapping ruleset with a reason.
      *
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentException|AuthorizationException
      */
     public function execute(
         User $operator,
-        int $mappingId,
+        AcademicCreditMapping $mapping,
         ?string $reason = null,
     ): AcademicCreditMapping {
-        $mapping = AcademicCreditMapping::query()->find($mappingId);
-
-        if ($mapping === null) {
-            throw new InvalidArgumentException('Pemetaan kredit tidak ditemukan.');
-        }
-
-        if ($mapping->status !== CreditMappingStatus::Active) {
-            throw new InvalidArgumentException('Hanya pemetaan kredit berstatus aktif yang dapat dipensiunkan.');
-        }
+        Gate::forUser($operator)->authorize('retire', $mapping);
 
         return DB::transaction(function () use ($operator, $mapping, $reason) {
+            $institution = Institution::query()
+                ->whereKey($mapping->institution_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($institution === null) {
+                throw new InvalidArgumentException('Institusi pemetaan kredit tidak ditemukan.');
+            }
+
+            $mapping = AcademicCreditMapping::query()
+                ->whereKey($mapping->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($mapping === null) {
+                throw new InvalidArgumentException('Pemetaan kredit tidak ditemukan.');
+            }
+
+            Gate::forUser($operator)->authorize('retire', $mapping);
+
+            if ($mapping->status !== CreditMappingStatus::Active) {
+                throw new InvalidArgumentException('Hanya pemetaan kredit berstatus aktif yang dapat dipensiunkan.');
+            }
+
             $now = Carbon::now();
+            $before = [
+                'activity_type' => $mapping->activity_type,
+                'version' => $mapping->version,
+                'status' => CreditMappingStatus::Active->value,
+            ];
 
             $mapping->update([
                 'status' => CreditMappingStatus::Retired,
@@ -51,8 +75,11 @@ final class RetireCreditMapping
                 operation: 'academic_credit_mapping.retired',
                 auditable: $mapping,
                 actor: $operator,
-                before: ['status' => CreditMappingStatus::Active->value],
+                institution: $institution,
+                before: $before,
                 after: [
+                    'activity_type' => $mapping->activity_type,
+                    'version' => $mapping->version,
                     'status' => CreditMappingStatus::Retired->value,
                     'effective_to' => $now->toIso8601String(),
                 ],

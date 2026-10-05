@@ -7,12 +7,14 @@ namespace App\Http\Controllers;
 use App\Actions\Academic\ActivateCreditMapping;
 use App\Actions\Academic\CreateCreditMapping;
 use App\Actions\Academic\RetireCreditMapping;
-use App\Enums\InstitutionMembershipStatus;
+use App\Actions\Auth\ResolveUserWorkspace;
+use App\Enums\WorkspaceRole;
 use App\Models\AcademicCreditMapping;
 use App\Models\Institution;
-use App\Models\InstitutionMembership;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use InvalidArgumentException;
@@ -23,39 +25,21 @@ class AcademicCreditMappingController extends Controller
         private readonly CreateCreditMapping $createAction,
         private readonly ActivateCreditMapping $activateAction,
         private readonly RetireCreditMapping $retireAction,
+        private readonly ResolveUserWorkspace $resolveUserWorkspace,
     ) {}
 
     /**
      * Display a listing of institutional credit mappings.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, Institution $institution): Response
     {
         $user = $request->user();
         assert($user !== null);
 
-        /** @var InstitutionMembership|null $membership */
-        $membership = InstitutionMembership::query()
-            ->where('user_id', $user->id)
-            ->where('status', InstitutionMembershipStatus::Verified)
-            ->first();
-
-        $institution = $membership?->institution;
-
-        if ($institution === null && ! $user->is_platform_admin) {
-            return Inertia::render('campus/credit-mappings', [
-                'mappings' => [],
-                'institution' => null,
-            ]);
-        }
-
-        /** @var Institution $activeInst */
-        $activeInst = $institution ?? Institution::query()->firstOrCreate(
-            ['name' => 'Default Campus Institution', 'slug' => 'default-campus-institution'],
-            ['code' => 'CAMPUS-01', 'status' => 'active']
-        );
+        $activeInstitution = $this->authorizedInstitution($user, $institution, 'viewAny');
 
         $mappings = AcademicCreditMapping::query()
-            ->where('institution_id', $activeInst->id)
+            ->whereBelongsTo($activeInstitution)
             ->with('approver:id,name')
             ->orderByDesc('created_at')
             ->get()
@@ -63,6 +47,7 @@ class AcademicCreditMappingController extends Controller
                 return [
                     'id' => $map->id,
                     'activity_type' => $map->activity_type,
+                    'version' => $map->version,
                     'credit_amount' => $map->credit_amount,
                     'status' => $map->status->value,
                     'effective_from' => $map->effective_from?->toIso8601String(),
@@ -76,8 +61,8 @@ class AcademicCreditMappingController extends Controller
         return Inertia::render('campus/credit-mappings', [
             'mappings' => $mappings,
             'institution' => [
-                'id' => $activeInst->id,
-                'name' => $activeInst->name,
+                'id' => $activeInstitution->getKey(),
+                'name' => $activeInstitution->name,
             ],
         ]);
     }
@@ -85,10 +70,12 @@ class AcademicCreditMappingController extends Controller
     /**
      * Store a new draft credit mapping ruleset.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, Institution $institution): RedirectResponse
     {
         $user = $request->user();
         assert($user !== null);
+
+        $activeInstitution = $this->authorizedInstitution($user, $institution, 'create');
 
         $validated = $request->validate([
             'activity_type' => ['required', 'string', 'max:255'],
@@ -96,28 +83,10 @@ class AcademicCreditMappingController extends Controller
             'reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        /** @var InstitutionMembership|null $membership */
-        $membership = InstitutionMembership::query()
-            ->where('user_id', $user->id)
-            ->where('status', InstitutionMembershipStatus::Verified)
-            ->first();
-
-        $institution = $membership?->institution;
-
-        if ($institution === null && ! $user->is_platform_admin) {
-            abort(403, 'Anda bukan anggota aktif dari institusi kampus.');
-        }
-
-        /** @var Institution $activeInst */
-        $activeInst = $institution ?? Institution::query()->firstOrCreate(
-            ['name' => 'Default Campus Institution', 'slug' => 'default-campus-institution'],
-            ['code' => 'CAMPUS-01', 'status' => 'active']
-        );
-
         try {
             $this->createAction->execute(
                 operator: $user,
-                institution: $activeInst,
+                institution: $activeInstitution,
                 activityType: (string) $validated['activity_type'],
                 creditAmount: (float) $validated['credit_amount'],
                 reason: isset($validated['reason']) ? (string) $validated['reason'] : null,
@@ -132,15 +101,21 @@ class AcademicCreditMappingController extends Controller
     /**
      * Activate a draft credit mapping ruleset.
      */
-    public function activate(Request $request, int $id): RedirectResponse
-    {
+    public function activate(
+        Request $request,
+        Institution $institution,
+        AcademicCreditMapping $mapping,
+    ): RedirectResponse {
         $user = $request->user();
         assert($user !== null);
+
+        $this->ensureMappingBelongsToInstitution($mapping, $institution);
+        $this->authorizedInstitution($user, $institution, 'viewAny');
 
         try {
             $this->activateAction->execute(
                 approver: $user,
-                mappingId: $id,
+                mapping: $mapping,
             );
         } catch (InvalidArgumentException $e) {
             return back()->withErrors(['mapping' => $e->getMessage()]);
@@ -152,10 +127,16 @@ class AcademicCreditMappingController extends Controller
     /**
      * Retire an active credit mapping ruleset.
      */
-    public function retire(Request $request, int $id): RedirectResponse
-    {
+    public function retire(
+        Request $request,
+        Institution $institution,
+        AcademicCreditMapping $mapping,
+    ): RedirectResponse {
         $user = $request->user();
         assert($user !== null);
+
+        $this->ensureMappingBelongsToInstitution($mapping, $institution);
+        $this->authorizedInstitution($user, $institution, 'viewAny');
 
         $validated = $request->validate([
             'reason' => ['nullable', 'string', 'max:1000'],
@@ -164,7 +145,7 @@ class AcademicCreditMappingController extends Controller
         try {
             $this->retireAction->execute(
                 operator: $user,
-                mappingId: $id,
+                mapping: $mapping,
                 reason: isset($validated['reason']) ? (string) $validated['reason'] : null,
             );
         } catch (InvalidArgumentException $e) {
@@ -172,5 +153,34 @@ class AcademicCreditMappingController extends Controller
         }
 
         return back()->with('success', 'Pemetaan kredit berhasil dipensiunkan.');
+    }
+
+    private function authorizedInstitution(
+        User $user,
+        Institution $institution,
+        string $ability,
+    ): Institution {
+        $workspace = $this->resolveUserWorkspace->handle(
+            $user,
+            requestedInstitution: $institution,
+            requestedWorkspace: WorkspaceRole::CampusAdmin,
+        );
+
+        abort_unless(
+            $workspace->role === WorkspaceRole::CampusAdmin
+                && $workspace->institutionId === $institution->getKey(),
+            403,
+        );
+
+        Gate::forUser($user)->authorize($ability, [AcademicCreditMapping::class, $institution]);
+
+        return $institution;
+    }
+
+    private function ensureMappingBelongsToInstitution(
+        AcademicCreditMapping $mapping,
+        Institution $institution,
+    ): void {
+        abort_unless($mapping->institution_id === $institution->getKey(), 404);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\InstitutionOwned;
 use App\Enums\InvitationStatus;
 use Database\Factories\PrivilegedInvitationFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,7 +30,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  */
-class PrivilegedInvitation extends Model
+class PrivilegedInvitation extends Model implements InstitutionOwned
 {
     /** @use HasFactory<PrivilegedInvitationFactory> */
     use HasFactory;
@@ -97,5 +98,10 @@ class PrivilegedInvitation extends Model
     public function isIssued(): bool
     {
         return $this->status === InvitationStatus::Issued;
+    }
+
+    public function institutionId(): int
+    {
+        return (int) $this->institution_id;
     }
 }

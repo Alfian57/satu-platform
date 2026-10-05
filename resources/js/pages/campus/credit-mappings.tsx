@@ -1,10 +1,12 @@
 import { Head, router } from '@inertiajs/react';
 import { Award, CheckCircle2, Plus, Shield, XCircle } from 'lucide-react';
 import React, { useState, useTransition } from 'react';
+import { activate, retire, store } from '@/routes/campus/credit-mappings';
 
 interface CreditMappingItem {
     id: number;
     activity_type: string;
+    version: number;
     credit_amount: number;
     status: string;
     effective_from: string | null;
@@ -19,7 +21,7 @@ interface CampusCreditMappingsProps {
     institution: {
         id: number;
         name: string;
-    } | null;
+    };
 }
 
 export default function CampusCreditMappings({
@@ -36,7 +38,7 @@ export default function CampusCreditMappings({
 
         startTransition(() => {
             router.post(
-                '/campus/credit-mappings',
+                store.url({ institution: institution.id }),
                 {
                     activity_type: activityType,
                     credit_amount: parseFloat(creditAmount),
@@ -53,7 +55,7 @@ export default function CampusCreditMappings({
     const handleActivate = (id: number) => {
         startTransition(() => {
             router.post(
-                `/campus/credit-mappings/${id}/activate`,
+                activate({ institution: institution.id, mapping: id }).url,
                 {},
                 {
                     preserveState: true,
@@ -66,7 +68,7 @@ export default function CampusCreditMappings({
     const handleRetire = (id: number) => {
         startTransition(() => {
             router.post(
-                `/campus/credit-mappings/${id}/retire`,
+                retire({ institution: institution.id, mapping: id }).url,
                 {},
                 {
                     preserveState: true,
@@ -226,6 +228,9 @@ export default function CampusCreditMappings({
                                                 </h3>
                                                 <span className="rounded-lg border border-blue-900 bg-blue-950 px-2.5 py-0.5 text-xs font-semibold text-blue-300">
                                                     {map.credit_amount} SKS
+                                                </span>
+                                                <span className="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-slate-300">
+                                                    Versi {map.version}
                                                 </span>
                                                 <span
                                                     className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${

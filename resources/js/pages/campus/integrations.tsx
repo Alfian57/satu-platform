@@ -75,6 +75,10 @@ interface SyncsPaginated {
 }
 
 interface Props {
+    institution: {
+        id: number;
+        name: string;
+    } | null;
     connections: ConnectionItem[];
     syncs: SyncsPaginated;
     filters: {
@@ -441,6 +445,7 @@ function Forbidden() {
 }
 
 export default function AcademicIntegrations({
+    institution,
     connections,
     syncs,
     filters,
@@ -460,9 +465,13 @@ export default function AcademicIntegrations({
     );
 
     function applyFilters() {
+        if (institution === null) {
+            return;
+        }
+
         startTransition(() => {
             router.get(
-                integrationsIndex().url,
+                integrationsIndex({ institution: institution.id }).url,
                 {
                     status: statusFilter,
                     connection: connectionFilter,
@@ -476,9 +485,13 @@ export default function AcademicIntegrations({
     }
 
     function goToPage(page: number) {
+        if (institution === null) {
+            return;
+        }
+
         startTransition(() => {
             router.get(
-                integrationsIndex().url,
+                integrationsIndex({ institution: institution.id }).url,
                 {
                     status: statusFilter,
                     connection: connectionFilter,
@@ -493,14 +506,14 @@ export default function AcademicIntegrations({
     }
 
     function submitRetry() {
-        if (!confirmingRetry) {
+        if (!confirmingRetry || institution === null) {
             return;
         }
 
         const sync = confirmingRetry;
         startTransition(() => {
             router.post(
-                retry(sync.id).url,
+                retry({ institution: institution.id, id: sync.id }).url,
                 {},
                 {
                     preserveScroll: true,
@@ -517,14 +530,14 @@ export default function AcademicIntegrations({
     }
 
     function submitReconcile() {
-        if (!confirmingReconcile) {
+        if (!confirmingReconcile || institution === null) {
             return;
         }
 
         const sync = confirmingReconcile;
         startTransition(() => {
             router.post(
-                reconcile(sync.id).url,
+                reconcile({ institution: institution.id, id: sync.id }).url,
                 { reason: reconcileReason },
                 {
                     preserveScroll: true,

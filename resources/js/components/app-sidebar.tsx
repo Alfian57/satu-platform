@@ -7,10 +7,12 @@ import {
     ClipboardCheck,
     FileCheck2,
     FileSpreadsheet,
+    GraduationCap,
     LayoutDashboard,
     ListOrdered,
     Network,
     Search,
+    RefreshCw,
     SendHorizontal,
     ShieldCheck,
     Sparkles,
@@ -27,12 +29,15 @@ import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as affiliationIndex } from '@/routes/campus/affiliations';
 import { index as campusContributionsIndex } from '@/routes/campus/contributions';
+import { index as campusCreditMappingsIndex } from '@/routes/campus/credit-mappings';
 import { index as campusInclusionIndex } from '@/routes/campus/inclusion';
+import { index as campusIntegrationsIndex } from '@/routes/campus/integrations';
 import { show as campusOverview } from '@/routes/campus/overview';
 import { show as campusRoster } from '@/routes/campus/roster';
 import { index as contributionsIndex } from '@/routes/contributions';
 import { index as leaderboardsIndex } from '@/routes/leaderboards';
 import { index as platformAffiliationsIndex } from '@/routes/platform/affiliations';
+import { index as platformOperationsIndex } from '@/routes/platform/operations';
 import { index as platformSkillsIndex } from '@/routes/platform/skills';
 import { index as portfolioIndex } from '@/routes/portfolio';
 import { index as projectsIndex } from '@/routes/projects';
@@ -241,6 +246,11 @@ export function AppSidebar() {
     const visibleMainNavItems = isPlatformAdmin
         ? [
               {
+                  title: 'Operasi platform',
+                  href: platformOperationsIndex(),
+                  icon: ShieldCheck,
+              },
+              {
                   title: 'Afiliasi kampus',
                   href: platformAffiliationsIndex(),
                   icon: Building2,
@@ -287,6 +297,20 @@ export function AppSidebar() {
                         institution: campusInstitution.id,
                     }),
                     icon: Network,
+                },
+                {
+                    title: 'Pemetaan kredit',
+                    href: campusCreditMappingsIndex({
+                        institution: campusInstitution.id,
+                    }),
+                    icon: GraduationCap,
+                },
+                {
+                    title: 'Sinkronisasi akademik',
+                    href: campusIntegrationsIndex({
+                        institution: campusInstitution.id,
+                    }),
+                    icon: RefreshCw,
                 },
             ]
           : isRecruiterWorkspace
@@ -338,7 +362,7 @@ export function AppSidebar() {
                     }
                     href={
                         isPlatformAdmin
-                            ? platformAffiliationsIndex()
+                            ? platformOperationsIndex()
                             : isCampusWorkspace
                               ? campusOverview({
                                     institution: campusInstitution.id,

@@ -14,6 +14,9 @@ use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlatformAffiliationController;
+use App\Http\Controllers\PlatformInstitutionController;
+use App\Http\Controllers\PlatformInvitationController;
+use App\Http\Controllers\PlatformOperationsController;
 use App\Http\Controllers\PlatformSkillTaxonomyController;
 use App\Http\Controllers\PortfolioEntryController;
 use App\Http\Controllers\PortfolioPageController;
@@ -69,13 +72,19 @@ Route::middleware('guest')->group(function () {
         ->name('recover.password.update');
 });
 
+Route::middleware('auth')->get('invitation/continue', [AuthFlowController::class, 'showPendingInvitation'])
+    ->name('invitation.pending');
+
 Route::get('invitation/{token}', [AuthFlowController::class, 'showInvitation'])
     ->name('invitation.show');
 
 Route::get('p/{publicIdentifier}', [PortfolioPageController::class, 'share'])
     ->name('portfolio.share');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
+    Route::post('invitation/accept', [AuthFlowController::class, 'acceptPendingInvitation'])
+        ->name('invitation.accept');
+
     Route::prefix('recruiter/talent')->name('recruiter.talent.')->group(function () {
         // Index page for saved candidates
         Route::get('saved', [SavedCandidatesController::class, 'index'])
@@ -239,8 +248,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('notifications/{id}/navigate', [NotificationController::class, 'navigate'])
         ->name('notifications.navigate');
 
+    Route::get('platform', [PlatformOperationsController::class, 'index'])
+        ->name('platform.operations.index');
+
+    Route::post('platform/institutions/{institution}/approve', [PlatformInstitutionController::class, 'approve'])
+        ->name('platform.institutions.approve');
+
+    Route::post('platform/institutions/{institution}/suspend', [PlatformInstitutionController::class, 'suspend'])
+        ->name('platform.institutions.suspend');
+
     Route::get('platform/affiliations', PlatformAffiliationController::class)
         ->name('platform.affiliations.index');
+
+    Route::post('platform/institutions/{institution}/invitations', [PlatformInvitationController::class, 'store'])
+        ->name('platform.invitations.store');
+
+    Route::post('platform/invitations/{invitation}/revoke', [PlatformInvitationController::class, 'revoke'])
+        ->name('platform.invitations.revoke');
 
     Route::prefix('platform/skills')->name('platform.skills.')->group(function () {
         Route::get('/', [PlatformSkillTaxonomyController::class, 'index'])->name('index');
@@ -268,16 +292,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('student/contact-requests/{id}/decline', [StudentContactRequestController::class, 'decline'])
         ->name('student.contact-requests.decline');
 
-    Route::get('campus/credit-mappings', [AcademicCreditMappingController::class, 'index'])
+    Route::get('campus/{institution}/credit-mappings', [AcademicCreditMappingController::class, 'index'])
         ->name('campus.credit-mappings.index');
 
-    Route::post('campus/credit-mappings', [AcademicCreditMappingController::class, 'store'])
+    Route::post('campus/{institution}/credit-mappings', [AcademicCreditMappingController::class, 'store'])
         ->name('campus.credit-mappings.store');
 
-    Route::post('campus/credit-mappings/{id}/activate', [AcademicCreditMappingController::class, 'activate'])
+    Route::post('campus/{institution}/credit-mappings/{mapping}/activate', [AcademicCreditMappingController::class, 'activate'])
         ->name('campus.credit-mappings.activate');
 
-    Route::post('campus/credit-mappings/{id}/retire', [AcademicCreditMappingController::class, 'retire'])
+    Route::post('campus/{institution}/credit-mappings/{mapping}/retire', [AcademicCreditMappingController::class, 'retire'])
         ->name('campus.credit-mappings.retire');
 
     Route::get('campus/{institution}/overview', [CampusOverviewController::class, 'show'])
@@ -321,13 +345,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         )->name('campus.affiliations.decisions.store');
     });
 
-    Route::get('campus/integrations', [AcademicIntegrationController::class, 'index'])
+    Route::get('campus/{institution}/integrations', [AcademicIntegrationController::class, 'index'])
         ->name('campus.integrations.index');
 
-    Route::post('campus/integrations/syncs/{id}/retry', [AcademicIntegrationController::class, 'retry'])
+    Route::post('campus/{institution}/integrations/syncs/{id}/retry', [AcademicIntegrationController::class, 'retry'])
         ->name('campus.integrations.syncs.retry');
 
-    Route::post('campus/integrations/syncs/{id}/reconcile', [AcademicIntegrationController::class, 'reconcile'])
+    Route::post('campus/{institution}/integrations/syncs/{id}/reconcile', [AcademicIntegrationController::class, 'reconcile'])
         ->name('campus.integrations.syncs.reconcile');
 
     Route::get('api/skills/taxonomy', [SkillTaxonomyController::class, 'index'])
