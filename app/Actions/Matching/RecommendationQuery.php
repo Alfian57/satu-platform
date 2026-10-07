@@ -16,6 +16,10 @@ use InvalidArgumentException;
 
 final class RecommendationQuery
 {
+    public function __construct(
+        private readonly GenerateRecommendationsForStudent $generateForStudent,
+    ) {}
+
     public function execute(
         User $user,
         Institution $institution,
@@ -76,6 +80,14 @@ final class RecommendationQuery
             'page',
             $page,
         );
+
+        // On first visit with no results, generate recommendations on-demand and retry once.
+        if ($paginator->isEmpty() && $page === 1) {
+            $this->generateForStudent->handle($user, $institution);
+
+            /** @var LengthAwarePaginator<int, Recommendation> $paginator */
+            $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        }
 
         return new RecommendationQueryResult($institution, $currentVersionId, $paginator);
     }

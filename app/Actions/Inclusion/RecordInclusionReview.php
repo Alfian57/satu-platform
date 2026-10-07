@@ -36,11 +36,11 @@ final class RecordInclusionReview
         ?string $supportAction = null,
         string $reason = '',
     ): InclusionReview {
-        if (! Feature::active('inclusion-signal-engine')) {
+        $signal->loadMissing('institution');
+
+        if (! Feature::for($signal->institution)->active('inclusion-signal-engine')) {
             throw new Exception('Inclusion signal engine is not active.');
         }
-
-        $signal->loadMissing('institution');
 
         $context = $this->institutionContextResolver->resolve(
             $reviewer,

@@ -60,11 +60,27 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<PhoneNumber, $this>
+     */
+    public function phoneNumbers(): HasMany
+    {
+        return $this->hasMany(PhoneNumber::class);
+    }
+
+    /**
      * @return HasMany<AffiliationRequest, $this>
      */
     public function affiliationRequests(): HasMany
     {
         return $this->hasMany(AffiliationRequest::class);
+    }
+
+    /**
+     * @return HasOne<StudentProfile, $this>
+     */
+    public function studentProfile(): HasOne
+    {
+        return $this->hasOne(StudentProfile::class);
     }
 
     /**

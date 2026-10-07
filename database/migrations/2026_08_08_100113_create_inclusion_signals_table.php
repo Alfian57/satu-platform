@@ -21,6 +21,7 @@ return new class extends Migration
             $table->boolean('restricted_feature_state')->default(false); // Indicates restricted human-review candidate
             $table->boolean('data_sufficiency_met')->default(true);
             $table->json('evidence_summary');
+            $table->boolean('is_synthetic')->default(false);
             $table->timestamps();
 
             $table->index(['institution_id', 'subject_id', 'version_id', 'period'], 'inc_signal_idx');
