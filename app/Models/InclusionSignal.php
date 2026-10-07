@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\InclusionSignalFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,17 +24,17 @@ class InclusionSignal extends Model
     ];
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<InclusionSignal>  $query
+     * @param  Builder<InclusionSignal>  $query
      */
-    public function scopeRealOnly(\Illuminate\Database\Eloquent\Builder $query): void
+    public function scopeRealOnly(Builder $query): void
     {
         $query->where('is_synthetic', false);
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<InclusionSignal>  $query
+     * @param  Builder<InclusionSignal>  $query
      */
-    public function scopeSyntheticOnly(\Illuminate\Database\Eloquent\Builder $query): void
+    public function scopeSyntheticOnly(Builder $query): void
     {
         $query->where('is_synthetic', true);
     }

@@ -302,7 +302,7 @@ class FetchCampusOverviewMetrics
         /** @var LengthAwarePaginator<int, mixed> $paginator */
         $paginator = $query->orderByDesc('created_at')->paginate($perPage, ['*'], 'page', $page);
 
-        $paginator->getCollection()->transform(function (InstitutionMembership $m) {
+        return $paginator->through(function (InstitutionMembership $m): array {
             return [
                 'id' => $m->getKey(),
                 'username' => $m->user->username,
@@ -312,7 +312,5 @@ class FetchCampusOverviewMetrics
                 'createdAt' => $m->created_at?->toIso8601String(),
             ];
         });
-
-        return $paginator;
     }
 }

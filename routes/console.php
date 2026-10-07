@@ -1,5 +1,7 @@
 <?php
 
+use App\Jobs\CalculateInstitutionInclusionSignals;
+use App\Models\Institution;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -14,7 +16,9 @@ Schedule::command('message:dispatch-due')
 
 Schedule::call(function () {
     $period = date('Y').'-S1';
-    foreach (\App\Models\Institution::all() as $institution) {
-        \App\Jobs\CalculateInstitutionInclusionSignals::dispatch($institution, $period);
+    foreach (Institution::all() as $institution) {
+        CalculateInstitutionInclusionSignals::dispatch($institution, $period);
     }
-})->daily()->withoutOverlapping();
+})->name('institution:calculate-inclusion-signals')
+    ->daily()
+    ->withoutOverlapping();
