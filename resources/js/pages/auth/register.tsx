@@ -426,7 +426,9 @@ export default function Register({ passwordRules, registration }: Props) {
                                             type="checkbox"
                                             name="terms_accepted"
                                             required
-                                            aria-invalid={Boolean(errors.terms_accepted)}
+                                            aria-invalid={Boolean(
+                                                errors.terms_accepted,
+                                            )}
                                             aria-describedby={
                                                 errors.terms_accepted
                                                     ? 'register-terms-error'
@@ -436,9 +438,10 @@ export default function Register({ passwordRules, registration }: Props) {
                                         />
                                         <Label
                                             htmlFor="terms_accepted"
-                                            className="text-xs leading-relaxed font-normal text-slate-600 cursor-pointer"
+                                            className="cursor-pointer text-xs leading-relaxed font-normal text-slate-600"
                                         >
-                                            Saya menyetujui Ketentuan Layanan dan Kebijakan Privasi SATU v1.0.
+                                            Saya menyetujui Ketentuan Layanan
+                                            dan Kebijakan Privasi SATU v1.0.
                                         </Label>
                                     </div>
                                     <InputError

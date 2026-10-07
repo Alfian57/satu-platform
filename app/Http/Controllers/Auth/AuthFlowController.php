@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Actions\Auth\DispatchAuthOtp;
+use App\Actions\Consent\ConsentRecorder;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Institution\AcceptInvitation;
@@ -37,8 +38,6 @@ use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
 use Throwable;
-
-use App\Actions\Consent\ConsentRecorder;
 
 class AuthFlowController extends Controller
 {

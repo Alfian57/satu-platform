@@ -34,7 +34,7 @@ class ExportUserData
             ])->all(),
             'profile' => $user->studentProfile ? [
                 'bio' => $user->studentProfile->bio,
-                'visibility' => $user->studentProfile->visibility,
+                'visibility' => $user->studentProfile->portfolio_visibility,
             ] : null,
             'memberships' => $user->institutionMemberships->map(fn ($m) => [
                 'institution' => $m->institution?->name,
