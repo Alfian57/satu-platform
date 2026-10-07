@@ -24,6 +24,6 @@ Schedule::call(function () {
     ->withoutOverlapping();
 
 Schedule::command('matching:generate-recommendations')
-    ->nightly()
+    ->dailyAt('02:00')
     ->withoutOverlapping()
     ->runInBackground();
