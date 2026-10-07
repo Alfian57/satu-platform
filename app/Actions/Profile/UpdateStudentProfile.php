@@ -6,6 +6,7 @@ namespace App\Actions\Profile;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Actions\Portfolio\RebuildTalentCandidateProjection;
+use App\Jobs\Matching\RefreshStudentRecommendations;
 use App\Models\Institution;
 use App\Models\ProfileInterest;
 use App\Models\ProfileSkill;
@@ -32,7 +33,7 @@ final class UpdateStudentProfile
     {
         Gate::forUser($actor)->authorize('update', $studentProfile);
 
-        return DB::transaction(function () use ($actor, $studentProfile, $data): StudentProfile {
+        $updatedProfile = DB::transaction(function () use ($actor, $studentProfile, $data): StudentProfile {
             $profile = StudentProfile::query()
                 ->lockForUpdate()
                 ->whereKey($studentProfile->getKey())
@@ -102,6 +103,10 @@ final class UpdateStudentProfile
 
             return $profile->refresh();
         }, attempts: 3);
+
+        RefreshStudentRecommendations::dispatch($actor->id, $updatedProfile->institution_id);
+
+        return $updatedProfile;
     }
 
     /**
