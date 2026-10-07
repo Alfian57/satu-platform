@@ -37,7 +37,7 @@ final class InclusionReviewQueue
         int $perPage = 25,
         ?int $page = null,
     ): LengthAwarePaginator {
-        if (! Feature::active('inclusion-signal-engine')) {
+        if (! Feature::for($institution)->active('inclusion-signal-engine')) {
             throw new Exception('Inclusion signal engine is not active.');
         }
 
@@ -60,7 +60,7 @@ final class InclusionReviewQueue
         ?string $period = null,
         bool $restrictedOnly = true,
     ): Builder {
-        if (! Feature::active('inclusion-signal-engine')) {
+        if (! Feature::for($institution)->active('inclusion-signal-engine')) {
             throw new Exception('Inclusion signal engine is not active.');
         }
 
