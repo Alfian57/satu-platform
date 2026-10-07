@@ -22,3 +22,8 @@ Schedule::call(function () {
 })->name('institution:calculate-inclusion-signals')
     ->daily()
     ->withoutOverlapping();
+
+Schedule::command('matching:generate-recommendations')
+    ->dailyAt('02:00')
+    ->withoutOverlapping()
+    ->runInBackground();
