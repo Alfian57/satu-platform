@@ -3,7 +3,6 @@
 namespace Tests\Feature\Auth;
 
 use App\Enums\OtpPurpose;
-use App\Models\OtpChallenge;
 use App\Support\PhoneIdentity;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
