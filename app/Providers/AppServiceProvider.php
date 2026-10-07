@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Institution;
 use App\Support\Integration\AcademicGateway;
 use App\Support\Integration\SandboxGateway;
 use App\Support\Notification\FonnteGateway;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Pennant\Feature;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,6 +47,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        Feature::define('inclusion-signal-engine', fn (Institution $scope) => false);
     }
 
     /**
