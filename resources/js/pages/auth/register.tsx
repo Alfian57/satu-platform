@@ -419,6 +419,37 @@ export default function Register({ passwordRules, registration }: Props) {
                                     />
                                 </div>
 
+                                <div className="grid gap-2">
+                                    <div className="flex items-start gap-2.5 pt-1">
+                                        <input
+                                            id="terms_accepted"
+                                            type="checkbox"
+                                            name="terms_accepted"
+                                            required
+                                            aria-invalid={Boolean(
+                                                errors.terms_accepted,
+                                            )}
+                                            aria-describedby={
+                                                errors.terms_accepted
+                                                    ? 'register-terms-error'
+                                                    : undefined
+                                            }
+                                            className="mt-0.5 size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <Label
+                                            htmlFor="terms_accepted"
+                                            className="cursor-pointer text-xs leading-relaxed font-normal text-slate-600"
+                                        >
+                                            Saya menyetujui Ketentuan Layanan
+                                            dan Kebijakan Privasi SATU v1.0.
+                                        </Label>
+                                    </div>
+                                    <InputError
+                                        id="register-terms-error"
+                                        message={errors.terms_accepted}
+                                    />
+                                </div>
+
                                 <Button
                                     type="submit"
                                     size="lg"

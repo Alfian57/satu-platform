@@ -10,6 +10,7 @@ use App\Http\Controllers\CampusOverviewController;
 use App\Http\Controllers\ContributionController;
 use App\Http\Controllers\ContributionPageController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DataRightsController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;
@@ -378,6 +379,11 @@ Route::middleware(['auth'])->group(function () {
             ->name('visibility.update');
         Route::put('/{studentProfile}/availability', [StudentProfileController::class, 'replaceAvailability'])
             ->name('availability.update');
+    });
+
+    Route::prefix('account/data-rights')->name('account.data-rights.')->group(function () {
+        Route::post('export', [DataRightsController::class, 'export'])->name('export');
+        Route::post('delete', [DataRightsController::class, 'delete'])->name('delete');
     });
 });
 
