@@ -383,6 +383,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('account/data-rights')->name('account.data-rights.')->group(function () {
         Route::post('export', [DataRightsController::class, 'export'])->name('export');
+        Route::post('correction', [DataRightsController::class, 'correction'])->name('correction');
+        Route::post('restriction', [DataRightsController::class, 'restriction'])->name('restriction');
+        Route::post('withdrawal', [DataRightsController::class, 'withdrawal'])->name('withdrawal');
         Route::post('delete', [DataRightsController::class, 'delete'])->name('delete');
     });
 });

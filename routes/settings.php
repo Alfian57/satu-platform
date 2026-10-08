@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DataRightsController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -22,6 +23,9 @@ Route::middleware(['auth'])->group(function () {
     Route::put('settings/password', [SecurityController::class, 'update'])
         ->middleware('throttle:6,1')
         ->name('user-password.update');
+
+    Route::get('settings/data-rights', [DataRightsController::class, 'edit'])
+        ->name('data-rights.edit');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
 });

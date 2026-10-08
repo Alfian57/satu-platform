@@ -1,9 +1,10 @@
 import { Link } from '@inertiajs/react';
-import { CircleUserRound, ShieldCheck, Sun } from 'lucide-react';
+import { CircleUserRound, ShieldAlert, ShieldCheck, Sun } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editDataRights } from '@/routes/data-rights';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
@@ -23,6 +24,11 @@ const sidebarNavItems: NavItem[] = [
         title: 'Tampilan',
         href: editAppearance(),
         icon: Sun,
+    },
+    {
+        title: 'Hak Data',
+        href: editDataRights(),
+        icon: ShieldAlert,
     },
 ];
 
