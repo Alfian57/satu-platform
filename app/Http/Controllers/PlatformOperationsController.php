@@ -14,6 +14,7 @@ use App\Models\AuditLog;
 use App\Models\Institution;
 use App\Models\MessageOutbox;
 use App\Models\PrivilegedInvitation;
+use App\Models\RecruiterEntitlement;
 use App\Models\RecruiterOrganization;
 use App\Models\User;
 use App\Support\PhoneIdentity;
@@ -76,6 +77,16 @@ final class PlatformOperationsController extends Controller
 
         $recruiterOrganizations = RecruiterOrganization::query()
             ->select(['id', 'name', 'industry', 'status', 'created_at'])
+            ->with([
+                'entitlements' => fn ($entitlementQuery) => $entitlementQuery
+                    ->where('status', RecruiterEntitlementStatus::Active)
+                    ->where('starts_at', '<=', $now)
+                    ->where(function ($activeEntitlementQuery) use ($now): void {
+                        $activeEntitlementQuery
+                            ->whereNull('ends_at')
+                            ->orWhere('ends_at', '>=', $now);
+                    }),
+            ])
             ->withCount([
                 'memberships as active_memberships_count' => fn ($membershipQuery) => $membershipQuery
                     ->where('status', RecruiterMembershipStatus::Active),
@@ -181,6 +192,16 @@ final class PlatformOperationsController extends Controller
                     'activeMembershipsCount' => (int) $organization->getAttribute('active_memberships_count'),
                     'activeEntitlementsCount' => (int) $organization->getAttribute('active_entitlements_count'),
                     'createdAt' => $organization->created_at->toIso8601String(),
+                    'activeEntitlements' => $organization->entitlements
+                        ->map(fn (RecruiterEntitlement $entitlement): array => [
+                            'id' => $entitlement->getKey(),
+                            'scope' => $entitlement->scope->value,
+                            'status' => $entitlement->status->value,
+                            'startsAt' => $entitlement->starts_at->toIso8601String(),
+                            'endsAt' => $entitlement->ends_at?->toIso8601String(),
+                        ])
+                        ->values()
+                        ->all(),
                 ])
                 ->values()
                 ->all(),

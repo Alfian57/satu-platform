@@ -9,6 +9,8 @@ import {
     ChevronRight,
     FileCheck2,
     Lock,
+    MessageCircle,
+    Phone,
     Send,
     ShieldCheck,
     Sparkles,
@@ -34,6 +36,7 @@ interface Candidate {
     availability_status: string;
     verified_at: string | null;
     institution_name: string | null;
+    phone?: string | null;
 }
 
 interface CandidateDetailProps {
@@ -371,21 +374,57 @@ export default function CandidateDetail({
                         </div>
                     </header>
 
-                    {/* Privacy Boundary Banner */}
-                    <div className="flex items-start gap-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-5 text-blue-950 shadow-xs">
-                        <Lock
-                            aria-hidden="true"
-                            className="mt-0.5 size-5 shrink-0 text-blue-600"
-                        />
-                        <div>
-                            <h2 className="text-xs font-bold tracking-wider text-blue-900 uppercase">
-                                Batas Privasi Portofolio Perekrut
-                            </h2>
-                            <p className="mt-1 text-xs leading-relaxed text-blue-800/90">
-                                {contactConsequenceNotice}
-                            </p>
+                    {/* Privacy Boundary Banner or Revealed Contact Card */}
+                    {candidate.phone ? (
+                        <div className="flex flex-col gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 text-emerald-950 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-start gap-4">
+                                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                                    <Phone className="size-5" />
+                                </span>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="text-xs font-bold tracking-wider text-emerald-900 uppercase">
+                                            Kontak Mahasiswa Terbuka
+                                        </h2>
+                                        <span className="rounded-full bg-emerald-200/80 px-2 py-0.5 text-[0.6875rem] font-bold text-emerald-800">
+                                            Disetujui
+                                        </span>
+                                    </div>
+                                    <p className="mt-1 font-mono text-base font-bold text-emerald-950">
+                                        {candidate.phone}
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-emerald-800/80">
+                                        {contactConsequenceNotice}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <a
+                                href={`https://wa.me/${candidate.phone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700"
+                            >
+                                <MessageCircle className="size-4" />
+                                Hubungi via WhatsApp
+                            </a>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="flex items-start gap-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-5 text-blue-950 shadow-xs">
+                            <Lock
+                                aria-hidden="true"
+                                className="mt-0.5 size-5 shrink-0 text-blue-600"
+                            />
+                            <div>
+                                <h2 className="text-xs font-bold tracking-wider text-blue-900 uppercase">
+                                    Batas Privasi Portofolio Perekrut
+                                </h2>
+                                <p className="mt-1 text-xs leading-relaxed text-blue-800/90">
+                                    {contactConsequenceNotice}
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Bio Card */}
                     {candidate.bio && (

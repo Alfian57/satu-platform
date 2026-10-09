@@ -27,6 +27,7 @@ final class GrantRecruiterEntitlement
      * Grant or extend an entitlement for a recruiter organization.
      *
      * @throws AuthorizationException
+     * @throws InvalidArgumentException
      */
     public function execute(
         User $issuer,

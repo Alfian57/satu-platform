@@ -9,6 +9,8 @@ import {
     Clock,
     Lock,
     Mail,
+    MessageCircle,
+    Phone,
     Search,
     Send,
     UserCheck,
@@ -34,6 +36,7 @@ interface ContactRequestItem {
     responded_at: string | null;
     candidate_name: string;
     candidate_headline: string | null;
+    candidate_phone?: string | null;
 }
 
 interface RecruiterContactRequestsProps {
@@ -498,6 +501,37 @@ export default function RecruiterContactRequests({
                                                                 )}
                                                             </span>
                                                         </div>
+
+                                                        {/* Revealed Phone for Accepted Requests */}
+                                                        {req.status ===
+                                                            'accepted' &&
+                                                            req.candidate_phone && (
+                                                                <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-emerald-200/80 bg-emerald-50/70 p-3.5">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Phone className="size-4 text-emerald-600" />
+                                                                        <span className="text-xs font-semibold text-emerald-950">
+                                                                            WhatsApp
+                                                                            Mahasiswa:
+                                                                        </span>
+                                                                        <span className="font-mono text-xs font-bold text-emerald-900">
+                                                                            {
+                                                                                req.candidate_phone
+                                                                            }
+                                                                        </span>
+                                                                    </div>
+                                                                    <a
+                                                                        href={`https://wa.me/${req.candidate_phone.replace(/\D/g, '')}`}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-700"
+                                                                    >
+                                                                        <MessageCircle className="size-3.5" />
+                                                                        Hubungi
+                                                                        via
+                                                                        WhatsApp
+                                                                    </a>
+                                                                </div>
+                                                            )}
                                                     </div>
                                                 </div>
 
