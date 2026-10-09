@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Integration\CreateIntegrationConnection;
 use App\Actions\Integration\ReconcileIntegrationSync;
 use App\Actions\Integration\RetryIntegrationSync;
+use App\Enums\IntegrationProviderMode;
 use App\Enums\IntegrationSyncStatus;
+use App\Http\Requests\Campus\StoreIntegrationConnectionRequest;
 use App\Models\Institution;
 use App\Models\IntegrationConnection;
 use App\Models\IntegrationSync;
@@ -25,7 +28,32 @@ class AcademicIntegrationController extends Controller
         private readonly IntegrationConnectionSerializer $serializer,
         private readonly RetryIntegrationSync $retryAction,
         private readonly ReconcileIntegrationSync $reconcileAction,
+        private readonly CreateIntegrationConnection $createAction,
     ) {}
+
+    public function store(StoreIntegrationConnectionRequest $request, Institution $institution): RedirectResponse
+    {
+        $user = $request->user();
+        assert($user !== null);
+
+        $validated = $request->validated();
+        $mode = isset($validated['mode'])
+            ? IntegrationProviderMode::from((string) $validated['mode'])
+            : IntegrationProviderMode::Sandbox;
+
+        try {
+            $this->createAction->execute(
+                operator: $user,
+                institution: $institution,
+                providerKey: (string) $validated['provider_key'],
+                mode: $mode,
+            );
+        } catch (InvalidArgumentException $e) {
+            return back()->withErrors(['provider_key' => $e->getMessage()]);
+        }
+
+        return back()->with('success', 'Koneksi integrasi berhasil dibuat.');
+    }
 
     /**
      * Display the academic sync status and review queue for a campus operator.

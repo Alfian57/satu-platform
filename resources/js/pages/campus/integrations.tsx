@@ -3,6 +3,7 @@ import {
     CheckCircle2,
     Clock,
     ExternalLink,
+    Plus,
     RefreshCw,
     RotateCcw,
     ServerCog,
@@ -25,7 +26,10 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { index as integrationsIndex } from '@/routes/campus/integrations';
+import {
+    index as integrationsIndex,
+    store as integrationsStore,
+} from '@/routes/campus/integrations';
 import { reconcile, retry } from '@/routes/campus/integrations/syncs';
 
 interface TimelineEntry {
@@ -144,8 +148,10 @@ function StatusBadge({ status }: { status: string }) {
 
 function ConnectionOverview({
     connections,
+    onCreate,
 }: {
     connections: ConnectionItem[];
+    onCreate?: () => void;
 }) {
     if (connections.length === 0) {
         return (
@@ -153,22 +159,36 @@ function ConnectionOverview({
                 aria-labelledby="connections-heading"
                 className="rounded-xl border border-border/80 bg-card p-6"
             >
-                <div className="flex items-start gap-3.5">
-                    <span className="rounded-lg bg-accent p-2.5 text-primary">
-                        <ServerCog aria-hidden="true" className="size-5" />
-                    </span>
-                    <div>
-                        <h2
-                            id="connections-heading"
-                            className="text-title font-bold"
-                        >
-                            Belum ada koneksi akademik
-                        </h2>
-                        <p className="mt-1 max-w-[65ch] text-sm leading-6 text-muted-foreground">
-                            Anda dapat membuat koneksi sandbox untuk mulai
-                            memetakan aktivitas terverifikasi menjadi kredit.
-                        </p>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex items-start gap-3.5">
+                        <span className="rounded-lg bg-accent p-2.5 text-primary">
+                            <ServerCog aria-hidden="true" className="size-5" />
+                        </span>
+                        <div>
+                            <h2
+                                id="connections-heading"
+                                className="text-title font-bold"
+                            >
+                                Belum ada koneksi akademik
+                            </h2>
+                            <p className="mt-1 max-w-[65ch] text-sm leading-6 text-muted-foreground">
+                                Anda dapat membuat koneksi sandbox untuk mulai
+                                memetakan aktivitas terverifikasi menjadi
+                                kredit.
+                            </p>
+                        </div>
                     </div>
+                    {onCreate && (
+                        <Button
+                            type="button"
+                            size="sm"
+                            onClick={onCreate}
+                            className="shrink-0 gap-1.5"
+                        >
+                            <Plus aria-hidden="true" className="size-4" />
+                            Buat Koneksi Sandbox
+                        </Button>
+                    )}
                 </div>
             </section>
         );
@@ -176,9 +196,23 @@ function ConnectionOverview({
 
     return (
         <section aria-labelledby="connections-heading">
-            <h2 id="connections-heading" className="mb-3 text-title font-bold">
-                Koneksi akademik
-            </h2>
+            <div className="mb-3 flex items-center justify-between">
+                <h2 id="connections-heading" className="text-title font-bold">
+                    Koneksi akademik
+                </h2>
+                {onCreate && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={onCreate}
+                        className="gap-1.5"
+                    >
+                        <Plus aria-hidden="true" className="size-4" />
+                        Tambah Koneksi Sandbox
+                    </Button>
+                )}
+            </div>
             <div className="grid gap-3 md:grid-cols-2">
                 {connections.map((connection) => (
                     <div
@@ -459,10 +493,38 @@ export default function AcademicIntegrations({
     const [confirmingReconcile, setConfirmingReconcile] =
         useState<SyncItem | null>(null);
     const [reconcileReason, setReconcileReason] = useState('');
+    const [creatingConnection, setCreatingConnection] = useState(false);
+    const [providerKey, setProviderKey] = useState('');
     const [statusFilter, setStatusFilter] = useState(filters.status);
     const [connectionFilter, setConnectionFilter] = useState(
         String(filters.connection),
     );
+
+    function submitCreateConnection() {
+        if (institution === null || !providerKey.trim()) {
+            return;
+        }
+
+        startTransition(() => {
+            router.post(
+                integrationsStore({ institution: institution.id }).url,
+                { provider_key: providerKey.trim(), mode: 'sandbox' },
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        setCreatingConnection(false);
+                        setProviderKey('');
+                        toast.success('Koneksi sandbox berhasil dibuat');
+                    },
+                    onError: (errors) => {
+                        toast.error(
+                            errors.provider_key ?? 'Gagal membuat koneksi',
+                        );
+                    },
+                },
+            );
+        });
+    }
 
     function applyFilters() {
         if (institution === null) {
@@ -588,7 +650,10 @@ export default function AcademicIntegrations({
                     <Forbidden />
                 ) : (
                     <div className="grid gap-7">
-                        <ConnectionOverview connections={connections} />
+                        <ConnectionOverview
+                            connections={connections}
+                            onCreate={() => setCreatingConnection(true)}
+                        />
 
                         <section aria-labelledby="sync-queue-heading">
                             <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
@@ -736,6 +801,62 @@ export default function AcademicIntegrations({
                     </div>
                 )}
             </AppPage>
+
+            <Dialog
+                open={creatingConnection}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setCreatingConnection(false);
+                        setProviderKey('');
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Buat koneksi akademik sandbox</DialogTitle>
+                        <DialogDescription>
+                            Tambahkan provider koneksi sandbox untuk
+                            mensimulasikan sinkronisasi kredit akademik dan
+                            memetakan aktivitas mahasiswa.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <label className="grid gap-1.5">
+                        <span className="font-label text-label font-semibold text-muted-foreground">
+                            Kunci penyedia (Provider Key)
+                        </span>
+                        <input
+                            type="text"
+                            value={providerKey}
+                            onChange={(e) => setProviderKey(e.target.value)}
+                            placeholder="Contoh: siakad, feeder, atau pd_dikti"
+                            className="h-control-md rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                        />
+                        <span className="text-xs text-muted-foreground">
+                            Koneksi dibuat dalam mode Sandbox untuk pengujian
+                            terisolasi.
+                        </span>
+                    </label>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                setCreatingConnection(false);
+                                setProviderKey('');
+                            }}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={submitCreateConnection}
+                            disabled={isPending || !providerKey.trim()}
+                        >
+                            {isPending ? 'Menyimpan...' : 'Simpan Koneksi'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Dialog
                 open={confirmingRetry !== null}
