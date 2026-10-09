@@ -18,6 +18,7 @@ use App\Http\Controllers\PlatformAffiliationController;
 use App\Http\Controllers\PlatformInstitutionController;
 use App\Http\Controllers\PlatformInvitationController;
 use App\Http\Controllers\PlatformOperationsController;
+use App\Http\Controllers\PlatformRecruiterController;
 use App\Http\Controllers\PlatformSkillTaxonomyController;
 use App\Http\Controllers\PortfolioEntryController;
 use App\Http\Controllers\PortfolioPageController;
@@ -266,6 +267,15 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('platform/invitations/{invitation}/revoke', [PlatformInvitationController::class, 'revoke'])
         ->name('platform.invitations.revoke');
+
+    Route::post('platform/recruiter-organizations/{organization}/review', [PlatformRecruiterController::class, 'review'])
+        ->name('platform.recruiter-organizations.review');
+
+    Route::post('platform/recruiter-organizations/{organization}/entitlements', [PlatformRecruiterController::class, 'grantEntitlement'])
+        ->name('platform.recruiter-organizations.entitlements.store');
+
+    Route::post('platform/recruiter-entitlements/{entitlement}/revoke', [PlatformRecruiterController::class, 'revokeEntitlement'])
+        ->name('platform.recruiter-entitlements.revoke');
 
     Route::prefix('platform/skills')->name('platform.skills.')->group(function () {
         Route::get('/', [PlatformSkillTaxonomyController::class, 'index'])->name('index');
