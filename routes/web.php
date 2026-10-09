@@ -359,6 +359,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('campus/{institution}/integrations', [AcademicIntegrationController::class, 'index'])
         ->name('campus.integrations.index');
 
+    Route::post('campus/{institution}/integrations', [AcademicIntegrationController::class, 'store'])
+        ->name('campus.integrations.store');
+
     Route::post('campus/{institution}/integrations/syncs/{id}/retry', [AcademicIntegrationController::class, 'retry'])
         ->name('campus.integrations.syncs.retry');
 
