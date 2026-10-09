@@ -95,10 +95,14 @@ export default function Login({ status }: Props) {
 
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-2.5">
-                                    <Checkbox id="remember" name="remember" />
+                                    <Checkbox
+                                        id="remember"
+                                        name="remember"
+                                        className="cursor-pointer"
+                                    />
                                     <Label
                                         htmlFor="remember"
-                                        className="text-sm text-slate-600"
+                                        className="cursor-pointer text-sm text-slate-600"
                                     >
                                         Ingat saya
                                     </Label>

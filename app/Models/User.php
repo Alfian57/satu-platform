@@ -22,11 +22,12 @@ use Illuminate\Support\Str;
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
+ * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
 #[Fillable(['name', 'username', 'password', 'is_platform_admin'])]
-#[Hidden(['password', 'username', 'two_factor_secret', 'two_factor_recovery_codes'])]
+#[Hidden(['password', 'username', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
