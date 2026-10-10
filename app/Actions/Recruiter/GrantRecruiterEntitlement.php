@@ -57,6 +57,20 @@ final class GrantRecruiterEntitlement
         $trimmedReason = $reason !== null ? trim($reason) : null;
 
         return DB::transaction(function () use ($issuer, $organization, $enumScope, $startsAt, $endsAt, $trimmedReason) {
+            $existingActive = RecruiterEntitlement::query()
+                ->where('recruiter_organization_id', $organization->id)
+                ->where('scope', $enumScope->value)
+                ->where('status', RecruiterEntitlementStatus::Active->value)
+                ->where(function ($query) use ($startsAt) {
+                    $query->whereNull('ends_at')
+                        ->orWhere('ends_at', '>=', $startsAt);
+                })
+                ->exists();
+
+            if ($existingActive) {
+                throw new InvalidArgumentException("Recruiter organization already has an active entitlement for scope: {$enumScope->value}");
+            }
+
             $entitlement = RecruiterEntitlement::query()->create([
                 'recruiter_organization_id' => $organization->id,
                 'scope' => $enumScope->value,
