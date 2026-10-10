@@ -58,6 +58,8 @@ final class SubmitRecruiterVerificationReview
         };
 
         return DB::transaction(function () use ($admin, $organization, $enumConclusion, $newStatus, $trimmedReason) {
+            $previousStatus = $organization->status;
+
             $organization->update([
                 'status' => $newStatus->value,
             ]);
@@ -76,7 +78,7 @@ final class SubmitRecruiterVerificationReview
                 actor: $admin,
                 institution: null,
                 before: [
-                    'status' => $organization->getOriginal('status'),
+                    'status' => $previousStatus->value,
                 ],
                 after: [
                     'status' => $newStatus->value,
