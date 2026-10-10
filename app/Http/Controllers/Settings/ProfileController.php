@@ -28,9 +28,11 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        abort_unless($user !== null, 401);
 
-        $request->user()->save();
+        $user->fill($request->validated());
+        $user->save();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profil berhasil diperbarui.')]);
 
