@@ -41,8 +41,8 @@ export default function Profile() {
                                 Identitas akun
                             </h2>
                             <p className="text-sm leading-6 text-slate-600">
-                                Perbarui nama yang tampil pada akun dan nama
-                                pengguna untuk masuk ke SATU.
+                                Perbarui nama lengkap yang tampil pada akun SATU
+                                milikmu.
                             </p>
                         </div>
                     </header>
@@ -72,28 +72,6 @@ export default function Profile() {
                                     <InputError
                                         className="mt-2"
                                         message={errors.name}
-                                    />
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label htmlFor="username">
-                                        Nama pengguna
-                                    </Label>
-
-                                    <Input
-                                        id="username"
-                                        type="text"
-                                        className="w-full bg-slate-50"
-                                        defaultValue={auth.user.username}
-                                        name="username"
-                                        required
-                                        autoComplete="username"
-                                        placeholder="Nama pengguna"
-                                    />
-
-                                    <InputError
-                                        className="mt-2"
-                                        message={errors.username}
                                     />
                                 </div>
 

@@ -71,7 +71,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{id: int, name: string, username: string, is_platform_admin: bool, workspace: array<string, mixed>, created_at: mixed, updated_at: mixed}|null
+     * @return array{id: int, name: string, is_platform_admin: bool, workspace: array<string, mixed>, created_at: mixed, updated_at: mixed}|null
      */
     private function authenticatedUserSummary(Request $request): ?array
     {
@@ -85,7 +85,6 @@ class HandleInertiaRequests extends Middleware
             ...$user->only([
                 'id',
                 'name',
-                'username',
                 'created_at',
                 'updated_at',
             ]),
