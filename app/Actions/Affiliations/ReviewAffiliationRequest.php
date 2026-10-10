@@ -91,12 +91,12 @@ final class ReviewAffiliationRequest
 
             match ($decision) {
                 AffiliationReviewDecision::Approve => $this->approveMembership->handle(
-                    $lockedRequest->membership,
+                    $lockedRequest->membership ?? throw new \UnexpectedValueException('Cannot process decision without an associated membership record.'),
                     $reviewer,
                     $reason->value,
                 ),
                 AffiliationReviewDecision::Reject => $this->rejectMembership->handle(
-                    $lockedRequest->membership,
+                    $lockedRequest->membership ?? throw new \UnexpectedValueException('Cannot process decision without an associated membership record.'),
                     $reviewer,
                     $reason->value,
                 ),
