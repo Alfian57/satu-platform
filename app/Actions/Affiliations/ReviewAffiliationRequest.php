@@ -89,19 +89,27 @@ final class ReviewAffiliationRequest
                 AffiliationReviewDecision::Reject => AffiliationRequestStatus::Rejected,
             };
 
-            match ($decision) {
-                AffiliationReviewDecision::Approve => $this->approveMembership->handle(
-                    $lockedRequest->membership,
-                    $reviewer,
-                    $reason->value,
-                ),
-                AffiliationReviewDecision::Reject => $this->rejectMembership->handle(
-                    $lockedRequest->membership,
-                    $reviewer,
-                    $reason->value,
-                ),
-                AffiliationReviewDecision::RequestRevision => null,
-            };
+            if ($decision !== AffiliationReviewDecision::RequestRevision) {
+                if ($lockedRequest->membership === null) {
+                    throw new \UnexpectedValueException('Cannot process decision without an associated membership record.');
+                }
+
+                $membership = $lockedRequest->membership;
+
+                match ($decision) {
+                    AffiliationReviewDecision::Approve => $this->approveMembership->handle(
+                        $membership,
+                        $reviewer,
+                        $reason->value,
+                    ),
+                    AffiliationReviewDecision::Reject => $this->rejectMembership->handle(
+                        $membership,
+                        $reviewer,
+                        $reason->value,
+                    ),
+                    default => null,
+                };
+            }
 
             $review = AffiliationReview::query()->forceCreate([
                 'affiliation_request_id' => $lockedRequest->getKey(),
