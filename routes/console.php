@@ -12,18 +12,23 @@ Artisan::command('inspire', function () {
 
 Schedule::command('message:dispatch-due')
     ->everyMinute()
-    ->withoutOverlapping();
+    ->withoutOverlapping()
+    ->onOneServer();
 
 Schedule::call(function () {
     $period = date('Y').'-S1';
-    foreach (Institution::all() as $institution) {
-        CalculateInstitutionInclusionSignals::dispatch($institution, $period);
-    }
+    Institution::query()->chunkById(100, function ($institutions) use ($period) {
+        foreach ($institutions as $institution) {
+            CalculateInstitutionInclusionSignals::dispatch($institution, $period);
+        }
+    });
 })->name('institution:calculate-inclusion-signals')
     ->daily()
-    ->withoutOverlapping();
+    ->withoutOverlapping()
+    ->onOneServer();
 
 Schedule::command('matching:generate-recommendations')
     ->dailyAt('02:00')
     ->withoutOverlapping()
+    ->onOneServer()
     ->runInBackground();
