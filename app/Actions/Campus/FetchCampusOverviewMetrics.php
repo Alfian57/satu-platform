@@ -305,7 +305,7 @@ class FetchCampusOverviewMetrics
         return $paginator->through(function (InstitutionMembership $m): array {
             return [
                 'id' => $m->getKey(),
-                'username' => $m->user?->username ?? 'Unknown',
+                'username' => $m->user->username ?? 'Unknown',
                 'role' => $m->role->value,
                 'status' => $m->status->value,
                 'program' => $m->user?->studentProfiles->first()?->study_program,
