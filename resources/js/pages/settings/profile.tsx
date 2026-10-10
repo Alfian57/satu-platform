@@ -2,6 +2,7 @@ import { Form, Head, usePage } from '@inertiajs/react';
 import { CircleUserRound, Save } from 'lucide-react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
+import ExportUserData from '@/components/export-user-data';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -101,6 +102,8 @@ export default function Profile() {
                         )}
                     </Form>
                 </section>
+
+                <ExportUserData />
 
                 <DeleteUser />
             </div>
