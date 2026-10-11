@@ -44,6 +44,9 @@ final class RecommendationSerializer
         $explanation = $recommendation->safeExplanation();
         $project = $recommendation->project;
         $version = $recommendation->matchRun?->version;
+        $snapshot = $recommendation->matchRun->input_snapshot;
+        $selectedRoleId = $snapshot['selected_role']['id'] ?? null;
+        $role = is_int($selectedRoleId) ? $project?->roles->firstWhere('id', $selectedRoleId) : null;
 
         return [
             'id' => $recommendation->getKey(),
@@ -61,6 +64,8 @@ final class RecommendationSerializer
                 'version' => $version?->version,
             ],
             'is_stale' => $recommendation->isStaleAgainst($currentVersionId),
+            'role' => $role === null ? null : ['id' => $role->getKey(), 'title' => $role->title, 'accepts_beginners' => $role->accepts_beginners],
+            'limitations' => ($snapshot['policy'] ?? null) === MatchingAvailability::POLICY ? ['Keahlian berasal dari pernyataan mahasiswa, bukan penilaian bukti.', 'Kebutuhan waktu proyek belum tersedia. Jadwal perlu disepakati dengan tim.', 'Hasil pencocokan tidak menjamin penerimaan.'] : [],
             'expires_at' => $recommendation->expires_at?->toIso8601String(),
         ];
     }

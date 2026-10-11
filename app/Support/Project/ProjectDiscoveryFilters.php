@@ -28,6 +28,9 @@ final readonly class ProjectDiscoveryFilters
         public ?int $institutionId,
         public int $perPage,
         public int $page,
+        public string $view = 'opportunities',
+        public string $beginner = 'all',
+        public string $availability = 'all',
     ) {
         $this->statuses = $statuses;
         $this->visibilities = $visibilities;
@@ -39,11 +42,12 @@ final readonly class ProjectDiscoveryFilters
     public static function fromValidated(array $validated): self
     {
         $sort = (string) ($validated['sort'] ?? 'deadline');
+        $view = (string) ($validated['view'] ?? 'opportunities');
 
         return new self(
             search: self::normalizeSearch($validated['q'] ?? null),
-            statuses: self::statuses($validated['status'] ?? null),
-            visibilities: self::visibilities($validated['visibility'] ?? null),
+            statuses: self::statuses($validated['status'] ?? null, $view),
+            visibilities: self::visibilities($validated['visibility'] ?? null, $view),
             sort: $sort,
             direction: (string) ($validated['direction'] ?? self::defaultDirection($sort)),
             institutionId: isset($validated['institution_id'])
@@ -51,6 +55,9 @@ final readonly class ProjectDiscoveryFilters
                 : null,
             perPage: (int) ($validated['per_page'] ?? 20),
             page: (int) ($validated['page'] ?? 1),
+            view: $view,
+            beginner: (string) ($validated['beginner'] ?? 'all'),
+            availability: (string) ($validated['availability'] ?? 'all'),
         );
     }
 
@@ -80,8 +87,12 @@ final readonly class ProjectDiscoveryFilters
     /**
      * @return list<ProjectStatus>
      */
-    public static function discoverableStatuses(): array
+    public static function discoverableStatuses(string $view = 'opportunities'): array
     {
+        if ($view === 'mine') {
+            return ProjectStatus::cases();
+        }
+
         return [
             ...self::defaultStatuses(),
             ProjectStatus::Closed,
@@ -111,6 +122,9 @@ final readonly class ProjectDiscoveryFilters
     public function queryParameters(): array
     {
         return [
+            'view' => $this->view,
+            'beginner' => $this->beginner,
+            'availability' => $this->availability,
             'q' => $this->search,
             'status' => self::enumValues($this->statuses),
             'visibility' => self::enumValues($this->visibilities),
@@ -127,6 +141,9 @@ final readonly class ProjectDiscoveryFilters
     public function toArray(): array
     {
         return [
+            'view' => $this->view,
+            'beginner' => $this->beginner,
+            'availability' => $this->availability,
             'q' => $this->search ?? '',
             'status' => self::enumValueList($this->statuses),
             'visibility' => self::enumValueList($this->visibilities),
@@ -149,6 +166,9 @@ final readonly class ProjectDiscoveryFilters
             institutionId: $institutionId,
             perPage: $this->perPage,
             page: $this->page,
+            view: $this->view,
+            beginner: $this->beginner,
+            availability: $this->availability,
         );
     }
 
@@ -166,10 +186,10 @@ final readonly class ProjectDiscoveryFilters
     /**
      * @return list<ProjectStatus>
      */
-    private static function statuses(mixed $value): array
+    private static function statuses(mixed $value, string $view): array
     {
         if (! is_string($value) || trim($value) === '') {
-            return self::defaultStatuses();
+            return $view === 'mine' ? ProjectStatus::cases() : self::defaultStatuses();
         }
 
         return array_map(
@@ -181,10 +201,10 @@ final readonly class ProjectDiscoveryFilters
     /**
      * @return list<ProjectVisibility>
      */
-    private static function visibilities(mixed $value): array
+    private static function visibilities(mixed $value, string $view): array
     {
         if (! is_string($value) || trim($value) === '') {
-            return self::defaultVisibilities();
+            return $view === 'mine' ? ProjectVisibility::cases() : self::defaultVisibilities();
         }
 
         return array_map(

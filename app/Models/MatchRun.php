@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use LogicException;
 
 /**
  * Persisted normalized input for one reproducible matching calculation.
@@ -31,6 +32,21 @@ class MatchRun extends Model implements InstitutionOwned
 {
     /** @use HasFactory<MatchRunFactory> */
     use HasFactory;
+
+    /** @param array<string, mixed> $options */
+    public function save(array $options = []): bool
+    {
+        if ($this->exists && $this->isDirty()) {
+            throw new LogicException('Snapshot pencocokan tidak dapat diubah. Buat perhitungan baru.');
+        }
+
+        return parent::save($options);
+    }
+
+    public function delete(): never
+    {
+        throw new LogicException('Riwayat pencocokan tidak dapat dihapus.');
+    }
 
     /**
      * @return BelongsTo<Institution, $this>

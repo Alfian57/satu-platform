@@ -3,26 +3,33 @@ import {
     ArrowDown,
     ArrowRight,
     BadgeCheck,
+    BookOpen,
+    Check,
+    Eye,
     EyeOff,
-    FileCheck2,
-    Landmark,
-    Layers3,
+    FileText,
+    FolderOpen,
     LockKeyhole,
-    Network,
-    Search,
+    Menu,
     ShieldCheck,
-    Target,
     UsersRound,
+    X,
 } from 'lucide-react';
-import type { KeyboardEvent, ReactNode } from 'react';
-import React, { Suspense, lazy, useState, useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
+import type { CSSProperties, KeyboardEvent } from 'react';
 import AppLogo from '@/components/app-logo';
+import { DashboardArchiveArt } from '@/components/dashboard-archive-art';
+import LandingDemo, { LandingDemoFallback } from '@/components/landing-demo';
+import LandingJourneyDemo from '@/components/landing-journey-demo';
+import LandingMascot from '@/components/landing-mascot';
+import LandingPreview from '@/components/landing-preview';
+import type { LandingPreviewKind } from '@/components/landing-preview';
+import LandingReveal from '@/components/landing-reveal';
 import LandingFlowLedger, {
     LANDING_STAGES,
 } from '@/components/LandingFlowLedger';
 import Mascot from '@/components/mascot';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import { dashboard, login, register } from '@/routes';
 
 const landingTheme = {
@@ -42,297 +49,343 @@ const landingTheme = {
     '--landing-coral-soft': '#FFF0EC',
     '--landing-yellow': '#B46D00',
     '--landing-yellow-soft': '#FFF5D9',
-} as React.CSSProperties;
+    colorScheme: 'light',
+} as CSSProperties;
 
+const navigation = [
+    { href: '#cara-kerja', label: 'Cara kerja' },
+    { href: '#fitur', label: 'Jelajahi fitur' },
+    { href: '#demo', label: 'Demo' },
+    { href: '#peran', label: 'Untuk siapa' },
+    { href: '#privasi', label: 'Privasi' },
+];
 const audienceTabs = [
     { key: 'student', label: 'Mahasiswa', icon: UsersRound },
-    { key: 'campus', label: 'Operator kampus', icon: Landmark },
-    { key: 'recruiter', label: 'Perekrut', icon: Search },
+    { key: 'campus', label: 'Operator kampus', icon: ShieldCheck },
+    { key: 'recruiter', label: 'Perekrut (lanjutan)', icon: Eye },
 ] as const;
-
 type AudienceKey = (typeof audienceTabs)[number]['key'];
-
-const audienceDetails: Record<
+const audiences: Record<
     AudienceKey,
     {
-        eyebrow: string;
         title: string;
         description: string;
         boundaries: string[];
-        action: string;
-        href: string;
-        icon: typeof UsersRound;
+        preview: LandingPreviewKind;
     }
 > = {
     student: {
-        eyebrow: 'Ruang mahasiswa',
-        title: 'Bangun karya bersama, simpan konteksnya.',
+        title: 'Ruang untuk tumbuh lewat karya.',
         description:
-            'Temukan peluang kolaborasi, bentuk tim, dan catat kontribusi. Kontribusi yang disetujui dapat masuk portofolio yang visibilitasnya kamu atur.',
+            'Temukan proyek, bekerja bersama tim, dan susun portofolio dari kontribusi yang disetujui kampus.',
         boundaries: [
-            'Registrasi terbuka membuat akun mahasiswa.',
-            'Kamu menentukan entry portofolio yang dapat dilihat perekrut.',
+            'Registrasi terbuka hanya membuat akun mahasiswa.',
+            'Afiliasi kampus diverifikasi terpisah dari pembuatan akun.',
+            'Belum punya karya? Cari peran yang menerima pemula. Jangkauan karya tetap pilihanmu.',
         ],
-        action: 'Buat akun mahasiswa',
-        href: 'register',
-        icon: UsersRound,
+        preview: 'portfolio',
     },
     campus: {
-        eyebrow: 'Ruang operasi kampus',
-        title: 'Jaga alur afiliasi dan validasi tetap terbaca.',
+        title: 'Konteks yang jelas untuk setiap tinjauan.',
         description:
-            'Operator kampus menggunakan ruang kerja terpisah untuk meninjau afiliasi dan validasi kontribusi sesuai kewenangannya.',
+            'Operator kampus meninjau afiliasi dan kontribusi melalui ruang operasi sesuai kewenangannya.',
         boundaries: [
             'Akses operator diberikan melalui alur terkontrol.',
-            'Keputusan validasi memiliki status dan riwayat yang dapat ditinjau.',
+            'Tinjauan kontribusi memiliki versi dan alasan keputusan.',
+            'Informasi terbatas hanya tersedia bagi petugas berwenang.',
         ],
-        action: 'Pelajari batas akses',
-        href: '#privasi',
-        icon: Landmark,
+        preview: 'campus',
     },
     recruiter: {
-        eyebrow: 'Talent Portal',
-        title: 'Baca bukti kerja yang memang dibagikan.',
+        title: 'Perekrut adalah pengembangan lanjutan.',
         description:
-            'Perekrut melihat proyeksi portofolio yang secara eksplisit diizinkan mahasiswa. Organisasi dan hak aksesnya melewati verifikasi SATU.',
+            'Fokus rilis inti adalah kesempatan berkolaborasi dan pengakuan mahasiswa. Modul perekrut existing tetap dibatasi hak akses dan izin berbagi, bukan syarat alur utama.',
         boundaries: [
-            'Profil privat dan percakapan tim tidak masuk proyeksi.',
-            'Sinyal peluang kolaborasi hanya tersedia untuk reviewer kampus berwenang.',
+            'Organisasi dan hak akses harus melewati verifikasi SATU.',
+            'Portofolio mengikuti izin yang dipilih mahasiswa.',
+            'Percakapan tim, bukti privat, dan data peninjauan terbatas tidak ditampilkan.',
         ],
-        action: 'Lihat batas proyeksi',
-        href: '#privasi',
-        icon: Search,
+        preview: 'recruiter',
     },
 };
-
-const LandingDemoGraph = lazy(() => import('@/components/LandingDemoGraph'));
-
+const featureStories: {
+    label: string;
+    title: string;
+    description: string;
+    note: string;
+    kind: LandingPreviewKind;
+    icon: typeof FileText;
+}[] = [
+    {
+        label: 'Proyek dan tim',
+        title: 'Bukan sekadar daftar proyek. Temukan tempat untuk berperan.',
+        description:
+            'Pahami tujuan proyek, keahlian yang dibutuhkan, dan peran yang ingin kamu ambil. Peluang yang jelas membantu kamu memutuskan langkah berikutnya.',
+        note: 'Mulai dari kebutuhan proyek, bukan popularitas.',
+        kind: 'project',
+        icon: FolderOpen,
+    },
+    {
+        label: 'Kontribusi dan validasi',
+        title: 'Pekerjaanmu punya cerita yang bisa ditinjau.',
+        description:
+            'Catat peran, pekerjaan, dan bukti yang relevan. Tinjauan kampus memberi keputusan serta alasan, sehingga kamu tahu apa yang perlu ditindaklanjuti.',
+        note: 'Permintaan revisi tetap menjadi bagian dari perjalanan.',
+        kind: 'contribution',
+        icon: FileText,
+    },
+    {
+        label: 'Portofolio dan kendali',
+        title: 'Beri ruang pada karya. Pilih siapa yang melihatnya.',
+        description:
+            'Susun karya dari kontribusi yang disetujui. Konteks proyek dan peran tetap terbaca, sementara jangkauan tiap karya tetap berada dalam kendalimu.',
+        note: 'Kontribusi disetujui bukan berarti otomatis dipublikasikan.',
+        kind: 'portfolio',
+        icon: LockKeyhole,
+    },
+];
 const subscribeToHydration = () => () => undefined;
-const getClientHydrationSnapshot = () => true;
-const getServerHydrationSnapshot = () => false;
-
-function useIsHydrated(): boolean {
-    return useSyncExternalStore(
-        subscribeToHydration,
-        getClientHydrationSnapshot,
-        getServerHydrationSnapshot,
-    );
-}
-
-function LandingDemoGraphFallback() {
-    return (
-        <div
-            className="grid gap-5 p-4 lg:grid-cols-[minmax(0,1fr)_21rem] lg:p-6"
-            aria-busy="true"
-            role="status"
-        >
-            <div className="space-y-4">
-                <div className="flex items-center justify-between gap-4">
-                    <Skeleton className="h-8 w-40 bg-[#E7F2FF]" />
-                    <Skeleton className="h-9 w-28 bg-[#E7F2FF]" />
-                </div>
-                <Skeleton className="h-[320px] w-full rounded-2xl bg-[#E7F2FF] lg:h-[420px]" />
-            </div>
-            <div className="space-y-4">
-                <Skeleton className="h-8 w-32 bg-[#E7F2FF]" />
-                <Skeleton className="h-16 w-full rounded-xl bg-[#E7F2FF]" />
-                <Skeleton className="h-16 w-full rounded-xl bg-[#E7F2FF]" />
-            </div>
-            <span className="sr-only">Menyiapkan demo kolaborasi.</span>
-        </div>
-    );
-}
-
-function TrustNote({
-    icon: Icon,
-    children,
-}: {
-    icon: typeof ShieldCheck;
-    children: ReactNode;
-}) {
-    return (
-        <div className="flex items-center gap-2.5 text-sm font-semibold text-[#345574]">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-[#D9E8F5] bg-white text-[#1764E8] shadow-[0_3px_10px_rgba(23,52,90,0.05)]">
-                <Icon aria-hidden="true" className="size-4" />
-            </span>
-            <span>{children}</span>
-        </div>
-    );
-}
-
-function moveAudienceTab(
-    event: KeyboardEvent<HTMLButtonElement>,
-    currentIndex: number,
-    setActiveAudience: (audience: AudienceKey) => void,
-) {
-    let nextIndex = currentIndex;
-
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-        nextIndex = (currentIndex + 1) % audienceTabs.length;
-    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-        nextIndex =
-            (currentIndex - 1 + audienceTabs.length) % audienceTabs.length;
-    } else if (event.key === 'Home') {
-        nextIndex = 0;
-    } else if (event.key === 'End') {
-        nextIndex = audienceTabs.length - 1;
-    } else {
-        return;
-    }
-
-    event.preventDefault();
-    setActiveAudience(audienceTabs[nextIndex].key);
-    event.currentTarget
-        .closest('[role="tablist"]')
-        ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-        .item(nextIndex)
-        ?.focus();
-}
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 export default function Welcome() {
     const { auth } = usePage().props;
-    const isHydrated = useIsHydrated();
+    const isHydrated = useSyncExternalStore(
+        subscribeToHydration,
+        getClientSnapshot,
+        getServerSnapshot,
+    );
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isMapOpen, setIsMapOpen] = useState(false);
     const [activeAudience, setActiveAudience] =
         useState<AudienceKey>('student');
-    const audience = audienceDetails[activeAudience];
-    const AudienceIcon = audience.icon;
+    const audience = audiences[activeAudience];
+
+    function closeMenu(restoreFocus = false) {
+        setIsMenuOpen(false);
+
+        if (restoreFocus) {
+            document
+                .querySelector<HTMLButtonElement>(
+                    '[data-testid="landing-menu-toggle"]',
+                )
+                ?.focus();
+        }
+    }
+
+    function moveAudience(
+        event: KeyboardEvent<HTMLButtonElement>,
+        index: number,
+    ) {
+        let next: number;
+
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+            next = (index + 1) % audienceTabs.length;
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+            next = (index - 1 + audienceTabs.length) % audienceTabs.length;
+        } else if (event.key === 'Home') {
+            next = 0;
+        } else if (event.key === 'End') {
+            next = audienceTabs.length - 1;
+        } else {
+            return;
+        }
+
+        event.preventDefault();
+        setActiveAudience(audienceTabs[next].key);
+        event.currentTarget
+            .closest('[role="tablist"]')
+            ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+            .item(next)
+            ?.focus();
+    }
 
     return (
         <>
-            <Head title="SATU | Kolaborasi dan portofolio mahasiswa" />
+            <Head title="SATU | Kolaborasi dan portofolio mahasiswa">
+                <meta
+                    name="description"
+                    content="Temukan peluang kolaborasi, catat kontribusi, dan susun portofolio dengan jangkauan yang kamu kendalikan di SATU."
+                />
+            </Head>
             <div
                 id="top"
                 data-landing-surface
-                className="min-h-screen overflow-x-clip bg-[#F3F9FF] text-[#17345A] selection:bg-[#B9D9FF]"
-                style={{ ...landingTheme, colorScheme: 'light' }}
+                className="landing-editorial min-h-screen bg-[#F3F9FF] text-[#17345A] selection:bg-[#B9D9FF]"
+                style={landingTheme}
             >
                 <a
                     href="#main"
-                    className="sr-only z-[100] rounded-lg bg-white px-4 py-3 text-[#17345A] focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0]"
+                    className="sr-only z-[100] rounded-xl bg-white px-4 py-3 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
                 >
                     Langsung ke konten utama
                 </a>
-
-                <header className="sticky top-0 z-50 border-b border-[#D9E8F5]/80 bg-white/90 backdrop-blur-xl">
-                    <div className="mx-auto flex min-h-[4.5rem] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+                <header
+                    className="@container sticky top-0 z-50 border-b border-[#D9E8F5]/80 bg-white/95 backdrop-blur-xl"
+                    onKeyDown={(event) => {
+                        if (event.key === 'Escape' && isMenuOpen) {
+                            event.preventDefault();
+                            closeMenu(true);
+                        }
+                    }}
+                >
+                    <div className="landing-container flex min-h-20 items-center justify-between gap-3 py-3">
                         <a
                             href="#top"
                             aria-label="SATU, kembali ke awal halaman"
-                            className="shrink-0 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1746B0]"
+                            className="shrink-0 rounded-xl"
                         >
                             <AppLogo
                                 compact
+                                logoClassName="size-11 rounded-xl border border-[#D9E8F5] bg-white shadow-sm sm:size-12"
                                 className="text-[#17345A]"
-                                ruleClassName="bg-[#1764E8]"
                             />
                         </a>
-
                         <nav
                             aria-label="Navigasi landing"
-                            className="hidden items-center gap-1 lg:flex"
+                            className="hidden items-center gap-1 @min-[64rem]:flex"
                         >
-                            {[
-                                { href: '#cara-kerja', label: 'Cara kerja' },
-                                { href: '#demo', label: 'Demo interaktif' },
-                                { href: '#peran', label: 'Untuk siapa' },
-                                { href: '#privasi', label: 'Privasi' },
-                            ].map((item) => (
+                            {navigation.map((item) => (
                                 <a
                                     key={item.href}
                                     href={item.href}
-                                    className="rounded-lg px-3.5 py-2 text-sm font-semibold text-[#526B85] transition-colors duration-150 hover:bg-[#E7F2FF] hover:text-[#1454C4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0] motion-reduce:transition-none"
+                                    className="landing-nav-link"
                                 >
                                     {item.label}
                                 </a>
                             ))}
                         </nav>
-
-                        <div className="flex shrink-0 items-center gap-3">
+                        <div className="flex shrink-0 items-center gap-2">
                             {auth.user ? (
-                                <Button
-                                    asChild
-                                    className="rounded-xl bg-[#1764E8] px-4 font-semibold text-white shadow-[0_5px_14px_rgba(23,100,232,0.18)] hover:bg-[#1454C4]"
+                                <Link
+                                    href={dashboard()}
+                                    className="landing-primary px-4 text-sm"
+                                    prefetch
                                 >
-                                    <Link href={dashboard()} prefetch>
-                                        Buka dashboard
-                                        <ArrowRight
-                                            aria-hidden="true"
-                                            className="ml-1 size-4"
-                                        />
-                                    </Link>
-                                </Button>
+                                    Buka beranda
+                                    <ArrowRight
+                                        aria-hidden="true"
+                                        className="hidden size-4 sm:block"
+                                    />
+                                </Link>
                             ) : (
                                 <>
                                     <Link
                                         href={login()}
-                                        className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-[#526B85] hover:text-[#1454C4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0] sm:inline-flex"
+                                        className="landing-nav-link"
                                     >
                                         Masuk
                                     </Link>
-                                    <Button
-                                        asChild
-                                        className="rounded-xl bg-[#1764E8] px-4 font-semibold text-white shadow-[0_5px_14px_rgba(23,100,232,0.18)] hover:bg-[#1454C4]"
+                                    <Link
+                                        href={register()}
+                                        className="landing-primary hidden px-4 text-sm sm:inline-flex"
+                                        prefetch
                                     >
-                                        <Link href={register()} prefetch>
-                                            Daftar mahasiswa
-                                            <ArrowRight
-                                                aria-hidden="true"
-                                                className="ml-1 size-4"
-                                            />
-                                        </Link>
-                                    </Button>
+                                        Daftar mahasiswa
+                                        <ArrowRight
+                                            aria-hidden="true"
+                                            className="size-4"
+                                        />
+                                    </Link>
                                 </>
                             )}
+                            <button
+                                data-testid="landing-menu-toggle"
+                                type="button"
+                                aria-label={
+                                    isMenuOpen
+                                        ? 'Tutup navigasi'
+                                        : 'Buka navigasi'
+                                }
+                                aria-expanded={isMenuOpen}
+                                aria-controls="landing-mobile-navigation"
+                                className="inline-flex size-11 items-center justify-center rounded-xl border border-[#D9E8F5] bg-white text-[#17345A] @min-[64rem]:hidden"
+                                onClick={() => setIsMenuOpen((open) => !open)}
+                            >
+                                {isMenuOpen ? (
+                                    <X aria-hidden="true" className="size-5" />
+                                ) : (
+                                    <Menu
+                                        aria-hidden="true"
+                                        className="size-5"
+                                    />
+                                )}
+                            </button>
                         </div>
                     </div>
+                    <nav
+                        id="landing-mobile-navigation"
+                        aria-label="Navigasi landing mobile"
+                        hidden={!isMenuOpen}
+                        className="border-t border-[#D9E8F5] bg-white @min-[64rem]:hidden"
+                    >
+                        <div className="landing-container grid max-h-[calc(100dvh-5rem)] gap-1 overflow-y-auto py-3">
+                            {navigation.map((item) => (
+                                <a
+                                    key={item.href}
+                                    href={item.href}
+                                    className="landing-nav-link"
+                                    onClick={() => closeMenu(true)}
+                                >
+                                    {item.label}
+                                    <ArrowRight
+                                        aria-hidden="true"
+                                        className="ml-auto size-4"
+                                    />
+                                </a>
+                            ))}
+                            {!auth.user && (
+                                <Link
+                                    href={register()}
+                                    className="landing-primary mt-2"
+                                    prefetch
+                                >
+                                    Daftar sebagai mahasiswa
+                                </Link>
+                            )}
+                        </div>
+                    </nav>
                 </header>
 
-                <main id="main">
+                <main id="main" tabIndex={-1}>
                     <section
                         aria-labelledby="landing-heading"
-                        className="px-3 pt-5 pb-16 sm:px-6 sm:pt-8 lg:px-8 lg:pt-10 lg:pb-24"
+                        className="landing-container pt-6 pb-14 sm:pt-10 sm:pb-20 lg:pt-12"
                     >
-                        <div className="relative mx-auto grid min-h-[36rem] max-w-7xl overflow-visible rounded-[2rem] border border-[#D9E8F5] bg-[radial-gradient(ellipse_at_78%_8%,rgba(168,217,255,0.56),transparent_36%),linear-gradient(130deg,#FFFFFF_0%,#F7FBFF_42%,#E3F3FF_100%)] px-5 pt-8 pb-0 shadow-[0_20px_60px_rgba(48,105,151,0.09)] sm:px-9 sm:pt-10 lg:min-h-[40rem] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center lg:px-12 lg:py-10">
+                        <div className="landing-editorial-hero landing-main-hero relative isolate rounded-[2rem] border border-[#D9E8F5] py-8 shadow-md sm:py-12">
                             <div
                                 aria-hidden="true"
                                 className="pointer-events-none absolute inset-0 overflow-hidden rounded-[2rem]"
                             >
-                                <span className="absolute -top-24 right-[14%] size-72 rounded-full bg-white/70 blur-3xl" />
-                                <span className="absolute right-[26%] bottom-8 size-52 rounded-full bg-[#B8E8F3]/55 blur-3xl" />
-                                <span className="absolute right-8 bottom-0 h-20 w-72 rounded-t-full bg-[#D6F1E7]/80 blur-2xl" />
+                                <span className="absolute top-8 -right-16 size-80 rounded-full border border-white/80 sm:size-[34rem]" />
+                                <span className="absolute -right-14 -bottom-52 size-[34rem] rounded-full border-[64px] border-white/35" />
                             </div>
-
-                            <div className="relative z-20 max-w-2xl pb-3 lg:pb-8">
-                                <div className="inline-flex items-center gap-2 rounded-full border border-[#C5DFF4] bg-white/80 px-3.5 py-1.5 text-xs font-bold tracking-[0.06em] text-[#1764B3] shadow-[0_3px_10px_rgba(23,52,90,0.04)]">
-                                    <Layers3
-                                        aria-hidden="true"
-                                        className="size-3.5"
-                                    />
-                                    PELUANG SAMPAI PORTOFOLIO
-                                </div>
-                                <h1
-                                    id="landing-heading"
-                                    className="mt-6 max-w-[13ch] text-[clamp(2.65rem,6.1vw,5rem)] leading-[0.99] font-bold tracking-[-0.045em] text-[#17345A]"
-                                >
-                                    Temukan teman berkarya.{' '}
-                                    <span className="text-[#1764E8]">
-                                        Tunjukkan kontribusimu.
-                                    </span>
-                                </h1>
-                                <p className="mt-6 max-w-[37rem] text-base leading-7 text-[#526B85] sm:text-lg sm:leading-8">
-                                    SATU membantu mahasiswa menemukan peluang,
-                                    bekerja dalam tim, dan mencatat kontribusi.
-                                    Kontribusi yang disetujui dapat masuk
-                                    portofolio dengan visibilitas yang kamu
-                                    kendalikan.
-                                </p>
-
-                                <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                                    <Button
-                                        asChild
-                                        size="lg"
-                                        className="group h-12 rounded-xl bg-[#1764E8] px-6 font-bold text-white shadow-[0_8px_18px_rgba(23,100,232,0.2)] transition-[background-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:bg-[#1454C4] hover:shadow-[0_12px_24px_rgba(23,100,232,0.23)] motion-reduce:transition-none"
+                            <LandingMascot>
+                                <LandingReveal className="lg:pt-2">
+                                    <p className="inline-flex items-center gap-2 rounded-full border border-[#BFD7EC] bg-white/90 px-3 py-2 text-xs font-semibold text-[#1454C4]">
+                                        <span
+                                            aria-hidden="true"
+                                            className="size-2 rounded-full bg-[#FFB85C]"
+                                        />
+                                        Ruang kolaborasi mahasiswa
+                                    </p>
+                                    <h1
+                                        id="landing-heading"
+                                        className="mt-6 max-w-[15ch] text-[clamp(2rem,5.4vw,4.5rem)] leading-[1.02] font-bold tracking-[-0.045em]"
                                     >
+                                        Temukan teman berkarya.
+                                        <span className="mt-2 block text-[#1764E8]">
+                                            Tunjukkan kontribusimu.
+                                        </span>
+                                    </h1>
+                                    <p className="mt-6 max-w-[43ch] text-base leading-7 text-[#526B85] sm:text-lg sm:leading-8">
+                                        Punya kemampuan, tetapi belum punya
+                                        kesempatan? Mulai dari peran yang jelas,
+                                        bekerja dengan rekan baru, lalu buktikan
+                                        kontribusimu. Tanpa harus sudah memiliki
+                                        karya atau banyak relasi.
+                                    </p>
+                                    <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                                         <Link
                                             href={
                                                 auth.user
@@ -340,145 +393,178 @@ export default function Welcome() {
                                                     : register()
                                             }
                                             prefetch
+                                            className="landing-primary min-h-12 px-6"
                                         >
                                             {auth.user
-                                                ? 'Lanjutkan ke dashboard'
+                                                ? 'Buka beranda'
                                                 : 'Mulai sebagai mahasiswa'}
                                             <ArrowRight
                                                 aria-hidden="true"
-                                                className="ml-1 size-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none"
+                                                className="size-4"
                                             />
                                         </Link>
-                                    </Button>
-                                    <a
-                                        href="#cara-kerja"
-                                        className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#BFD7EC] bg-white/80 px-5 text-sm font-bold text-[#345574] transition-[background-color,border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-[#8BB9E1] hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0] motion-reduce:transition-none"
+                                        <a
+                                            href="#demo"
+                                            className="landing-control min-h-12 bg-white/90 px-6"
+                                        >
+                                            Jelajahi demo
+                                            <ArrowDown
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                        </a>
+                                    </div>
+                                    <p className="mt-4 text-xs leading-5 text-[#526B85]">
+                                        {auth.user
+                                            ? 'Lanjutkan dari ruang kerjamu.'
+                                            : 'Akun mahasiswa. Afiliasi kampus diverifikasi terpisah.'}
+                                    </p>
+                                </LandingReveal>
+                            </LandingMascot>
+                            <div className="relative mt-8 grid gap-4 border-t border-[#BFD7EC] pt-6 sm:grid-cols-3 lg:mt-10">
+                                {[
+                                    {
+                                        icon: UsersRound,
+                                        text: 'Peluang dengan peran yang jelas',
+                                    },
+                                    {
+                                        icon: BadgeCheck,
+                                        text: 'Kontribusi ditinjau kampus',
+                                    },
+                                    {
+                                        icon: LockKeyhole,
+                                        text: 'Jangkauan karya kamu kendalikan',
+                                    },
+                                ].map(({ icon: Icon, text }) => (
+                                    <div
+                                        key={text}
+                                        className="flex items-center gap-3 text-sm font-semibold text-[#345574]"
                                     >
-                                        Lihat cara kerja
-                                        <ArrowDown
+                                        <Icon
                                             aria-hidden="true"
-                                            className="size-4"
+                                            className="size-5 shrink-0 text-[#1764E8]"
                                         />
-                                    </a>
-                                </div>
-
-                                <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
-                                    <TrustNote icon={ShieldCheck}>
-                                        Validasi memiliki konteks
-                                    </TrustNote>
-                                    <TrustNote icon={LockKeyhole}>
-                                        Visibilitas dapat diatur
-                                    </TrustNote>
-                                    <TrustNote icon={FileCheck2}>
-                                        Kontribusi tercatat
-                                    </TrustNote>
-                                </div>
-                            </div>
-
-                            <div
-                                className="relative z-10 -mx-3 mt-1 min-h-[17rem] sm:min-h-[23rem] lg:mx-0 lg:mt-0 lg:min-h-[34rem]"
-                                data-testid="landing-hero-illustration"
-                            >
-                                <div
-                                    aria-hidden="true"
-                                    className="absolute right-[7%] bottom-[8%] h-[65%] w-[78%] rounded-full bg-[#A9DFF0]/45 blur-2xl"
-                                />
-                                <Mascot
-                                    pose="welcome"
-                                    interactive
-                                    priority
-                                    className="absolute -right-2 bottom-[-1.5rem] z-10 w-[18rem] max-w-none sm:right-0 sm:bottom-[-2.5rem] sm:w-[25rem] lg:-right-8 lg:bottom-[-3.5rem] lg:w-[32rem]"
-                                />
-                                <div className="absolute top-3 left-1 z-20 inline-flex items-center gap-2 rounded-2xl border border-white/80 bg-white/90 px-3 py-2.5 text-xs font-bold text-[#345574] shadow-[0_8px_24px_rgba(23,52,90,0.12)] sm:top-8 sm:left-3 sm:px-4 sm:py-3">
-                                    <span className="flex size-8 items-center justify-center rounded-xl bg-[#E7F2FF] text-[#1764E8]">
-                                        <BadgeCheck
-                                            aria-hidden="true"
-                                            className="size-4"
-                                        />
-                                    </span>
-                                    <span>
-                                        <span className="block text-[0.65rem] font-semibold text-[#66809A]">
-                                            KONTRIBUSI
-                                        </span>
-                                        Memiliki konteks
-                                    </span>
-                                </div>
-                                <div className="absolute bottom-4 left-1 z-20 inline-flex items-center gap-2 rounded-2xl border border-white/80 bg-white/90 px-3 py-2.5 text-xs font-bold text-[#345574] shadow-[0_8px_24px_rgba(23,52,90,0.12)] sm:bottom-9 sm:left-0 sm:px-4 sm:py-3 lg:left-[-1.5rem]">
-                                    <span className="flex size-8 items-center justify-center rounded-xl bg-[#EAF8F1] text-[#16845B]">
-                                        <EyeOff
-                                            aria-hidden="true"
-                                            className="size-4"
-                                        />
-                                    </span>
-                                    <span>
-                                        <span className="block text-[0.65rem] font-semibold text-[#66809A]">
-                                            PORTOFOLIO
-                                        </span>
-                                        Visibilitas di tanganmu
-                                    </span>
-                                </div>
+                                        {text}
+                                    </div>
+                                ))}
                             </div>
                         </div>
+                        <a
+                            href="#cara-kerja"
+                            className="mx-auto mt-7 flex min-h-11 w-fit items-center gap-2 rounded-lg text-sm font-semibold text-[#526B85]"
+                        >
+                            Kenali perjalananmu
+                            <ArrowDown aria-hidden="true" className="size-4" />
+                        </a>
                     </section>
 
                     <section
                         id="cara-kerja"
                         aria-labelledby="lifecycle-heading"
-                        className="scroll-mt-24 bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24"
+                        className="landing-section bg-white"
                     >
-                        <div className="mx-auto max-w-7xl">
-                            <div className="grid gap-6 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-end lg:gap-12">
+                        <div className="landing-container">
+                            <LandingReveal className="mb-10 grid gap-5 lg:grid-cols-2 lg:items-end lg:gap-16">
                                 <div>
-                                    <p className="inline-flex items-center gap-2 rounded-full bg-[#E7F2FF] px-3.5 py-1.5 text-xs font-bold tracking-[0.06em] text-[#1764B3]">
-                                        <Layers3
-                                            aria-hidden="true"
-                                            className="size-3.5"
-                                        />
-                                        CARA KERJA
-                                    </p>
-                                    <h2
-                                        id="lifecycle-heading"
-                                        className="mt-5 max-w-[17ch] text-[clamp(2rem,4vw,3.2rem)] leading-[1.05] font-bold tracking-[-0.035em] text-[#17345A]"
-                                    >
-                                        Dari peluang sampai bukti kontribusi.
-                                    </h2>
-                                </div>
-                                <p className="max-w-2xl text-base leading-7 text-[#526B85] sm:text-lg sm:leading-8">
-                                    Ikuti lima tahap yang saling terhubung.
-                                    Pilih satu tahap untuk melihat apa yang
-                                    terjadi, dari menemukan proyek sampai
-                                    mengatur visibilitas portofolio.
-                                </p>
-                            </div>
-
-                            <div className="mt-10 grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start xl:gap-12">
-                                <LandingFlowLedger className="min-w-0" />
-                                <aside className="rounded-2xl border border-[#D9E8F5] bg-[#F4F9FF] p-5 sm:p-6 xl:mt-5">
-                                    <div className="flex size-11 items-center justify-center rounded-xl bg-white text-[#1764E8] shadow-[0_3px_12px_rgba(23,52,90,0.06)]">
-                                        <Target
-                                            aria-hidden="true"
-                                            className="size-5"
-                                        />
-                                    </div>
-                                    <h3 className="mt-4 text-lg font-bold tracking-tight text-[#17345A]">
-                                        Setiap tahap punya sumber.
-                                    </h3>
-                                    <p className="mt-2 text-sm leading-6 text-[#526B85]">
-                                        Catatan menunjukkan asal informasi dan
-                                        kelanjutan proses. Pilih tahap untuk
-                                        melihat contohnya.
-                                    </p>
-                                    <a
-                                        href="#demo"
-                                        className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-bold text-[#1764B3] hover:text-[#1454C4] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1746B0]"
-                                    >
-                                        Lihat demo kolaborasi
-                                        <ArrowRight
+                                    <p className="landing-kicker">
+                                        <BookOpen
                                             aria-hidden="true"
                                             className="size-4"
                                         />
-                                    </a>
-                                </aside>
+                                        Perjalanan di SATU
+                                    </p>
+                                    <h2
+                                        id="lifecycle-heading"
+                                        className="landing-section-title mt-4"
+                                    >
+                                        Satu alur.
+                                        <br />
+                                        Banyak ruang untuk berkarya.
+                                    </h2>
+                                </div>
+                                <p className="max-w-xl text-base leading-7 text-[#526B85] sm:text-lg sm:leading-8">
+                                    Kesempatan bukan sekadar profil yang
+                                    terlihat. Kenali alur dari peran pertama
+                                    sampai pengakuan atas pekerjaanmu. Tidak
+                                    perlu karya terdahulu untuk mulai.
+                                </p>
+                            </LandingReveal>
+                            <LandingFlowLedger />
+                        </div>
+                    </section>
+
+                    <section
+                        id="fitur"
+                        aria-labelledby="features-heading"
+                        className="landing-section"
+                    >
+                        <div className="landing-container">
+                            <LandingReveal className="mb-14 max-w-2xl">
+                                <p className="landing-kicker">
+                                    Kenali ruang kerjamu
+                                </p>
+                                <h2
+                                    id="features-heading"
+                                    className="landing-section-title mt-4"
+                                >
+                                    Dirancang untuk pekerjaan.
+                                    <br />
+                                    Tetap memberi ruang pada cerita.
+                                </h2>
+                            </LandingReveal>
+                            <div className="space-y-16 lg:space-y-24">
+                                {featureStories.map((story, index) => {
+                                    const Icon = story.icon;
+
+                                    return (
+                                        <LandingReveal
+                                            key={story.kind}
+                                            className="grid items-center gap-8 lg:grid-cols-2 lg:gap-20"
+                                        >
+                                            <div
+                                                className={cn(
+                                                    'min-w-0',
+                                                    index % 2 !== 0 &&
+                                                        'lg:order-2',
+                                                )}
+                                            >
+                                                <span className="inline-flex size-12 items-center justify-center rounded-2xl border border-[#D9E8F5] bg-white text-[#1764E8] shadow-sm">
+                                                    <Icon
+                                                        aria-hidden="true"
+                                                        className="size-5"
+                                                    />
+                                                </span>
+                                                <p className="mt-5 text-sm font-semibold text-[#1454C4]">
+                                                    {story.label}
+                                                </p>
+                                                <h3 className="mt-3 max-w-[21ch] text-[clamp(1.75rem,3vw,2.625rem)] leading-[1.12] font-bold tracking-[-0.03em]">
+                                                    {story.title}
+                                                </h3>
+                                                <p className="mt-5 max-w-lg text-base leading-7 text-[#526B85] sm:text-lg sm:leading-8">
+                                                    {story.description}
+                                                </p>
+                                                <p className="mt-6 flex max-w-lg items-start gap-3 border-t border-[#D9E8F5] pt-5 text-sm leading-6 text-[#345574]">
+                                                    <Check
+                                                        aria-hidden="true"
+                                                        className="mt-1 size-4 shrink-0 text-[#1764E8]"
+                                                    />
+                                                    {story.note}
+                                                </p>
+                                            </div>
+                                            <div
+                                                className={cn(
+                                                    'min-w-0',
+                                                    index % 2 !== 0 &&
+                                                        'lg:order-1',
+                                                )}
+                                            >
+                                                <LandingPreview
+                                                    kind={story.kind}
+                                                />
+                                            </div>
+                                        </LandingReveal>
+                                    );
+                                })}
                             </div>
                         </div>
                     </section>
@@ -486,183 +572,185 @@ export default function Welcome() {
                     <section
                         id="demo"
                         aria-labelledby="demo-heading"
-                        className="scroll-mt-24 bg-[#EAF5FF] px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24"
+                        className="landing-section border-y border-[#D9E8F5] bg-[#E7F2FF]"
                     >
-                        <div className="mx-auto max-w-7xl">
-                            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-                                <div className="max-w-3xl">
-                                    <p className="inline-flex items-center gap-2 rounded-full border border-[#C7DFF3] bg-white/80 px-3.5 py-1.5 text-xs font-bold tracking-[0.06em] text-[#1764B3]">
-                                        <Network
-                                            aria-hidden="true"
-                                            className="size-3.5"
-                                        />
-                                        DEMO INTERAKTIF
+                        <div className="landing-container">
+                            <LandingReveal className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-end lg:gap-12">
+                                <div>
+                                    <p className="landing-kicker">
+                                        Coba, bukan hanya baca
                                     </p>
                                     <h2
                                         id="demo-heading"
-                                        className="mt-5 max-w-[20ch] text-[clamp(2rem,4vw,3.2rem)] leading-[1.05] font-bold tracking-[-0.035em] text-[#17345A]"
+                                        className="landing-section-title mt-4"
                                     >
-                                        Lihat bagaimana satu kontribusi
-                                        terhubung.
+                                        Dari kesempatan pertama
+                                        <br />
+                                        sampai karya yang diakui.
                                     </h2>
+                                    <p className="mt-5 max-w-2xl text-base leading-7 text-[#526B85]">
+                                        Ikuti Budi yang belum punya karya,
+                                        mengajukan peran pemula, bekerja dengan
+                                        Siti, lalu mencatat kontribusinya. Coba
+                                        juga keadaan penuh atau perlu revisi.
+                                    </p>
                                 </div>
-                                <p className="max-w-md rounded-2xl border border-[#C7DFF3] bg-white/80 px-4 py-3 text-sm leading-6 text-[#526B85]">
-                                    Semua record dalam graf dan tabel ini adalah
-                                    data synthetic. Demo dapat direset.
+                                <div className="border-l-2 border-[#1764E8] pl-4">
+                                    <p className="text-sm font-bold text-[#1454C4]">
+                                        Data synthetic
+                                    </p>
+                                    <p className="mt-2 text-sm leading-6 text-[#526B85]">
+                                        Semua nama dan hubungan pada demo adalah
+                                        contoh, bukan aktivitas atau hasil
+                                        pengguna nyata.
+                                    </p>
+                                </div>
+                            </LandingReveal>
+                            <div className="mt-9">
+                                <LandingJourneyDemo />
+                            </div>
+                            <details
+                                onToggle={(event) =>
+                                    setIsMapOpen(event.currentTarget.open)
+                                }
+                                className="mt-6 rounded-3xl border border-[#BFD7EC] bg-white p-5 shadow-sm"
+                            >
+                                <summary className="min-h-11 cursor-pointer content-center rounded-xl text-base font-semibold">
+                                    Pelengkap: peta dan daftar hubungan
+                                </summary>
+                                <p className="mt-3 text-sm leading-6 text-[#526B85]">
+                                    Ilustrasi hubungan objek, bukan analitik
+                                    jaringan atau laporan dampak. Seluruh data
+                                    synthetic.
                                 </p>
-                            </div>
-                            <p className="mt-5 max-w-2xl text-base leading-7 text-[#526B85]">
-                                Pilih node atau baris tabel untuk menyorot
-                                hubungan. Filter dan tabel memberi cara baca
-                                yang setara untuk keyboard dan pembaca layar.
-                            </p>
-
-                            <div className="mt-8 overflow-hidden rounded-[1.75rem] border border-[#D3E4F2] bg-white p-2 shadow-[0_14px_40px_rgba(48,105,151,0.08)] sm:p-3">
-                                <div data-testid="landing-demo-region">
-                                    {isHydrated ? (
-                                        <Suspense
-                                            fallback={
-                                                <LandingDemoGraphFallback />
-                                            }
-                                        >
-                                            <LandingDemoGraph />
-                                        </Suspense>
-                                    ) : (
-                                        <LandingDemoGraphFallback />
-                                    )}
+                                <div
+                                    className="mt-5"
+                                    data-testid="landing-demo-region"
+                                >
+                                    {isMapOpen && isHydrated ? (
+                                        <LandingDemo />
+                                    ) : isMapOpen ? (
+                                        <LandingDemoFallback />
+                                    ) : null}
                                 </div>
-                            </div>
+                            </details>
                         </div>
                     </section>
 
                     <section
                         id="peran"
                         aria-labelledby="roles-heading"
-                        className="scroll-mt-24 bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24"
+                        className="landing-section bg-white"
                     >
-                        <div className="mx-auto max-w-7xl">
-                            <div className="max-w-3xl">
-                                <p className="inline-flex items-center gap-2 rounded-full bg-[#E7F2FF] px-3.5 py-1.5 text-xs font-bold tracking-[0.06em] text-[#1764B3]">
-                                    <UsersRound
-                                        aria-hidden="true"
-                                        className="size-3.5"
-                                    />
-                                    UNTUK SIAPA
-                                </p>
+                        <div className="landing-container">
+                            <LandingReveal className="max-w-2xl">
+                                <p className="landing-kicker">Untuk siapa?</p>
                                 <h2
                                     id="roles-heading"
-                                    className="mt-5 max-w-[19ch] text-[clamp(2rem,4vw,3.2rem)] leading-[1.05] font-bold tracking-[-0.035em] text-[#17345A]"
+                                    className="landing-section-title mt-4"
                                 >
-                                    Satu ruang kolaborasi, hak akses yang jelas.
+                                    Berkolaborasi bersama.
+                                    <br />
+                                    Dengan ruang dan batas yang jelas.
                                 </h2>
-                                <p className="mt-5 max-w-2xl text-base leading-7 text-[#526B85] sm:text-lg">
-                                    Pilih peran untuk melihat tujuan dan
-                                    batasnya. Akses mengikuti kewenangan dan
-                                    izin yang diberikan.
+                                <p className="mt-5 text-base leading-7 text-[#526B85]">
+                                    Pilih peran untuk mengenali tujuannya.
+                                    Pilihan ini menjelaskan akses, bukan
+                                    menentukan jenis akun saat mendaftar.
                                 </p>
-                            </div>
+                            </LandingReveal>
+                            <div
+                                role="tablist"
+                                aria-label="Pilih peran di SATU"
+                                className="mt-8 flex flex-wrap gap-2"
+                            >
+                                {audienceTabs.map((tab, index) => {
+                                    const Icon = tab.icon;
+                                    const active = tab.key === activeAudience;
 
-                            <div className="mt-9 grid gap-6 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
-                                <div
-                                    role="tablist"
-                                    aria-label="Pilih peran di SATU"
-                                    aria-orientation="vertical"
-                                    className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0"
-                                >
-                                    {audienceTabs.map((tab, index) => {
-                                        const TabIcon = tab.icon;
-                                        const isActive =
-                                            activeAudience === tab.key;
-
-                                        return (
-                                            <button
-                                                key={tab.key}
-                                                id={`role-tab-${tab.key}`}
-                                                type="button"
-                                                role="tab"
-                                                aria-selected={isActive}
-                                                aria-controls="role-panel"
-                                                tabIndex={isActive ? 0 : -1}
-                                                onClick={() =>
-                                                    setActiveAudience(tab.key)
-                                                }
-                                                onKeyDown={(event) =>
-                                                    moveAudienceTab(
-                                                        event,
-                                                        index,
-                                                        setActiveAudience,
-                                                    )
-                                                }
-                                                className={`inline-flex min-h-12 shrink-0 items-center gap-3 rounded-xl border px-4 text-left text-sm font-bold transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0] motion-reduce:transition-none lg:w-full ${
-                                                    isActive
-                                                        ? 'border-[#B9D8F2] bg-[#EAF5FF] text-[#1454C4] shadow-[0_4px_14px_rgba(23,52,90,0.06)]'
-                                                        : 'border-transparent bg-white text-[#526B85] hover:border-[#D9E8F5] hover:bg-[#F6FAFE]'
-                                                }`}
-                                            >
-                                                <span
-                                                    className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${isActive ? 'bg-white text-[#1764E8]' : 'bg-[#F1F6FB] text-[#66809A]'}`}
-                                                >
-                                                    <TabIcon
-                                                        aria-hidden="true"
-                                                        className="size-4"
-                                                    />
-                                                </span>
-                                                {tab.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                <section
-                                    id="role-panel"
-                                    role="tabpanel"
-                                    aria-labelledby={`role-tab-${activeAudience}`}
-                                    tabIndex={0}
-                                    className="relative min-h-[20rem] overflow-hidden rounded-[1.75rem] border border-[#D9E8F5] bg-[radial-gradient(ellipse_at_100%_0%,rgba(186,224,255,0.45),transparent_45%),#F8FBFF] p-6 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1746B0] sm:p-9"
-                                >
-                                    <div className="relative z-10 max-w-3xl">
-                                        <p className="text-xs font-bold tracking-[0.08em] text-[#1764B3]">
-                                            {audience.eyebrow.toUpperCase()}
-                                        </p>
-                                        <div className="mt-4 flex items-start gap-4">
-                                            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#1764E8] shadow-[0_4px_16px_rgba(23,52,90,0.07)]">
-                                                <AudienceIcon
+                                    return (
+                                        <button
+                                            key={tab.key}
+                                            id={`role-tab-${tab.key}`}
+                                            type="button"
+                                            role="tab"
+                                            aria-selected={active}
+                                            aria-controls="role-panel"
+                                            tabIndex={active ? 0 : -1}
+                                            onClick={() =>
+                                                setActiveAudience(tab.key)
+                                            }
+                                            onKeyDown={(event) =>
+                                                moveAudience(event, index)
+                                            }
+                                            className={cn(
+                                                'landing-control px-4 sm:px-5',
+                                                active &&
+                                                    'border-[#1764E8] bg-[#1764E8] text-white hover:bg-[#1454C4]',
+                                            )}
+                                        >
+                                            <Icon
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                            {tab.label}
+                                            {active && (
+                                                <Check
                                                     aria-hidden="true"
-                                                    className="size-5"
+                                                    className="size-4"
                                                 />
-                                            </span>
-                                            <div>
-                                                <h3 className="text-2xl leading-tight font-bold tracking-[-0.025em] text-[#17345A] sm:text-3xl">
-                                                    {audience.title}
-                                                </h3>
-                                                <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526B85] sm:text-base sm:leading-7">
-                                                    {audience.description}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <section
+                                id="role-panel"
+                                role="tabpanel"
+                                aria-labelledby={`role-tab-${activeAudience}`}
+                                tabIndex={0}
+                                className="mt-6 rounded-[2rem] border border-[#D9E8F5] bg-[#F3F9FF] p-5 sm:p-8 lg:p-10"
+                            >
+                                <div
+                                    key={activeAudience}
+                                    className="landing-panel-enter grid gap-8 lg:min-h-[29rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:items-center lg:gap-16"
+                                >
+                                    <div className="min-w-0">
+                                        <h3 className="max-w-[20ch] text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.12] font-bold tracking-[-0.03em]">
+                                            {audience.title}
+                                        </h3>
+                                        <p className="mt-5 max-w-lg text-base leading-7 text-[#526B85]">
+                                            {audience.description}
+                                        </p>
+                                        <ul className="mt-6 space-y-4">
                                             {audience.boundaries.map(
                                                 (boundary) => (
                                                     <li
                                                         key={boundary}
-                                                        className="flex items-start gap-2.5 rounded-xl border border-[#D9E8F5] bg-white/85 p-3.5 text-sm leading-5 text-[#345574]"
+                                                        className="flex items-start gap-3 text-sm leading-6 text-[#345574]"
                                                     >
-                                                        <BadgeCheck
+                                                        <ShieldCheck
                                                             aria-hidden="true"
-                                                            className="mt-0.5 size-4 shrink-0 text-[#1764B3]"
+                                                            className="mt-1 size-4 shrink-0 text-[#1764E8]"
                                                         />
-                                                        <span>{boundary}</span>
+                                                        {boundary}
                                                     </li>
                                                 ),
                                             )}
                                         </ul>
                                         {activeAudience === 'student' ? (
                                             <Link
-                                                href={register()}
+                                                href={
+                                                    auth.user
+                                                        ? dashboard()
+                                                        : register()
+                                                }
+                                                className="landing-primary mt-7 px-5"
                                                 prefetch
-                                                className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-bold text-[#1764B3] hover:text-[#1454C4] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1746B0]"
                                             >
-                                                {audience.action}
+                                                {auth.user
+                                                    ? 'Buka beranda'
+                                                    : 'Buat akun mahasiswa'}
                                                 <ArrowRight
                                                     aria-hidden="true"
                                                     className="size-4"
@@ -670,10 +758,10 @@ export default function Welcome() {
                                             </Link>
                                         ) : (
                                             <a
-                                                href={audience.href}
-                                                className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-bold text-[#1764B3] hover:text-[#1454C4] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1746B0]"
+                                                href="#privasi"
+                                                className="landing-control mt-7"
                                             >
-                                                {audience.action}
+                                                Pelajari batas akses
                                                 <ArrowRight
                                                     aria-hidden="true"
                                                     className="size-4"
@@ -681,227 +769,197 @@ export default function Welcome() {
                                             </a>
                                         )}
                                     </div>
-                                    <span
-                                        aria-hidden="true"
-                                        className="pointer-events-none absolute -right-10 -bottom-20 size-56 rounded-full border-[28px] border-white/55"
-                                    />
-                                </section>
-                            </div>
+                                    <LandingPreview kind={audience.preview} />
+                                </div>
+                            </section>
                         </div>
                     </section>
 
                     <section
                         id="privasi"
                         aria-labelledby="privacy-heading"
-                        className="scroll-mt-24 bg-[#F3F9FF] px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24"
+                        className="landing-section"
                     >
-                        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:gap-14">
-                            <div>
-                                <p className="inline-flex items-center gap-2 rounded-full border border-[#D9E8F5] bg-white px-3.5 py-1.5 text-xs font-bold tracking-[0.06em] text-[#1764B3]">
+                        <div className="landing-container grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-20">
+                            <LandingReveal>
+                                <span className="inline-flex size-14 items-center justify-center rounded-2xl border border-[#D9E8F5] bg-white text-[#1764E8] shadow-sm">
                                     <LockKeyhole
                                         aria-hidden="true"
-                                        className="size-3.5"
+                                        className="size-6"
                                     />
-                                    PRIVASI TERLIHAT
+                                </span>
+                                <p className="landing-kicker mt-5">
+                                    Kendali tetap di tanganmu
                                 </p>
                                 <h2
                                     id="privacy-heading"
-                                    className="mt-5 max-w-[16ch] text-[clamp(2rem,4vw,3rem)] leading-[1.06] font-bold tracking-[-0.035em] text-[#17345A]"
+                                    className="landing-section-title mt-4"
                                 >
-                                    Bukti yang dibagikan tetap dalam kendalimu.
+                                    Berkarya terbuka.
+                                    <br />
+                                    Bukan membuka semuanya.
                                 </h2>
-                                <p className="mt-5 max-w-xl text-base leading-7 text-[#526B85]">
-                                    Perekrut hanya menerima proyeksi portofolio
-                                    yang secara eksplisit diizinkan mahasiswa.
-                                    Detail privat dan sinyal untuk review kampus
-                                    tetap dibatasi sesuai kewenangan.
+                                <p className="mt-5 text-base leading-7 text-[#526B85]">
+                                    Persetujuan kontribusi, jangkauan karya, dan
+                                    izin ditemukan perekrut adalah hal yang
+                                    berbeda.
                                 </p>
-                            </div>
-
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <article className="rounded-2xl border border-[#CDE8D9] bg-white p-5 shadow-[0_5px_18px_rgba(23,52,90,0.045)] sm:p-6">
-                                    <span className="flex size-11 items-center justify-center rounded-xl bg-[#EAF8F1] text-[#18734F]">
-                                        <ShieldCheck
+                            </LandingReveal>
+                            <LandingReveal className="divide-y divide-[#D9E8F5] border-y border-[#D9E8F5]">
+                                <div className="py-7">
+                                    <h3 className="flex items-center gap-3 text-xl font-bold">
+                                        <Eye
                                             aria-hidden="true"
-                                            className="size-5"
+                                            className="size-5 text-[#1764E8]"
                                         />
-                                    </span>
-                                    <h3 className="mt-4 text-base font-bold text-[#17345A]">
-                                        Dapat diproyeksikan
+                                        Yang bisa kamu bagikan
                                     </h3>
-                                    <p className="mt-2 text-sm leading-6 text-[#526B85]">
-                                        Entry portofolio dan kontribusi yang
-                                        disetujui serta dipilih mahasiswa.
+                                    <p className="mt-3 text-base leading-7 text-[#526B85]">
+                                        Karya portofolio dengan jangkauan yang
+                                        kamu pilih. Perekrut hanya menerima
+                                        proyeksi yang secara eksplisit
+                                        diizinkan.
                                     </p>
-                                </article>
-                                <article className="rounded-2xl border border-[#D9E8F5] bg-white p-5 shadow-[0_5px_18px_rgba(23,52,90,0.045)] sm:p-6">
-                                    <span className="flex size-11 items-center justify-center rounded-xl bg-[#EEF3F8] text-[#526B85]">
+                                </div>
+                                <div className="py-7">
+                                    <h3 className="flex items-center gap-3 text-xl font-bold">
                                         <EyeOff
                                             aria-hidden="true"
-                                            className="size-5"
+                                            className="size-5 text-[#1764E8]"
                                         />
-                                    </span>
-                                    <h3 className="mt-4 text-base font-bold text-[#17345A]">
-                                        Tetap privat
+                                        Yang tidak masuk proyeksi
                                     </h3>
-                                    <p className="mt-2 text-sm leading-6 text-[#526B85]">
-                                        Username, nomor WhatsApp, diskusi tim,
-                                        dan audit mentah.
+                                    <p className="mt-3 text-base leading-7 text-[#526B85]">
+                                        Percakapan tim, bukti privat, data audit
+                                        mentah, dan informasi peninjauan
+                                        terbatas. Bukan bahan profil publik atau
+                                        perekrut.
                                     </p>
-                                </article>
-                            </div>
+                                </div>
+                            </LandingReveal>
                         </div>
-                        <p className="mx-auto mt-8 flex max-w-7xl items-start gap-2.5 text-sm leading-6 text-[#526B85]">
-                            <FileCheck2
-                                aria-hidden="true"
-                                className="mt-1 size-4 shrink-0 text-[#1764B3]"
-                            />
-                            Contoh pada demo diberi label data synthetic dan
-                            bukan klaim pelanggan, harga, hasil pilot, atau
-                            dampak.
-                        </p>
                     </section>
 
-                    <section className="px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-                        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] border border-[#C8DFF2] bg-[radial-gradient(ellipse_at_90%_0%,rgba(171,221,255,0.5),transparent_44%),linear-gradient(120deg,#FFFFFF,#EAF5FF)] px-5 py-10 sm:px-9 sm:py-14 lg:px-14">
-                            <div className="relative z-10 max-w-2xl">
-                                <p className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-1.5 text-xs font-bold tracking-[0.06em] text-[#1764B3]">
-                                    <UsersRound
-                                        aria-hidden="true"
-                                        className="size-3.5"
-                                    />
-                                    MULAI DARI SINI
+                    <section
+                        aria-labelledby="start-heading"
+                        className="landing-container pb-16 sm:pb-24"
+                    >
+                        <LandingReveal className="landing-editorial-hero relative isolate grid gap-6 overflow-hidden rounded-[2rem] border border-[#D9E8F5] p-6 shadow-md sm:p-10 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-center lg:p-12">
+                            <DashboardArchiveArt className="absolute -top-8 -right-4 w-48 opacity-50" />
+                            <div className="relative">
+                                <p className="landing-kicker">
+                                    Mulai dari satu langkah
                                 </p>
-                                <h2 className="mt-5 max-w-[18ch] text-[clamp(2rem,4.5vw,3.5rem)] leading-[1.03] font-bold tracking-[-0.04em] text-[#17345A]">
-                                    Satu peluang bisa membuka ruang berkarya.
+                                <h2
+                                    id="start-heading"
+                                    className="landing-section-title mt-4 max-w-[20ch]"
+                                >
+                                    Ada ruang untuk karya berikutnya.
                                 </h2>
-                                <p className="mt-4 max-w-xl text-base leading-7 text-[#526B85]">
-                                    Buat akun mahasiswa untuk melihat peluang
-                                    kolaborasi dan mulai melengkapi profilmu.
+                                <p className="mt-5 max-w-xl text-base leading-7 text-[#526B85]">
+                                    {auth.user
+                                        ? 'Kembali ke ruang kerjamu dan lanjutkan langkah berikutnya.'
+                                        : 'Buat akun mahasiswa, verifikasi afiliasi kampus, dan kenali peluang yang tersedia untukmu.'}
                                 </p>
                                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                                    <Button
-                                        asChild
-                                        size="lg"
-                                        className="group h-12 rounded-xl bg-[#1764E8] px-6 font-bold text-white shadow-[0_8px_18px_rgba(23,100,232,0.2)] hover:bg-[#1454C4]"
+                                    <Link
+                                        href={
+                                            auth.user ? dashboard() : register()
+                                        }
+                                        className="landing-primary min-h-12 px-6"
+                                        prefetch
                                     >
+                                        {auth.user
+                                            ? 'Buka beranda'
+                                            : 'Mulai sebagai mahasiswa'}
+                                        <ArrowRight
+                                            aria-hidden="true"
+                                            className="size-4"
+                                        />
+                                    </Link>
+                                    {!auth.user && (
                                         <Link
-                                            href={
-                                                auth.user
-                                                    ? dashboard()
-                                                    : register()
-                                            }
-                                            prefetch
+                                            href={login()}
+                                            className="landing-control min-h-12 bg-white px-6"
                                         >
-                                            {auth.user
-                                                ? 'Buka dashboard'
-                                                : 'Daftar mahasiswa'}
-                                            <ArrowRight
-                                                aria-hidden="true"
-                                                className="ml-1 size-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none"
-                                            />
+                                            Sudah punya akun? Masuk
                                         </Link>
-                                    </Button>
-                                    <a
-                                        href="#cara-kerja"
-                                        className="inline-flex h-12 items-center justify-center rounded-xl border border-[#BFD7EC] bg-white px-5 text-sm font-bold text-[#345574] hover:bg-[#F7FBFF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0]"
-                                    >
-                                        Pelajari alurnya
-                                    </a>
+                                    )}
                                 </div>
                             </div>
-                            <div className="pointer-events-none absolute -right-8 -bottom-10 hidden h-72 w-80 lg:block">
-                                <Mascot
-                                    pose="guide"
-                                    className="absolute right-0 bottom-[-2rem] w-[20rem] max-w-none"
-                                />
-                            </div>
-                        </div>
+                            <Mascot
+                                pose="guide"
+                                className="relative mx-auto hidden w-64 lg:block"
+                            />
+                        </LandingReveal>
                     </section>
                 </main>
 
                 <noscript>
-                    <section className="border-t border-[#D9E8F5] bg-white px-5 py-10 sm:px-6">
-                        <div className="mx-auto max-w-7xl">
-                            <p className="text-xs font-bold tracking-[0.08em] text-[#1764B3]">
-                                DATA SYNTHETIC
-                            </p>
-                            <h2 className="mt-3 text-2xl font-bold text-[#17345A]">
-                                Alur kolaborasi SATU
-                            </h2>
-                            <div className="mt-5 overflow-x-auto rounded-2xl border border-[#D9E8F5] bg-white">
-                                <table className="min-w-full text-left text-sm">
-                                    <caption className="sr-only">
-                                        Tabel alur kolaborasi synthetic SATU
-                                    </caption>
-                                    <thead className="bg-[#E7F2FF] text-[#17345A]">
-                                        <tr>
-                                            <th
-                                                scope="col"
-                                                className="px-4 py-3 font-semibold"
-                                            >
-                                                Tahap
-                                            </th>
-                                            <th
-                                                scope="col"
-                                                className="px-4 py-3 font-semibold"
-                                            >
-                                                Arti
-                                            </th>
-                                            <th
-                                                scope="col"
-                                                className="px-4 py-3 font-semibold"
-                                            >
-                                                Kelanjutan
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-[#D9E8F5] text-[#526B85]">
-                                        {LANDING_STAGES.map((stage) => (
-                                            <tr key={stage.key}>
-                                                <th
-                                                    scope="row"
-                                                    className="px-4 py-3 font-semibold text-[#17345A]"
-                                                >
-                                                    {stage.label}
-                                                </th>
-                                                <td className="px-4 py-3">
-                                                    {stage.shortDescription}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    {stage.outcome}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <section className="landing-container py-10">
+                        <h2 className="text-2xl font-bold">
+                            Alur kolaborasi SATU
+                        </h2>
+                        <p className="mt-2 text-sm text-[#526B85]">
+                            Penjelasan alur tetap dapat dibaca. Aktifkan
+                            JavaScript untuk mencoba interaksi.
+                        </p>
+                        <ol className="mt-5 space-y-4">
+                            {LANDING_STAGES.map((stage) => (
+                                <li key={stage.key}>
+                                    <h3 className="font-semibold">
+                                        {stage.index}. {stage.label}
+                                    </h3>
+                                    <p className="mt-1 text-sm leading-6">
+                                        {stage.description}
+                                    </p>
+                                </li>
+                            ))}
+                        </ol>
                     </section>
                 </noscript>
 
-                <footer className="border-t border-[#D9E8F5] bg-white px-4 py-9 sm:px-6 lg:px-8">
-                    <div className="mx-auto max-w-7xl">
-                        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                            <AppLogo
-                                compact
-                                className="text-[#17345A]"
-                                ruleClassName="bg-[#1764E8]"
-                            />
-                            <div className="flex items-center gap-2.5 text-sm font-medium text-[#526B85]">
-                                <span className="flex size-8 items-center justify-center rounded-lg bg-[#E7F2FF] text-[#1764B3]">
-                                    <LockKeyhole
-                                        aria-hidden="true"
-                                        className="size-4"
-                                    />
-                                </span>
-                                Portofolio dibagikan dengan izin mahasiswa.
+                <footer className="border-t border-[#D9E8F5] bg-white py-9">
+                    <div className="landing-container">
+                        <div className="grid gap-6 sm:grid-cols-2 sm:items-start">
+                            <div>
+                                <AppLogo
+                                    compact
+                                    logoClassName="size-11 rounded-none shadow-none"
+                                    className="text-[#17345A]"
+                                />
+                                <p className="mt-4 max-w-xs text-sm leading-6 text-[#526B85]">
+                                    Sistem Aktivitas Talenta Universitas.
+                                    <br />
+                                    Ruang untuk kolaborasi dan karya yang punya
+                                    konteks.
+                                </p>
                             </div>
+                            <nav
+                                aria-label="Navigasi footer"
+                                className="flex flex-wrap gap-x-4 gap-y-1 sm:justify-end"
+                            >
+                                {navigation.map((item) => (
+                                    <a
+                                        key={item.href}
+                                        href={item.href}
+                                        className="landing-nav-link"
+                                    >
+                                        {item.label}
+                                    </a>
+                                ))}
+                            </nav>
                         </div>
-                        <div className="mt-7 border-t border-[#E5EEF6] pt-5">
-                            <p className="text-xs font-medium text-[#66809A]">
+                        <div className="mt-7 flex flex-col justify-between gap-3 border-t border-[#D9E8F5] pt-5 text-xs leading-5 text-[#526B85] sm:flex-row">
+                            <p>
                                 &copy; {new Date().getFullYear()} SATU Platform.
-                                Semua hak cipta dilindungi.
+                            </p>
+                            <p className="inline-flex items-center gap-2">
+                                <LockKeyhole
+                                    aria-hidden="true"
+                                    className="size-4 shrink-0"
+                                />
+                                Portofolio dibagikan dengan izin mahasiswa.
                             </p>
                         </div>
                     </div>

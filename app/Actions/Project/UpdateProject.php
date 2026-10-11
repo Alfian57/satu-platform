@@ -6,6 +6,8 @@ namespace App\Actions\Project;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\ProjectStatus;
+use App\Enums\TeamMembershipStatus;
+use App\Events\MatchingInputsChanged;
 use App\Models\Institution;
 use App\Models\Project;
 use App\Models\User;
@@ -56,6 +58,10 @@ final class UpdateProject
                 ? $this->requirements->normalizeAndValidate($data['roles'], $capacity)
                 : null;
 
+            if ($capacity < $lockedProject->teamMemberships()->where('status', TeamMembershipStatus::Active)->count()) {
+                throw ValidationException::withMessages(['capacity' => 'Kapasitas tim tidak boleh lebih kecil dari anggota aktifnya.']);
+            }
+
             if (
                 $roles === null
                 && array_key_exists('capacity', $data)
@@ -105,12 +111,14 @@ final class UpdateProject
 
             if ($roles !== null) {
                 $this->requirements->persist($lockedProject, $roles);
+                $lockedProject->touch();
                 $changedFields[] = 'roles';
             }
 
             $changedFields = array_values(array_unique($changedFields));
 
             if ($changedFields !== []) {
+                MatchingInputsChanged::dispatch($lockedProject->institution_id);
                 $this->audit->record(
                     operation: 'project.updated',
                     auditable: $lockedProject,

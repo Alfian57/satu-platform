@@ -10,7 +10,7 @@ import {
     Send,
     X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     download as attachmentDownload,
     preview as attachmentPreview,
@@ -63,6 +63,8 @@ type ErrorMap = Record<string, unknown>;
 type Props = {
     projectId: number;
     initialPage: DiscussionPage;
+    disabled: boolean;
+    onForbidden: () => void;
 };
 
 const ACCEPTED_FILE_TYPES =
@@ -88,7 +90,6 @@ function formatDateTime(value: string): string {
     return new Intl.DateTimeFormat('id-ID', {
         dateStyle: 'medium',
         timeStyle: 'short',
-        timeZone: 'UTC',
     }).format(date);
 }
 
@@ -113,7 +114,7 @@ function initials(name: string): string {
         .join('');
 }
 
-function AttachmentItem({
+export function AttachmentItem({
     attachment,
     projectId,
 }: {
@@ -165,7 +166,7 @@ function AttachmentItem({
                     </p>
                     <p className="text-xs leading-5 text-muted-foreground">
                         {attachment.purpose === 'evidence'
-                            ? 'Evidence'
+                            ? 'Bukti privat'
                             : 'Lampiran'}{' '}
                         · {formatFileSize(attachment.size_bytes)} · diunggah
                         oleh {attachment.uploaded_by.name} ·{' '}
@@ -217,7 +218,7 @@ function DiscussionMessage({
                             )}
                         </div>
                         <p className="font-label text-label text-muted-foreground">
-                            Catatan team
+                            Catatan tim
                         </p>
                     </div>
                 </header>
@@ -225,10 +226,7 @@ function DiscussionMessage({
                     {message.body}
                 </p>
                 {message.attachments.length > 0 && (
-                    <ul
-                        className="grid gap-3 pl-12"
-                        aria-label="Evidence pesan"
-                    >
+                    <ul className="grid gap-3 pl-12" aria-label="Bukti pesan">
                         {message.attachments.map((attachment) => (
                             <AttachmentItem
                                 key={attachment.id}
@@ -261,7 +259,16 @@ function DiscussionSkeleton() {
     );
 }
 
-export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
+export function WorkspaceDiscussion({
+    projectId,
+    initialPage,
+    disabled,
+    onForbidden,
+}: Props) {
+    const [uncertain, setUncertain] = useState(false);
+    const commandLock = useRef(false);
+    const fileInput = useRef<HTMLInputElement>(null);
+    const focusValidation = useRef<'body' | 'upload' | null>(null);
     const [messages, setMessages] = useState(initialPage.data);
     const [currentPage, setCurrentPage] = useState(
         initialPage.meta.current_page,
@@ -300,11 +307,40 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
         body: '',
     });
     const olderMessagesForm = useHttp<DiscussionQueryData, DiscussionPage>({});
+    const checkForm = useHttp<DiscussionQueryData, DiscussionPage>({});
     const uploadForm = useHttp<UploadFormData, AttachmentResponse>({
         file: null,
         message_id: null,
         purpose: 'evidence',
     });
+
+    useEffect(() => {
+        if (
+            !discussionForm.processing &&
+            !uploadForm.processing &&
+            !disabled &&
+            focusValidation.current
+        ) {
+            if (focusValidation.current === 'body') {
+                document.getElementById('discussion-body')?.focus();
+            } else {
+                document
+                    .querySelector<HTMLElement>(
+                        '[data-test="discussion-upload-retry"]',
+                    )
+                    ?.focus();
+            }
+
+            focusValidation.current = null;
+        }
+    }, [
+        discussionForm.processing,
+        discussionForm.errors,
+        uploadForm.processing,
+        uploadForm.errors,
+        pendingUpload?.status,
+        disabled,
+    ]);
 
     const discussionErrors = discussionForm.errors as ErrorMap;
     const isUploading =
@@ -342,7 +378,15 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
         setActionError(message);
     }
 
-    function uploadAttachment(messageId: number, file: File): void {
+    function uploadAttachment(
+        messageId: number,
+        file: File,
+    ): Promise<void> | undefined {
+        if (disabled || uncertain || commandLock.current) {
+            return;
+        }
+
+        commandLock.current = true;
         setActionMessage(null);
         setActionError(null);
         setPendingUpload({
@@ -356,26 +400,34 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
             message_id: messageId,
             purpose: 'evidence',
         }));
-        uploadForm
+
+        return uploadForm
             .post(attachmentStore(projectId).url, {
                 onError: (errors) => {
+                    focusValidation.current = 'upload';
                     uploadFailure(
                         firstError(errors as ErrorMap, 'file') ??
-                            'Evidence belum tersimpan. Periksa file lalu coba lagi.',
+                            'Bukti belum tersimpan. Periksa file lalu coba lagi.',
                     );
                 },
                 onHttpException: (response: { status: number }) => {
+                    if (response.status === 403 || response.status === 404) {
+                        onForbidden();
+                    }
+
+                    setUncertain(true);
                     uploadFailure(
                         response.status === 403
-                            ? 'Anda tidak lagi memiliki akses untuk mengunggah evidence pada workspace ini.'
-                            : 'Evidence belum tersimpan. Coba lagi setelah memeriksa koneksi.',
+                            ? 'Anda tidak lagi memiliki akses untuk mengunggah bukti pada workspace ini.'
+                            : 'Bukti belum tersimpan. Coba lagi setelah memeriksa koneksi.',
                     );
 
                     return false;
                 },
                 onNetworkError: () => {
+                    setUncertain(true);
                     uploadFailure(
-                        'Evidence belum tersimpan, tetapi pesan tetap aman. Periksa koneksi lalu coba lagi.',
+                        'Catatan sudah tersimpan, tetapi hasil unggah belum pasti. Periksa diskusi terbaru sebelum mengunggah lagi.',
                     );
 
                     return false;
@@ -400,36 +452,57 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                     ),
                 );
                 setPendingUpload(null);
-                setActionMessage('Evidence berhasil dilampirkan ke diskusi.');
+                setActionMessage('Bukti berhasil dilampirkan ke diskusi.');
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(() => {
+                commandLock.current = false;
+            });
     }
 
     function submitDiscussion(event: React.FormEvent<HTMLFormElement>): void {
         event.preventDefault();
 
-        if (discussionForm.processing || isUploading || body.trim() === '') {
+        if (
+            disabled ||
+            uncertain ||
+            commandLock.current ||
+            pendingUpload !== null ||
+            discussionForm.processing ||
+            isUploading ||
+            body.trim() === ''
+        ) {
             return;
         }
 
         const file = selectedFile;
+        commandLock.current = true;
         setActionMessage(null);
         setActionError(null);
         discussionForm.transform(() => ({ body: body.trim() }));
         discussionForm
             .post(discussionStore(projectId).url, {
+                onError: () => {
+                    focusValidation.current = 'body';
+                },
                 onHttpException: (response: { status: number }) => {
+                    if (response.status === 403 || response.status === 404) {
+                        onForbidden();
+                    }
+
+                    setUncertain(true);
                     setActionError(
                         response.status === 403
                             ? 'Anda tidak lagi memiliki akses untuk menulis di workspace ini.'
-                            : 'Catatan belum tersimpan. Coba lagi setelah memeriksa koneksi.',
+                            : 'Hasil penyimpanan catatan belum pasti. Periksa diskusi terbaru sebelum mengirim lagi.',
                     );
 
                     return false;
                 },
                 onNetworkError: () => {
+                    setUncertain(true);
                     setActionError(
-                        'Catatan belum tersimpan. Periksa koneksi lalu coba lagi.',
+                        'Hasil penyimpanan catatan belum pasti. Draft tetap ada. Periksa diskusi terbaru sebelum mengirim lagi.',
                     );
 
                     return false;
@@ -444,22 +517,29 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                 setBody('');
                 setSelectedFile(null);
 
+                if (fileInput.current) {
+                    fileInput.current.value = '';
+                }
+
                 if (file !== null) {
-                    uploadAttachment(response.data.id, file);
+                    commandLock.current = false;
                     setActionMessage(
-                        'Catatan tersimpan. Evidence sedang diunggah dan belum dianggap selesai sampai server mengonfirmasinya.',
+                        'Catatan tersimpan. Bukti sedang diunggah dan belum dianggap selesai sampai server mengonfirmasinya.',
                     );
 
-                    return;
+                    return uploadAttachment(response.data.id, file);
                 }
 
                 setActionMessage('Catatan berhasil ditambahkan ke diskusi.');
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(() => {
+                commandLock.current = false;
+            });
     }
 
     function loadOlderMessages(): void {
-        if (olderMessagesForm.processing || !canLoadOlder) {
+        if (disabled || olderMessagesForm.processing || !canLoadOlder) {
             return;
         }
 
@@ -476,6 +556,13 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                 }).url,
                 {
                     onHttpException: (response: { status: number }) => {
+                        if (
+                            response.status === 403 ||
+                            response.status === 404
+                        ) {
+                            onForbidden();
+                        }
+
                         setDiscussionLoadError(
                             response.status === 403
                                 ? 'Diskusi tidak lagi dapat diakses dengan permission saat ini.'
@@ -512,11 +599,50 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
     }
 
     function retryUpload(): void {
-        if (pendingUpload === null || isUploading) {
+        if (disabled || uncertain || pendingUpload === null || isUploading) {
             return;
         }
 
         uploadAttachment(pendingUpload.messageId, pendingUpload.file);
+    }
+
+    function checkLatest(): void {
+        if (disabled || checkForm.processing || commandLock.current) {
+            return;
+        }
+
+        checkForm
+            .get(discussionIndex(projectId).url, {
+                onHttpException: (response) => {
+                    if (response.status === 403 || response.status === 404) {
+                        onForbidden();
+                    }
+
+                    setActionError(
+                        'Diskusi terbaru belum dapat diperiksa. Pengiriman tetap ditahan.',
+                    );
+
+                    return false;
+                },
+                onNetworkError: () => {
+                    setActionError(
+                        'Koneksi belum pulih. Periksa diskusi terbaru saat tersambung.',
+                    );
+
+                    return false;
+                },
+            })
+            .then((response) => {
+                setMessages(response.data);
+                setCurrentPage(response.meta.current_page);
+                setLastPage(response.meta.last_page);
+                setUncertain(false);
+                setActionError(null);
+                setActionMessage(
+                    'Data terbaru sudah dibaca. Periksa catatan dan lampirannya sebelum mengirim lagi. Tidak ada pengiriman ulang otomatis.',
+                );
+            })
+            .catch(() => undefined);
     }
 
     return (
@@ -528,18 +654,18 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
             <header className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-5">
                 <div className="grid gap-2">
                     <p className="font-label text-label text-muted-foreground">
-                        LINIMASA DISKUSI
+                        DISKUSI OPSIONAL
                     </p>
                     <h2
                         id="workspace-discussion-title"
                         className="text-title font-semibold"
                     >
-                        Diskusi dan evidence
+                        Diskusi tim (opsional)
                     </h2>
                     <p className="max-w-[70ch] text-sm leading-6 text-muted-foreground">
-                        Catatan kerja dan evidence tetap berada di workspace
-                        private. Setiap file menampilkan sumber dan waktu
-                        unggahnya.
+                        Gunakan untuk pertanyaan, hambatan, atau serah terima.
+                        Tidak perlu berbicara di sini untuk menyelesaikan tugas
+                        atau mengunggah bukti privat.
                     </p>
                 </div>
                 {canLoadOlder && (
@@ -560,6 +686,25 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                     </Button>
                 )}
             </header>
+
+            <Button
+                type="button"
+                variant="outline"
+                className="w-fit"
+                onClick={checkLatest}
+                disabled={
+                    disabled ||
+                    isUploading ||
+                    discussionForm.processing ||
+                    checkForm.processing
+                }
+                data-test="discussion-check-latest"
+            >
+                <RefreshCw aria-hidden="true" />
+                {checkForm.processing
+                    ? 'Memeriksa diskusi...'
+                    : 'Periksa diskusi terbaru'}
+            </Button>
 
             <div className="grid gap-3" aria-live="polite">
                 {actionMessage && (
@@ -612,12 +757,17 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                         }}
                         className="min-h-28 w-full resize-y border border-input bg-background px-3 py-2 text-base text-foreground transition-[color,background-color,border-color,box-shadow] duration-fast outline-none placeholder:text-muted-foreground hover:border-ring focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         maxLength={5000}
-                        placeholder="Tulis blocking issue, keputusan, atau langkah berikutnya untuk tim"
+                        placeholder="Tulis hambatan kerja, keputusan, atau langkah berikutnya untuk tim"
                         aria-describedby="discussion-body-help discussion-body-error"
                         aria-invalid={Boolean(
                             firstError(discussionErrors, 'body'),
                         )}
-                        disabled={isUploading}
+                        disabled={
+                            disabled ||
+                            uncertain ||
+                            discussionForm.processing ||
+                            isUploading
+                        }
                     />
                     <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
                         <p id="discussion-body-help">
@@ -639,16 +789,22 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                             className="flex w-fit cursor-pointer items-center gap-2 text-sm font-semibold text-foreground"
                         >
                             <Paperclip aria-hidden="true" className="size-4" />
-                            Lampirkan evidence
+                            Lampirkan bukti (opsional)
                         </label>
                         <input
+                            ref={fileInput}
                             id="discussion-file"
                             data-test="discussion-file"
                             type="file"
                             accept={ACCEPTED_FILE_TYPES}
                             onChange={selectFile}
                             className="block w-full cursor-pointer text-sm text-muted-foreground file:mr-3 file:cursor-pointer file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:file:bg-primary/90"
-                            disabled={isUploading}
+                            disabled={
+                                disabled ||
+                                uncertain ||
+                                discussionForm.processing ||
+                                isUploading
+                            }
                         />
                         <p className="text-xs leading-5 text-muted-foreground">
                             PDF, dokumen, spreadsheet, presentasi, gambar, atau
@@ -679,6 +835,10 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                         type="submit"
                         className="w-full cursor-pointer sm:w-fit"
                         disabled={
+                            disabled ||
+                            uncertain ||
+                            pendingUpload !== null ||
+                            checkForm.processing ||
                             discussionForm.processing ||
                             isUploading ||
                             body.trim() === ''
@@ -706,8 +866,8 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                         <div className="min-w-0">
                             <p className="text-sm font-semibold">
                                 {pendingUpload.status === 'uploading'
-                                    ? 'Mengunggah evidence'
-                                    : 'Evidence belum tersimpan'}
+                                    ? 'Mengunggah bukti'
+                                    : 'Bukti belum tersimpan'}
                             </p>
                             <p className="truncate text-xs text-muted-foreground">
                                 {pendingUpload.file.name}
@@ -720,7 +880,12 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                                 size="sm"
                                 className="cursor-pointer"
                                 onClick={retryUpload}
-                                disabled={isUploading}
+                                disabled={
+                                    disabled ||
+                                    uncertain ||
+                                    isUploading ||
+                                    checkForm.processing
+                                }
                                 data-test="discussion-upload-retry"
                             >
                                 <RefreshCw aria-hidden="true" />
@@ -734,7 +899,7 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                                 className="h-2 w-full accent-primary"
                                 max={100}
                                 value={uploadForm.progress?.percentage ?? 0}
-                                aria-label="Kemajuan unggah evidence"
+                                aria-label="Kemajuan unggah bukti"
                             />
                             <p className="text-xs text-muted-foreground">
                                 {uploadForm.progress?.percentage ?? 0}%{' '}
@@ -747,6 +912,25 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                             {pendingUpload.error ??
                                 'File tetap tersedia untuk dicoba kembali.'}
                         </p>
+                    )}
+                    {pendingUpload.status === 'failed' && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-fit"
+                            disabled={
+                                uncertain || disabled || checkForm.processing
+                            }
+                            onClick={() => {
+                                setPendingUpload(null);
+                                setActionError(null);
+                                setActionMessage(
+                                    'Unggahan ulang dibatalkan. Catatan yang tersimpan tetap ada; periksa bukti pada diskusi sebelum melanjutkan.',
+                                );
+                            }}
+                        >
+                            Lanjut tanpa unggah ulang
+                        </Button>
                     )}
                 </div>
             )}
@@ -808,17 +992,17 @@ export function WorkspaceDiscussion({ projectId, initialPage }: Props) {
                             BELUM ADA CATATAN
                         </p>
                         <h3 className="text-lg font-semibold">
-                            Mulai ledger diskusi project
+                            Belum ada diskusi tim
                         </h3>
                         <p className="mx-auto max-w-[54ch] text-sm leading-6 text-muted-foreground">
-                            Gunakan catatan untuk keputusan, blocking issue, dan
+                            Gunakan catatan untuk keputusan, hambatan kerja, dan
                             serah terima yang perlu dibaca tim.
                         </p>
                     </div>
                 ) : (
                     <ol
                         className="grid gap-5"
-                        aria-label="Timeline diskusi project"
+                        aria-label="Riwayat diskusi proyek"
                     >
                         {messages.map((message) => (
                             <DiscussionMessage

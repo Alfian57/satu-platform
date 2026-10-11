@@ -9,6 +9,7 @@ use App\Enums\InstitutionMembershipRole;
 use App\Enums\ProjectStatus;
 use App\Enums\TeamMembershipEventType;
 use App\Enums\TeamMembershipStatus;
+use App\Events\MatchingInputsChanged;
 use App\Exceptions\InvalidTeamTransition;
 use App\Models\Institution;
 use App\Models\Project;
@@ -129,6 +130,7 @@ final class TeamMembershipTransition
         string $operation,
         ?string $reason = null,
         ?int $sourceId = null,
+        ?string $sourceType = null,
     ): TeamMembership {
         $membership = $this->lockMembership($project, $member);
         $before = $membership === null ? [] : $this->membershipSummary($membership);
@@ -163,7 +165,7 @@ final class TeamMembershipTransition
             'actor_id' => $actor->getKey(),
             'event' => $eventType,
             'reason' => $reason,
-            'metadata' => $sourceId === null ? null : ['source_id' => $sourceId],
+            'metadata' => $sourceId === null ? null : ['source_id' => $sourceId, 'source_type' => $sourceType],
             'created_at' => $now,
         ]);
 
@@ -300,6 +302,7 @@ final class TeamMembershipTransition
 
     private function synchronizeProjectStatus(Project $project, User $actor): void
     {
+        MatchingInputsChanged::dispatch($project->institution_id);
         if (! in_array($project->status, [ProjectStatus::Open, ProjectStatus::Forming, ProjectStatus::Full], true)) {
             return;
         }

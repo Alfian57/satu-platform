@@ -9,6 +9,7 @@ use App\Enums\TeamJoinRequestStatus;
 use App\Models\TeamJoinRequest;
 use App\Models\User;
 use App\Notifications\TeamJoinRequestRespondedNotification;
+use App\Support\Team\TeamDecisionSnapshot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -22,19 +23,23 @@ final class RejectTeamJoinRequest
     public function handle(
         User $actor,
         TeamJoinRequest $request,
-        ?string $reason = null,
+        string $reason,
+        string $expectedRevision,
     ): TeamJoinRequest {
-        Gate::forUser($actor)->authorize('reject', $request);
-        $reason = $this->transition->normalizeReason($reason);
+        Gate::forUser($actor)->authorize('decide', $request);
+        $reason = $this->transition->normalizeReason($reason, required: true);
 
-        return DB::transaction(function () use ($actor, $request, $reason): TeamJoinRequest {
+        return DB::transaction(function () use ($actor, $request, $reason, $expectedRevision): TeamJoinRequest {
             $project = $this->transition->lockProject($request->project);
             $lockedRequest = TeamJoinRequest::query()
                 ->lockForUpdate()
                 ->whereKey($request->getKey())
+                ->whereBelongsTo($project)
                 ->firstOrFail();
 
-            Gate::forUser($actor)->authorize('reject', $lockedRequest);
+            Gate::forUser($actor)->authorize('decide', $lockedRequest);
+            TeamDecisionSnapshot::ensurePending($lockedRequest, $expectedRevision, TeamDecisionSnapshot::context($project));
+            $role = $this->transition->resolveRole($project, $lockedRequest->project_role_id);
             $before = $this->summary($lockedRequest);
             $lockedRequest->forceFill([
                 'status' => TeamJoinRequestStatus::Rejected,
@@ -49,7 +54,7 @@ final class RejectTeamJoinRequest
                 actor: $actor,
                 institution: $project->institution,
                 before: $before,
-                after: $this->summary($lockedRequest),
+                after: [...$this->summary($lockedRequest), 'selection_criteria' => $role?->selection_criteria, 'reviewed_revision' => $expectedRevision],
                 reason: $reason,
             );
 

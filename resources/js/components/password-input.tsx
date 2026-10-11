@@ -21,17 +21,20 @@ export default function PasswordInput({
             />
             <button
                 type="button"
+                disabled={props.disabled}
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute inset-y-0 right-0 flex cursor-pointer items-center rounded-r-md px-3 text-muted-foreground hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
+                className="absolute inset-y-0 right-0 flex cursor-pointer items-center rounded-r-md px-3 text-muted-foreground hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label={
                     showPassword ? 'Sembunyikan password' : 'Tampilkan password'
                 }
+                aria-controls={props.id}
+                aria-pressed={showPassword}
                 tabIndex={0}
             >
                 {showPassword ? (
-                    <EyeOff className="size-4" />
+                    <EyeOff aria-hidden="true" className="size-4" />
                 ) : (
-                    <Eye className="size-4" />
+                    <Eye aria-hidden="true" className="size-4" />
                 )}
             </button>
         </div>

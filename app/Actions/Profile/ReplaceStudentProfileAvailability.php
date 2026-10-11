@@ -6,6 +6,7 @@ namespace App\Actions\Profile;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Actions\Portfolio\RebuildTalentCandidateProjection;
+use App\Events\MatchingInputsChanged;
 use App\Models\AvailabilityWindow;
 use App\Models\Institution;
 use App\Models\StudentProfile;
@@ -24,6 +25,23 @@ final class ReplaceStudentProfileAvailability
         private readonly RebuildTalentCandidateProjection $rebuildProjection,
     ) {}
 
+    /** @param array<string, mixed> $data */
+    public function handleFromProfile(User $actor, StudentProfile $profile, array $data): StudentProfile
+    {
+        try {
+            return $this->handle($actor, $profile, [
+                'windows' => $data['availability_windows'] ?? [],
+                'timezone' => $data['timezone'] ?? $profile->institution()->value('timezone'),
+            ]);
+        } catch (ValidationException $error) {
+            throw ValidationException::withMessages(collect($error->errors())->mapWithKeys(
+                fn (array $messages, string $field): array => [
+                    str_starts_with($field, 'windows') ? 'availability_windows'.substr($field, 7) : $field => $messages,
+                ],
+            )->all());
+        }
+    }
+
     /**
      * Replace all availability windows atomically after validating order and overlap.
      *
@@ -38,7 +56,7 @@ final class ReplaceStudentProfileAvailability
                 ->lockForUpdate()
                 ->whereKey($studentProfile->getKey())
                 ->firstOrFail();
-            $this->ensureFresh->handle($profile, $data['expected_updated_at'] ?? null);
+            $this->ensureFresh->handle($profile, $data['expected_updated_at'] ?? null, $data['expected_profile_revision'] ?? null);
             $fallbackTimezone = $data['timezone']
                 ?? $profile->institution()->value('timezone')
                 ?? 'UTC';
@@ -57,6 +75,8 @@ final class ReplaceStudentProfileAvailability
                     ...$window,
                 ]);
             }
+
+            $profile->touch();
 
             $institution = Institution::query()->findOrFail($profile->institution_id);
 
@@ -77,6 +97,7 @@ final class ReplaceStudentProfileAvailability
             );
 
             $this->rebuildProjection->handle($actor, $institution);
+            MatchingInputsChanged::dispatch($profile->institution_id, $profile->user_id);
 
             return $profile->refresh();
         }, attempts: 3);

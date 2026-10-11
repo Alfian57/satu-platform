@@ -24,6 +24,7 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\TeamMembership;
 use App\Models\User;
+use App\Support\Attachment\WorkspaceEvidenceQuery;
 use App\Support\Discussion\DiscussionFilters;
 use App\Support\Discussion\DiscussionSerializer;
 use App\Support\Task\TaskWorkspaceSerializer;
@@ -41,6 +42,7 @@ final class ProjectWorkspaceController extends Controller
         Project $project,
         TaskWorkspaceSerializer $serializer,
         DiscussionSerializer $discussionSerializer,
+        WorkspaceEvidenceQuery $evidenceQuery,
     ): Response {
         /** @var User $user */
         $user = $request->user();
@@ -48,6 +50,9 @@ final class ProjectWorkspaceController extends Controller
 
         $query = Task::query()
             ->forProject($project)
+            ->when($filters->scope === 'mine', fn (Builder $query): Builder => $query->whereRelation('assignments', 'user_id', $user->getKey()))
+            ->when($filters->scope === 'unassigned', fn (Builder $query): Builder => $query->doesntHave('assignments'))
+            ->when($filters->taskId !== null, fn (Builder $query): Builder => $query->whereKey($filters->taskId))
             ->with([
                 'createdBy:id,name',
                 'assignments.assignee:id,name',
@@ -123,6 +128,7 @@ final class ProjectWorkspaceController extends Controller
             'project' => $serializer->project($project),
             'tasks' => $serializer->page($tasks),
             'discussion' => $discussionSerializer->page($discussion),
+            'evidence' => $evidenceQuery->execute($user, $project, $request->integer('evidence_page', 1)),
             'members' => $members,
             'filters' => $filters->toArray(),
             'permissions' => [
@@ -175,7 +181,7 @@ final class ProjectWorkspaceController extends Controller
                 actor: $user,
                 task: $task,
                 targetStatus: TaskStatus::from((string) $data['status']),
-                expectedUpdatedAt: $data['expected_updated_at'] ?? null,
+                expectedRevision: (string) $data['expected_revision'],
             );
         } catch (InvalidTaskTransition $exception) {
             throw ValidationException::withMessages(['status' => $exception->getMessage()]);
@@ -193,7 +199,7 @@ final class ProjectWorkspaceController extends Controller
         /** @var User $user */
         $user = $request->user();
         $assignee = User::query()->findOrFail($request->integer('assignee_id'));
-        $assignment = $assignTask->handle($user, $task, $assignee);
+        $assignment = $assignTask->handle($user, $task, $assignee, (string) $request->validated('expected_revision'));
 
         return response()->json([
             'data' => [
@@ -216,7 +222,7 @@ final class ProjectWorkspaceController extends Controller
         /** @var User $user */
         $user = $request->user();
         $assignee = User::query()->findOrFail($request->integer('assignee_id'));
-        $unassignTask->handle($user, $task, $assignee);
+        $unassignTask->handle($user, $task, $assignee, (string) $request->validated('expected_revision'));
 
         return response()->json(['data' => ['task_id' => $task->getKey(), 'user_id' => $assignee->getKey()]]);
     }
@@ -229,7 +235,7 @@ final class ProjectWorkspaceController extends Controller
     ): JsonResponse {
         /** @var User $user */
         $user = $request->user();
-        $deleteTask->handle($user, $task);
+        $deleteTask->handle($user, $task, (string) $request->validated('expected_revision'));
 
         return response()->json(['data' => ['deleted' => true, 'task_id' => $task->getKey()]]);
     }

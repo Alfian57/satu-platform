@@ -1,12 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowRight,
-    BadgeCheck,
+    BookOpenCheck,
     CircleAlert,
     History,
-    LockKeyhole,
-    ShieldCheck,
+    Globe2,
 } from 'lucide-react';
+import AppLogo from '@/components/app-logo';
+import { DashboardArchiveArt as ArchiveArt } from '@/components/dashboard-archive-art';
+import { PortfolioVerificationBadge } from '@/components/portfolio/portfolio-presentation';
 import { home } from '@/routes';
 import type {
     PortfolioVerificationLevel,
@@ -15,23 +17,10 @@ import type {
     PublicPortfolioProfile,
 } from '@/types/portfolio';
 
-/**
- * THESIS: A public portfolio should feel like a verified folio, not a social
- * profile or recruiter result.
- * OWN-WORLD: Buku Besar Kolaborasi rules, graphite ink, institutional blue,
- * compact verification marks, and flat ledger surfaces.
- * STORY: A visitor meets the maker, sees the published work, and can trace
- * each claim to its explicit verification level without seeing private proof.
- * FIRST VIEWPORT: Identity and the portfolio boundary lead on the left, with
- * the public projection contract in a quiet right rail.
- * FORM: Public ledger, grounded candidate 7, permissioned disclosure states.
- */
-
 const verificationDescriptions: Record<PortfolioVerificationLevel, string> = {
-    self_reported: 'Klaim yang ditulis dan dinyatakan oleh pemilik portfolio.',
+    self_reported: 'Catatan pekerjaan yang dinyatakan oleh pemilik portofolio.',
     team_confirmed: 'Kontribusi yang dikonfirmasi oleh rekan satu tim.',
-    institution_verified:
-        'Kontribusi yang disetujui melalui validasi reviewer kampus.',
+    institution_verified: 'Kontribusi yang disetujui melalui validasi kampus.',
 };
 
 function formatDate(value: string | null): string {
@@ -53,22 +42,24 @@ function formatDate(value: string | null): string {
 
 function PublicHeader() {
     return (
-        <header className="border-b border-border bg-background">
+        <header className="border-b border-border bg-card/90">
             <div className="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-6 lg:px-8">
                 <Link
                     href={home()}
-                    className="inline-flex cursor-pointer items-baseline gap-2 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                    className="inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                     data-test="public-portfolio-brand"
                 >
-                    <span className="font-bold tracking-tight text-primary">
-                        SATU
-                    </span>
+                    <AppLogo
+                        compact
+                        className="text-primary"
+                        logoClassName="size-10 rounded-none shadow-none"
+                    />
                     <span className="hidden text-sm text-muted-foreground sm:inline">
                         Buku Besar Kolaborasi
                     </span>
                 </Link>
-                <p className="font-label text-label text-muted-foreground">
-                    PORTFOLIO PUBLIK
+                <p className="text-xs font-medium text-muted-foreground">
+                    Portofolio publik
                 </p>
             </div>
         </header>
@@ -79,10 +70,10 @@ function PublicFooter() {
     return (
         <footer className="border-t border-border">
             <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:px-6 lg:px-8">
-                <p>SATU. Proyeksi yang dibagikan secara eksplisit.</p>
+                <p>SATU. Karya nyata, dibagikan dengan kendali pemilik.</p>
                 <Link
                     href={home()}
-                    className="w-fit cursor-pointer font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                    className="inline-flex min-h-11 w-fit cursor-pointer items-center rounded-xl font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                 >
                     Pelajari SATU
                     <span aria-hidden="true">
@@ -99,40 +90,38 @@ function ProjectionBoundary({ profile }: { profile: PublicPortfolioProfile }) {
     return (
         <aside
             aria-labelledby="public-boundary-title"
-            className="grid gap-4 border-y border-border px-4 py-5 md:border-y-0 md:border-l md:px-6 md:py-2"
+            className="grid min-w-0 gap-4 rounded-2xl border border-white/80 bg-white/75 p-5 shadow-sm sm:p-6"
             data-test="public-projection-boundary"
         >
             <div className="flex items-center gap-2">
-                <BadgeCheck
+                <BookOpenCheck
                     aria-hidden="true"
-                    className="size-5 text-verified"
+                    className="size-5 shrink-0 text-primary"
                 />
                 <h2
                     id="public-boundary-title"
-                    className="font-label text-label text-primary"
+                    className="text-sm font-semibold [overflow-wrap:anywhere] text-primary"
                 >
-                    PROYEKSI YANG DIIZINKAN
+                    Dibagikan oleh pemilik
                 </h2>
             </div>
             <p className="text-sm leading-6 text-muted-foreground">
-                Halaman ini hanya menampilkan entry yang dipilih publik dan
-                masih memiliki sumber contribution yang disetujui.
+                Halaman ini menampilkan karya yang dipilih Publik dan memiliki
+                sumber kontribusi yang disetujui kampus.
             </p>
             <dl className="grid gap-3 border-t border-border pt-3 text-xs">
                 <div className="grid gap-1">
-                    <dt className="font-label text-label text-muted-foreground">
-                        INSTITUSI
-                    </dt>
-                    <dd className="font-semibold">
+                    <dt className="text-xs text-muted-foreground">Institusi</dt>
+                    <dd className="font-semibold [overflow-wrap:anywhere]">
                         {profile.institution_name}
                     </dd>
                 </div>
                 <div className="grid gap-1">
-                    <dt className="font-label text-label text-muted-foreground">
-                        BATAS DATA
+                    <dt className="text-xs text-muted-foreground">
+                        Batas data
                     </dt>
                     <dd className="font-semibold">
-                        Tanpa evidence private dan audit mentah
+                        Tanpa bukti privat dan catatan kampus
                     </dd>
                 </div>
             </dl>
@@ -140,48 +129,34 @@ function ProjectionBoundary({ profile }: { profile: PublicPortfolioProfile }) {
     );
 }
 
-function VerificationMark({
-    entry,
-    compact = false,
-}: {
-    entry: PublicPortfolioEntry;
-    compact?: boolean;
-}) {
+function VerificationMark({ entry }: { entry: PublicPortfolioEntry }) {
     return (
-        <span
-            className="inline-flex w-fit items-center gap-1.5 border border-verified/40 bg-verified-subtle px-2 py-1 text-xs font-semibold text-verified-subtle-foreground"
+        <div
+            className="max-w-full min-w-0"
             data-test={'public-entry-verification-' + entry.id}
         >
-            <ShieldCheck
-                aria-hidden="true"
-                className="size-3.5 text-verified"
-            />
-            {compact
-                ? entry.verification_label
-                : 'Tingkat ' + entry.verification_label}
-        </span>
+            <PortfolioVerificationBadge entry={entry} />
+        </div>
     );
 }
 
 function ProvenanceFacts({ entry }: { entry: PublicPortfolioEntry }) {
     return (
-        <dl className="grid gap-4 border-t border-border pt-4 text-sm sm:grid-cols-3">
+        <dl className="grid min-w-0 gap-4 border-t border-border pt-4 text-sm sm:grid-cols-3">
             <div className="grid gap-1">
-                <dt className="font-label text-label text-muted-foreground">
-                    PROVENANCE
-                </dt>
-                <dd className="font-semibold">Contribution disetujui</dd>
+                <dt className="text-xs text-muted-foreground">Sumber karya</dt>
+                <dd className="font-semibold">Kontribusi disetujui</dd>
             </div>
             <div className="grid gap-1">
-                <dt className="font-label text-label text-muted-foreground">
-                    TINGKAT VERIFIKASI
+                <dt className="text-xs text-muted-foreground">
+                    Tingkat verifikasi
                 </dt>
-                <dd className="font-semibold">{entry.verification_label}</dd>
+                <dd className="font-semibold [overflow-wrap:anywhere]">
+                    {entry.verification_label}
+                </dd>
             </div>
             <div className="grid gap-1">
-                <dt className="font-label text-label text-muted-foreground">
-                    DITERBITKAN
-                </dt>
+                <dt className="text-xs text-muted-foreground">Diterbitkan</dt>
                 <dd>
                     <time dateTime={entry.published_at ?? undefined}>
                         {formatDate(entry.published_at)}
@@ -195,20 +170,20 @@ function ProvenanceFacts({ entry }: { entry: PublicPortfolioEntry }) {
 function FeaturedEntry({ entry }: { entry: PublicPortfolioEntry }) {
     return (
         <article
-            className="grid gap-5 border-y border-border bg-card/50 px-4 py-7 md:px-8 md:py-9"
+            className="grid min-w-0 gap-6 rounded-3xl border border-primary/20 bg-card p-5 shadow-md sm:p-8"
             data-test="public-featured-entry"
         >
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="font-label text-label text-primary">
-                    ENTRY UTAMA / 01
+                <p className="text-sm font-semibold [overflow-wrap:anywhere] text-primary">
+                    Karya terbaru
                 </p>
                 <VerificationMark entry={entry} />
             </div>
-            <div className="grid gap-3">
-                <h3 className="max-w-[30ch] text-title font-bold text-balance md:text-headline">
+            <div className="grid min-w-0 gap-3">
+                <h3 className="max-w-[42ch] text-2xl leading-snug font-bold tracking-tight [overflow-wrap:anywhere] sm:text-3xl">
                     {entry.title}
                 </h3>
-                <p className="max-w-[72ch] text-body leading-7 break-words text-muted-foreground">
+                <p className="max-w-[72ch] text-base leading-8 [overflow-wrap:anywhere] whitespace-pre-wrap">
                     {entry.summary}
                 </p>
             </div>
@@ -233,7 +208,7 @@ function LedgerEntry({
 }) {
     return (
         <li
-            className="grid gap-4 px-4 py-5 md:grid-cols-[3rem_minmax(0,1fr)_minmax(14rem,0.45fr)] md:items-start md:px-6"
+            className="grid min-w-0 content-start gap-5 rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-7"
             data-test={'public-entry-' + entry.id}
         >
             <span className="font-label text-label text-muted-foreground">
@@ -241,23 +216,21 @@ function LedgerEntry({
             </span>
             <div className="grid min-w-0 gap-3">
                 <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-label text-label text-primary">
-                        ENTRI PUBLIK
+                    <span className="text-xs font-semibold [overflow-wrap:anywhere] text-primary">
+                        Karya publik
                     </span>
-                    <VerificationMark entry={entry} compact />
+                    <VerificationMark entry={entry} />
                 </div>
-                <h3 className="text-base font-bold break-words">
+                <h3 className="text-xl leading-snug font-bold tracking-tight [overflow-wrap:anywhere] sm:text-2xl">
                     {entry.title}
                 </h3>
-                <p className="text-sm leading-6 break-words text-muted-foreground">
+                <p className="text-sm leading-7 [overflow-wrap:anywhere] whitespace-pre-wrap text-muted-foreground">
                     {entry.summary}
                 </p>
             </div>
-            <div className="grid gap-2 border-t border-border pt-3 text-xs md:border-t-0 md:border-l md:pt-0 md:pl-4">
-                <span className="font-label text-label text-muted-foreground">
-                    PROVENANCE
-                </span>
-                <span className="font-semibold">Contribution disetujui</span>
+            <div className="grid min-w-0 gap-2 border-t border-border pt-4 text-xs">
+                <span className="text-muted-foreground">Sumber karya</span>
+                <span className="font-semibold">Kontribusi disetujui</span>
                 <time
                     dateTime={entry.published_at ?? undefined}
                     className="text-muted-foreground"
@@ -279,55 +252,58 @@ function PublishedPortfolio({
     const [featuredEntry, ...remainingEntries] = entries;
 
     return (
-        <main className="mx-auto grid max-w-7xl gap-10 px-4 py-8 md:gap-14 md:px-6 md:py-12 lg:px-8 lg:py-16">
-            <section className="grid gap-8 border-b border-border pb-8 md:grid-cols-[minmax(0,1fr)_22rem] md:items-end md:gap-12 md:pb-12">
-                <div className="grid min-w-0 gap-5">
-                    <p className="font-label text-label text-primary">
-                        PORTOFOLIO PUBLIK / PROYEKSI TERVERIFIKASI
+        <main className="mx-auto grid w-full max-w-7xl min-w-0 gap-6 px-4 py-6 md:px-6 lg:px-8 lg:py-10">
+            <section className="relative grid min-w-0 gap-6 overflow-hidden rounded-4xl border border-white bg-linear-to-br from-accent via-sky-100 to-blue-100 p-5 shadow-md sm:p-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-center">
+                <ArchiveArt className="absolute -top-4 right-4 hidden w-44 rotate-12 opacity-25 sm:block lg:right-96" />
+                <div className="relative grid min-w-0 gap-5">
+                    <p className="text-sm font-semibold [overflow-wrap:anywhere] text-primary">
+                        Portofolio publik
                     </p>
-                    <div className="grid gap-3">
-                        <h1 className="max-w-[16ch] text-headline font-bold text-balance md:text-display">
+                    <div className="grid min-w-0 gap-3">
+                        <h1 className="max-w-[22ch] text-3xl leading-tight font-bold [overflow-wrap:anywhere] sm:text-4xl lg:text-5xl">
                             {profile.display_name}
                         </h1>
-                        <p className="text-title font-semibold text-muted-foreground">
-                            {profile.study_program ?? 'Portfolio publik SATU'}
+                        <p className="text-lg leading-7 font-medium [overflow-wrap:anywhere] text-muted-foreground">
+                            {profile.study_program ?? 'Portofolio publik SATU'}
                         </p>
                     </div>
                     {profile.bio && (
-                        <p className="max-w-[68ch] text-body leading-7 text-muted-foreground">
+                        <p className="max-w-[68ch] text-base leading-7 [overflow-wrap:anywhere] whitespace-pre-wrap text-muted-foreground">
                             {profile.bio}
                         </p>
                     )}
                 </div>
-                <ProjectionBoundary profile={profile} />
+                <div className="relative min-w-0">
+                    <ProjectionBoundary profile={profile} />
+                </div>
             </section>
 
             <section
                 aria-labelledby="public-portfolio-title"
-                className="grid gap-5"
+                className="grid min-w-0 gap-5"
                 data-test="public-portfolio-ledger"
             >
-                <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+                <div className="flex min-w-0 flex-wrap items-center justify-between gap-4 px-1 pt-2">
                     <div className="grid gap-1">
                         <div className="flex items-center gap-2">
-                            <LockKeyhole
+                            <Globe2
                                 aria-hidden="true"
                                 className="size-4 text-primary"
                             />
                             <h2
                                 id="public-portfolio-title"
-                                className="text-title font-bold"
+                                className="text-xl font-bold tracking-tight [overflow-wrap:anywhere] sm:text-2xl"
                             >
-                                Portfolio publik
+                                Portofolio publik
                             </h2>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            {entries.length} entri dengan provenance yang dapat
-                            dibaca siapa pun yang menerima tautan ini.
+                            {entries.length} karya yang dibagikan secara
+                            eksplisit oleh pemilik.
                         </p>
                     </div>
                     <span className="font-label text-label text-muted-foreground">
-                        INDEX / {String(entries.length).padStart(2, '0')}
+                        KOLEKSI / {String(entries.length).padStart(2, '0')}
                     </span>
                 </div>
 
@@ -335,8 +311,8 @@ function PublishedPortfolio({
 
                 {remainingEntries.length > 0 && (
                     <ol
-                        className="divide-y divide-border border-y border-border"
-                        aria-label="Entry portfolio publik lainnya"
+                        className="grid min-w-0 gap-5 lg:grid-cols-2"
+                        aria-label="Karya portofolio publik lainnya"
                     >
                         {remainingEntries.map((entry, index) => (
                             <LedgerEntry
@@ -354,11 +330,11 @@ function PublishedPortfolio({
 
 function UnavailablePortfolio() {
     return (
-        <main className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-4xl items-center px-4 py-12 md:px-6 lg:px-8">
+        <main className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-4xl min-w-0 items-center px-4 py-8 md:px-6 lg:px-8">
             <section
                 role="status"
                 aria-labelledby="public-portfolio-unavailable-title"
-                className="grid w-full gap-6 border-y border-border py-10 md:py-14"
+                className="grid w-full min-w-0 gap-6 rounded-4xl border border-border bg-card p-5 shadow-sm sm:p-10"
                 data-test="public-portfolio-unavailable"
             >
                 <p className="font-label text-label text-correction">
@@ -369,12 +345,12 @@ function UnavailablePortfolio() {
                         aria-hidden="true"
                         className="mt-1 size-6 shrink-0 text-correction"
                     />
-                    <div className="grid gap-3">
+                    <div className="grid min-w-0 gap-3">
                         <h1
                             id="public-portfolio-unavailable-title"
-                            className="max-w-[22ch] text-headline font-bold text-balance"
+                            className="max-w-[30ch] text-2xl leading-snug font-bold [overflow-wrap:anywhere] sm:text-3xl"
                         >
-                            Portfolio ini tidak tersedia untuk dibaca.
+                            Portofolio ini tidak tersedia untuk dibaca.
                         </h1>
                         <p className="max-w-[62ch] text-body leading-7 text-muted-foreground">
                             Pemilik dapat menarik visibilitas kapan saja. Data
@@ -385,7 +361,7 @@ function UnavailablePortfolio() {
                 </div>
                 <Link
                     href={home()}
-                    className="inline-flex w-fit cursor-pointer items-center gap-2 border border-border px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                    className="inline-flex min-h-11 w-fit cursor-pointer items-center gap-2 rounded-xl border border-input bg-background px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring motion-reduce:transition-none"
                 >
                     Kembali ke SATU
                     <ArrowRight aria-hidden="true" className="size-4" />
@@ -405,13 +381,13 @@ export default function PublicPortfolio({
     const isPublished =
         state === 'published' && profile !== null && entries.length > 0;
     const title = isPublished
-        ? profile.display_name + ' | Portfolio publik'
-        : 'Portfolio tidak tersedia';
+        ? profile.display_name + ' | Portofolio publik'
+        : 'Portofolio tidak tersedia';
     const description = isPublished
-        ? 'Portfolio publik ' +
+        ? 'Portofolio publik ' +
           profile.display_name +
           ', dengan entri yang dibagikan secara eksplisit.'
-        : 'Portfolio publik ini tidak sedang tersedia untuk dibaca.';
+        : 'Portofolio publik ini tidak sedang tersedia untuk dibaca.';
 
     return (
         <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">

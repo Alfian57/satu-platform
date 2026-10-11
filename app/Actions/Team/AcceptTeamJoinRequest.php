@@ -10,6 +10,7 @@ use App\Enums\TeamMembershipEventType;
 use App\Models\TeamJoinRequest;
 use App\Models\User;
 use App\Notifications\TeamJoinRequestRespondedNotification;
+use App\Support\Team\TeamDecisionSnapshot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -18,20 +19,24 @@ final class AcceptTeamJoinRequest
     public function __construct(
         private readonly TeamMembershipTransition $transition,
         private readonly AuditRecorder $audit,
+        private readonly ResolvePendingTeamOffers $pendingOffers,
     ) {}
 
-    public function handle(User $actor, TeamJoinRequest $request): TeamJoinRequest
+    public function handle(User $actor, TeamJoinRequest $request, string $reason, string $expectedRevision): TeamJoinRequest
     {
-        Gate::forUser($actor)->authorize('accept', $request);
+        Gate::forUser($actor)->authorize('decide', $request);
+        $reason = $this->transition->normalizeReason($reason, required: true);
 
-        return DB::transaction(function () use ($actor, $request): TeamJoinRequest {
+        return DB::transaction(function () use ($actor, $request, $reason, $expectedRevision): TeamJoinRequest {
             $project = $this->transition->lockProject($request->project);
             $lockedRequest = TeamJoinRequest::query()
                 ->lockForUpdate()
                 ->whereKey($request->getKey())
+                ->whereBelongsTo($project)
                 ->firstOrFail();
 
-            Gate::forUser($actor)->authorize('accept', $lockedRequest);
+            Gate::forUser($actor)->authorize('decide', $lockedRequest);
+            TeamDecisionSnapshot::ensurePending($lockedRequest, $expectedRevision, TeamDecisionSnapshot::context($project));
             $this->transition->ensureProjectAcceptsMembers($project);
             $requester = User::query()->findOrFail($lockedRequest->requester_id);
             $this->transition->ensureVerifiedStudent($requester, $project);
@@ -51,6 +56,8 @@ final class AcceptTeamJoinRequest
                     ? 'team.membership.joined'
                     : 'team.membership.rejoined',
                 sourceId: $lockedRequest->getKey(),
+                sourceType: 'join_request',
+                reason: $reason,
             );
 
             $before = $this->summary($lockedRequest);
@@ -58,8 +65,9 @@ final class AcceptTeamJoinRequest
                 'status' => TeamJoinRequestStatus::Accepted,
                 'pending_key' => null,
                 'responded_at' => now(),
-                'response_reason' => null,
+                'response_reason' => $reason,
             ])->save();
+            $this->pendingOffers->handle($project, $requester, $actor);
 
             $this->audit->record(
                 operation: 'team.join_request.accepted',
@@ -67,7 +75,8 @@ final class AcceptTeamJoinRequest
                 actor: $actor,
                 institution: $project->institution,
                 before: $before,
-                after: $this->summary($lockedRequest),
+                after: [...$this->summary($lockedRequest), 'selection_criteria' => $role?->selection_criteria, 'reviewed_revision' => $expectedRevision],
+                reason: $reason,
             );
 
             $lockedRequest->load('requester');

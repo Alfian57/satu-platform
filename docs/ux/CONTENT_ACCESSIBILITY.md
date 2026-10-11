@@ -32,7 +32,7 @@ status atau aksi.
 
 Status selalu berisi keadaan, akibat, dan tindakan berikutnya bila tersedia. Warna tidak boleh menjadi satu-satunya pembeda.
 
-Contoh: `Belum cocok dengan roster. Afiliasi Anda masuk peninjauan kampus. Anda tetap dapat melengkapi profil.`
+Contoh: `Belum cocok dengan roster. Afiliasi Anda masuk peninjauan kampus. Draft onboarding tetap tersedia, tetapi profil baru disimpan setelah afiliasi terverifikasi.`
 
 ## Error Formula
 

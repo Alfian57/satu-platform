@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    AlertTriangle,
+    AlertCircle,
+    ArrowUpRight,
     Award,
     Bookmark,
     BookmarkCheck,
@@ -8,18 +9,14 @@ import {
     CheckCircle2,
     ChevronLeft,
     ChevronRight,
-    Filter,
-    Lock,
+    LockKeyhole,
     RotateCcw,
     Search,
     ShieldCheck,
-    Sparkles,
-    UserRound,
-    UserRoundSearch,
-    Users,
+    UsersRound,
     X,
 } from 'lucide-react';
-import { useState, useTransition } from 'react';
+import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import {
     destroy as unsaveCandidate,
@@ -30,9 +27,14 @@ import {
     show as showCandidate,
 } from '@/actions/App/Http/Controllers/TalentSearchController';
 import { AppPage } from '@/components/app-page';
+import { DashboardArchiveArt as ArchiveArt } from '@/components/dashboard-archive-art';
+import Mascot from '@/components/mascot';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import { saved as savedCandidates } from '@/routes/recruiter/talent';
 import { index as contactRequests } from '@/routes/recruiter/talent/contact-requests';
 
@@ -42,15 +44,10 @@ interface Candidate {
     bio: string | null;
     skills: string[];
     badges: string[];
-    contributions: string[];
+    contributions: (string | { title?: string | null })[];
     availability_status: string;
     verified_at: string | null;
     institution_name: string | null;
-}
-
-interface Institution {
-    id: number;
-    name: string;
 }
 
 interface TalentSearchProps {
@@ -62,51 +59,42 @@ interface TalentSearchProps {
         per_page: number;
     };
     filters: {
-        query: string;
-        skills: string[];
-        badges: string[];
-        availability: string;
-        institution_id: string;
+        query?: string;
+        skills?: string[];
+        badges?: string[];
+        availability?: string;
+        institution_id?: string;
     };
     entitlement: {
         has_entitlement: boolean;
         status: string;
-        expires_at: string | null;
+        expires_at?: string | null;
     };
-    institutions: Institution[];
+    institutions: { id: number; name: string }[];
     savedCandidateIds?: number[];
 }
 
-function availabilityMeta(status: string): {
-    label: string;
-    dotColor: string;
-    badgeColor: string;
-} {
+function availabilityMeta(status: string) {
     switch (status) {
         case 'available':
             return {
                 label: 'Tersedia untuk peluang',
-                dotColor: 'bg-emerald-500',
-                badgeColor:
-                    'border-emerald-200/80 bg-emerald-50/90 text-emerald-800',
+                className: 'border-emerald-200 bg-emerald-50 text-emerald-800',
             };
         case 'open_to_offers':
             return {
                 label: 'Terbuka untuk penawaran',
-                dotColor: 'bg-blue-500',
-                badgeColor: 'border-blue-200/80 bg-blue-50/90 text-blue-800',
+                className: 'border-primary/20 bg-accent text-primary',
             };
         case 'not_available':
             return {
                 label: 'Belum tersedia',
-                dotColor: 'bg-slate-400',
-                badgeColor: 'border-slate-200 bg-slate-50 text-slate-700',
+                className: 'border-border bg-background text-muted-foreground',
             };
         default:
             return {
-                label: status.replaceAll('_', ' '),
-                dotColor: 'bg-slate-400',
-                badgeColor: 'border-slate-200 bg-slate-50 text-slate-700',
+                label: 'Ketersediaan belum dicantumkan',
+                className: 'border-border bg-background text-muted-foreground',
             };
     }
 }
@@ -119,167 +107,312 @@ function entitlementLabel(status: string): string {
             return 'Hak akses berakhir';
         case 'no_organization':
             return 'Organisasi belum aktif';
+        case 'unavailable':
+            return 'Hak akses perlu diperiksa';
         default:
             return 'Hak akses diperlukan';
     }
 }
 
 function TalentContextRail({
-    activeFilterCount,
-    savedCount,
     entitlement,
+    savedCount,
 }: {
-    activeFilterCount: number;
-    savedCount: number;
     entitlement: TalentSearchProps['entitlement'];
+    savedCount: number;
 }) {
     return (
-        <div className="grid gap-6">
-            {/* Card 1: Ruang Perekrut & Boundary */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-                <div className="flex items-center gap-2">
-                    <span className="flex size-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                        <Lock className="size-3.5" aria-hidden="true" />
-                    </span>
-                    <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
-                        RUANG PEREKRUT
-                    </p>
-                </div>
-
-                <h2 className="mt-3 text-base font-bold tracking-tight text-slate-900">
-                    Batas akses terlihat
+        <aside
+            aria-label="Panduan ruang perekrut"
+            className="min-w-0 space-y-6 xl:col-start-2 xl:row-start-1"
+        >
+            <section className="rounded-3xl border border-primary/15 bg-gradient-to-br from-white to-accent/70 p-5 shadow-sm sm:p-6">
+                <span className="flex size-11 items-center justify-center rounded-2xl border border-primary/10 bg-white text-primary shadow-xs">
+                    <ShieldCheck aria-hidden="true" className="size-5" />
+                </span>
+                <h2 className="mt-4 text-xl font-bold tracking-tight">
+                    Kenali karya, hormati pilihan.
                 </h2>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                    Hanya portofolio yang dipilih mahasiswa yang tampil di sini.
-                    Kontak langsung baru terbuka setelah kandidat menerima
-                    permintaan kontak Anda.
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    Hanya portofolio yang diizinkan mahasiswa yang tampil.
+                    Kontak langsung mengikuti persetujuan kandidat atas
+                    permintaan kontak.
                 </p>
-            </div>
-
-            {/* Card 2: Ringkasan Metrik */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-                <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
-                    RINGKASAN PORTAL
-                </p>
-
-                <div className="mt-4 grid divide-y divide-slate-100">
-                    <div className="flex items-center justify-between py-3">
-                        <div className="flex items-center gap-2.5">
-                            <Bookmark className="size-4 text-slate-400" />
-                            <span className="text-sm font-medium text-slate-700">
-                                Kandidat tersimpan
-                            </span>
-                        </div>
-                        <Link
-                            href={savedCandidates()}
-                            prefetch
-                            className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-100"
-                        >
-                            {savedCount}
-                            <ChevronRight
-                                aria-hidden="true"
-                                className="size-3"
-                            />
-                        </Link>
-                    </div>
-
-                    <div className="flex items-center justify-between py-3">
-                        <div className="flex items-center gap-2.5">
-                            <Filter className="size-4 text-slate-400" />
-                            <span className="text-sm font-medium text-slate-700">
-                                Filter aktif
-                            </span>
-                        </div>
-                        <span className="inline-flex size-6 items-center justify-center rounded-full bg-slate-100 font-mono text-xs font-bold text-slate-800">
-                            {activeFilterCount}
-                        </span>
-                    </div>
-
-                    <div className="flex items-center justify-between py-3">
-                        <div className="flex items-center gap-2.5">
-                            <ShieldCheck className="size-4 text-blue-600" />
-                            <span className="text-sm font-medium text-slate-700">
-                                Status akses
-                            </span>
-                        </div>
-                        <span className="text-xs font-semibold text-slate-800">
-                            {entitlementLabel(entitlement.status)}
-                        </span>
-                    </div>
+                <div className="mt-5 border-t border-primary/10 pt-4">
+                    <p className="text-xs font-semibold text-muted-foreground">
+                        Status akses organisasi
+                    </p>
+                    <p className="mt-1 text-sm font-semibold">
+                        {entitlementLabel(entitlement.status)}
+                    </p>
+                    {entitlement.has_entitlement && entitlement.expires_at && (
+                        <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                            Berlaku hingga{' '}
+                            {new Intl.DateTimeFormat('id-ID', {
+                                dateStyle: 'medium',
+                            }).format(new Date(entitlement.expires_at))}
+                            .
+                        </p>
+                    )}
                 </div>
-            </div>
-
-            {/* Card 3: Quick Navigation to Contact Requests */}
-            <Link
-                href={contactRequests()}
-                prefetch
-                className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
-            >
-                <div className="flex items-center gap-3">
-                    <div className="flex size-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                        <Users className="size-4.5" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-semibold text-slate-900">
+            </section>
+            <section aria-labelledby="talent-next-heading" className="px-1">
+                <p className="text-xs font-semibold tracking-wider text-primary uppercase">
+                    Langkah berikutnya
+                </p>
+                <h2 id="talent-next-heading" className="mt-2 text-lg font-bold">
+                    Lanjutkan penelusuranmu
+                </h2>
+                <div className="mt-3 divide-y divide-border">
+                    <Link
+                        href={savedCandidates()}
+                        className="flex min-h-16 cursor-pointer items-center gap-3 rounded-xl py-3 transition-colors hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                    >
+                        <Bookmark
+                            aria-hidden="true"
+                            className="size-5 shrink-0 text-primary"
+                        />
+                        <span className="min-w-0 flex-1 text-sm font-semibold">
+                            Kandidat tersimpan{' '}
+                            <span className="ml-1 font-normal text-muted-foreground">
+                                ({savedCount})
+                            </span>
+                        </span>
+                        <ChevronRight
+                            aria-hidden="true"
+                            className="size-4 shrink-0 text-muted-foreground"
+                        />
+                    </Link>
+                    <Link
+                        href={contactRequests()}
+                        className="flex min-h-16 cursor-pointer items-center gap-3 rounded-xl py-3 transition-colors hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                    >
+                        <UsersRound
+                            aria-hidden="true"
+                            className="size-5 shrink-0 text-primary"
+                        />
+                        <span className="min-w-0 flex-1 text-sm font-semibold">
                             Permintaan kontak
-                        </p>
-                        <p className="text-xs text-slate-500">
-                            Kelola relasi & penawaran
-                        </p>
-                    </div>
+                        </span>
+                        <ChevronRight
+                            aria-hidden="true"
+                            className="size-4 shrink-0 text-muted-foreground"
+                        />
+                    </Link>
                 </div>
-                <ChevronRight className="size-4 text-slate-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-blue-600" />
-            </Link>
-
-            {/* Card 4: Info Jaminan Keaslian */}
-            <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/80 to-indigo-50/40 p-4.5">
-                <div className="flex items-start gap-3">
-                    <Sparkles className="mt-0.5 size-4 shrink-0 text-blue-600" />
-                    <div>
-                        <p className="text-xs font-bold text-blue-900">
-                            Bukti tervalidasi kampus
-                        </p>
-                        <p className="mt-1 text-[0.8125rem] leading-relaxed text-blue-800/80">
-                            Setiap riwayat tugas dan kontribusi diverifikasi
-                            langsung oleh reviewer kampus pada buku besar
-                            kolaborasi.
-                        </p>
-                    </div>
-                </div>
+            </section>
+            <div className="flex gap-3 border-t border-border px-1 pt-5 text-sm leading-6 text-muted-foreground">
+                <CheckCircle2
+                    aria-hidden="true"
+                    className="mt-0.5 size-5 shrink-0 text-primary"
+                />
+                <p>
+                    Baca kontribusi dan badge yang dibagikan untuk memahami
+                    pengalaman kandidat. Detail profil menjelaskan bukti yang
+                    dapat dilihat.
+                </p>
             </div>
-        </div>
+        </aside>
+    );
+}
+
+function CandidateCard({
+    candidate,
+    saved,
+    saving,
+    disabled,
+    onSave,
+}: {
+    candidate: Candidate;
+    saved: boolean;
+    saving: boolean;
+    disabled: boolean;
+    onSave: () => void;
+}) {
+    const availability = availabilityMeta(candidate.availability_status);
+
+    return (
+        <article
+            aria-label={`Kandidat ${candidate.headline || 'portofolio mahasiswa'}`}
+            className="flex min-w-0 flex-col overflow-hidden rounded-3xl border border-border bg-white shadow-sm focus-within:border-primary/30 focus-within:shadow-md"
+        >
+            <div className="flex-1 p-5 sm:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-label text-xs text-muted-foreground">
+                        FOLIO-{candidate.id}
+                    </span>
+                    <span
+                        className={cn(
+                            'max-w-full rounded-full border px-3 py-1 text-xs font-semibold',
+                            availability.className,
+                        )}
+                    >
+                        {availability.label}
+                    </span>
+                </div>
+                <h3 className="mt-4 text-xl leading-tight font-bold tracking-tight break-words sm:text-2xl">
+                    {candidate.headline || 'Portofolio mahasiswa'}
+                </h3>
+                {candidate.institution_name && (
+                    <p className="mt-3 flex items-start gap-2 text-sm leading-6 text-muted-foreground">
+                        <Building2
+                            aria-hidden="true"
+                            className="mt-1 size-4 shrink-0"
+                        />
+                        <span className="min-w-0 break-words">
+                            {candidate.institution_name}
+                        </span>
+                    </p>
+                )}
+                {candidate.verified_at && (
+                    <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
+                        <CheckCircle2 aria-hidden="true" className="size-4" />
+                        Portofolio terverifikasi
+                    </p>
+                )}
+                {candidate.bio && (
+                    <p className="mt-4 line-clamp-3 text-sm leading-6 break-words text-muted-foreground">
+                        {candidate.bio}
+                    </p>
+                )}
+                <div className="mt-5 rounded-2xl border border-primary/10 bg-gradient-to-br from-accent/80 to-background p-4">
+                    <p className="text-xs font-semibold tracking-wide text-primary uppercase">
+                        Keahlian yang dibagikan
+                    </p>
+                    {candidate.skills.length > 0 ? (
+                        <ul
+                            aria-label="Keahlian kandidat"
+                            className="mt-3 flex flex-wrap gap-2"
+                        >
+                            {candidate.skills.map((skill) => (
+                                <li
+                                    key={skill}
+                                    className="max-w-full rounded-lg border border-primary/10 bg-white px-2.5 py-1 text-xs font-medium break-words"
+                                >
+                                    {skill}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            Belum ada skill yang dibagikan.
+                        </p>
+                    )}
+                </div>
+                {candidate.contributions.length > 0 && (
+                    <div className="mt-5 border-t border-border pt-4">
+                        <p className="text-xs font-semibold text-muted-foreground">
+                            Kontribusi yang dibagikan
+                        </p>
+                        <ul className="mt-2 space-y-2">
+                            {candidate.contributions
+                                .slice(0, 2)
+                                .map((contribution, index) => (
+                                    <li
+                                        key={index}
+                                        className="flex gap-2 text-sm leading-6 break-words"
+                                    >
+                                        <CheckCircle2
+                                            aria-hidden="true"
+                                            className="mt-1 size-4 shrink-0 text-primary"
+                                        />
+                                        <span className="min-w-0">
+                                            {typeof contribution === 'string'
+                                                ? contribution
+                                                : contribution.title ||
+                                                  'Karya yang dibagikan'}
+                                        </span>
+                                    </li>
+                                ))}
+                        </ul>
+                        {candidate.contributions.length > 2 && (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                Kontribusi lainnya tersedia di profil.
+                            </p>
+                        )}
+                    </div>
+                )}
+                {candidate.badges.length > 0 && (
+                    <ul
+                        aria-label="Badge kandidat"
+                        className="mt-4 flex flex-wrap gap-2"
+                    >
+                        {candidate.badges.map((badge) => (
+                            <li
+                                key={badge}
+                                className="inline-flex max-w-full items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-900"
+                            >
+                                <Award
+                                    aria-hidden="true"
+                                    className="mt-0.5 size-3.5 shrink-0"
+                                />
+                                <span className="min-w-0 break-words">
+                                    {badge}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+            <div className="flex flex-wrap items-center gap-3 border-t border-border bg-background/50 px-5 py-4 sm:px-6">
+                <Button
+                    asChild
+                    variant="outline"
+                    className="h-11 flex-1 border-primary/20 bg-white text-primary"
+                >
+                    <Link href={showCandidate(candidate.id)}>
+                        Lihat profil
+                        <ArrowUpRight aria-hidden="true" className="size-4" />
+                    </Link>
+                </Button>
+                <Button
+                    aria-label={
+                        saved
+                            ? `Hapus ${candidate.headline || 'kandidat'} dari simpanan`
+                            : `Simpan ${candidate.headline || 'kandidat'}`
+                    }
+                    aria-pressed={saved}
+                    disabled={disabled}
+                    onClick={onSave}
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                        'h-11 px-3',
+                        saved && 'border-primary/20 bg-accent text-primary',
+                    )}
+                >
+                    {saving ? (
+                        <Spinner aria-hidden="true" />
+                    ) : saved ? (
+                        <BookmarkCheck aria-hidden="true" className="size-4" />
+                    ) : (
+                        <Bookmark aria-hidden="true" className="size-4" />
+                    )}
+                    <span className="text-sm">
+                        {saving ? 'Memproses' : saved ? 'Tersimpan' : 'Simpan'}
+                    </span>
+                </Button>
+            </div>
+        </article>
     );
 }
 
 function CandidateSkeleton() {
     return (
-        <div className="grid gap-4">
+        <div
+            aria-hidden="true"
+            className="grid gap-5 @min-[44rem]:grid-cols-2 @min-[56rem]:grid-cols-3"
+        >
             {[1, 2, 3].map((index) => (
                 <div
                     key={index}
-                    aria-hidden="true"
-                    className="animate-pulse rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs"
+                    className="min-w-0 rounded-3xl border border-border bg-white p-6"
                 >
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-4">
-                            <Skeleton className="size-12 rounded-2xl bg-slate-100" />
-                            <div className="grid gap-2">
-                                <div className="flex items-center gap-2">
-                                    <Skeleton className="h-4 w-20 bg-slate-100" />
-                                    <Skeleton className="h-4 w-28 bg-slate-100" />
-                                </div>
-                                <Skeleton className="h-5 w-64 bg-slate-100" />
-                                <Skeleton className="h-4 w-40 bg-slate-100" />
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Skeleton className="size-9 rounded-xl bg-slate-100" />
-                            <Skeleton className="h-9 w-28 rounded-xl bg-slate-100" />
-                        </div>
-                    </div>
-                    <div className="mt-4 border-t border-slate-100 pt-4">
-                        <Skeleton className="h-4 w-full bg-slate-100" />
-                    </div>
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="mt-5 h-7 w-4/5" />
+                    <Skeleton className="mt-4 h-4 w-full" />
+                    <Skeleton className="mt-6 h-24 w-full rounded-2xl" />
+                    <Skeleton className="mt-6 h-11 w-full rounded-xl" />
                 </div>
             ))}
         </div>
@@ -304,47 +437,86 @@ export default function TalentSearch({
     const [selectedSkills, setSelectedSkills] = useState<string[]>(
         filters.skills || [],
     );
-    const [savedIds, setSavedIds] = useState<number[]>(savedCandidateIds);
-    const [isPending, startTransition] = useTransition();
-
+    const [savedIds, setSavedIds] = useState(savedCandidateIds);
+    const [isPending, setIsPending] = useState(false);
+    const [savingId, setSavingId] = useState<number | null>(null);
+    const [hasError, setHasError] = useState(false);
+    const [isForbidden, setIsForbidden] = useState(false);
+    const [saveMessage, setSaveMessage] = useState('');
+    const [saveError, setSaveError] = useState(false);
+    const lastSearch = useRef(talentSearch());
+    const canSearch = entitlement.has_entitlement && !isForbidden;
+    const isBusy = isPending || savingId !== null;
     const activeFilterCount =
         Number(searchQuery.length > 0) +
         selectedSkills.length +
+        (filters.badges?.length ?? 0) +
         Number(selectedAvailability.length > 0) +
         Number(selectedInstitution.length > 0);
-
     const filterQuery = (page?: number) => ({
         query: searchQuery || undefined,
-        skills:
-            selectedSkills.length > 0 ? selectedSkills.join(',') : undefined,
-        badges:
-            filters.badges?.length > 0 ? filters.badges.join(',') : undefined,
+        skills: selectedSkills.length ? selectedSkills.join(',') : undefined,
+        badges: filters.badges?.length ? filters.badges.join(',') : undefined,
         availability: selectedAvailability || undefined,
         institution_id: selectedInstitution || undefined,
         page,
     });
 
-    const applyFilters = () => {
-        startTransition(() => {
-            router.get(
-                talentSearch({ query: filterQuery() }),
-                {},
-                {
-                    preserveScroll: true,
-                    preserveState: true,
-                    replace: true,
-                },
-            );
-        });
-    };
+    const searchFailure = (forbidden = false): false => {
+        setHasError(true);
 
+        if (forbidden) {
+            setIsForbidden(true);
+        }
+
+        return false;
+    };
+    const visitSearch = (target = talentSearch({ query: filterQuery() })) => {
+        lastSearch.current = target;
+        setHasError(false);
+        setIsPending(true);
+        router.get(
+            target,
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                onSuccess: (page) => {
+                    setHasError(false);
+                    setIsForbidden(false);
+                    const latestSavedIds = page.props.savedCandidateIds;
+
+                    if (Array.isArray(latestSavedIds)) {
+                        setSavedIds(
+                            latestSavedIds.filter(
+                                (id): id is number => typeof id === 'number',
+                            ),
+                        );
+                    }
+
+                    setSaveMessage('');
+                    setSaveError(false);
+                },
+                onError: () => {
+                    setHasError(true);
+                },
+                onHttpException: (response) =>
+                    searchFailure(response.status === 403),
+                onNetworkError: () => searchFailure(),
+                onFinish: () => setIsPending(false),
+            },
+        );
+    };
     const handleFilterSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        applyFilters();
-    };
 
-    const addSkill = (skill: string) => {
-        const trimmed = skill.trim();
+        if (!isBusy && canSearch) {
+            visitSearch();
+        }
+    };
+    const addSkill = () => {
+        const trimmed = skillInput.trim();
 
         if (trimmed && !selectedSkills.includes(trimmed)) {
             setSelectedSkills((current) => [...current, trimmed]);
@@ -352,706 +524,673 @@ export default function TalentSearch({
 
         setSkillInput('');
     };
-
-    const removeSkill = (skillToRemove: string) => {
-        setSelectedSkills((current) =>
-            current.filter((s) => s !== skillToRemove),
-        );
-    };
-
     const resetFilters = () => {
         setSearchQuery('');
         setSelectedAvailability('');
         setSelectedInstitution('');
         setSelectedSkills([]);
-
-        startTransition(() => {
-            router.get(
-                talentSearch(),
-                {},
-                {
-                    preserveScroll: true,
-                    preserveState: true,
-                    replace: true,
-                },
-            );
-        });
+        setSkillInput('');
+        visitSearch(talentSearch());
     };
-
     const toggleSaveCandidate = (candidateId: number) => {
-        const isSaved = savedIds.includes(candidateId);
-        const previousSavedIds = [...savedIds];
+        if (isBusy || !canSearch) {
+            return;
+        }
 
-        setSavedIds((current) =>
-            isSaved
-                ? current.filter((id) => id !== candidateId)
-                : [...current, candidateId],
-        );
-
-        startTransition(() => {
-            const options = {
-                preserveScroll: true,
-                preserveState: true,
-                onError: () => setSavedIds(previousSavedIds),
-            };
-
-            if (isSaved) {
-                router.delete(unsaveCandidate(candidateId), options);
-
-                return;
+        const wasSaved = savedIds.includes(candidateId);
+        setSavingId(candidateId);
+        setSaveError(false);
+        setSaveMessage('Memproses perubahan kandidat tersimpan.');
+        const failSave = (forbidden = false): false => {
+            if (forbidden) {
+                setIsForbidden(true);
             }
 
+            setSaveError(true);
+            setSaveMessage(
+                'Belum dapat memastikan perubahan tersimpan. Muat ulang untuk memeriksa status terbaru.',
+            );
+
+            return false;
+        };
+        const options = {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                setSavedIds((current) =>
+                    wasSaved
+                        ? current.filter((id) => id !== candidateId)
+                        : [...new Set([...current, candidateId])],
+                );
+                setSaveMessage(
+                    wasSaved
+                        ? 'Kandidat dihapus dari simpanan.'
+                        : 'Kandidat berhasil disimpan.',
+                );
+            },
+            onError: () => {
+                failSave();
+            },
+            onHttpException: (response: { status: number }) =>
+                failSave(response.status === 403),
+            onNetworkError: () => failSave(),
+            onFinish: () => setSavingId(null),
+        };
+
+        if (wasSaved) {
+            router.delete(unsaveCandidate(candidateId), options);
+        } else {
             router.post(saveCandidate(candidateId), {}, options);
-        });
+        }
     };
 
     return (
         <>
-            <Head title="Cari Talenta | SATU" />
-
-            <AppPage
-                contextRail={
-                    <TalentContextRail
-                        activeFilterCount={activeFilterCount}
-                        entitlement={entitlement}
-                        savedCount={savedIds.length}
-                    />
-                }
-                contextRailLabel="Konteks Talent Portal"
-            >
+            <Head title="Cari Talenta" />
+            <AppPage className="max-w-none min-w-0">
                 <div className="space-y-6" data-test="talent-search-root">
-                    {/* Hero Header Banner */}
-                    <header className="relative isolate overflow-hidden rounded-2xl border border-blue-100 bg-white px-6 py-6 shadow-[0_18px_50px_-36px_rgba(30,64,175,0.35)] sm:px-8 sm:py-7">
+                    <header className="relative isolate overflow-hidden rounded-[2rem] border border-primary/10 bg-gradient-to-br from-[#dff1ff] via-[#edf6ff] to-white p-6 shadow-md sm:p-8 lg:p-10">
                         <div
                             aria-hidden="true"
-                            className="absolute -top-28 -right-24 size-80 rounded-full bg-blue-100/75 blur-3xl sm:-right-12"
-                        />
-                        <div
-                            aria-hidden="true"
-                            className="absolute right-14 bottom-0 hidden h-24 w-24 rounded-tl-[2.5rem] border-t border-l border-indigo-100 sm:block"
-                        />
-
-                        <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-end lg:gap-8">
-                            <div>
-                                <p className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold tracking-[0.12em] text-blue-700 uppercase">
-                                    <Sparkles
-                                        aria-hidden="true"
-                                        className="size-3.5"
-                                    />
-                                    Talent Portal Perekrut
+                            className="pointer-events-none absolute inset-0"
+                        >
+                            <ArchiveArt className="absolute top-4 right-24 hidden w-36 -rotate-6 opacity-50 sm:block lg:right-48 lg:w-44" />
+                            <span className="absolute top-10 right-8 h-10 w-2 rotate-12 rounded-full bg-[#ffb85c]/75" />
+                        </div>
+                        <div className="relative grid items-center gap-5 sm:grid-cols-[minmax(0,1fr)_9rem] lg:grid-cols-[minmax(0,1fr)_13rem] 2xl:grid-cols-[minmax(0,1fr)_16rem]">
+                            <div className="min-w-0">
+                                <p className="text-xs font-semibold tracking-[0.14em] text-primary uppercase">
+                                    Ruang perekrut
                                 </p>
-                                <h1 className="mt-4 max-w-[20ch] text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
-                                    Cari talenta yang siap berkolaborasi.
+                                <h1 className="mt-3 text-3xl leading-tight font-bold tracking-[-0.035em] sm:text-4xl 2xl:text-5xl">
+                                    Temukan talenta.
+                                    <br />
+                                    <span className="text-primary">
+                                        Kenali cerita di balik karya.
+                                    </span>
                                 </h1>
-                                <p className="mt-3 max-w-[62ch] text-sm leading-relaxed text-slate-600">
-                                    Telusuri portofolio mahasiswa berprestasi
-                                    yang memilih untuk terlihat. Setiap data
-                                    tervalidasi langsung melalui riwayat proyek
-                                    dan aman bagi perekrut.
+                                <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
+                                    Telusuri portofolio yang diizinkan
+                                    mahasiswa. Mulai dari keahlian dan
+                                    pengalaman yang relevan, lalu lanjutkan
+                                    percakapan dengan persetujuan kandidat.
                                 </p>
-                            </div>
-
-                            <div className="border-t border-slate-100 pt-5 lg:border-t-0 lg:border-l lg:border-slate-100 lg:pt-0 lg:pl-6">
-                                <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
-                                    STATUS AKSES ORGANISASI
-                                </p>
-                                <div className="mt-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                                <p className="mt-5 inline-flex max-w-full items-center gap-2 rounded-full border border-primary/15 bg-white/80 px-3 py-2 text-sm font-semibold">
                                     <ShieldCheck
                                         aria-hidden="true"
-                                        className="size-4.5 text-blue-600"
+                                        className="size-4 shrink-0 text-primary"
                                     />
-                                    {entitlementLabel(entitlement.status)}
-                                </div>
-                                {entitlement.expires_at &&
-                                    entitlement.has_entitlement && (
-                                        <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                                            Berlaku aktif hingga{' '}
-                                            <span className="font-medium text-slate-700">
-                                                {new Intl.DateTimeFormat(
-                                                    'id-ID',
-                                                    {
-                                                        dateStyle: 'medium',
-                                                    },
-                                                ).format(
-                                                    new Date(
-                                                        entitlement.expires_at,
-                                                    ),
-                                                )}
-                                            </span>
-                                        </p>
-                                    )}
+                                    {isForbidden
+                                        ? 'Hak akses perlu diperiksa'
+                                        : entitlementLabel(entitlement.status)}
+                                </p>
                             </div>
+                            <Mascot
+                                pose="guide"
+                                priority
+                                className="mx-auto w-28 sm:w-full"
+                            />
                         </div>
                     </header>
 
-                    {/* Entitlement Warning Banner if inactive */}
                     {!entitlement.has_entitlement && (
                         <section
                             aria-labelledby="entitlement-warning-heading"
-                            className="flex items-start gap-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 text-amber-950 shadow-xs"
+                            className="flex gap-3 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-950"
                         >
-                            <AlertTriangle
+                            <LockKeyhole
                                 aria-hidden="true"
-                                className="mt-0.5 size-5 shrink-0 text-amber-700"
+                                className="mt-1 size-5 shrink-0"
                             />
                             <div>
                                 <h2
                                     id="entitlement-warning-heading"
-                                    className="text-sm font-bold text-amber-900"
+                                    className="font-semibold"
                                 >
                                     {entitlement.status === 'expired'
                                         ? 'Hak akses pencarian telah berakhir'
-                                        : 'Hak akses pencarian diperlukan'}
+                                        : entitlement.status ===
+                                            'no_organization'
+                                          ? 'Organisasi perekrut belum aktif'
+                                          : 'Hak akses pencarian diperlukan'}
                                 </h2>
-                                <p className="mt-1 text-sm leading-relaxed text-amber-800">
+                                <p className="mt-2 text-sm leading-6">
                                     Organisasi perekrut memerlukan hak akses
-                                    Talent Portal yang aktif sebelum daftar
-                                    kandidat dapat ditampilkan. Silakan hubungi
-                                    admin platform untuk aktivasi hak akses.
+                                    Talent Portal yang aktif. Hubungi admin
+                                    platform untuk memeriksa organisasi dan
+                                    aktivasi akses. Daftar kandidat belum dapat
+                                    ditampilkan.
                                 </p>
                             </div>
                         </section>
                     )}
 
-                    {/* Main Content Area: Sidebar Filter + Candidates Grid */}
-                    <div className="grid gap-6 xl:grid-cols-[16rem_minmax(0,1fr)]">
-                        {/* Filter Panel */}
-                        <form
-                            aria-label="Filter pencarian talenta"
-                            className="self-start rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs xl:sticky xl:top-6"
-                            onSubmit={handleFilterSubmit}
-                        >
-                            <div className="grid gap-5">
-                                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                    <div className="flex items-center gap-2">
-                                        <Filter className="size-4 text-blue-600" />
-                                        <p className="text-sm font-bold text-slate-900">
-                                            Filter Pencarian
+                    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
+                        <div className="min-w-0 space-y-6 xl:contents xl:space-y-0">
+                            <section
+                                aria-labelledby="talent-filters-heading"
+                                className="rounded-3xl border border-primary/15 bg-white p-5 shadow-md sm:p-6 xl:col-start-1 xl:row-start-1 xl:flex xl:flex-col xl:self-stretch"
+                            >
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-xs font-semibold tracking-wide text-primary uppercase">
+                                            Mulai penelusuran
+                                        </p>
+                                        <h2
+                                            id="talent-filters-heading"
+                                            className="mt-2 text-xl font-bold"
+                                        >
+                                            Apa yang sedang kamu cari?
+                                        </h2>
+                                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                            Gunakan kata kunci atau persempit
+                                            dengan filter yang relevan.
                                         </p>
                                     </div>
                                     {activeFilterCount > 0 && (
-                                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">
-                                            {activeFilterCount}
+                                        <span className="rounded-full border border-primary/15 bg-accent px-3 py-1 text-xs font-semibold text-primary">
+                                            {activeFilterCount} filter dipilih
                                         </span>
                                     )}
                                 </div>
-
-                                {/* Keyword Input */}
-                                <div className="grid gap-1.5">
-                                    <label
-                                        className="text-xs font-semibold text-slate-700"
-                                        htmlFor="talent-query"
+                                <form
+                                    onSubmit={handleFilterSubmit}
+                                    aria-label="Filter pencarian talenta"
+                                    className="mt-5 space-y-5 xl:flex xl:flex-1 xl:flex-col xl:gap-6 xl:space-y-0"
+                                >
+                                    <fieldset
+                                        disabled={isBusy || !canSearch}
+                                        className="min-w-0 space-y-4 disabled:opacity-70 xl:flex xl:flex-1 xl:flex-col xl:justify-between xl:gap-6 xl:space-y-0"
                                     >
-                                        Kata kunci
-                                    </label>
-                                    <div className="relative">
-                                        <Search
-                                            aria-hidden="true"
-                                            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
-                                        />
-                                        <Input
-                                            id="talent-query"
-                                            className="h-10 rounded-xl pl-9 text-xs font-medium placeholder:text-slate-400"
-                                            onChange={(event) =>
-                                                setSearchQuery(
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="Skill, peran, atau topik..."
-                                            value={searchQuery}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Availability Dropdown */}
-                                <div className="grid gap-1.5">
-                                    <label
-                                        className="text-xs font-semibold text-slate-700"
-                                        htmlFor="talent-availability"
-                                    >
-                                        Ketersediaan
-                                    </label>
-                                    <select
-                                        id="talent-availability"
-                                        aria-label="Filter ketersediaan kandidat"
-                                        className="h-10 w-full cursor-pointer rounded-xl border border-slate-300 bg-white px-3 text-xs font-medium text-slate-800 transition-[border-color,box-shadow] duration-fast outline-none focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-100"
-                                        onChange={(event) =>
-                                            setSelectedAvailability(
-                                                event.target.value,
-                                            )
-                                        }
-                                        value={selectedAvailability}
-                                    >
-                                        <option value="">Semua status</option>
-                                        <option value="available">
-                                            Tersedia untuk peluang
-                                        </option>
-                                        <option value="open_to_offers">
-                                            Terbuka untuk penawaran
-                                        </option>
-                                        <option value="not_available">
-                                            Belum tersedia
-                                        </option>
-                                    </select>
-                                </div>
-
-                                {/* Institution Dropdown */}
-                                <div className="grid gap-1.5">
-                                    <label
-                                        className="text-xs font-semibold text-slate-700"
-                                        htmlFor="talent-institution"
-                                    >
-                                        Institusi kampus
-                                    </label>
-                                    <select
-                                        id="talent-institution"
-                                        aria-label="Filter institusi kandidat"
-                                        className="h-10 w-full cursor-pointer rounded-xl border border-slate-300 bg-white px-3 text-xs font-medium text-slate-800 transition-[border-color,box-shadow] duration-fast outline-none focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-100"
-                                        onChange={(event) =>
-                                            setSelectedInstitution(
-                                                event.target.value,
-                                            )
-                                        }
-                                        value={selectedInstitution}
-                                    >
-                                        <option value="">
-                                            Semua institusi
-                                        </option>
-                                        {institutions.map((institution) => (
-                                            <option
-                                                key={institution.id}
-                                                value={institution.id}
+                                        <legend className="sr-only">
+                                            Kata kunci dan pilihan filter
+                                        </legend>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="talent-query">
+                                                Kata kunci
+                                            </Label>
+                                            <div className="relative">
+                                                <Search
+                                                    aria-hidden="true"
+                                                    className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground"
+                                                />
+                                                <Input
+                                                    id="talent-query"
+                                                    aria-describedby="talent-query-help"
+                                                    className="h-12 pl-12 text-base md:text-base"
+                                                    placeholder="Contoh: desainer produk atau pengembang web"
+                                                    value={searchQuery}
+                                                    onChange={(event) =>
+                                                        setSearchQuery(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+                                            <p
+                                                id="talent-query-help"
+                                                className="text-sm leading-6 text-muted-foreground"
                                             >
-                                                {institution.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Skill Tags Filter */}
-                                <div className="grid gap-1.5">
-                                    <label
-                                        className="text-xs font-semibold text-slate-700"
-                                        htmlFor="talent-skill"
-                                    >
-                                        Keahlian & Skill
-                                    </label>
-                                    <div className="flex gap-1.5">
-                                        <Input
-                                            id="talent-skill"
-                                            className="h-10 rounded-xl text-xs font-medium placeholder:text-slate-400"
-                                            onChange={(event) =>
-                                                setSkillInput(
-                                                    event.target.value,
-                                                )
-                                            }
-                                            onKeyDown={(event) => {
-                                                if (event.key === 'Enter') {
-                                                    event.preventDefault();
-                                                    addSkill(skillInput);
-                                                }
-                                            }}
-                                            placeholder="Ketik skill (tekan Enter)"
-                                            value={skillInput}
-                                        />
-                                        {skillInput && (
-                                            <Button
-                                                className="h-10 cursor-pointer rounded-xl px-3 text-xs"
-                                                onClick={() =>
-                                                    addSkill(skillInput)
-                                                }
-                                                size="sm"
-                                                type="button"
-                                                variant="secondary"
+                                                Cari peran atau bidang pada
+                                                judul dan ringkasan profil.
+                                                Untuk keahlian khusus, gunakan
+                                                filter skill di bawah.
+                                            </p>
+                                        </div>
+                                        <div className="grid items-start gap-4 md:grid-cols-2">
+                                            <div className="grid min-w-0 gap-2">
+                                                <Label htmlFor="talent-availability">
+                                                    Ketersediaan
+                                                </Label>
+                                                <select
+                                                    id="talent-availability"
+                                                    aria-describedby="talent-availability-help"
+                                                    className="h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-white px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed"
+                                                    value={selectedAvailability}
+                                                    onChange={(event) =>
+                                                        setSelectedAvailability(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                >
+                                                    <option value="">
+                                                        Semua status
+                                                    </option>
+                                                    <option value="available">
+                                                        Tersedia untuk peluang
+                                                    </option>
+                                                    <option value="open_to_offers">
+                                                        Terbuka untuk penawaran
+                                                    </option>
+                                                    <option value="not_available">
+                                                        Belum tersedia
+                                                    </option>
+                                                </select>
+                                                <p
+                                                    id="talent-availability-help"
+                                                    className="text-sm leading-6 text-muted-foreground"
+                                                >
+                                                    Pilih status ketersediaan
+                                                    mahasiswa. Biarkan Semua
+                                                    status jika tidak ingin
+                                                    membatasi ketersediaan.
+                                                </p>
+                                            </div>
+                                            <div className="grid min-w-0 gap-2">
+                                                <Label htmlFor="talent-institution">
+                                                    Institusi kampus
+                                                </Label>
+                                                <select
+                                                    id="talent-institution"
+                                                    aria-describedby="talent-institution-help"
+                                                    className="h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-white px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed"
+                                                    value={selectedInstitution}
+                                                    onChange={(event) =>
+                                                        setSelectedInstitution(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                >
+                                                    <option value="">
+                                                        Semua institusi
+                                                    </option>
+                                                    {institutions.map(
+                                                        (institution) => (
+                                                            <option
+                                                                key={
+                                                                    institution.id
+                                                                }
+                                                                value={
+                                                                    institution.id
+                                                                }
+                                                            >
+                                                                {
+                                                                    institution.name
+                                                                }
+                                                            </option>
+                                                        ),
+                                                    )}
+                                                </select>
+                                                <p
+                                                    id="talent-institution-help"
+                                                    className="text-sm leading-6 text-muted-foreground"
+                                                >
+                                                    Batasi hasil ke kampus
+                                                    tertentu, atau pilih Semua
+                                                    institusi untuk mencari
+                                                    lintas kampus.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="talent-skill">
+                                                Keahlian atau skill
+                                            </Label>
+                                            <div className="flex min-w-0 gap-2">
+                                                <Input
+                                                    id="talent-skill"
+                                                    aria-describedby="talent-skill-help"
+                                                    className="h-11 min-w-0 text-base md:text-base"
+                                                    value={skillInput}
+                                                    placeholder="Contoh: desain produk"
+                                                    onChange={(event) =>
+                                                        setSkillInput(
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    onKeyDown={(event) => {
+                                                        if (
+                                                            event.key ===
+                                                            'Enter'
+                                                        ) {
+                                                            event.preventDefault();
+                                                            addSkill();
+                                                        }
+                                                    }}
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    className="h-11 shrink-0"
+                                                    disabled={
+                                                        !skillInput.trim()
+                                                    }
+                                                    onClick={addSkill}
+                                                >
+                                                    Tambah
+                                                </Button>
+                                            </div>
+                                            <p
+                                                id="talent-skill-help"
+                                                className="text-xs leading-5 text-muted-foreground"
                                             >
-                                                Tambah
-                                            </Button>
-                                        )}
-                                    </div>
-
-                                    {/* Selected Skill Chips */}
-                                    {selectedSkills.length > 0 && (
-                                        <ul
-                                            aria-label="Skill yang dipilih"
-                                            className="mt-1.5 flex flex-wrap gap-1.5"
-                                        >
-                                            {selectedSkills.map((skill) => (
-                                                <li key={skill}>
-                                                    <span className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50/90 py-0.5 pr-1 pl-2 text-xs font-semibold text-blue-800">
-                                                        {skill}
+                                                Tekan Enter atau Tambah, lalu
+                                                terapkan pencarian.
+                                            </p>
+                                        </div>
+                                        {selectedSkills.length > 0 && (
+                                            <ul
+                                                aria-label="Skill yang dipilih"
+                                                className="flex flex-wrap gap-2"
+                                            >
+                                                {selectedSkills.map((skill) => (
+                                                    <li
+                                                        key={skill}
+                                                        className="inline-flex max-w-full items-center gap-1 rounded-xl border border-primary/15 bg-accent pl-3 text-sm font-medium text-primary"
+                                                    >
+                                                        <span className="min-w-0 break-words">
+                                                            {skill}
+                                                        </span>
                                                         <button
+                                                            type="button"
                                                             aria-label={`Hapus skill ${skill}`}
-                                                            className="flex size-4 cursor-pointer items-center justify-center rounded-sm text-blue-600 hover:bg-blue-200/60"
+                                                            className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xl hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-ring disabled:cursor-not-allowed"
                                                             onClick={() =>
-                                                                removeSkill(
-                                                                    skill,
+                                                                setSelectedSkills(
+                                                                    (current) =>
+                                                                        current.filter(
+                                                                            (
+                                                                                value,
+                                                                            ) =>
+                                                                                value !==
+                                                                                skill,
+                                                                        ),
                                                                 )
                                                             }
-                                                            type="button"
                                                         >
                                                             <X
                                                                 aria-hidden="true"
-                                                                className="size-3"
+                                                                className="size-4"
                                                             />
                                                         </button>
-                                                    </span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </fieldset>
+                                    <div className="flex flex-wrap gap-3 border-t border-border pt-4">
+                                        <Button
+                                            type="submit"
+                                            className="h-11"
+                                            disabled={isBusy || !canSearch}
+                                        >
+                                            {isPending ? (
+                                                <Spinner aria-hidden="true" />
+                                            ) : (
+                                                <Search
+                                                    aria-hidden="true"
+                                                    className="size-4"
+                                                />
+                                            )}
+                                            {isPending
+                                                ? 'Memuat talenta'
+                                                : 'Cari talenta'}
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            className="h-11"
+                                            disabled={
+                                                isBusy ||
+                                                !canSearch ||
+                                                activeFilterCount === 0
+                                            }
+                                            onClick={resetFilters}
+                                        >
+                                            <RotateCcw
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                            Atur ulang filter
+                                        </Button>
+                                    </div>
+                                </form>
+                            </section>
 
-                                {/* Filter Actions */}
-                                <div className="grid gap-2 border-t border-slate-100 pt-4">
-                                    <Button
-                                        className="h-10 w-full cursor-pointer rounded-xl bg-blue-600 text-xs font-semibold text-white shadow-xs transition-all hover:bg-blue-700"
-                                        disabled={
-                                            isPending ||
-                                            !entitlement.has_entitlement
-                                        }
-                                        type="submit"
-                                    >
-                                        <Filter
-                                            aria-hidden="true"
-                                            className="mr-1.5 size-3.5"
-                                        />
-                                        {isPending
-                                            ? 'Menerapkan...'
-                                            : 'Terapkan Filter'}
-                                    </Button>
-                                    <Button
-                                        className="h-9 w-full cursor-pointer rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                                        disabled={
-                                            isPending || activeFilterCount === 0
-                                        }
-                                        onClick={resetFilters}
-                                        type="button"
-                                        variant="ghost"
-                                    >
-                                        <RotateCcw className="mr-1.5 size-3" />
-                                        Atur ulang filter
-                                    </Button>
-                                </div>
-                            </div>
-                        </form>
-
-                        {/* Candidates Result List */}
-                        <section
-                            aria-busy={isPending}
-                            aria-labelledby="candidate-results-heading"
-                            aria-live="polite"
-                            className="min-w-0 space-y-4"
-                        >
-                            {/* Result Meta Bar */}
-                            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white px-5 py-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <div className="flex items-center gap-2">
+                            <section
+                                aria-labelledby="candidate-results-heading"
+                                aria-busy={isPending}
+                                className="@container min-w-0 space-y-5 xl:col-span-2 xl:row-start-2"
+                            >
+                                <div className="flex flex-wrap items-end justify-between gap-3 px-1">
+                                    <div>
+                                        <p className="text-xs font-semibold tracking-wide text-primary uppercase">
+                                            Portofolio pilihan mahasiswa
+                                        </p>
                                         <h2
                                             id="candidate-results-heading"
-                                            className="text-base font-bold text-slate-900"
+                                            className="mt-2 text-2xl font-bold"
                                         >
-                                            {candidates.total} Talenta Ditemukan
+                                            {canSearch
+                                                ? `${candidates.total} talenta ditemukan`
+                                                : 'Daftar talenta'}
                                         </h2>
-                                        {isPending && (
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
-                                                <span className="size-1.5 animate-ping rounded-full bg-blue-600" />
-                                                Memperbarui...
-                                            </span>
+                                    </div>
+                                    {canSearch &&
+                                        candidates.data.length > 0 && (
+                                            <p className="text-sm text-muted-foreground">
+                                                Halaman{' '}
+                                                {candidates.current_page} dari{' '}
+                                                {candidates.last_page}
+                                            </p>
                                         )}
-                                    </div>
-                                    <p className="mt-0.5 text-xs text-slate-500">
-                                        Portofolio terverifikasi yang terbuka
-                                        untuk kolaborasi
-                                    </p>
                                 </div>
-
-                                <div className="flex items-center gap-3">
-                                    <span className="rounded-lg bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
-                                        Halaman {candidates.current_page} dari{' '}
-                                        {candidates.last_page}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Loading Skeleton */}
-                            {isPending && candidates.data.length === 0 && (
-                                <CandidateSkeleton />
-                            )}
-
-                            {/* Empty State */}
-                            {!isPending && candidates.data.length === 0 && (
-                                <div className="grid justify-items-center gap-4 rounded-2xl border border-slate-200/80 bg-white px-6 py-16 text-center shadow-xs">
-                                    <div className="flex size-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-8 ring-blue-50/50">
-                                        <UserRoundSearch
-                                            aria-hidden="true"
-                                            className="size-7"
-                                        />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-base font-bold text-slate-900">
-                                            Belum ada kandidat yang sesuai
-                                        </h3>
-                                        <p className="mx-auto mt-2 max-w-[46ch] text-xs leading-relaxed text-slate-600">
-                                            Coba sesuaikan kata kunci atau atur
-                                            ulang filter untuk menemukan lebih
-                                            banyak portofolio mahasiswa yang
-                                            tersedia.
-                                        </p>
-                                    </div>
-                                    <Button
-                                        className="cursor-pointer rounded-xl text-xs font-semibold"
-                                        onClick={resetFilters}
-                                        type="button"
-                                        variant="outline"
+                                {(hasError || isForbidden) && (
+                                    <div
+                                        role="alert"
+                                        className="rounded-2xl border border-amber-200 bg-amber-50 p-5"
                                     >
-                                        <RotateCcw className="mr-1.5 size-3.5" />
-                                        Atur ulang filter
-                                    </Button>
-                                </div>
-                            )}
-
-                            {/* Candidate Cards */}
-                            {candidates.data.length > 0 && (
+                                        <div className="flex gap-2">
+                                            <AlertCircle
+                                                aria-hidden="true"
+                                                className="mt-0.5 size-5 shrink-0"
+                                            />
+                                            <div>
+                                                <h3 className="font-semibold">
+                                                    {isForbidden
+                                                        ? 'Akses pencarian tidak tersedia'
+                                                        : 'Hasil belum dapat diperbarui'}
+                                                </h3>
+                                                <p className="mt-2 text-sm leading-6">
+                                                    {isForbidden
+                                                        ? 'Data sebelumnya disembunyikan. Periksa hak akses organisasi sebelum mencoba lagi.'
+                                                        : 'Pilihan filter tetap tersedia. Coba ulang untuk memuat hasil terbaru.'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="mt-4 h-11 bg-white"
+                                            disabled={isBusy}
+                                            onClick={() =>
+                                                visitSearch(lastSearch.current)
+                                            }
+                                        >
+                                            {isPending
+                                                ? 'Memeriksa'
+                                                : 'Coba lagi'}
+                                        </Button>
+                                    </div>
+                                )}
                                 <div
-                                    aria-label="Daftar kandidat"
-                                    className="grid gap-4"
-                                    role="list"
+                                    role="status"
+                                    aria-live="polite"
+                                    className={cn(
+                                        'min-h-5 text-sm',
+                                        saveError
+                                            ? 'text-amber-900'
+                                            : 'text-muted-foreground',
+                                    )}
                                 >
-                                    {candidates.data.map((candidate) => {
-                                        const isSaved = savedIds.includes(
-                                            candidate.id,
-                                        );
-                                        const availability = availabilityMeta(
-                                            candidate.availability_status,
-                                        );
-
-                                        return (
-                                            <article
-                                                key={candidate.id}
-                                                aria-label={`Kandidat ${candidate.headline ?? 'talenta terverifikasi'}`}
-                                                className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
-                                                role="listitem"
-                                            >
-                                                {/* Header Row: Avatar + Headline + Badges + Action Buttons */}
-                                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                                    <div className="flex items-start gap-4">
-                                                        {/* Avatar Icon */}
-                                                        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-base font-bold text-white shadow-xs">
-                                                            <UserRound className="size-6" />
-                                                        </div>
-
-                                                        {/* Info Header */}
-                                                        <div>
-                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                <span className="font-mono text-xs font-bold text-slate-400">
-                                                                    FOLIO-
-                                                                    {
-                                                                        candidate.id
-                                                                    }
-                                                                </span>
-                                                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                                                                    <CheckCircle2
-                                                                        aria-hidden="true"
-                                                                        className="size-3 text-emerald-600"
-                                                                    />
-                                                                    Terverifikasi
-                                                                </span>
-                                                                <span
-                                                                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${availability.badgeColor}`}
-                                                                >
-                                                                    <span
-                                                                        className={`size-1.5 rounded-full ${availability.dotColor}`}
-                                                                    />
-                                                                    {
-                                                                        availability.label
-                                                                    }
-                                                                </span>
-                                                            </div>
-
-                                                            <h3 className="mt-2 text-lg font-bold tracking-tight text-slate-900 transition-colors group-hover:text-blue-600">
-                                                                {candidate.headline ??
-                                                                    'Talenta Terverifikasi'}
-                                                            </h3>
-
-                                                            {candidate.institution_name && (
-                                                                <div className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-600">
-                                                                    <Building2
-                                                                        aria-hidden="true"
-                                                                        className="size-3.5 text-slate-400"
-                                                                    />
-                                                                    <span>
-                                                                        {
-                                                                            candidate.institution_name
-                                                                        }
-                                                                    </span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Top Right Action Buttons */}
-                                                    <div className="flex shrink-0 items-center gap-2 sm:self-start">
-                                                        <Button
-                                                            aria-label={
-                                                                isSaved
-                                                                    ? `Hapus ${candidate.headline ?? 'kandidat'} dari simpanan`
-                                                                    : `Simpan ${candidate.headline ?? 'kandidat'}`
-                                                            }
-                                                            className={`size-10 cursor-pointer rounded-xl transition-all ${
-                                                                isSaved
-                                                                    ? 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                                                                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900'
-                                                            }`}
-                                                            disabled={isPending}
-                                                            onClick={() =>
-                                                                toggleSaveCandidate(
-                                                                    candidate.id,
-                                                                )
-                                                            }
-                                                            size="icon"
-                                                            type="button"
-                                                            variant="outline"
-                                                        >
-                                                            {isSaved ? (
-                                                                <BookmarkCheck
-                                                                    aria-hidden="true"
-                                                                    className="size-4.5 fill-blue-600 text-blue-600"
-                                                                />
-                                                            ) : (
-                                                                <Bookmark
-                                                                    aria-hidden="true"
-                                                                    className="size-4.5"
-                                                                />
-                                                            )}
-                                                        </Button>
-
-                                                        <Button
-                                                            asChild
-                                                            className="h-10 cursor-pointer rounded-xl bg-blue-600 px-4 text-xs font-semibold text-white shadow-xs transition-all hover:bg-blue-700"
-                                                        >
-                                                            <Link
-                                                                href={showCandidate(
-                                                                    candidate.id,
-                                                                )}
-                                                                prefetch
-                                                            >
-                                                                Lihat profil
-                                                                <ChevronRight
-                                                                    aria-hidden="true"
-                                                                    className="ml-1 size-3.5"
-                                                                />
-                                                            </Link>
-                                                        </Button>
-                                                    </div>
-                                                </div>
-
-                                                {/* Bio Section */}
-                                                {candidate.bio && (
-                                                    <p className="mt-3 text-xs leading-relaxed text-slate-600">
-                                                        {candidate.bio}
-                                                    </p>
-                                                )}
-
-                                                {/* Skills & Badges Tags */}
-                                                <div className="mt-4 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-3.5">
-                                                    {candidate.skills.map(
-                                                        (skill) => (
-                                                            <span
-                                                                key={skill}
-                                                                className="rounded-lg border border-slate-200/80 bg-slate-50/80 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:border-blue-200 hover:bg-blue-50/50 hover:text-blue-800"
-                                                            >
-                                                                {skill}
-                                                            </span>
+                                    {isPending
+                                        ? 'Memperbarui hasil pencarian. Hasil sebelumnya tetap ditampilkan.'
+                                        : saveMessage}
+                                    {saveError && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="mt-2 h-11 sm:ml-3"
+                                            disabled={isBusy}
+                                            onClick={() =>
+                                                visitSearch(
+                                                    talentSearch({
+                                                        query: filterQuery(
+                                                            candidates.current_page,
                                                         ),
-                                                    )}
-
-                                                    {candidate.badges.map(
-                                                        (badge) => (
-                                                            <span
-                                                                key={badge}
-                                                                className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-xs font-semibold text-amber-900"
-                                                            >
-                                                                <Award
-                                                                    aria-hidden="true"
-                                                                    className="size-3 text-amber-600"
-                                                                />
-                                                                {badge}
-                                                            </span>
-                                                        ),
-                                                    )}
-                                                </div>
-                                            </article>
-                                        );
-                                    })}
+                                                    }),
+                                                )
+                                            }
+                                        >
+                                            Muat ulang status
+                                        </Button>
+                                    )}
                                 </div>
-                            )}
-
-                            {/* Pagination Controls */}
-                            {candidates.last_page > 1 && (
-                                <nav
-                                    aria-label="Paginasi kandidat"
-                                    className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs"
-                                >
-                                    <Button
-                                        className="cursor-pointer rounded-xl text-xs font-semibold"
-                                        disabled={candidates.current_page <= 1}
-                                        onClick={() =>
-                                            router.get(
-                                                talentSearch({
-                                                    query: filterQuery(
-                                                        candidates.current_page -
-                                                            1,
-                                                    ),
-                                                }),
-                                                {},
-                                                { preserveScroll: true },
-                                            )
-                                        }
-                                        type="button"
-                                        variant="outline"
+                                {canSearch &&
+                                    isPending &&
+                                    candidates.data.length === 0 && (
+                                        <CandidateSkeleton />
+                                    )}
+                                {canSearch &&
+                                    !isPending &&
+                                    !hasError &&
+                                    candidates.data.length === 0 && (
+                                        <div className="grid justify-items-center gap-4 rounded-3xl border border-border bg-white px-5 py-10 text-center shadow-sm">
+                                            <ArchiveArt className="w-28" />
+                                            <div>
+                                                <h3 className="text-xl font-bold">
+                                                    Belum ada kandidat yang
+                                                    sesuai
+                                                </h3>
+                                                <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
+                                                    Coba kata kunci lain atau
+                                                    kurangi filter untuk melihat
+                                                    portofolio yang tersedia.
+                                                </p>
+                                            </div>
+                                            {activeFilterCount > 0 && (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    className="h-11"
+                                                    disabled={isBusy}
+                                                    onClick={resetFilters}
+                                                >
+                                                    <RotateCcw
+                                                        aria-hidden="true"
+                                                        className="size-4"
+                                                    />
+                                                    Atur ulang filter
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
+                                {canSearch && candidates.data.length > 0 && (
+                                    <ul
+                                        aria-label="Daftar kandidat"
+                                        className="grid gap-5 @min-[44rem]:grid-cols-2 @min-[56rem]:grid-cols-3"
                                     >
-                                        <ChevronLeft
-                                            aria-hidden="true"
-                                            className="mr-1 size-3.5"
-                                        />
-                                        Sebelumnya
-                                    </Button>
-
-                                    <span className="text-xs font-semibold text-slate-600">
-                                        Halaman {candidates.current_page} dari{' '}
-                                        {candidates.last_page}
-                                    </span>
-
-                                    <Button
-                                        className="cursor-pointer rounded-xl text-xs font-semibold"
-                                        disabled={
-                                            candidates.current_page >=
-                                            candidates.last_page
-                                        }
-                                        onClick={() =>
-                                            router.get(
-                                                talentSearch({
-                                                    query: filterQuery(
-                                                        candidates.current_page +
-                                                            1,
-                                                    ),
-                                                }),
-                                                {},
-                                                { preserveScroll: true },
-                                            )
-                                        }
-                                        type="button"
-                                        variant="outline"
+                                        {candidates.data.map((candidate) => (
+                                            <li
+                                                key={candidate.id}
+                                                className="grid min-w-0"
+                                            >
+                                                <CandidateCard
+                                                    candidate={candidate}
+                                                    saved={savedIds.includes(
+                                                        candidate.id,
+                                                    )}
+                                                    saving={
+                                                        savingId ===
+                                                        candidate.id
+                                                    }
+                                                    disabled={isBusy}
+                                                    onSave={() =>
+                                                        toggleSaveCandidate(
+                                                            candidate.id,
+                                                        )
+                                                    }
+                                                />
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                                {canSearch && candidates.last_page > 1 && (
+                                    <nav
+                                        aria-label="Paginasi kandidat"
+                                        className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5"
                                     >
-                                        Berikutnya
-                                        <ChevronRight
-                                            aria-hidden="true"
-                                            className="ml-1 size-3.5"
-                                        />
-                                    </Button>
-                                </nav>
-                            )}
-                        </section>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="h-11"
+                                            disabled={
+                                                isBusy ||
+                                                candidates.current_page <= 1
+                                            }
+                                            onClick={() =>
+                                                visitSearch(
+                                                    talentSearch({
+                                                        query: filterQuery(
+                                                            candidates.current_page -
+                                                                1,
+                                                        ),
+                                                    }),
+                                                )
+                                            }
+                                        >
+                                            <ChevronLeft
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                            Sebelumnya
+                                        </Button>
+                                        <span className="text-sm text-muted-foreground">
+                                            {candidates.current_page} /{' '}
+                                            {candidates.last_page}
+                                        </span>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="h-11"
+                                            disabled={
+                                                isBusy ||
+                                                candidates.current_page >=
+                                                    candidates.last_page
+                                            }
+                                            onClick={() =>
+                                                visitSearch(
+                                                    talentSearch({
+                                                        query: filterQuery(
+                                                            candidates.current_page +
+                                                                1,
+                                                        ),
+                                                    }),
+                                                )
+                                            }
+                                        >
+                                            Berikutnya
+                                            <ChevronRight
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                        </Button>
+                                    </nav>
+                                )}
+                            </section>
+                        </div>
+                        <TalentContextRail
+                            entitlement={
+                                isForbidden
+                                    ? {
+                                          ...entitlement,
+                                          has_entitlement: false,
+                                          status: 'unavailable',
+                                      }
+                                    : entitlement
+                            }
+                            savedCount={savedIds.length}
+                        />
                     </div>
                 </div>
             </AppPage>
@@ -1061,13 +1200,7 @@ export default function TalentSearch({
 
 TalentSearch.layout = {
     breadcrumbs: [
-        {
-            title: 'Talent Portal',
-            href: talentSearch(),
-        },
-        {
-            title: 'Cari Talenta',
-            href: talentSearch(),
-        },
+        { title: 'Talent Portal', href: talentSearch() },
+        { title: 'Cari Talenta', href: talentSearch() },
     ],
 };

@@ -50,7 +50,8 @@ export function WorkspaceRealtimeStatus({
                     data-test="workspace-presence"
                 >
                     <Users aria-hidden="true" className="size-3.5" />
-                    {presenceMembers.length} anggota aktif
+                    {presenceMembers.length} anggota terhubung. Bukan ukuran
+                    kontribusi.
                 </span>
             )}
             {canRetry && (
@@ -58,7 +59,7 @@ export function WorkspaceRealtimeStatus({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-auto min-h-0 cursor-pointer px-1 py-0.5 text-xs"
+                    className="min-h-11 cursor-pointer px-2 text-xs"
                     onClick={onRetry}
                     data-test="workspace-realtime-retry"
                 >

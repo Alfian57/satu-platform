@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Profile;
 
+use App\Concerns\ProfileAvailabilityValidationRules;
 use App\Concerns\StudentProfileValidationRules;
 use App\Models\StudentProfile;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Gate;
 
 class UpdateStudentProfileRequest extends FormRequest
 {
+    use ProfileAvailabilityValidationRules;
     use StudentProfileValidationRules;
 
     public function authorize(): bool
@@ -28,7 +30,9 @@ class UpdateStudentProfileRequest extends FormRequest
     {
         return [
             ...$this->studentProfileRules(),
+            ...$this->profileAvailabilityRules(),
             'expected_updated_at' => ['sometimes', 'nullable', 'date'],
+            'expected_profile_revision' => ['sometimes', 'nullable', 'string', 'regex:/^[a-f0-9]{64}$/'],
         ];
     }
 }

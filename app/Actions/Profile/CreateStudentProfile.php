@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Profile;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Events\MatchingInputsChanged;
 use App\Models\Institution;
 use App\Models\StudentProfile;
 use App\Models\User;
@@ -70,16 +71,7 @@ final class CreateStudentProfile
             }
 
             if (array_key_exists('availability_windows', $data)) {
-                $this->replaceAvailability->handle(
-                    $actor,
-                    $profile,
-                    [
-                        'windows' => is_array($data['availability_windows'])
-                            ? $data['availability_windows']
-                            : [],
-                        'timezone' => $data['timezone'] ?? $institution->timezone,
-                    ],
-                );
+                $this->replaceAvailability->handleFromProfile($actor, $profile, $data);
             }
 
             $this->audit->record(
@@ -94,6 +86,8 @@ final class CreateStudentProfile
                     'availability_count' => $profile->availabilityWindows()->count(),
                 ],
             );
+
+            MatchingInputsChanged::dispatch($profile->institution_id, $profile->user_id);
 
             return $profile->refresh();
         }, attempts: 3);

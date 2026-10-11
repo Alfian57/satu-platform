@@ -12,6 +12,7 @@ use App\Models\Institution;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Support\Task\TaskSnapshot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -75,8 +76,8 @@ final class CreateTask
                 projectId: (int) $lockedProject->getKey(),
                 resourceId: (int) $task->getKey(),
                 operation: 'task.created',
-                version: $task->updated_at->toIso8601String(),
-                occurredAt: now()->toIso8601String(),
+                version: TaskSnapshot::revision($task),
+                occurredAt: now()->toISOString(),
             );
 
             return $task->refresh()->load(['project', 'createdBy', 'assignments.assignee']);

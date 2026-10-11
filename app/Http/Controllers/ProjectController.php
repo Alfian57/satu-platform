@@ -28,6 +28,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Support\Project\ProjectDiscoveryFilters;
 use App\Support\Project\ProjectDiscoverySerializer;
+use App\Support\Project\ProjectOpportunityCapacity;
 use App\Support\Team\TeamFormationSerializer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -66,7 +67,7 @@ final class ProjectController extends Controller
             'filter_options' => [
                 'status' => array_map(
                     static fn (\BackedEnum $status): string => (string) $status->value,
-                    ProjectDiscoveryFilters::discoverableStatuses(),
+                    ProjectDiscoveryFilters::discoverableStatuses($result->filters->view),
                 ),
                 'visibility' => array_map(
                     static fn (\BackedEnum $visibility): string => (string) $visibility->value,
@@ -242,7 +243,9 @@ final class ProjectController extends Controller
             'institution:id,name',
             'owner:id,name',
             'roles.skills.taxonomy',
+            'roles' => fn ($roles) => $roles->withCount(['teamMemberships as occupied_count' => ProjectOpportunityCapacity::activeRoleMembers(...)]),
         ]);
+        $project->loadCount(['teamMemberships as occupied_count' => ProjectOpportunityCapacity::activeMembers(...)]);
 
         return [
             'id' => $project->getKey(),
@@ -261,6 +264,7 @@ final class ProjectController extends Controller
             'status' => $project->status->value,
             'visibility' => $project->visibility->value,
             'capacity' => $project->capacity,
+            'capacity_stats' => ProjectOpportunityCapacity::project($project),
             'deadline' => $project->deadline->toIso8601String(),
             'created_at' => $project->created_at->toIso8601String(),
             'updated_at' => $project->updated_at->toIso8601String(),
@@ -269,6 +273,9 @@ final class ProjectController extends Controller
                 'title' => $role->title,
                 'description' => $role->description,
                 'capacity' => $role->capacity,
+                'capacity_stats' => ProjectOpportunityCapacity::role($role, $project),
+                'accepts_beginners' => $role->accepts_beginners,
+                'selection_criteria' => $role->selection_criteria,
                 'skills' => $role->skills->map(static fn (ProjectRoleSkill $skill): array => [
                     'id' => $skill->getKey(),
                     'taxonomy_id' => $skill->skill_taxonomy_id,

@@ -16,16 +16,22 @@ import {
     SendHorizontal,
     ShieldCheck,
     Sparkles,
+    X,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import { DashboardArchiveArt as ArchiveArt } from '@/components/dashboard-archive-art';
 import { NavMain } from '@/components/nav-main';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
     SidebarHeader,
+    useSidebar,
 } from '@/components/ui/sidebar';
-import { cn } from '@/lib/utils';
+import { WorkspaceContextCard } from '@/components/workspace-context-card';
+import { getWorkspaceContext } from '@/lib/workspace-context';
 import { dashboard } from '@/routes';
 import { index as affiliationIndex } from '@/routes/campus/affiliations';
 import { index as campusContributionsIndex } from '@/routes/campus/contributions';
@@ -73,87 +79,55 @@ const mainNavItems: NavItem[] = [
         href: portfolioIndex(),
         icon: BookOpenCheck,
     },
-    {
-        title: 'Peringkat',
-        href: leaderboardsIndex(),
-        icon: ListOrdered,
-    },
 ];
 
 const membershipStatuses: Record<
     InstitutionMembershipStatus,
-    { label: string; className: string }
+    {
+        label: string;
+        variant: 'secondary' | 'verified' | 'pending' | 'correction';
+    }
 > = {
-    unverified: {
-        label: 'Belum terverifikasi',
-        className: 'bg-muted text-muted-foreground border-sidebar-border',
-    },
-    pending: {
-        label: 'Menunggu tinjauan',
-        className:
-            'bg-pending-subtle text-pending-subtle-foreground border-pending/30',
-    },
-    verified: {
-        label: 'Terverifikasi',
-        className:
-            'bg-verified-subtle text-verified-subtle-foreground border-verified/30',
-    },
-    suspended: {
-        label: 'Akses ditangguhkan',
-        className:
-            'bg-correction-subtle text-correction-subtle-foreground border-correction/30',
-    },
+    unverified: { label: 'Belum terverifikasi', variant: 'secondary' },
+    pending: { label: 'Menunggu tinjauan', variant: 'pending' },
+    verified: { label: 'Terverifikasi', variant: 'verified' },
+    suspended: { label: 'Akses ditangguhkan', variant: 'correction' },
 };
 
 function InstitutionMembershipContext({ shell }: { shell: ShellContext }) {
     const membership = shell.institutionMembership;
-    const membershipContent = membership ? (
-        <>
-            <p className="truncate text-sm font-semibold">
-                {membership.institutionName}
-            </p>
-            <span
-                className={cn(
-                    'w-fit border px-2 py-1 text-xs font-medium',
-                    membershipStatuses[membership.status].className,
-                )}
-            >
-                {membershipStatuses[membership.status].label}
-            </span>
-        </>
-    ) : (
-        <>
-            <Building2 aria-hidden="true" className="size-4 shrink-0" />
-            <span className="text-sm font-semibold">Hubungkan kampus</span>
-        </>
+    const status = membership ? membershipStatuses[membership.status] : null;
+    const content = (
+        <WorkspaceContextCard
+            label="Afiliasi kampus"
+            name={membership?.institutionName ?? 'Hubungkan kampus'}
+            icon={Building2}
+        >
+            {status && (
+                <Badge
+                    variant={status.variant}
+                    className="max-w-full whitespace-normal"
+                >
+                    {status.label}
+                </Badge>
+            )}
+        </WorkspaceContextCard>
     );
 
-    return (
-        <div aria-label="Afiliasi kampus" className="px-6 py-5">
-            <p className="font-label text-label leading-none text-sidebar-foreground/65">
-                Afiliasi kampus
-            </p>
-            {membership?.status === 'verified' ? (
-                <div className="mt-3 grid gap-2">{membershipContent}</div>
-            ) : (
-                <Link
-                    href={dashboard()}
-                    aria-label={
-                        membership
-                            ? `Buka status afiliasi ${membership.institutionName}`
-                            : 'Hubungkan akun dengan kampus'
-                    }
-                    className={cn(
-                        'mt-3 min-h-control-md cursor-pointer',
-                        membership
-                            ? 'grid gap-2 hover:underline'
-                            : 'flex items-center gap-3 text-primary hover:underline',
-                    )}
-                >
-                    {membershipContent}
-                </Link>
-            )}
-        </div>
+    return membership?.status === 'verified' ? (
+        content
+    ) : (
+        <Link
+            href={dashboard()}
+            className="group block cursor-pointer rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            aria-label={
+                membership
+                    ? `Buka status afiliasi ${membership.institutionName}`
+                    : 'Hubungkan akun dengan kampus'
+            }
+        >
+            {content}
+        </Link>
     );
 }
 
@@ -163,43 +137,21 @@ function CampusWorkspaceContext({
     institutionName: string;
 }) {
     return (
-        <div
-            aria-label="Konteks operasi kampus"
-            className="flex items-start gap-3 rounded-2xl border border-white bg-white/80 px-3 py-3"
-        >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-                <Building2 aria-hidden="true" className="size-4" />
-            </span>
-            <span className="min-w-0">
-                <span className="block text-xs font-medium text-muted-foreground">
-                    Operasi kampus
-                </span>
-                <span className="mt-0.5 block truncate text-sm font-semibold text-foreground">
-                    {institutionName}
-                </span>
-            </span>
-        </div>
+        <WorkspaceContextCard
+            label="Operasi kampus"
+            name={institutionName}
+            icon={Building2}
+        />
     );
 }
 
 function PlatformWorkspaceContext() {
     return (
-        <div
-            aria-label="Konteks operasi platform"
-            className="flex items-start gap-3 rounded-2xl border border-white bg-white/80 px-3 py-3"
-        >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-                <ShieldCheck aria-hidden="true" className="size-4" />
-            </span>
-            <span className="min-w-0">
-                <span className="block text-xs font-medium text-muted-foreground">
-                    Operasi platform
-                </span>
-                <span className="mt-0.5 block truncate text-sm font-semibold text-foreground">
-                    Lintas institusi SATU
-                </span>
-            </span>
-        </div>
+        <WorkspaceContextCard
+            label="Operasi platform"
+            name="Lintas institusi SATU"
+            icon={ShieldCheck}
+        />
     );
 }
 
@@ -209,22 +161,11 @@ function RecruiterWorkspaceContext({
     organizationName: string;
 }) {
     return (
-        <div
-            aria-label="Konteks ruang perekrut"
-            className="flex items-start gap-3 rounded-2xl border border-white bg-white/80 px-3 py-3"
-        >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-                <BriefcaseBusiness aria-hidden="true" className="size-4" />
-            </span>
-            <span className="min-w-0">
-                <span className="block text-xs font-medium text-muted-foreground">
-                    Ruang perekrut
-                </span>
-                <span className="mt-0.5 block truncate text-sm font-semibold text-foreground">
-                    {organizationName}
-                </span>
-            </span>
-        </div>
+        <WorkspaceContextCard
+            label="Ruang perekrut"
+            name={organizationName}
+            icon={BriefcaseBusiness}
+        />
     );
 }
 
@@ -232,6 +173,9 @@ export function AppSidebar() {
     const { auth, shell } = usePage().props;
     const workspace = auth.user?.workspace;
     const role = workspace?.role ?? 'student';
+    const roleContext = getWorkspaceContext(role);
+    const RoleIcon = roleContext.icon;
+    const { isMobile, setOpenMobile } = useSidebar();
     const campusInstitution = workspace?.institution;
     const recruiterOrganization = workspace?.recruiterOrganization;
     const isPlatformAdmin = role === 'platform_admin';
@@ -291,27 +235,6 @@ export function AppSidebar() {
                     }),
                     icon: FileCheck2,
                 },
-                {
-                    title: 'Peninjauan inklusi',
-                    href: campusInclusionIndex({
-                        institution: campusInstitution.id,
-                    }),
-                    icon: Network,
-                },
-                {
-                    title: 'Pemetaan kredit',
-                    href: campusCreditMappingsIndex({
-                        institution: campusInstitution.id,
-                    }),
-                    icon: GraduationCap,
-                },
-                {
-                    title: 'Sinkronisasi akademik',
-                    href: campusIntegrationsIndex({
-                        institution: campusInstitution.id,
-                    }),
-                    icon: RefreshCw,
-                },
             ]
           : isRecruiterWorkspace
             ? [
@@ -335,54 +258,108 @@ export function AppSidebar() {
               ? mainNavItems
               : mainNavItems.filter(
                     (item) =>
-                        ![
-                            'Proyek',
-                            'Kontribusi',
-                            'Portofolio',
-                            'Peringkat',
-                        ].includes(item.title),
+                        !['Proyek', 'Kontribusi', 'Portofolio'].includes(
+                            item.title,
+                        ),
                 );
+    const advancedNavItems: NavItem[] = isCampusWorkspace
+        ? [
+              {
+                  title: 'Peninjauan inklusi',
+                  href: campusInclusionIndex({
+                      institution: campusInstitution.id,
+                  }),
+                  icon: Network,
+              },
+              {
+                  title: 'Pemetaan kredit',
+                  href: campusCreditMappingsIndex({
+                      institution: campusInstitution.id,
+                  }),
+                  icon: GraduationCap,
+              },
+              {
+                  title: 'Sinkronisasi akademik',
+                  href: campusIntegrationsIndex({
+                      institution: campusInstitution.id,
+                  }),
+                  icon: RefreshCw,
+              },
+          ]
+        : role === 'student' &&
+            shell.institutionMembership?.status === 'verified'
+          ? [
+                {
+                    title: 'Peringkat',
+                    href: leaderboardsIndex(),
+                    icon: ListOrdered,
+                },
+            ]
+          : [];
 
     return (
         <Sidebar
             collapsible="offcanvas"
             variant="sidebar"
-            className="border-r border-sidebar-border/70 bg-sidebar text-sidebar-foreground"
+            className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
         >
-            <SidebarHeader className="h-20 shrink-0 flex-row items-center p-0 px-5">
-                <Link
-                    aria-label={
-                        isPlatformAdmin
-                            ? 'SATU: Operasi platform'
-                            : isCampusWorkspace
-                              ? 'SATU: Operasi kampus'
-                              : isRecruiterWorkspace
-                                ? 'SATU: Ruang perekrut'
-                                : 'SATU: Beranda'
-                    }
-                    href={
-                        isPlatformAdmin
-                            ? platformOperationsIndex()
-                            : isCampusWorkspace
-                              ? campusOverview({
-                                    institution: campusInstitution.id,
-                                })
-                              : isRecruiterWorkspace
-                                ? talentSearch()
-                                : dashboard()
-                    }
-                    prefetch
-                    className="flex cursor-pointer items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+            <SidebarHeader className="relative isolate shrink-0 gap-4 border-b border-primary/10 bg-linear-to-br from-accent/80 via-card to-card px-4 pt-5 pb-4">
+                <ArchiveArt className="absolute -top-1 right-2 w-20 rotate-12 opacity-35" />
+                <div className="relative flex items-start gap-2">
+                    <Link
+                        aria-label={
+                            isPlatformAdmin
+                                ? 'SATU: Operasi platform'
+                                : isCampusWorkspace
+                                  ? 'SATU: Operasi kampus'
+                                  : isRecruiterWorkspace
+                                    ? 'SATU: Ruang perekrut'
+                                    : 'SATU: Beranda'
+                        }
+                        href={
+                            isPlatformAdmin
+                                ? platformOperationsIndex()
+                                : isCampusWorkspace
+                                  ? campusOverview({
+                                        institution: campusInstitution.id,
+                                    })
+                                  : isRecruiterWorkspace
+                                    ? talentSearch()
+                                    : dashboard()
+                        }
+                        prefetch
+                        className="flex min-h-14 min-w-0 flex-1 cursor-pointer items-center rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                        data-test="sidebar-brand"
+                    >
+                        <AppLogo
+                            className="text-foreground"
+                            variant="sidebar"
+                        />
+                    </Link>
+                    {isMobile && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-11 shrink-0 rounded-xl border border-white/80 bg-card/70 text-muted-foreground"
+                            aria-label="Tutup navigasi"
+                            data-test="sidebar-close"
+                            onClick={() => setOpenMobile(false)}
+                        >
+                            <X aria-hidden="true" className="size-4" />
+                        </Button>
+                    )}
+                </div>
+                <p
+                    className="relative flex w-fit max-w-full items-center gap-2 rounded-full border border-primary/10 bg-card/85 px-3 py-1.5 text-xs font-semibold text-primary shadow-xs"
+                    data-test="sidebar-role"
                 >
-                    <AppLogo
-                        className="text-slate-950"
-                        logoClassName="size-10 rounded-2xl"
-                        ruleClassName="bg-blue-600"
-                    />
-                </Link>
+                    <RoleIcon aria-hidden="true" className="size-3.5" />
+                    {roleContext.accountLabel}
+                </p>
             </SidebarHeader>
 
-            <SidebarContent className="gap-8 py-4">
+            <SidebarContent className="gap-6 pt-5">
                 <NavMain
                     items={visibleMainNavItems}
                     ariaLabel={
@@ -403,24 +380,45 @@ export function AppSidebar() {
                                 ? 'Ruang perekrut'
                                 : 'Ruang kerja'
                     }
+                    description={
+                        isRecruiterWorkspace
+                            ? 'Modul lanjutan. Akses tetap mengikuti izin mahasiswa dan hak organisasi.'
+                            : role === 'student' &&
+                                shell.institutionMembership?.status !==
+                                    'verified'
+                              ? shell.institutionMembership?.status ===
+                                'suspended'
+                                  ? 'Menu kolaborasi tidak tersedia selama akses kampus ditangguhkan.'
+                                  : 'Menu kolaborasi tersedia setelah afiliasi kampus terverifikasi.'
+                              : undefined
+                    }
                 />
-            </SidebarContent>
-
-            <SidebarFooter className="p-4">
-                {isPlatformAdmin ? (
-                    <PlatformWorkspaceContext />
-                ) : isCampusWorkspace ? (
-                    <CampusWorkspaceContext
-                        institutionName={campusInstitution.name}
+                {advancedNavItems.length > 0 && (
+                    <NavMain
+                        key={`${auth.user?.id}-${role}-${campusInstitution?.id ?? 'student'}`}
+                        items={advancedNavItems}
+                        label="Fitur lanjutan"
+                        ariaLabel="Navigasi fitur lanjutan"
+                        description="Bukan bagian alur utama. Akses dan pengaturan izin tetap berlaku."
+                        collapsible
                     />
-                ) : isRecruiterWorkspace ? (
-                    <RecruiterWorkspaceContext
-                        organizationName={recruiterOrganization.name}
-                    />
-                ) : (
-                    <InstitutionMembershipContext shell={shell} />
                 )}
-            </SidebarFooter>
+                <SidebarFooter className="mt-auto shrink-0 border-t border-primary/10 bg-linear-to-b from-card to-accent/35 p-3">
+                    {isPlatformAdmin ? (
+                        <PlatformWorkspaceContext />
+                    ) : isCampusWorkspace ? (
+                        <CampusWorkspaceContext
+                            institutionName={campusInstitution.name}
+                        />
+                    ) : isRecruiterWorkspace ? (
+                        <RecruiterWorkspaceContext
+                            organizationName={recruiterOrganization.name}
+                        />
+                    ) : (
+                        <InstitutionMembershipContext shell={shell} />
+                    )}
+                </SidebarFooter>
+            </SidebarContent>
         </Sidebar>
     );
 }

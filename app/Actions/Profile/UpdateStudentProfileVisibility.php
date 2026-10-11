@@ -38,7 +38,7 @@ final class UpdateStudentProfileVisibility
                 ->lockForUpdate()
                 ->whereKey($studentProfile->getKey())
                 ->firstOrFail();
-            $this->ensureFresh->handle($profile, $data['expected_updated_at'] ?? null);
+            $this->ensureFresh->handle($profile, $data['expected_updated_at'] ?? null, $data['expected_profile_revision'] ?? null);
             $before = [
                 'portfolio_visibility' => $profile->portfolio_visibility->value,
                 'recruiter_discoverable' => $profile->recruiter_discoverable,

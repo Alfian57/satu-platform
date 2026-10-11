@@ -3,12 +3,11 @@
 namespace App\Http\Middleware;
 
 use App\Actions\Auth\ResolveUserWorkspace;
-use App\Enums\InstitutionMembershipRole;
+use App\Actions\Profile\ResolveStudentMembership;
 use App\Enums\InstitutionMembershipStatus;
 use App\Enums\InstitutionStatus;
 use App\Enums\WorkspaceRole;
 use App\Models\Institution;
-use App\Models\InstitutionMembership;
 use App\Models\StudentProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -18,6 +17,7 @@ class HandleInertiaRequests extends Middleware
 {
     public function __construct(
         private readonly ResolveUserWorkspace $resolveUserWorkspace,
+        private readonly ResolveStudentMembership $resolveStudentMembership,
     ) {}
 
     /**
@@ -131,17 +131,9 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        $memberships = $user->institutionMemberships()
-            ->with('institution:id,name,status')
-            ->whereRelation('institution', 'status', InstitutionStatus::Active)
-            ->where('role', InstitutionMembershipRole::Student)
-            ->latest('requested_at')
-            ->latest('id')
-            ->get();
-
-        $membership = $memberships->first(
-            fn (InstitutionMembership $membership): bool => $membership->status === InstitutionMembershipStatus::Verified,
-        ) ?? $memberships->first();
+        $membership = $this->resolveStudentMembership->handle($user,
+            $request->routeIs('student-profiles.edit') && $request->filled('institution_id') ? $request->integer('institution_id') : null,
+        );
 
         if ($membership === null) {
             return null;
@@ -170,13 +162,10 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        $membership = $user->institutionMemberships()
-            ->with(['institution:id,name,status', 'affiliationRequest'])
-            ->whereRelation('institution', 'status', InstitutionStatus::Active)
-            ->where('role', InstitutionMembershipRole::Student)
-            ->latest('requested_at')
-            ->latest('id')
-            ->first();
+        $membership = $this->resolveStudentMembership->handle($user,
+            $request->routeIs('student-profiles.edit') && $request->filled('institution_id') ? $request->integer('institution_id') : null,
+        );
+        $membership?->loadMissing('affiliationRequest');
 
         $institutionId = $membership?->institution_id;
         $institutionName = $membership?->institution?->name;
@@ -200,7 +189,7 @@ class HandleInertiaRequests extends Middleware
             ->values()
             ->all();
 
-        $profile = $institutionId !== null
+        $profile = $membership?->status === InstitutionMembershipStatus::Verified && $institutionId !== null
             ? StudentProfile::query()
                 ->withCount(['skills', 'availabilityWindows'])
                 ->whereBelongsTo($user)
@@ -208,13 +197,9 @@ class HandleInertiaRequests extends Middleware
                 ->first()
             : null;
 
-        $isReady = $profile !== null
-            && ! empty($profile->study_program)
-            && (int) $profile->skills_count > 0
-            && (int) $profile->availability_windows_count > 0;
-
         return [
-            'required' => ! $isReady,
+            'required' => ! $request->routeIs('student-profiles.edit')
+                && ($membership === null || $membership->status === InstitutionMembershipStatus::Unverified),
             'institutionId' => $institutionId,
             'institutionName' => $institutionName,
             'membershipStatus' => $membership?->status->value ?? 'unverified',

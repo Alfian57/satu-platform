@@ -6,6 +6,7 @@ namespace App\Actions\Contribution;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Actions\Portfolio\RebuildTalentCandidateProjection;
+use App\Actions\Portfolio\SyncApprovedPortfolioEntry;
 use App\Enums\ContributionReviewDecision;
 use App\Enums\ContributionStatus;
 use App\Events\ContributionApproved;
@@ -14,8 +15,10 @@ use App\Exceptions\StaleContributionDecision;
 use App\Models\Contribution;
 use App\Models\ContributionReview;
 use App\Models\Institution;
+use App\Models\Project;
 use App\Models\User;
 use App\Notifications\ContributionReviewedNotification;
+use App\Support\Contribution\ContributionSnapshot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -28,6 +31,8 @@ final class ReviewContribution
     public function __construct(
         private readonly AuditRecorder $audit,
         private readonly RebuildTalentCandidateProjection $rebuildProjection,
+        private readonly SyncApprovedPortfolioEntry $syncEntry,
+        private readonly ContributionRequirements $requirements,
     ) {}
 
     public function handle(
@@ -35,6 +40,7 @@ final class ReviewContribution
         User $reviewer,
         ContributionReviewDecision $decision,
         int $expectedVersion,
+        string $expectedRevision,
         ?string $reason = null,
         ?string $note = null,
     ): ContributionReview {
@@ -46,9 +52,11 @@ final class ReviewContribution
             $reviewer,
             $decision,
             $expectedVersion,
+            $expectedRevision,
             $reason,
             $note,
         ): ContributionReview {
+            Project::query()->whereKey($contribution->project_id)->lockForUpdate()->firstOrFail();
             $lockedContribution = Contribution::query()
                 ->lockForUpdate()
                 ->whereKey($contribution->getKey())
@@ -60,6 +68,7 @@ final class ReviewContribution
                 ->firstOrFail();
 
             Gate::forUser($reviewer)->authorize('review', $lockedContribution);
+            ContributionSnapshot::ensureFresh($lockedContribution, $expectedRevision);
 
             $version = $lockedContribution->currentVersion;
 
@@ -88,6 +97,10 @@ final class ReviewContribution
                 );
             }
 
+            if ($decision === ContributionReviewDecision::Approved) {
+                $this->requirements->ensureAvailableEvidence($version, $lockedContribution->project);
+            }
+
             $newStatus = $decision->contributionStatus();
 
             if (! $lockedContribution->status->canTransitionTo($newStatus)) {
@@ -110,6 +123,16 @@ final class ReviewContribution
                 'status' => $newStatus,
             ])->save();
 
+            if ($decision === ContributionReviewDecision::Approved) {
+                $this->syncEntry->handle(new ContributionApproved(
+                    contributionId: $lockedContribution->getKey(),
+                    contributionVersionId: $version->getKey(),
+                    reviewId: $review->getKey(),
+                    reviewerId: $reviewer->getKey(),
+                    institutionId: $institution->getKey(),
+                    policyVersion: self::POLICY_VERSION,
+                ));
+            }
             $this->rebuildProjection->handle($lockedContribution->owner, $institution);
 
             $this->audit->record(

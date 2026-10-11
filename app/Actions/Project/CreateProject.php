@@ -7,6 +7,7 @@ namespace App\Actions\Project;
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\ProjectStatus;
 use App\Enums\ProjectVisibility;
+use App\Events\MatchingInputsChanged;
 use App\Models\Institution;
 use App\Models\Project;
 use App\Models\User;
@@ -83,6 +84,8 @@ final class CreateProject
                     'capacity' => $project->capacity,
                 ],
             );
+
+            MatchingInputsChanged::dispatch($project->institution_id);
 
             return $project;
         }, attempts: 3);

@@ -10,12 +10,14 @@ use App\Enums\AttachmentPurpose;
 use App\Http\Requests\Attachment\DeleteAttachmentRequest;
 use App\Http\Requests\Attachment\DownloadAttachmentRequest;
 use App\Http\Requests\Attachment\StoreAttachmentRequest;
+use App\Http\Requests\Task\ShowTaskWorkspaceRequest;
 use App\Models\Attachment;
 use App\Models\Message;
 use App\Models\Project;
 use App\Models\User;
 use App\Support\Attachment\AttachmentSerializer;
 use App\Support\Attachment\AttachmentStorage;
+use App\Support\Attachment\WorkspaceEvidenceQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
@@ -23,6 +25,14 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class ProjectAttachmentController extends Controller
 {
+    public function index(ShowTaskWorkspaceRequest $request, Project $project, WorkspaceEvidenceQuery $query): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        return response()->json($query->execute($user, $project, $request->integer('evidence_page', 1)));
+    }
+
     public function store(
         StoreAttachmentRequest $request,
         Project $project,

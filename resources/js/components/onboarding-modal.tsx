@@ -13,6 +13,7 @@ import {
     Search,
     ShieldCheck,
     Trash2,
+    X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -35,6 +36,7 @@ import {
     store as createTaxonomy,
 } from '@/routes/skills/taxonomy';
 import {
+    edit as editProfile,
     show as showProfile,
     store as storeProfile,
     update as updateProfile,
@@ -70,7 +72,7 @@ type ProfilePayload = {
     skills: {
         taxonomy_id: number;
         proficiency: Proficiency;
-        evidence_metadata: Record<string, string | number | boolean | null>[];
+        evidence_metadata?: Record<string, string | number | boolean | null>[];
     }[];
     availability_windows: Availability[];
     portfolio_visibility: Visibility;
@@ -218,7 +220,13 @@ function refreshOnboarding(): Promise<OnboardingState | null> {
     });
 }
 
-export function OnboardingModal() {
+export function OnboardingModal({
+    onVisibilityChange,
+    openRequest = 0,
+}: {
+    onVisibilityChange?: (isOpen: boolean) => void;
+    openRequest?: number;
+}) {
     const { onboarding } = usePage<OnboardingProps>().props;
     const [step, setStep] = useState(0);
     const [institutionId, setInstitutionId] = useState(
@@ -246,6 +254,8 @@ export function OnboardingModal() {
     const [error, setError] = useState<string | null>(null);
     const [phase, setPhase] = useState<Phase>('editing');
     const [holdOpen, setHoldOpen] = useState(false);
+    const [dismissed, setDismissed] = useState(false);
+    const returnFocus = useRef<HTMLElement | null>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
     const errorRef = useRef<HTMLDivElement>(null);
     const draftTouched = useRef(false);
@@ -268,6 +278,32 @@ export function OnboardingModal() {
     const needsReconciliation = useRef(false);
     const busy = Boolean(phaseLabels[phase]);
     const institutions = onboarding?.institutions ?? [];
+    const isOpen =
+        !dismissed &&
+        phase !== 'complete' &&
+        Boolean(onboarding?.required || holdOpen);
+
+    useEffect(() => {
+        if (openRequest === 0) {
+            return;
+        }
+
+        const frame = requestAnimationFrame(() => {
+            returnFocus.current =
+                document.activeElement instanceof HTMLElement
+                    ? document.activeElement
+                    : null;
+            setDismissed(false);
+            setHoldOpen(true);
+            setPhase('editing');
+        });
+
+        return () => cancelAnimationFrame(frame);
+    }, [openRequest]);
+
+    useEffect(() => {
+        onVisibilityChange?.(isOpen);
+    }, [isOpen, onVisibilityChange]);
 
     const profileForm = useHttp<ProfilePayload, ProfileResponse>({
         institution_id: 0,
@@ -387,7 +423,7 @@ export function OnboardingModal() {
         return () => controller.abort();
     }, [onboarding?.profileId, onboarding?.required]);
 
-    if (phase === 'complete' || (!onboarding?.required && !holdOpen)) {
+    if (!isOpen) {
         return null;
     }
 
@@ -420,12 +456,6 @@ export function OnboardingModal() {
 
                 return false;
             }
-        }
-
-        if (step === 1 && skills.length === 0) {
-            showError('Tambahkan minimal satu keahlianmu.');
-
-            return false;
         }
 
         return true;
@@ -535,13 +565,7 @@ export function OnboardingModal() {
             return;
         }
 
-        if (!availabilityDays.length) {
-            showError('Pilih minimal satu hari untuk berkolaborasi.');
-
-            return;
-        }
-
-        if (endsAt <= startsAt) {
+        if (availabilityDays.length > 0 && endsAt <= startsAt) {
             showError('Jam selesai harus setelah jam mulai.');
 
             return;
@@ -560,7 +584,6 @@ export function OnboardingModal() {
             skills: skills.map((skill) => ({
                 taxonomy_id: skill.taxonomy_id,
                 proficiency: skill.proficiency,
-                evidence_metadata: [],
             })),
             availability_windows: availabilityDays.map((day) => ({
                 day_of_week: day,
@@ -668,6 +691,18 @@ export function OnboardingModal() {
                 verifiedAffiliation.current = affiliationKey;
             }
 
+            if (latest?.profileId) {
+                setHoldOpen(false);
+                setPhase('complete');
+                router.visit(
+                    editProfile({
+                        query: { institution_id: selectedInstitution },
+                    }),
+                );
+
+                return;
+            }
+
             if (needsReconciliation.current) {
                 setPhase('refresh');
                 latest = await refreshOnboarding();
@@ -729,6 +764,10 @@ export function OnboardingModal() {
                     progress.finished.add('visibility');
                 }
 
+                if (!response?.data?.id) {
+                    throw new Error(failureMessage);
+                }
+
                 progress.profileId = response.data.id;
                 progress.finished.add('profile');
             }
@@ -743,10 +782,15 @@ export function OnboardingModal() {
                     windows: payload.availability_windows,
                     timezone,
                 }));
-                await availabilityForm.put(
+                const response = await availabilityForm.put(
                     updateAvailability.url(progress.profileId),
                     options,
                 );
+
+                if (!response?.data?.id) {
+                    throw new Error(failureMessage);
+                }
+
                 progress.finished.add('availability');
             }
 
@@ -756,10 +800,15 @@ export function OnboardingModal() {
                     portfolio_visibility: payload.portfolio_visibility,
                     recruiter_discoverable: payload.recruiter_discoverable,
                 }));
-                await visibilityForm.patch(
+                const response = await visibilityForm.patch(
                     updateVisibility.url(progress.profileId),
                     options,
                 );
+
+                if (!response?.data?.id) {
+                    throw new Error(failureMessage);
+                }
+
                 progress.finished.add('visibility');
             }
 
@@ -768,10 +817,11 @@ export function OnboardingModal() {
 
             if (
                 confirmed?.institutionId !== selectedInstitution ||
-                confirmed.required
+                confirmed.membershipStatus !== 'verified' ||
+                !confirmed.profileId
             ) {
                 throw new Error(
-                    'Data tersimpan, tetapi profil belum dinyatakan lengkap. Periksa kembali isianmu.',
+                    'Hasil penyimpanan belum dapat dikonfirmasi. Periksa akses dan profil tersimpan sebelum mencoba lagi.',
                 );
             }
 
@@ -794,7 +844,21 @@ export function OnboardingModal() {
             <DialogPrimitive.Portal>
                 <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-sm" />
                 <DialogPrimitive.Content
-                    onEscapeKeyDown={(event) => event.preventDefault()}
+                    onCloseAutoFocus={(event) => {
+                        if (returnFocus.current?.isConnected) {
+                            event.preventDefault();
+                            requestAnimationFrame(() =>
+                                returnFocus.current?.focus(),
+                            );
+                        }
+                    }}
+                    onEscapeKeyDown={(event) => {
+                        if (busy) {
+                            event.preventDefault();
+                        } else {
+                            setDismissed(true);
+                        }
+                    }}
                     onPointerDownOutside={(event) => event.preventDefault()}
                     className="fixed top-1/2 left-1/2 z-50 flex h-[94svh] max-h-[94svh] w-[calc(100%-1.5rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[2rem] border border-white bg-white shadow-2xl focus:outline-none lg:flex-row"
                 >
@@ -852,6 +916,17 @@ export function OnboardingModal() {
                     </aside>
                     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                         <header className="shrink-0 px-5 pt-6 pb-5 sm:px-8">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="float-right size-11"
+                                aria-label="Tutup pelengkapan afiliasi"
+                                disabled={busy}
+                                onClick={() => setDismissed(true)}
+                            >
+                                <X aria-hidden="true" />
+                            </Button>
                             <p className="mb-2 text-xs font-bold tracking-[0.12em] text-blue-700 uppercase">
                                 Ruang untuk bertumbuh
                             </p>
@@ -1202,10 +1277,11 @@ export function OnboardingModal() {
                                                         id="skill-search-help"
                                                         className="text-xs leading-5 text-slate-600"
                                                     >
-                                                        Pilih minimal satu
-                                                        keahlian. Kamu bisa
-                                                        menambahkan yang belum
-                                                        tersedia.
+                                                        Keahlian boleh kosong
+                                                        dan dapat dilengkapi
+                                                        lewat Profil kemampuan.
+                                                        Kamu bisa menambahkan
+                                                        yang belum tersedia.
                                                     </p>
                                                 </div>
                                                 {searchQuery.trim() && (
@@ -1503,6 +1579,8 @@ export function OnboardingModal() {
                                                         Zona waktu: {timezone}.
                                                         Jam yang sama berlaku
                                                         pada hari pilihanmu.
+                                                        Jadwal boleh kosong dan
+                                                        dapat dilengkapi nanti.
                                                     </p>
                                                 </fieldset>
                                                 <fieldset>

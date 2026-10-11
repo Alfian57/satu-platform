@@ -62,7 +62,12 @@
             "npm run format:check",
             "npm run types:check",
             "@phpstan",
-            "@lint:check"
+            "@lint:check",
+            "@test:core"
+        ],
+        "test:core": [
+            "Composer\\Config::disableProcessTimeout",
+            "node .github/scripts/check-core-release.cjs"
         ],
         "phpstan": [
             "phpstan analyse --memory-limit=2G"

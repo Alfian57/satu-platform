@@ -1,31 +1,41 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    ArrowLeft,
+    ArrowUpRight,
     Award,
-    Bookmark,
+    BookOpenCheck,
     BookmarkCheck,
-    BookmarkX,
     Building2,
     CheckCircle2,
     ChevronLeft,
     ChevronRight,
-    Lock,
+    FileText,
+    LockKeyhole,
+    RefreshCw,
     Search,
     ShieldCheck,
     Trash2,
-    UserCheck,
-    UserRound,
-    Users,
+    UsersRound,
 } from 'lucide-react';
-import React, { useState, useTransition } from 'react';
+import { useRef, useState } from 'react';
 import { destroy as unsaveCandidate } from '@/actions/App/Http/Controllers/SavedCandidatesController';
 import {
     index as talentSearch,
     show as showCandidate,
 } from '@/actions/App/Http/Controllers/TalentSearchController';
 import { AppPage } from '@/components/app-page';
+import { DashboardArchiveArt as ArchiveArt } from '@/components/dashboard-archive-art';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import { saved as savedCandidates } from '@/routes/recruiter/talent';
 import { index as contactRequests } from '@/routes/recruiter/talent/contact-requests';
 
@@ -35,7 +45,7 @@ interface Candidate {
     bio: string | null;
     skills: string[];
     badges: string[];
-    contributions: string[];
+    contributions: unknown[];
     availability_status: string;
     verified_at: string | null;
     institution_name: string | null;
@@ -55,147 +65,313 @@ interface SavedCandidatesProps {
     };
 }
 
-function availabilityMeta(status: string): {
-    label: string;
-    dotColor: string;
-    badgeColor: string;
-} {
+function availabilityMeta(status: string) {
     switch (status) {
         case 'available':
             return {
                 label: 'Tersedia untuk peluang',
-                dotColor: 'bg-emerald-500',
-                badgeColor:
-                    'border-emerald-200/80 bg-emerald-50/90 text-emerald-800',
+                className: 'border-emerald-200 bg-emerald-50 text-emerald-800',
             };
         case 'open_to_offers':
             return {
                 label: 'Terbuka untuk penawaran',
-                dotColor: 'bg-blue-500',
-                badgeColor: 'border-blue-200/80 bg-blue-50/90 text-blue-800',
+                className: 'border-primary/20 bg-accent text-primary',
             };
         case 'not_available':
             return {
                 label: 'Belum tersedia',
-                dotColor: 'bg-slate-400',
-                badgeColor: 'border-slate-200 bg-slate-50 text-slate-700',
+                className: 'border-border bg-background text-muted-foreground',
             };
         default:
             return {
-                label: status.replaceAll('_', ' '),
-                dotColor: 'bg-slate-400',
-                badgeColor: 'border-slate-200 bg-slate-50 text-slate-700',
+                label: 'Ketersediaan belum dibagikan',
+                className: 'border-border bg-background text-muted-foreground',
             };
     }
 }
 
-function SavedContextRail({
-    savedCount,
-    hasEntitlement,
+function accessLabel(status: string): string {
+    switch (status) {
+        case 'active':
+            return 'Hak akses aktif';
+        case 'expired':
+            return 'Hak akses kedaluwarsa';
+        case 'no_organization':
+            return 'Organisasi belum aktif';
+        case 'missing':
+            return 'Hak akses belum aktif';
+        default:
+            return 'Hak akses perlu diperiksa';
+    }
+}
+
+function SavedCandidateCard({
+    candidate,
+    disabled,
+    onRemove,
 }: {
-    savedCount: number;
-    hasEntitlement: boolean;
+    candidate: Candidate;
+    disabled: boolean;
+    onRemove: (button: HTMLButtonElement) => void;
 }) {
+    const availability = availabilityMeta(candidate.availability_status);
+
     return (
-        <div className="grid gap-6">
-            {/* Card 1: Ruang Perekrut & Boundary */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-                <div className="flex items-center gap-2">
-                    <span className="flex size-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                        <Lock className="size-3.5" aria-hidden="true" />
-                    </span>
-                    <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
-                        RUANG PEREKRUT
+        <article
+            aria-label={`Kandidat ${candidate.headline || 'portofolio mahasiswa'}`}
+            className="@container min-w-0 overflow-hidden rounded-3xl border border-border bg-white shadow-sm focus-within:border-primary/30 focus-within:shadow-md"
+        >
+            <div className="grid gap-5 p-5 sm:p-6 @min-[40rem]:grid-cols-[minmax(0,1fr)_16rem]">
+                <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-label text-xs text-muted-foreground">
+                            FOLIO-{candidate.id}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-accent px-2.5 py-1 text-xs font-semibold text-primary">
+                            <BookmarkCheck
+                                aria-hidden="true"
+                                className="size-3.5"
+                            />
+                            Disimpan
+                        </span>
+                    </div>
+                    <h3 className="mt-3 text-xl leading-tight font-bold tracking-tight break-words sm:text-2xl">
+                        {candidate.headline || 'Portofolio mahasiswa'}
+                    </h3>
+                    <p className="mt-3 flex items-start gap-2 text-sm leading-6 text-muted-foreground">
+                        <Building2
+                            aria-hidden="true"
+                            className="mt-1 size-4 shrink-0"
+                        />
+                        <span className="min-w-0 break-words">
+                            {candidate.institution_name ||
+                                'Institusi kampus belum dibagikan.'}
+                        </span>
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <span
+                            className={cn(
+                                'max-w-full rounded-full border px-3 py-1 text-xs font-semibold',
+                                availability.className,
+                            )}
+                        >
+                            {availability.label}
+                        </span>
+                        {candidate.verified_at && (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
+                                <CheckCircle2
+                                    aria-hidden="true"
+                                    className="size-4"
+                                />
+                                Portofolio terverifikasi
+                            </span>
+                        )}
+                    </div>
+                    <p className="mt-4 line-clamp-3 max-w-prose text-sm leading-6 break-words text-muted-foreground">
+                        {candidate.bio || 'Ringkasan profil belum dibagikan.'}
+                    </p>
+                    {candidate.badges.length > 0 && (
+                        <ul
+                            aria-label="Badge kandidat"
+                            className="mt-4 flex flex-wrap gap-2"
+                        >
+                            {candidate.badges.map((badge, index) => (
+                                <li
+                                    key={index}
+                                    className="inline-flex max-w-full items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-900"
+                                >
+                                    <Award
+                                        aria-hidden="true"
+                                        className="mt-0.5 size-3.5 shrink-0"
+                                    />
+                                    <span className="min-w-0 break-words">
+                                        {badge}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+                <div className="min-w-0 self-start rounded-2xl border border-primary/10 bg-gradient-to-br from-accent/70 to-background p-4">
+                    <div className="flex items-center gap-2 text-primary">
+                        <BookOpenCheck
+                            aria-hidden="true"
+                            className="size-4 shrink-0"
+                        />
+                        <p className="text-xs font-semibold tracking-wide uppercase">
+                            Keahlian dibagikan
+                        </p>
+                    </div>
+                    {candidate.skills.length > 0 ? (
+                        <ul
+                            aria-label="Keahlian kandidat"
+                            className="mt-3 flex flex-wrap gap-2"
+                        >
+                            {candidate.skills.map((skill, index) => (
+                                <li
+                                    key={index}
+                                    className="max-w-full rounded-lg border border-primary/10 bg-white px-2.5 py-1 text-xs font-medium break-words"
+                                >
+                                    {skill}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                            Belum ada skill yang dibagikan.
+                        </p>
+                    )}
+                    <p className="mt-4 flex items-start gap-2 border-t border-primary/10 pt-3 text-xs leading-5 text-muted-foreground">
+                        <FileText
+                            aria-hidden="true"
+                            className="mt-0.5 size-4 shrink-0"
+                        />
+                        <span>
+                            {candidate.contributions.length} kontribusi
+                            dibagikan. Rincian tersedia pada profil.
+                        </span>
                     </p>
                 </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 border-t border-border bg-background/50 px-5 py-4 sm:px-6">
+                <Button
+                    asChild
+                    variant="outline"
+                    className="h-11 flex-1 border-primary/20 bg-white text-primary sm:flex-none"
+                >
+                    <Link href={showCandidate(candidate.id)}>
+                        Lihat profil
+                        <ArrowUpRight aria-hidden="true" className="size-4" />
+                    </Link>
+                </Button>
+                <Button
+                    type="button"
+                    aria-label={`Hapus ${candidate.headline || 'kandidat'} dari simpanan`}
+                    variant="outline"
+                    className="h-11 border-correction/20 bg-white px-3 text-correction hover:bg-correction/5 hover:text-correction sm:ml-auto"
+                    disabled={disabled}
+                    onClick={(event) => onRemove(event.currentTarget)}
+                >
+                    <Trash2 aria-hidden="true" className="size-4" />
+                    Hapus
+                </Button>
+            </div>
+        </article>
+    );
+}
 
-                <h2 className="mt-3 text-base font-bold tracking-tight text-slate-900">
-                    Koleksi Internal
+function SavedContextRail({
+    total,
+    canView,
+    status,
+}: {
+    total: number;
+    canView: boolean;
+    status: string;
+}) {
+    return (
+        <aside
+            aria-label="Panduan koleksi organisasi"
+            className="min-w-0 space-y-6"
+        >
+            <section className="rounded-3xl border border-primary/15 bg-gradient-to-br from-white to-accent/60 p-5 shadow-sm sm:p-6">
+                <span className="flex size-11 items-center justify-center rounded-2xl border border-primary/10 bg-white text-primary shadow-xs">
+                    <LockKeyhole aria-hidden="true" className="size-5" />
+                </span>
+                <p className="mt-4 text-xs font-semibold tracking-wide text-primary uppercase">
+                    Koleksi organisasi
+                </p>
+                <h2 className="mt-2 text-xl font-bold">
+                    Tinjau kembali bersama tim.
                 </h2>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                    Daftar kandidat ini hanya dapat dilihat oleh anggota tim
-                    dalam organisasi perekrut Anda.
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    Simpanan ini tersedia dalam organisasi perekrut. Menghapus
+                    kandidat dari daftar berlaku pada koleksi organisasi, bukan
+                    menghapus profil mahasiswa.
                 </p>
-            </div>
-
-            {/* Card 2: Metrik & Status */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-                <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
-                    STATUS PENYIMPANAN
+                <dl className="mt-5 divide-y divide-primary/10 border-t border-primary/10">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2 py-4">
+                        <dt className="text-sm text-muted-foreground">
+                            Total tersimpan
+                        </dt>
+                        <dd className="font-semibold">
+                            {canView ? total : 'Belum tersedia'}
+                        </dd>
+                    </div>
+                    <div className="grid gap-2 pt-4">
+                        <dt className="text-sm text-muted-foreground">
+                            Hak akses pencarian
+                        </dt>
+                        <dd className="flex items-start gap-2 text-sm font-semibold">
+                            <ShieldCheck
+                                aria-hidden="true"
+                                className="mt-0.5 size-4 shrink-0 text-primary"
+                            />
+                            {accessLabel(status)}
+                        </dd>
+                    </div>
+                </dl>
+            </section>
+            <section aria-labelledby="saved-next-heading" className="px-1">
+                <p className="text-xs font-semibold tracking-wide text-primary uppercase">
+                    Lanjutkan peninjauan
                 </p>
-
-                <div className="mt-4 grid divide-y divide-slate-100">
-                    <div className="flex items-center justify-between py-3">
-                        <div className="flex items-center gap-2.5">
-                            <Bookmark className="size-4 text-blue-600" />
-                            <span className="text-sm font-medium text-slate-700">
-                                Total tersimpan
+                <h2 id="saved-next-heading" className="mt-2 text-lg font-bold">
+                    Langkah berikutnya
+                </h2>
+                <div className="mt-3 divide-y divide-border">
+                    {[
+                        {
+                            href: talentSearch(),
+                            label: 'Cari talenta',
+                            description: 'Temukan portofolio lainnya.',
+                            Icon: Search,
+                        },
+                        {
+                            href: contactRequests(),
+                            label: 'Permintaan kontak',
+                            description:
+                                'Tinjau permintaan yang sudah dikirim.',
+                            Icon: UsersRound,
+                        },
+                    ].map(({ href, label, description, Icon }) => (
+                        <Link
+                            key={label}
+                            href={href}
+                            className="flex min-h-16 cursor-pointer items-center gap-3 rounded-xl py-3 transition-colors hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                        >
+                            <Icon
+                                aria-hidden="true"
+                                className="size-5 shrink-0 text-primary"
+                            />
+                            <span className="min-w-0 flex-1">
+                                <span className="block text-sm font-semibold">
+                                    {label}
+                                </span>
+                                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                                    {description}
+                                </span>
                             </span>
-                        </div>
-                        <span className="inline-flex size-6 items-center justify-center rounded-full bg-blue-50 font-mono text-xs font-bold text-blue-700">
-                            {savedCount}
-                        </span>
-                    </div>
-
-                    <div className="flex items-center justify-between py-3">
-                        <div className="flex items-center gap-2.5">
-                            <ShieldCheck className="size-4 text-emerald-600" />
-                            <span className="text-sm font-medium text-slate-700">
-                                Hak akses
-                            </span>
-                        </div>
-                        <span className="text-xs font-semibold text-slate-800">
-                            {hasEntitlement ? 'Aktif' : 'Perlu aktivasi'}
-                        </span>
-                    </div>
+                            <ChevronRight
+                                aria-hidden="true"
+                                className="size-4 shrink-0 text-muted-foreground"
+                            />
+                        </Link>
+                    ))}
                 </div>
+            </section>
+            <div className="flex items-start gap-3 border-t border-border px-1 pt-5 text-sm leading-6 text-muted-foreground">
+                <ShieldCheck
+                    aria-hidden="true"
+                    className="mt-1 size-5 shrink-0 text-primary"
+                />
+                <p>
+                    Menyimpan kandidat tidak membuka kontak langsung. Jangkauan
+                    profil tetap mengikuti pilihan mahasiswa dan hak akses
+                    organisasi.
+                </p>
             </div>
-
-            {/* Card 3: Navigasi Cepat */}
-            <div className="grid gap-2.5">
-                <Link
-                    href={talentSearch()}
-                    prefetch
-                    className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="flex size-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
-                            <Search className="size-4" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-slate-900">
-                                Cari Talenta Baru
-                            </p>
-                            <p className="text-[0.6875rem] text-slate-500">
-                                Telusuri portofolio mahasiswa
-                            </p>
-                        </div>
-                    </div>
-                    <ChevronRight className="size-4 text-slate-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-blue-600" />
-                </Link>
-
-                <Link
-                    href={contactRequests()}
-                    prefetch
-                    className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="flex size-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                            <Users className="size-4" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-slate-900">
-                                Permintaan Kontak
-                            </p>
-                            <p className="text-[0.6875rem] text-slate-500">
-                                Kelola penawaran kolaborasi
-                            </p>
-                        </div>
-                    </div>
-                    <ChevronRight className="size-4 text-slate-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-blue-600" />
-                </Link>
-            </div>
-        </div>
+        </aside>
     );
 }
 
@@ -203,377 +379,499 @@ export default function SavedCandidates({
     candidates,
     entitlement,
 }: SavedCandidatesProps) {
-    const [savedList, setSavedList] = useState<Candidate[]>(candidates.data);
-    const [isPending, startTransition] = useTransition();
+    const [candidateToRemove, setCandidateToRemove] =
+        useState<Candidate | null>(null);
+    const [removingId, setRemovingId] = useState<number | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isForbidden, setIsForbidden] = useState(false);
+    const [hasError, setHasError] = useState(false);
+    const [feedback, setFeedback] = useState('');
+    const pageHeadingRef = useRef<HTMLHeadingElement>(null);
+    const listHeadingRef = useRef<HTMLHeadingElement>(null);
+    const removeTriggerRef = useRef<HTMLButtonElement | null>(null);
+    const didRemoveRef = useRef(false);
+    const lastPageRef = useRef(candidates.current_page);
+    const isBusy = removingId !== null || isRefreshing;
+    const canView = entitlement.has_entitlement && !isForbidden;
+    const currentStatus = isForbidden ? 'unavailable' : entitlement.status;
 
-    const handleUnsave = (candidateId: number) => {
-        const previousList = [...savedList];
-        setSavedList((prev) => prev.filter((c) => c.id !== candidateId));
+    const failRequest = (forbidden = false): false => {
+        if (forbidden) {
+            setIsForbidden(true);
+            setCandidateToRemove(null);
+        }
 
-        startTransition(() => {
-            router.delete(unsaveCandidate(candidateId), {
+        setHasError(true);
+        setFeedback(
+            'Belum dapat memastikan status daftar. Muat ulang untuk memeriksa kandidat tersimpan terbaru.',
+        );
+
+        return false;
+    };
+
+    const visitPage = (page = candidates.current_page) => {
+        if (isBusy) {
+            return;
+        }
+
+        lastPageRef.current = page;
+        setIsRefreshing(true);
+        setFeedback('Memuat daftar kandidat tersimpan.');
+        router.get(
+            savedCandidates({ query: { page } }),
+            {},
+            {
                 preserveState: true,
                 preserveScroll: true,
-                onError: () => {
-                    setSavedList(previousList);
+                onSuccess: () => {
+                    setIsForbidden(false);
+                    setHasError(false);
+                    setFeedback('Daftar kandidat tersimpan telah diperbarui.');
                 },
-            });
+                onError: () => {
+                    failRequest();
+                },
+                onHttpException: (response) =>
+                    failRequest(response.status === 403),
+                onNetworkError: () => failRequest(),
+                onFinish: () => setIsRefreshing(false),
+            },
+        );
+    };
+
+    const handleUnsave = () => {
+        if (!candidateToRemove || isBusy || !canView) {
+            return;
+        }
+
+        const candidateId = candidateToRemove.id;
+        setRemovingId(candidateId);
+        setHasError(false);
+        setFeedback('Menghapus kandidat dari daftar simpanan organisasi.');
+        router.delete(unsaveCandidate(candidateId), {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                didRemoveRef.current = true;
+                setCandidateToRemove(null);
+                setHasError(false);
+                setFeedback(
+                    'Kandidat dihapus dari daftar simpanan organisasi.',
+                );
+            },
+            onError: () => {
+                failRequest();
+            },
+            onHttpException: (response) => failRequest(response.status === 403),
+            onNetworkError: () => failRequest(),
+            onFinish: () => setRemovingId(null),
         });
     };
 
     return (
         <>
-            <Head title="Kandidat Tersimpan | SATU" />
-
-            <AppPage
-                contextRail={
-                    <SavedContextRail
-                        hasEntitlement={entitlement.has_entitlement}
-                        savedCount={savedList.length}
-                    />
-                }
-                contextRailLabel="Konteks Kandidat Tersimpan"
-            >
+            <Head title="Kandidat tersimpan | SATU" />
+            <AppPage className="max-w-none min-w-0">
                 <div className="space-y-6" data-test="saved-candidates-root">
-                    {/* Header Banner */}
-                    <header className="relative isolate overflow-hidden rounded-2xl border border-blue-100 bg-white px-6 py-6 shadow-[0_18px_50px_-36px_rgba(30,64,175,0.35)] sm:px-8 sm:py-7">
-                        <div
-                            aria-hidden="true"
-                            className="absolute -top-28 -right-24 size-80 rounded-full bg-blue-100/75 blur-3xl sm:-right-12"
-                        />
-                        <div
-                            aria-hidden="true"
-                            className="absolute right-14 bottom-0 hidden h-24 w-24 rounded-tl-[2.5rem] border-t border-l border-indigo-100 sm:block"
-                        />
-
-                        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <Link
-                                    href={talentSearch()}
-                                    prefetch
-                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 transition-colors hover:text-blue-800"
-                                >
-                                    <ArrowLeft className="size-3.5" />
-                                    Kembali ke Cari Talenta
-                                </Link>
-
-                                <div className="mt-3 flex items-center gap-3">
-                                    <h1 className="text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
-                                        Kandidat Tersimpan
+                    <header className="rounded-3xl border border-border bg-white p-5 shadow-sm sm:p-6">
+                        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 items-start gap-4">
+                                <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-primary/15 bg-accent text-primary">
+                                    <BookmarkCheck
+                                        aria-hidden="true"
+                                        className="size-6"
+                                    />
+                                </span>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold tracking-wide text-primary uppercase">
+                                        Koleksi organisasi
+                                    </p>
+                                    <h1
+                                        ref={pageHeadingRef}
+                                        tabIndex={-1}
+                                        className="mt-1 rounded-lg text-2xl leading-tight font-bold tracking-tight break-words focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring sm:text-3xl"
+                                    >
+                                        Kandidat tersimpan
                                     </h1>
-                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                                        <Bookmark className="size-3 text-blue-600" />
-                                        Bookmark Private
-                                    </span>
+                                    <p className="mt-2 max-w-prose text-sm leading-6 text-muted-foreground">
+                                        Profil yang disimpan timmu untuk
+                                        ditinjau kembali.
+                                    </p>
                                 </div>
-
-                                <p className="mt-2 max-w-[60ch] text-sm leading-relaxed text-slate-600">
-                                    Daftar kandidat talenta pilihan yang telah
-                                    Anda tandai untuk kebutuhan rekrutmen dan
-                                    evaluasi internal tim Anda.
-                                </p>
                             </div>
-
-                            {entitlement.has_entitlement && (
-                                <div className="flex shrink-0 items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-2.5 text-xs font-semibold text-blue-800">
-                                    <UserCheck className="size-4 text-blue-600" />
-                                    <span>Hak Akses Aktif</span>
-                                </div>
-                            )}
+                            <Button
+                                asChild
+                                className="h-11 shrink-0 sm:self-center"
+                            >
+                                <Link href={talentSearch()}>
+                                    <Search
+                                        aria-hidden="true"
+                                        className="size-4"
+                                    />
+                                    Cari talenta
+                                </Link>
+                            </Button>
                         </div>
                     </header>
 
-                    {/* Content Section */}
-                    <div className="space-y-4">
-                        {/* Meta Bar */}
-                        <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white px-5 py-4 shadow-xs">
-                            <div className="flex items-center gap-2">
-                                <BookmarkCheck className="size-4.5 text-blue-600" />
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    {savedList.length} Kandidat Tersimpan
-                                </h2>
-                            </div>
-                            <span className="text-xs text-slate-500">
-                                Halaman {candidates.current_page} dari{' '}
-                                {candidates.last_page}
-                            </span>
-                        </div>
-
-                        {/* Loading State */}
-                        {isPending && (
-                            <div className="grid gap-4">
-                                {[1, 2].map((n) => (
-                                    <div
-                                        key={n}
-                                        className="animate-pulse space-y-3 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <Skeleton className="size-12 rounded-2xl bg-slate-100" />
-                                            <div className="space-y-2">
-                                                <Skeleton className="h-5 w-48 bg-slate-100" />
-                                                <Skeleton className="h-4 w-32 bg-slate-100" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Empty State */}
-                        {!isPending && savedList.length === 0 && (
-                            <div className="grid justify-items-center gap-4 rounded-2xl border border-slate-200/80 bg-white px-6 py-16 text-center shadow-xs">
-                                <div className="flex size-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-8 ring-blue-50/50">
-                                    <BookmarkX
-                                        aria-hidden="true"
-                                        className="size-7"
-                                    />
-                                </div>
+                    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
+                        <section
+                            aria-labelledby="saved-list-heading"
+                            className="min-w-0 space-y-5"
+                        >
+                            <div className="flex flex-wrap items-end justify-between gap-3 px-1">
                                 <div>
-                                    <h3 className="text-base font-bold text-slate-900">
-                                        Belum ada kandidat yang disimpan
+                                    <p className="text-xs font-semibold tracking-wide text-primary uppercase">
+                                        Daftar simpanan
+                                    </p>
+                                    <h2
+                                        id="saved-list-heading"
+                                        ref={listHeadingRef}
+                                        tabIndex={-1}
+                                        className="mt-2 rounded-lg text-xl font-bold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring sm:text-2xl"
+                                    >
+                                        {canView
+                                            ? candidates.total +
+                                              ' kandidat tersimpan'
+                                            : 'Daftar belum tersedia'}
+                                    </h2>
+                                </div>
+                                {canView && (
+                                    <Button
+                                        variant="outline"
+                                        className="h-11"
+                                        type="button"
+                                        disabled={isBusy}
+                                        onClick={() => visitPage()}
+                                    >
+                                        {isRefreshing ? (
+                                            <Spinner aria-hidden="true" />
+                                        ) : (
+                                            <RefreshCw
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                        )}
+                                        Muat ulang
+                                    </Button>
+                                )}
+                            </div>
+                            {canView && (
+                                <p className="px-1 text-sm leading-6 text-muted-foreground">
+                                    Menampilkan {candidates.data.length}{' '}
+                                    kandidat. Halaman {candidates.current_page}.
+                                </p>
+                            )}
+                            <div className="space-y-3 px-1">
+                                <p
+                                    role="status"
+                                    className={cn(
+                                        'min-h-5 text-sm leading-6',
+                                        hasError
+                                            ? 'text-correction'
+                                            : 'text-muted-foreground',
+                                    )}
+                                >
+                                    {candidateToRemove ? '' : feedback}
+                                </p>
+                                {hasError && !candidateToRemove && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="h-11"
+                                        disabled={isBusy}
+                                        onClick={() =>
+                                            visitPage(lastPageRef.current)
+                                        }
+                                    >
+                                        <RefreshCw
+                                            aria-hidden="true"
+                                            className="size-4"
+                                        />
+                                        Muat ulang status
+                                    </Button>
+                                )}
+                            </div>
+
+                            {!canView ? (
+                                <div className="rounded-3xl border border-primary/15 bg-white p-6 shadow-sm sm:p-8">
+                                    <span className="flex size-12 items-center justify-center rounded-2xl bg-accent text-primary">
+                                        <LockKeyhole
+                                            aria-hidden="true"
+                                            className="size-6"
+                                        />
+                                    </span>
+                                    <h3 className="mt-4 text-xl font-bold">
+                                        {isForbidden
+                                            ? 'Akses daftar simpanan tidak tersedia'
+                                            : entitlement.status ===
+                                                'no_organization'
+                                              ? 'Organisasi perekrut belum aktif'
+                                              : 'Hak akses pencarian diperlukan'}
                                     </h3>
-                                    <p className="mx-auto mt-2 max-w-[46ch] text-xs leading-relaxed text-slate-600">
-                                        Tandai kandidat berbakat saat menelusuri
-                                        halaman Cari Talenta untuk menyimpannya
-                                        ke dalam daftar bookmark organisasi
-                                        Anda.
+                                    <p className="mt-3 max-w-prose text-sm leading-6 text-muted-foreground">
+                                        {isForbidden
+                                            ? 'Hak akses mungkin telah berubah. Data sebelumnya tidak ditampilkan. Muat ulang untuk memeriksa akses terbaru.'
+                                            : 'Daftar kandidat hanya tersedia bagi organisasi dengan hak akses Talent Portal aktif. Hubungi admin platform untuk memeriksa organisasi dan aktivasi akses.'}
                                     </p>
                                 </div>
-                                <Button
-                                    asChild
-                                    className="cursor-pointer rounded-xl bg-blue-600 px-5 text-xs font-semibold text-white shadow-xs hover:bg-blue-700"
+                            ) : isRefreshing && candidates.data.length === 0 ? (
+                                <div
+                                    aria-busy="true"
+                                    aria-label="Memuat koleksi kandidat"
                                 >
-                                    <Link href={talentSearch()} prefetch>
-                                        <Search className="mr-1.5 size-3.5" />
-                                        Jelajahi Cari Talenta
-                                    </Link>
-                                </Button>
-                            </div>
-                        )}
-
-                        {/* Saved Candidates Cards */}
-                        {!isPending && savedList.length > 0 && (
-                            <div className="grid gap-4">
-                                {savedList.map((candidate) => {
-                                    const availability = availabilityMeta(
-                                        candidate.availability_status,
-                                    );
-
-                                    return (
-                                        <article
+                                    <div
+                                        aria-hidden="true"
+                                        className="grid gap-5"
+                                    >
+                                        {[1, 2, 3].map((index) => (
+                                            <div
+                                                key={index}
+                                                className="rounded-3xl border border-border bg-white p-6"
+                                            >
+                                                <Skeleton className="h-4 w-1/3" />
+                                                <Skeleton className="mt-4 h-7 w-3/4" />
+                                                <Skeleton className="mt-4 h-4 w-full" />
+                                                <Skeleton className="mt-5 h-24 w-full rounded-2xl" />
+                                                <Skeleton className="mt-5 h-11 w-full rounded-xl" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : candidates.data.length === 0 ? (
+                                <div className="grid justify-items-start gap-5 rounded-3xl border border-dashed border-primary/20 bg-white p-6 shadow-sm sm:p-8">
+                                    <ArchiveArt className="w-28" />
+                                    <div>
+                                        <h3 className="text-xl font-bold sm:text-2xl">
+                                            {candidates.total > 0
+                                                ? 'Tidak ada kandidat pada halaman ini'
+                                                : 'Belum ada kandidat yang disimpan'}
+                                        </h3>
+                                        <p className="mt-3 max-w-prose text-sm leading-6 text-muted-foreground">
+                                            {candidates.total > 0
+                                                ? 'Isi koleksi mungkin telah berubah. Kembali ke halaman sebelumnya untuk melanjutkan peninjauan.'
+                                                : 'Simpan kandidat dari Cari Talenta agar timmu dapat menemukannya kembali. Menyimpan profil tidak mengirim permintaan kontak.'}
+                                        </p>
+                                    </div>
+                                    <Button asChild className="h-11">
+                                        <Link href={talentSearch()}>
+                                            <Search
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                            Cari talenta
+                                        </Link>
+                                    </Button>
+                                </div>
+                            ) : (
+                                <ul
+                                    aria-label="Kandidat tersimpan"
+                                    aria-busy={isRefreshing}
+                                    className="grid gap-5"
+                                >
+                                    {candidates.data.map((candidate) => (
+                                        <li
                                             key={candidate.id}
-                                            className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+                                            className="min-w-0"
                                         >
-                                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                                <div className="flex items-start gap-4">
-                                                    {/* Avatar Icon */}
-                                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-base font-bold text-white shadow-xs">
-                                                        <UserRound className="size-6" />
-                                                    </div>
+                                            <SavedCandidateCard
+                                                candidate={candidate}
+                                                disabled={isBusy}
+                                                onRemove={(button) => {
+                                                    removeTriggerRef.current =
+                                                        button;
+                                                    didRemoveRef.current = false;
+                                                    setHasError(false);
+                                                    setFeedback('');
+                                                    setCandidateToRemove(
+                                                        candidate,
+                                                    );
+                                                }}
+                                            />
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
 
-                                                    {/* Candidate Info */}
-                                                    <div>
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <span className="font-mono text-xs font-bold text-slate-400">
-                                                                FOLIO-
-                                                                {candidate.id}
-                                                            </span>
-                                                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                                                                <CheckCircle2
-                                                                    aria-hidden="true"
-                                                                    className="size-3 text-emerald-600"
-                                                                />
-                                                                Terverifikasi
-                                                            </span>
-                                                            <span
-                                                                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${availability.badgeColor}`}
-                                                            >
-                                                                <span
-                                                                    className={`size-1.5 rounded-full ${availability.dotColor}`}
-                                                                />
-                                                                {
-                                                                    availability.label
-                                                                }
-                                                            </span>
-                                                        </div>
-
-                                                        <h3 className="mt-2 text-lg font-bold tracking-tight text-slate-900 transition-colors group-hover:text-blue-600">
-                                                            {candidate.headline ??
-                                                                'Talenta Terverifikasi'}
-                                                        </h3>
-
-                                                        {candidate.institution_name && (
-                                                            <div className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-600">
-                                                                <Building2
-                                                                    aria-hidden="true"
-                                                                    className="size-3.5 text-slate-400"
-                                                                />
-                                                                <span>
-                                                                    {
-                                                                        candidate.institution_name
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Action Buttons */}
-                                                <div className="flex shrink-0 items-center gap-2 sm:self-start">
-                                                    <Button
-                                                        asChild
-                                                        className="h-10 cursor-pointer rounded-xl bg-blue-600 px-4 text-xs font-semibold text-white shadow-xs transition-all hover:bg-blue-700"
-                                                    >
-                                                        <Link
-                                                            href={showCandidate(
-                                                                candidate.id,
-                                                            )}
-                                                            prefetch
-                                                        >
-                                                            Lihat profil
-                                                            <ChevronRight
-                                                                aria-hidden="true"
-                                                                className="ml-1 size-3.5"
-                                                            />
-                                                        </Link>
-                                                    </Button>
-
-                                                    <Button
-                                                        aria-label={`Hapus ${candidate.headline ?? 'kandidat'} dari simpanan`}
-                                                        className="h-10 cursor-pointer rounded-xl border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100 hover:text-rose-800"
-                                                        onClick={() =>
-                                                            handleUnsave(
-                                                                candidate.id,
-                                                            )
-                                                        }
-                                                        size="sm"
-                                                        type="button"
-                                                        variant="outline"
-                                                    >
-                                                        <Trash2 className="mr-1 size-3.5 text-rose-600" />
-                                                        Hapus
-                                                    </Button>
-                                                </div>
-                                            </div>
-
-                                            {/* Bio */}
-                                            {candidate.bio && (
-                                                <p className="mt-3 text-xs leading-relaxed text-slate-600">
-                                                    {candidate.bio}
-                                                </p>
-                                            )}
-
-                                            {/* Skills & Badges */}
-                                            <div className="mt-4 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-3.5">
-                                                {candidate.skills.map(
-                                                    (skill) => (
-                                                        <span
-                                                            key={skill}
-                                                            className="rounded-lg border border-slate-200/80 bg-slate-50/80 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:border-blue-200 hover:bg-blue-50/50 hover:text-blue-800"
-                                                        >
-                                                            {skill}
-                                                        </span>
-                                                    ),
-                                                )}
-
-                                                {candidate.badges.map(
-                                                    (badge) => (
-                                                        <span
-                                                            key={badge}
-                                                            className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-xs font-semibold text-amber-900"
-                                                        >
-                                                            <Award
-                                                                aria-hidden="true"
-                                                                className="size-3 text-amber-600"
-                                                            />
-                                                            {badge}
-                                                        </span>
-                                                    ),
-                                                )}
-                                            </div>
-                                        </article>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {/* Pagination */}
-                        {candidates.last_page > 1 && (
-                            <nav
-                                aria-label="Paginasi kandidat tersimpan"
-                                className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs"
-                            >
-                                <Button
-                                    className="cursor-pointer rounded-xl text-xs font-semibold"
-                                    disabled={candidates.current_page <= 1}
-                                    onClick={() =>
-                                        router.get(
-                                            savedCandidates(),
-                                            {
-                                                page:
+                            {canView &&
+                                (candidates.last_page > 1 ||
+                                    candidates.current_page > 1) && (
+                                    <nav
+                                        aria-label="Paginasi kandidat tersimpan"
+                                        className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-1 pt-5"
+                                    >
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="h-11"
+                                            disabled={
+                                                isBusy ||
+                                                candidates.current_page <= 1
+                                            }
+                                            onClick={() =>
+                                                visitPage(
                                                     candidates.current_page - 1,
-                                            },
-                                            { preserveScroll: true },
-                                        )
-                                    }
-                                    type="button"
-                                    variant="outline"
-                                >
-                                    <ChevronLeft
-                                        aria-hidden="true"
-                                        className="mr-1 size-3.5"
-                                    />
-                                    Sebelumnya
-                                </Button>
-
-                                <span className="text-xs font-semibold text-slate-600">
-                                    Halaman {candidates.current_page} dari{' '}
-                                    {candidates.last_page}
-                                </span>
-
-                                <Button
-                                    className="cursor-pointer rounded-xl text-xs font-semibold"
-                                    disabled={
-                                        candidates.current_page >=
-                                        candidates.last_page
-                                    }
-                                    onClick={() =>
-                                        router.get(
-                                            savedCandidates(),
-                                            {
-                                                page:
+                                                )
+                                            }
+                                        >
+                                            <ChevronLeft
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                            Sebelumnya
+                                        </Button>
+                                        <span className="order-first w-full text-center text-sm text-muted-foreground sm:order-none sm:w-auto">
+                                            Halaman {candidates.current_page}
+                                        </span>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="h-11"
+                                            disabled={
+                                                isBusy ||
+                                                candidates.current_page >=
+                                                    candidates.last_page
+                                            }
+                                            onClick={() =>
+                                                visitPage(
                                                     candidates.current_page + 1,
-                                            },
-                                            { preserveScroll: true },
-                                        )
-                                    }
-                                    type="button"
-                                    variant="outline"
-                                >
-                                    Berikutnya
-                                    <ChevronRight
-                                        aria-hidden="true"
-                                        className="ml-1 size-3.5"
-                                    />
-                                </Button>
-                            </nav>
-                        )}
+                                                )
+                                            }
+                                        >
+                                            Berikutnya
+                                            <ChevronRight
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                        </Button>
+                                    </nav>
+                                )}
+                        </section>
+                        <SavedContextRail
+                            total={candidates.total}
+                            canView={canView}
+                            status={currentStatus}
+                        />
                     </div>
                 </div>
             </AppPage>
+
+            <Dialog
+                open={candidateToRemove !== null}
+                onOpenChange={(open) => {
+                    if (!open && !isBusy) {
+                        setCandidateToRemove(null);
+                    }
+                }}
+            >
+                <DialogContent
+                    closeButtonDisabled={isBusy}
+                    onEscapeKeyDown={(event) => {
+                        if (isBusy) {
+                            event.preventDefault();
+                        }
+                    }}
+                    onInteractOutside={(event) => {
+                        if (isBusy) {
+                            event.preventDefault();
+                        }
+                    }}
+                    onCloseAutoFocus={(event) => {
+                        event.preventDefault();
+
+                        if (didRemoveRef.current) {
+                            listHeadingRef.current?.focus();
+                        } else if (removeTriggerRef.current?.isConnected) {
+                            removeTriggerRef.current.focus();
+                        } else {
+                            pageHeadingRef.current?.focus();
+                        }
+
+                        didRemoveRef.current = false;
+                    }}
+                >
+                    <DialogHeader>
+                        <DialogTitle>Hapus dari daftar simpanan?</DialogTitle>
+                        <DialogDescription>
+                            Kandidat akan dihapus dari koleksi organisasi.
+                            Profil mahasiswa tidak dihapus dan dapat disimpan
+                            kembali dari Cari Talenta.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="rounded-2xl border border-primary/10 bg-accent/60 p-4">
+                        <p className="text-xs font-semibold text-muted-foreground">
+                            Kandidat yang dipilih
+                        </p>
+                        <p className="mt-2 text-base font-semibold break-words">
+                            {candidateToRemove?.headline ||
+                                'Portofolio mahasiswa'}
+                        </p>
+                    </div>
+                    <p
+                        role={hasError ? 'alert' : 'status'}
+                        className={cn(
+                            'min-h-5 text-sm leading-6',
+                            hasError
+                                ? 'text-correction'
+                                : 'text-muted-foreground',
+                        )}
+                    >
+                        {candidateToRemove ? feedback : ''}
+                    </p>
+                    <DialogFooter>
+                        {hasError && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="h-11"
+                                disabled={isBusy}
+                                onClick={() => {
+                                    setCandidateToRemove(null);
+                                    visitPage();
+                                }}
+                            >
+                                <RefreshCw
+                                    aria-hidden="true"
+                                    className="size-4"
+                                />
+                                Muat ulang status
+                            </Button>
+                        )}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="h-11"
+                            disabled={isBusy}
+                            onClick={() => setCandidateToRemove(null)}
+                        >
+                            Batalkan
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            className="h-11"
+                            disabled={isBusy || !canView}
+                            onClick={handleUnsave}
+                        >
+                            {removingId !== null ? (
+                                <Spinner aria-hidden="true" />
+                            ) : (
+                                <Trash2 aria-hidden="true" className="size-4" />
+                            )}
+                            {removingId !== null
+                                ? 'Menghapus'
+                                : 'Hapus simpanan'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
 
 SavedCandidates.layout = {
     breadcrumbs: [
-        {
-            title: 'Talent Portal',
-            href: talentSearch(),
-        },
-        {
-            title: 'Kandidat Tersimpan',
-            href: savedCandidates(),
-        },
+        { title: 'Talent Portal', href: talentSearch() },
+        { title: 'Kandidat tersimpan', href: savedCandidates() },
     ],
 };

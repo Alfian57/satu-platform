@@ -15,6 +15,8 @@ final readonly class TaskWorkspaceFilters
         public ?TaskPriority $priority,
         public int $perPage,
         public int $page,
+        public string $scope = 'all',
+        public ?int $taskId = null,
     ) {}
 
     /**
@@ -36,6 +38,8 @@ final readonly class TaskWorkspaceFilters
                 : null,
             perPage: (int) ($validated['per_page'] ?? 20),
             page: (int) ($validated['page'] ?? 1),
+            scope: (string) ($validated['scope'] ?? 'all'),
+            taskId: isset($validated['task']) ? (int) $validated['task'] : null,
         );
     }
 
@@ -46,6 +50,8 @@ final readonly class TaskWorkspaceFilters
     {
         return [
             'q' => $this->search,
+            'scope' => $this->scope,
+            'task' => $this->taskId,
             'status' => $this->status?->value,
             'priority' => $this->priority?->value,
             'per_page' => $this->perPage,
@@ -59,6 +65,8 @@ final readonly class TaskWorkspaceFilters
     {
         return [
             'q' => $this->search ?? '',
+            'scope' => $this->scope,
+            'task' => $this->taskId,
             'status' => $this->status?->value,
             'priority' => $this->priority?->value,
             'per_page' => $this->perPage,

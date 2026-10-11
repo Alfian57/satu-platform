@@ -126,7 +126,7 @@ class Recommendation extends Model implements InstitutionOwned
 
     public function isStaleAgainst(?int $currentVersionId): bool
     {
-        return $currentVersionId === null || $this->scoreVersionId() !== $currentVersionId;
+        return $currentVersionId === null || $this->scoreVersionId() !== $currentVersionId || $this->expires_at?->isPast() === true;
     }
 
     /**

@@ -1,10 +1,19 @@
 export type DashboardActionKey =
-    'onboarding' | 'projects' | 'project' | 'refresh';
+    | 'onboarding'
+    | 'profile'
+    | 'projects'
+    | 'project'
+    | 'workspace'
+    | 'contribution'
+    | 'refresh';
 
 export type DashboardAction = {
     key: DashboardActionKey;
     label: string;
     projectId?: number;
+    taskId?: number;
+    contributionId?: number;
+    view?: 'opportunities' | 'mine';
 };
 
 export type DashboardStatusTone =
@@ -80,6 +89,8 @@ export type DashboardRecommendation = {
     title: string;
     role: string;
     reasons: string[];
+    reasonTypes?: string[];
+    limitations?: string[];
     scoreVersion: string | null;
     isStale: boolean;
     createdAt: string;
@@ -90,16 +101,24 @@ export type DashboardRecommendationRegion =
     | {
           state: 'ready';
           recommendation: DashboardRecommendation;
+          canRefresh?: boolean;
       }
     | {
           state: 'loading';
           announcement: string;
       }
     | {
-          state: 'empty' | 'error' | 'forbidden';
+          state:
+              | 'empty'
+              | 'error'
+              | 'forbidden'
+              | 'processing'
+              | 'stale'
+              | 'unavailable';
           title: string;
           description: string;
           action?: DashboardAction | null;
+          canRefresh?: boolean;
       };
 
 export type DashboardNotice = {

@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('matching:reconcile-refreshes')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
         $schedule->command('integration:alert-sync-anomalies')
             ->everyFifteenMinutes()
             ->withoutOverlapping()

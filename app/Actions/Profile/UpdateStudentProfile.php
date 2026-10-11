@@ -6,6 +6,7 @@ namespace App\Actions\Profile;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Actions\Portfolio\RebuildTalentCandidateProjection;
+use App\Events\MatchingInputsChanged;
 use App\Models\Institution;
 use App\Models\ProfileInterest;
 use App\Models\ProfileSkill;
@@ -21,6 +22,7 @@ final class UpdateStudentProfile
         private readonly AuditRecorder $audit,
         private readonly EnsureStudentProfileIsFresh $ensureFresh,
         private readonly RebuildTalentCandidateProjection $rebuildProjection,
+        private readonly ReplaceStudentProfileAvailability $replaceAvailability,
     ) {}
 
     /**
@@ -37,7 +39,7 @@ final class UpdateStudentProfile
                 ->lockForUpdate()
                 ->whereKey($studentProfile->getKey())
                 ->firstOrFail();
-            $this->ensureFresh->handle($profile, $data['expected_updated_at'] ?? null);
+            $this->ensureFresh->handle($profile, $data['expected_updated_at'] ?? null, $data['expected_profile_revision'] ?? null);
             $before = $this->summary($profile);
             $changedFields = [];
 
@@ -73,9 +75,15 @@ final class UpdateStudentProfile
                 $changedFields[] = 'interests';
             }
 
+            if (array_key_exists('availability_windows', $data)) {
+                $this->replaceAvailability->handleFromProfile($actor, $profile, $data);
+                $changedFields[] = 'availability_windows';
+            }
+
             $changedFields = array_values(array_unique($changedFields));
 
             if ($changedFields !== []) {
+                $profile->touch();
                 $after = $this->summary($profile);
                 $institution = Institution::query()->findOrFail($profile->institution_id);
                 $this->audit->record(
@@ -98,6 +106,9 @@ final class UpdateStudentProfile
                 );
 
                 $this->rebuildProjection->handle($actor, $institution);
+                if (array_intersect($changedFields, ['skills', 'interests', 'availability_windows']) !== []) {
+                    MatchingInputsChanged::dispatch($profile->institution_id, $profile->user_id);
+                }
             }
 
             return $profile->refresh();

@@ -11,6 +11,7 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskAssignment;
 use App\Models\User;
+use App\Support\Task\TaskSnapshot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -20,11 +21,11 @@ final class UnassignTask
         private readonly AuditRecorder $audit,
     ) {}
 
-    public function handle(User $actor, Task $task, User $assignee): ?TaskAssignment
+    public function handle(User $actor, Task $task, User $assignee, string $expectedRevision): ?TaskAssignment
     {
         Gate::forUser($actor)->authorize('unassign', $task);
 
-        return DB::transaction(function () use ($actor, $task, $assignee): ?TaskAssignment {
+        return DB::transaction(function () use ($actor, $task, $assignee, $expectedRevision): ?TaskAssignment {
             $lockedProject = Project::query()
                 ->lockForUpdate()
                 ->whereKey($task->project_id)
@@ -35,6 +36,7 @@ final class UnassignTask
                 ->firstOrFail();
 
             Gate::forUser($actor)->authorize('unassign', $lockedTask);
+            TaskSnapshot::ensureFresh($lockedTask, $expectedRevision);
 
             $assignment = TaskAssignment::query()
                 ->lockForUpdate()
@@ -66,13 +68,14 @@ final class UnassignTask
 
             $assignment->delete();
 
+            $lockedTask->unsetRelation('assignments');
             WorkspaceTaskChanged::dispatch(
                 institutionId: (int) $lockedProject->institution_id,
                 projectId: (int) $lockedProject->getKey(),
                 resourceId: (int) $lockedTask->getKey(),
                 operation: 'task.unassigned',
-                version: $lockedTask->updated_at->toIso8601String(),
-                occurredAt: now()->toIso8601String(),
+                version: TaskSnapshot::revision($lockedTask),
+                occurredAt: now()->toISOString(),
             );
 
             return $assignment;

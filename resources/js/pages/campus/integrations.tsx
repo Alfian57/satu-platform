@@ -2,7 +2,8 @@ import { Head, router } from '@inertiajs/react';
 import {
     CheckCircle2,
     Clock,
-    ExternalLink,
+    History,
+    LoaderCircle,
     RefreshCw,
     RotateCcw,
     ServerCog,
@@ -10,10 +11,14 @@ import {
     Sparkles,
     TimerReset,
 } from 'lucide-react';
-import { useState, useTransition } from 'react';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import { AppPage } from '@/components/app-page';
-import { Badge } from '@/components/ui/badge';
+import {
+    CampusOperationHeader,
+    CampusTechnicalDetails,
+    campusControlClass,
+} from '@/components/campus-operation-layout';
+import { DashboardArchiveArt } from '@/components/dashboard-archive-art';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -23,7 +28,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { index as integrationsIndex } from '@/routes/campus/integrations';
 import { reconcile, retry } from '@/routes/campus/integrations/syncs';
@@ -98,48 +102,52 @@ const retryableStatuses = new Set([
     'validation_error',
     'conflict',
 ]);
-
-function statusTone(status: string) {
-    switch (status) {
-        case 'succeeded':
-        case 'reconciled':
-            return 'verified';
-        case 'queued':
-        case 'sending':
-            return 'muted';
-        case 'retrying':
-        case 'conflict':
-            return 'pending';
-        default:
-            return 'correction';
-    }
-}
+const reconcilableStatuses = new Set(['dead', 'conflict', 'timeout', 'failed']);
+const statusLabels: Record<string, string> = {
+    queued: 'Dalam antrean',
+    sending: 'Sedang dikirim',
+    succeeded: 'Berhasil',
+    failed: 'Gagal',
+    retrying: 'Mencoba ulang',
+    dead: 'Percobaan dihentikan',
+    timeout: 'Waktu habis',
+    validation_error: 'Validasi gagal',
+    conflict: 'Konflik',
+    reconciled: 'Direkonsiliasi',
+};
 
 function StatusBadge({ status }: { status: string }) {
-    const tone = statusTone(status);
+    const verified = status === 'succeeded' || status === 'reconciled';
+    const waiting =
+        status === 'queued' || status === 'sending' || status === 'retrying';
+    const Icon = verified ? CheckCircle2 : waiting ? Clock : ShieldAlert;
 
     return (
-        <Badge
-            variant="outline"
+        <span
             className={cn(
-                'gap-1.5 border font-label text-label font-semibold',
-                tone === 'verified' &&
-                    'border-verified/30 bg-verified-subtle text-verified-subtle-foreground',
-                tone === 'pending' &&
-                    'border-pending/30 bg-pending-subtle text-pending-subtle-foreground',
-                tone === 'correction' &&
-                    'border-correction/30 bg-correction-subtle text-correction-subtle-foreground',
-                tone === 'muted' &&
-                    'border-border bg-muted/50 text-muted-foreground',
+                'inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+                verified
+                    ? 'border-verified/30 bg-verified-subtle text-verified-subtle-foreground'
+                    : waiting
+                      ? 'border-pending/30 bg-pending-subtle text-pending-subtle-foreground'
+                      : 'border-correction/30 bg-correction-subtle text-correction-subtle-foreground',
             )}
         >
-            <span
-                aria-hidden="true"
-                className="size-1.5 rounded-full bg-current"
-            />
-            {status}
-        </Badge>
+            <Icon aria-hidden="true" className="size-3.5 shrink-0" />
+            {statusLabels[status] ?? status}
+        </span>
     );
+}
+
+function syncDate(value: string | null) {
+    if (!value || Number.isNaN(new Date(value).getTime())) {
+        return 'Belum tersedia';
+    }
+
+    return new Intl.DateTimeFormat('id-ID', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(new Date(value));
 }
 
 function ConnectionOverview({
@@ -147,299 +155,223 @@ function ConnectionOverview({
 }: {
     connections: ConnectionItem[];
 }) {
-    if (connections.length === 0) {
-        return (
-            <section
-                aria-labelledby="connections-heading"
-                className="rounded-xl border border-border/80 bg-card p-6"
-            >
-                <div className="flex items-start gap-3.5">
-                    <span className="rounded-lg bg-accent p-2.5 text-primary">
-                        <ServerCog aria-hidden="true" className="size-5" />
-                    </span>
+    return (
+        <section
+            aria-labelledby="connections-heading"
+            className="@container min-w-0"
+        >
+            <h2 id="connections-heading" className="mb-3 text-lg font-bold">
+                Koneksi akademik
+            </h2>
+            {connections.length === 0 ? (
+                <div className="flex items-start gap-3 rounded-3xl border border-border bg-white p-5 shadow-sm">
+                    <ServerCog
+                        aria-hidden="true"
+                        className="mt-1 size-5 shrink-0 text-primary"
+                    />
                     <div>
-                        <h2
-                            id="connections-heading"
-                            className="text-title font-bold"
-                        >
+                        <h3 className="font-semibold">
                             Belum ada koneksi akademik
-                        </h2>
-                        <p className="mt-1 max-w-[65ch] text-sm leading-6 text-muted-foreground">
-                            Anda dapat membuat koneksi sandbox untuk mulai
-                            memetakan aktivitas terverifikasi menjadi kredit.
+                        </h3>
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                            Status sinkronisasi tersedia setelah koneksi kampus
+                            dikonfigurasi melalui alur yang diizinkan. Halaman
+                            ini tidak membuat koneksi baru.
                         </p>
                     </div>
                 </div>
-            </section>
-        );
-    }
-
-    return (
-        <section aria-labelledby="connections-heading">
-            <h2 id="connections-heading" className="mb-3 text-title font-bold">
-                Koneksi akademik
-            </h2>
-            <div className="grid gap-3 md:grid-cols-2">
-                {connections.map((connection) => (
-                    <div
-                        key={connection.id}
-                        className="rounded-xl border border-border/80 bg-card p-5"
-                    >
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                                <p className="truncate font-semibold">
-                                    {connection.provider_key}
-                                </p>
-                                <p className="mt-0.5 font-label text-label text-muted-foreground">
-                                    {connection.sync_count} sync
-                                </p>
-                            </div>
-                            <Badge
-                                variant={
-                                    connection.mode === 'real'
-                                        ? 'default'
-                                        : 'secondary'
-                                }
-                                className={cn(
-                                    'gap-1.5 font-label text-label font-semibold',
-                                    connection.mode === 'sandbox' &&
-                                        'border border-pending/30 bg-pending-subtle text-pending-subtle-foreground',
-                                )}
-                            >
-                                {connection.mode === 'sandbox' ? (
+            ) : (
+                <div className="grid gap-3 @min-[42rem]:grid-cols-2 @min-[72rem]:grid-cols-3">
+                    {connections.map((connection) => (
+                        <article
+                            key={connection.id}
+                            className="min-w-0 rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-5"
+                        >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div className="flex min-w-0 items-start gap-3">
+                                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-primary">
+                                        <ServerCog
+                                            aria-hidden="true"
+                                            className="size-5"
+                                        />
+                                    </span>
+                                    <div className="min-w-0">
+                                        <h3 className="font-bold wrap-anywhere">
+                                            {connection.provider_key}
+                                        </h3>
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            {connection.sync_count} sinkronisasi
+                                            tercatat
+                                        </p>
+                                    </div>
+                                </div>
+                                <span
+                                    className={cn(
+                                        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+                                        connection.mode === 'sandbox'
+                                            ? 'border-pending/30 bg-pending-subtle text-pending-subtle-foreground'
+                                            : 'border-primary/15 bg-accent text-primary',
+                                    )}
+                                >
                                     <Sparkles
                                         aria-hidden="true"
-                                        className="size-3"
+                                        className="size-3.5"
+                                    />
+                                    {connection.mode === 'sandbox'
+                                        ? 'Sandbox (uji coba)'
+                                        : connection.mode_label}
+                                </span>
+                            </div>
+                            <p className="mt-4 flex items-center gap-2 border-t border-border pt-3 text-sm text-muted-foreground">
+                                {connection.status === 'connected' ? (
+                                    <CheckCircle2
+                                        aria-hidden="true"
+                                        className="size-4 shrink-0 text-verified"
                                     />
                                 ) : (
-                                    <ExternalLink
+                                    <ShieldAlert
                                         aria-hidden="true"
-                                        className="size-3"
+                                        className="size-4 shrink-0 text-pending-subtle-foreground"
                                     />
                                 )}
-                                {connection.mode_label}
-                            </Badge>
-                        </div>
-                        <div className="mt-4 flex items-center gap-2 border-t border-border/80 pt-3">
-                            <StatusBadge status={connection.status} />
-                            <span className="font-label text-label text-muted-foreground">
                                 {connection.status_label}
-                            </span>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                            </p>
+                        </article>
+                    ))}
+                </div>
+            )}
         </section>
     );
 }
 
 function SyncTable({
     syncs,
+    disabled,
     onRetry,
     onReconcile,
     onOpenTimeline,
 }: {
     syncs: SyncItem[];
+    disabled: boolean;
     onRetry: (sync: SyncItem) => void;
     onReconcile: (sync: SyncItem) => void;
     onOpenTimeline: (sync: SyncItem) => void;
 }) {
     return (
-        <div
-            className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm"
-            data-test="sync-ledger"
-        >
-            <div
-                aria-hidden="true"
-                className="hidden grid-cols-[minmax(7rem,0.7fr)_minmax(6rem,0.7fr)_7rem_minmax(9rem,1fr)_6.5rem_8.5rem] border-b border-border/80 bg-muted/50 font-label text-[11px] font-semibold tracking-wider text-muted-foreground uppercase lg:grid"
-            >
-                <span className="px-4 py-2.5">Sumber</span>
-                <span className="border-l border-border/80 px-4 py-2.5">
-                    Versi mapping
-                </span>
-                <span className="border-l border-border/80 px-4 py-2.5">
-                    Status
-                </span>
-                <span className="border-l border-border/80 px-4 py-2.5">
-                    Pesan
-                </span>
-                <span className="border-l border-border/80 px-4 py-2.5">
-                    Coba ke
-                </span>
-                <span className="border-l border-border/80 px-4 py-2.5" />
-            </div>
-
-            <ul className="divide-y divide-border/80">
+        <div className="@container min-w-0" data-test="sync-ledger">
+            <ul className="grid gap-4 @min-[56rem]:grid-cols-2">
                 {syncs.map((sync) => (
                     <li
                         key={sync.id}
-                        className="border-b border-border/80 last:border-b-0"
+                        className="min-w-0 rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-5"
                     >
-                        <div className="grid gap-1 p-4 lg:grid-cols-[minmax(7rem,0.7fr)_minmax(6rem,0.7fr)_7rem_minmax(9rem,1fr)_6.5rem_8.5rem] lg:items-center lg:gap-0">
-                            <div className="grid min-w-0 gap-1 sm:grid-cols-[5.5rem_minmax(0,1fr)] sm:gap-3">
-                                <span className="font-label text-label font-semibold text-muted-foreground sm:hidden">
-                                    Sumber
-                                </span>
-                                <span className="min-w-0 font-semibold wrap-anywhere">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0">
+                                <p className="text-xs font-semibold text-primary">
+                                    Berkas SY-{sync.id}
+                                </p>
+                                <h3 className="mt-1 text-xl font-bold wrap-anywhere">
                                     {sync.source}
-                                </span>
+                                </h3>
                             </div>
-                            <div className="grid min-w-0 gap-1 sm:grid-cols-[5.5rem_minmax(0,1fr)] sm:gap-3 lg:border-l lg:border-border/80 lg:px-4">
-                                <span className="font-label text-label font-semibold text-muted-foreground sm:hidden">
-                                    Versi
-                                </span>
-                                <span className="min-w-0 font-label text-label text-muted-foreground">
-                                    {sync.mapping_version}
-                                </span>
+                            <StatusBadge status={sync.status} />
+                        </div>
+                        <dl className="mt-4 grid gap-3 border-y border-border py-3 sm:grid-cols-2">
+                            <div className="min-w-0">
+                                <dt className="text-xs text-muted-foreground">
+                                    Versi pemetaan
+                                </dt>
+                                <dd className="mt-1 text-sm font-semibold wrap-anywhere">
+                                    {sync.mapping_version || 'Belum tersedia'}
+                                </dd>
                             </div>
-                            <div className="grid min-w-0 gap-1 sm:grid-cols-[5.5rem_minmax(0,1fr)] sm:gap-3 lg:border-l lg:border-border/80 lg:px-4">
-                                <span className="font-label text-label font-semibold text-muted-foreground sm:hidden">
-                                    Status
-                                </span>
-                                <span className="flex items-center">
-                                    <StatusBadge status={sync.status} />
-                                </span>
-                            </div>
-                            <div className="grid min-w-0 gap-1 sm:grid-cols-[5.5rem_minmax(0,1fr)] sm:gap-3 lg:border-l lg:border-border/80 lg:px-4">
-                                <span className="font-label text-label font-semibold text-muted-foreground sm:hidden">
-                                    Pesan
-                                </span>
-                                <span className="min-w-0 text-sm leading-5 wrap-anywhere text-muted-foreground">
-                                    {sync.error ??
-                                        (sync.external_reference
-                                            ? `Referensi ${sync.external_reference}`
-                                            : 'Belum ada pesan')}
-                                </span>
-                            </div>
-                            <div className="grid min-w-0 gap-1 sm:grid-cols-[5.5rem_minmax(0,1fr)] sm:gap-3 lg:border-l lg:border-border/80 lg:px-4">
-                                <span className="font-label text-label font-semibold text-muted-foreground sm:hidden">
-                                    Coba ke
-                                </span>
-                                <span className="font-label text-label text-muted-foreground">
+                            <div className="min-w-0">
+                                <dt className="text-xs text-muted-foreground">
+                                    Jumlah percobaan
+                                </dt>
+                                <dd className="mt-1 text-sm font-semibold">
                                     {sync.attempts}
-                                </span>
+                                </dd>
                             </div>
-                            <div className="flex flex-wrap items-center gap-2 pt-2 lg:justify-end lg:border-l lg:border-border/80 lg:px-4 lg:pt-0">
+                            <div className="min-w-0">
+                                <dt className="text-xs text-muted-foreground">
+                                    Koneksi
+                                </dt>
+                                <dd className="mt-1 text-sm wrap-anywhere">
+                                    {sync.connection_provider ??
+                                        'Belum tersedia'}
+                                </dd>
+                            </div>
+                            <div className="min-w-0">
+                                <dt className="text-xs text-muted-foreground">
+                                    Percobaan terakhir
+                                </dt>
+                                <dd className="mt-1 text-sm">
+                                    {syncDate(sync.last_attempt_at)}
+                                </dd>
+                            </div>
+                        </dl>
+                        <div className="mt-3 min-w-0 rounded-2xl bg-accent/50 p-3">
+                            <p className="text-xs font-semibold text-primary">
+                                Pesan proses
+                            </p>
+                            <p className="mt-1 text-sm leading-6 wrap-anywhere text-muted-foreground">
+                                {sync.error ??
+                                    (sync.external_reference
+                                        ? `Referensi ${sync.external_reference}`
+                                        : sync.status === 'queued'
+                                          ? 'Menunggu pemrosesan. Belum ada hasil dari penyedia.'
+                                          : 'Belum ada pesan proses.')}
+                            </p>
+                        </div>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                disabled={disabled}
+                                onClick={() => onOpenTimeline(sync)}
+                                className="min-h-11 text-primary"
+                            >
+                                <History
+                                    aria-hidden="true"
+                                    className="size-4"
+                                />
+                                Riwayat
+                            </Button>
+                            {retryableStatuses.has(sync.status) && (
                                 <Button
                                     type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-primary"
-                                    onClick={() => onOpenTimeline(sync)}
+                                    variant="outline"
+                                    disabled={disabled}
+                                    onClick={() => onRetry(sync)}
+                                    className="min-h-11"
                                 >
-                                    <Clock
+                                    <RefreshCw
                                         aria-hidden="true"
-                                        className="size-3.5"
+                                        className="size-4"
                                     />
-                                    Riwayat
+                                    Ulangi
                                 </Button>
-                                {retryableStatuses.has(sync.status) && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-primary/40 text-primary"
-                                        onClick={() => onRetry(sync)}
-                                    >
-                                        <RefreshCw
-                                            aria-hidden="true"
-                                            className="size-3.5"
-                                        />
-                                        Ulangi
-                                    </Button>
-                                )}
-                                {(sync.status === 'dead' ||
-                                    sync.status === 'conflict' ||
-                                    sync.status === 'timeout' ||
-                                    sync.status === 'failed') && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => onReconcile(sync)}
-                                    >
-                                        <TimerReset
-                                            aria-hidden="true"
-                                            className="size-3.5"
-                                        />
-                                        Rekonsiliasi
-                                    </Button>
-                                )}
-                            </div>
+                            )}
+                            {reconcilableStatuses.has(sync.status) && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={disabled}
+                                    onClick={() => onReconcile(sync)}
+                                    className="min-h-11"
+                                >
+                                    <TimerReset
+                                        aria-hidden="true"
+                                        className="size-4"
+                                    />
+                                    Rekonsiliasi
+                                </Button>
+                            )}
                         </div>
                     </li>
                 ))}
             </ul>
-        </div>
-    );
-}
-
-function SyncLoading() {
-    return (
-        <div
-            aria-busy="true"
-            aria-live="polite"
-            className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm"
-            data-test="sync-loading"
-            role="status"
-        >
-            <span className="sr-only">Memuat antrean sync akademik.</span>
-            <div aria-hidden="true" className="grid">
-                {[0, 1, 2].map((index) => (
-                    <div
-                        key={index}
-                        className="grid grid-cols-[minmax(0,1fr)_6.5rem] gap-4 border-b border-border/80 px-4 py-4 last:border-b-0"
-                    >
-                        <div className="grid gap-2">
-                            <Skeleton className="h-4 w-2/3" />
-                            <Skeleton className="h-4 w-1/3" />
-                        </div>
-                        <Skeleton className="h-6 w-16 self-center" />
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-function SyncEmpty() {
-    return (
-        <div
-            className="flex flex-col items-start gap-4 rounded-xl border border-border/80 bg-card px-5 py-8 shadow-sm"
-            data-test="sync-empty"
-        >
-            <span className="rounded-lg bg-accent p-2.5 text-primary">
-                <ShieldAlert aria-hidden="true" className="size-5" />
-            </span>
-            <div>
-                <p className="font-semibold">Belum ada riwayat sync</p>
-                <p className="mt-1 max-w-[65ch] text-sm leading-6 text-muted-foreground">
-                    Ketika aktivitas terverifikasi dipetakan, status dan hasil
-                    sinkronisasi akan muncul di sini.
-                </p>
-            </div>
-        </div>
-    );
-}
-
-function Forbidden() {
-    return (
-        <div
-            className="flex flex-col items-start gap-4 rounded-xl border border-correction/30 bg-correction-subtle px-5 py-8"
-            data-test="integrations-forbidden"
-        >
-            <span className="rounded-lg bg-card p-2.5 text-correction">
-                <ShieldAlert aria-hidden="true" className="size-5" />
-            </span>
-            <div>
-                <p className="font-semibold text-correction-subtle-foreground">
-                    Anda belum memiliki akses integrasi akademik
-                </p>
-                <p className="mt-1 max-w-[65ch] text-sm leading-6 text-correction-subtle-foreground">
-                    Hubungi admin platform untuk mendapatkan akses operator
-                    kampus.
-                </p>
-            </div>
         </div>
     );
 }
@@ -451,7 +383,8 @@ export default function AcademicIntegrations({
     filters,
     forbidden,
 }: Props) {
-    const [isPending, startTransition] = useTransition();
+    const [isPending, setPending] = useState(false);
+    const [processing, setProcessing] = useState(false);
     const [activeSync, setActiveSync] = useState<SyncItem | null>(null);
     const [confirmingRetry, setConfirmingRetry] = useState<SyncItem | null>(
         null,
@@ -463,370 +396,596 @@ export default function AcademicIntegrations({
     const [connectionFilter, setConnectionFilter] = useState(
         String(filters.connection),
     );
+    const [feedback, setFeedback] = useState<string | null>(null);
+    const [reasonError, setReasonError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+    const [accessUnavailable, setAccessUnavailable] = useState(false);
+    const busy = isPending || processing;
+    const unavailable = forbidden || accessUnavailable || institution === null;
 
-    function applyFilters() {
-        if (institution === null) {
+    function requestFailure(status?: number) {
+        if (status === 403 || status === 404) {
+            setAccessUnavailable(true);
+            setConfirmingRetry(null);
+            setConfirmingReconcile(null);
+            setActiveSync(null);
+        }
+
+        setFeedback(
+            'Hasil request belum dapat dikonfirmasi. Periksa koneksi atau akses, lalu muat ulang sebelum mencoba kembali.',
+        );
+
+        return false;
+    }
+
+    function applyFilters(page = 1) {
+        if (!institution || busy) {
             return;
         }
 
-        startTransition(() => {
-            router.get(
-                integrationsIndex({ institution: institution.id }).url,
-                {
-                    status: statusFilter,
-                    connection: connectionFilter,
+        setPending(true);
+        setFeedback(null);
+        setSuccess(null);
+        router.get(
+            integrationsIndex({ institution: institution.id }).url,
+            { status: statusFilter, connection: connectionFilter, page },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onSuccess: () => {
+                    setAccessUnavailable(false);
+                    setActiveSync(null);
                 },
-                {
-                    preserveState: true,
-                    replace: true,
-                },
-            );
-        });
+                onError: () =>
+                    setFeedback(
+                        'Antrean belum diperbarui. Periksa filter dan coba lagi.',
+                    ),
+                onHttpException: (response) => requestFailure(response.status),
+                onNetworkError: () => requestFailure(),
+                onFinish: () => setPending(false),
+            },
+        );
     }
 
-    function goToPage(page: number) {
-        if (institution === null) {
+    function submitCommand(kind: 'retry' | 'reconcile') {
+        const sync = kind === 'retry' ? confirmingRetry : confirmingReconcile;
+
+        if (
+            !sync ||
+            !institution ||
+            busy ||
+            unavailable ||
+            (kind === 'reconcile' && !reconcileReason.trim())
+        ) {
             return;
         }
 
-        startTransition(() => {
-            router.get(
-                integrationsIndex({ institution: institution.id }).url,
-                {
-                    status: statusFilter,
-                    connection: connectionFilter,
-                    page,
+        setProcessing(true);
+        setFeedback(null);
+        setReasonError(null);
+        setSuccess(null);
+        const route = kind === 'retry' ? retry : reconcile;
+        router.post(
+            route({ institution: institution.id, id: sync.id }).url,
+            kind === 'retry' ? {} : { reason: reconcileReason },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    setConfirmingRetry(null);
+                    setConfirmingReconcile(null);
+                    setReconcileReason('');
+                    setSuccess(
+                        kind === 'retry'
+                            ? 'Sinkronisasi masuk antrean untuk dicoba ulang. Ini belum berarti penyedia telah menyelesaikannya.'
+                            : 'Penyelesaian manual tercatat. Riwayat sinkronisasi telah diperbarui.',
+                    );
+                    window.setTimeout(
+                        () =>
+                            document
+                                .getElementById('sync-queue-heading')
+                                ?.focus(),
+                        0,
+                    );
                 },
-                {
-                    preserveState: true,
-                    replace: true,
+                onError: (errors) => {
+                    setReasonError(errors.reason ?? null);
+                    setFeedback(
+                        errors[kind] ??
+                            errors.reason ??
+                            'Perubahan belum disimpan. Periksa isian dan status berkas.',
+                    );
                 },
-            );
-        });
+                onHttpException: (response) => requestFailure(response.status),
+                onNetworkError: () => requestFailure(),
+                onFinish: () => setProcessing(false),
+            },
+        );
     }
-
-    function submitRetry() {
-        if (!confirmingRetry || institution === null) {
-            return;
-        }
-
-        const sync = confirmingRetry;
-        startTransition(() => {
-            router.post(
-                retry({ institution: institution.id, id: sync.id }).url,
-                {},
-                {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        setConfirmingRetry(null);
-                        toast.success('Sync dijalankan ulang');
-                    },
-                    onError: (errors) => {
-                        toast.error(errors.retry ?? 'Gagal menjalankan ulang');
-                    },
-                },
-            );
-        });
-    }
-
-    function submitReconcile() {
-        if (!confirmingReconcile || institution === null) {
-            return;
-        }
-
-        const sync = confirmingReconcile;
-        startTransition(() => {
-            router.post(
-                reconcile({ institution: institution.id, id: sync.id }).url,
-                { reason: reconcileReason },
-                {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        setConfirmingReconcile(null);
-                        setReconcileReason('');
-                        toast.success('Sync direkonsiliasi');
-                    },
-                    onError: (errors) => {
-                        toast.error(errors.reconcile ?? 'Gagal merekonsiliasi');
-                    },
-                },
-            );
-        });
-    }
-
-    const total = syncs.meta.total;
 
     return (
         <>
-            <Head title="Integrasi Akademik" />
+            <Head title="Sinkronisasi Akademik | SATU" />
             <AppPage>
-                <div className="mb-6 grid gap-4">
-                    <header>
-                        <p className="text-body text-muted-foreground">
-                            Operasi akademik
-                        </p>
-                        <h1 className="mt-1 text-headline font-bold">
-                            Status sync dan antrean peninjauan
-                        </h1>
-                    </header>
-
-                    {!forbidden && connections.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border/80 bg-card/60 px-3.5 py-2.5 text-xs text-muted-foreground shadow-2xs">
-                            <Sparkles
-                                aria-hidden="true"
-                                className="size-4 shrink-0 text-pending"
-                            />
-                            <p className="leading-relaxed">
-                                Data yang ditampilkan berasal dari sandbox dan
-                                bersifat synthetic.
-                            </p>
+                <div className="space-y-6" data-test="campus-integrations-root">
+                    <CampusOperationHeader
+                        title="Sinkronisasi akademik"
+                        description="Pantau hasil pengiriman aktivitas dan versi kredit. Bedakan percobaan ulang dari pencatatan penyelesaian manual."
+                        institution={
+                            unavailable ? null : (institution?.name ?? null)
+                        }
+                        icon={ServerCog}
+                    />
+                    {feedback && (
+                        <div
+                            role="alert"
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-correction/30 bg-correction-subtle p-4 text-sm text-correction-subtle-foreground"
+                        >
+                            <p>{feedback}</p>
+                            {institution && (
+                                <Button
+                                    variant="outline"
+                                    disabled={busy}
+                                    onClick={() => applyFilters()}
+                                >
+                                    Muat ulang
+                                </Button>
+                            )}
                         </div>
                     )}
-                </div>
-
-                {forbidden ? (
-                    <Forbidden />
-                ) : (
-                    <div className="grid gap-7">
-                        <ConnectionOverview connections={connections} />
-
-                        <section aria-labelledby="sync-queue-heading">
-                            <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-                                <h2
-                                    id="sync-queue-heading"
-                                    className="text-title font-bold"
-                                >
-                                    Antrean sync
-                                </h2>
-                                <span
-                                    aria-label={`${total} sync`}
-                                    className="inline-flex items-center rounded-full border border-primary/20 bg-accent px-2.5 py-0.5 font-label text-label font-bold text-accent-foreground"
-                                    data-test="sync-total"
-                                >
-                                    {total}
-                                </span>
-                            </div>
-
-                            <div className="mb-4 flex flex-wrap items-end gap-3">
-                                <label className="grid gap-1">
-                                    <span className="font-label text-label font-semibold text-muted-foreground">
-                                        Status
-                                    </span>
-                                    <select
-                                        value={statusFilter}
-                                        onChange={(e) =>
-                                            setStatusFilter(e.target.value)
-                                        }
-                                        className="h-control-md rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                                    >
-                                        <option value="all">
-                                            Semua status
-                                        </option>
-                                        {filters.status_options.map(
-                                            (option) => (
-                                                <option
-                                                    key={option.value}
-                                                    value={option.value}
-                                                >
-                                                    {option.label}
-                                                </option>
-                                            ),
-                                        )}
-                                    </select>
-                                </label>
-
-                                <label className="grid gap-1">
-                                    <span className="font-label text-label font-semibold text-muted-foreground">
-                                        Koneksi
-                                    </span>
-                                    <select
-                                        value={connectionFilter}
-                                        onChange={(e) =>
-                                            setConnectionFilter(e.target.value)
-                                        }
-                                        className="h-control-md rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                                    >
-                                        <option value="0">Semua koneksi</option>
-                                        {filters.connection_options.map(
-                                            (option) => (
-                                                <option
-                                                    key={option.id}
-                                                    value={String(option.id)}
-                                                >
-                                                    {option.label}
-                                                </option>
-                                            ),
-                                        )}
-                                    </select>
-                                </label>
-
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={applyFilters}
-                                    disabled={isPending}
-                                >
-                                    <RotateCcw
-                                        aria-hidden="true"
-                                        className="size-3.5"
-                                    />
-                                    Terapkan
-                                </Button>
-                            </div>
-
-                            {isPending ? (
-                                <SyncLoading />
-                            ) : syncs.data.length === 0 ? (
-                                <SyncEmpty />
-                            ) : (
-                                <SyncTable
-                                    syncs={syncs.data}
-                                    onRetry={setConfirmingRetry}
-                                    onReconcile={setConfirmingReconcile}
-                                    onOpenTimeline={setActiveSync}
-                                />
-                            )}
-
-                            {!isPending && syncs.meta.last_page > 1 && (
-                                <nav
-                                    aria-label="Paginasi antrean sync"
-                                    className="mt-4 flex items-center justify-between"
-                                >
-                                    <span className="font-label text-label text-muted-foreground">
-                                        Halaman {syncs.meta.current_page} dari{' '}
-                                        {syncs.meta.last_page}
-                                    </span>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={
-                                                syncs.meta.current_page === 1
-                                            }
-                                            onClick={() =>
-                                                goToPage(
-                                                    syncs.meta.current_page - 1,
-                                                )
-                                            }
-                                        >
-                                            Sebelumnya
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={
-                                                syncs.meta.current_page ===
-                                                syncs.meta.last_page
-                                            }
-                                            onClick={() =>
-                                                goToPage(
-                                                    syncs.meta.current_page + 1,
-                                                )
-                                            }
-                                        >
-                                            Berikutnya
-                                        </Button>
-                                    </div>
-                                </nav>
-                            )}
+                    {success && (
+                        <p
+                            role="status"
+                            className="flex items-start gap-2 rounded-2xl border border-verified/30 bg-verified-subtle p-4 text-sm text-verified-subtle-foreground"
+                        >
+                            <CheckCircle2
+                                aria-hidden="true"
+                                className="mt-0.5 size-4 shrink-0"
+                            />
+                            {success}
+                        </p>
+                    )}
+                    {unavailable ? (
+                        <section
+                            data-test="integrations-forbidden"
+                            className="rounded-3xl border border-correction/30 bg-correction-subtle p-5"
+                        >
+                            <ShieldAlert
+                                aria-hidden="true"
+                                className="size-6 text-correction-subtle-foreground"
+                            />
+                            <h2 className="mt-3 text-lg font-bold">
+                                Akses integrasi akademik tidak tersedia
+                            </h2>
+                            <p className="mt-2 text-sm leading-6 text-correction-subtle-foreground">
+                                Periksa izin operator dan institusi aktif. Data
+                                sebelumnya tidak ditampilkan selama akses tidak
+                                tersedia.
+                            </p>
                         </section>
-                    </div>
-                )}
+                    ) : (
+                        <>
+                            {connections.some(
+                                (connection) => connection.mode === 'sandbox',
+                            ) && (
+                                <div className="flex items-start gap-3 rounded-2xl border border-pending/30 bg-pending-subtle p-4 text-sm leading-6 text-pending-subtle-foreground">
+                                    <Sparkles
+                                        aria-hidden="true"
+                                        className="mt-1 size-4 shrink-0"
+                                    />
+                                    <p>
+                                        Koneksi berlabel Sandbox memakai
+                                        lingkungan uji coba. Hasilnya bukan
+                                        bukti pengiriman ke sistem akademik
+                                        nyata.
+                                    </p>
+                                </div>
+                            )}
+                            <ConnectionOverview connections={connections} />
+                            <CampusTechnicalDetails title="Kapan memilih Ulangi atau Rekonsiliasi?">
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <p className="font-semibold text-foreground">
+                                            Ulangi pengiriman
+                                        </p>
+                                        <p className="mt-1">
+                                            Mengantrekan kembali payload yang
+                                            sama sesuai status yang diizinkan.
+                                            Hasil akhir tetap mengikuti respons
+                                            penyedia.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-foreground">
+                                            Rekonsiliasi manual
+                                        </p>
+                                        <p className="mt-1">
+                                            Mencatat bahwa masalah sudah
+                                            diselesaikan secara manual. Wajib
+                                            menyertakan alasan, bukan mengirim
+                                            ulang payload.
+                                        </p>
+                                    </div>
+                                </div>
+                            </CampusTechnicalDetails>
+                            <section
+                                aria-labelledby="sync-queue-heading"
+                                className="min-w-0 space-y-4"
+                            >
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <h2
+                                        id="sync-queue-heading"
+                                        tabIndex={-1}
+                                        className="text-lg font-bold focus-visible:ring-2 focus-visible:ring-ring"
+                                    >
+                                        Hasil dan antrean sinkronisasi
+                                    </h2>
+                                    <span
+                                        className="rounded-full border border-primary/15 bg-accent px-3 py-1 text-xs font-semibold"
+                                        data-test="sync-total"
+                                    >
+                                        {syncs.meta.total} sesuai filter
+                                    </span>
+                                </div>
+                                <form
+                                    aria-label="Filter sinkronisasi akademik"
+                                    onSubmit={(event) => {
+                                        event.preventDefault();
+                                        applyFilters();
+                                    }}
+                                    className="grid min-w-0 items-end gap-4 rounded-3xl border border-border bg-white p-4 shadow-sm sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:p-5"
+                                >
+                                    <label className="grid min-w-0 gap-2 text-sm font-semibold">
+                                        Status
+                                        <select
+                                            value={statusFilter}
+                                            onChange={(event) =>
+                                                setStatusFilter(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            disabled={busy}
+                                            className={cn(
+                                                campusControlClass,
+                                                'cursor-pointer',
+                                            )}
+                                        >
+                                            <option value="all">
+                                                Semua status
+                                            </option>
+                                            {filters.status_options.map(
+                                                (option) => (
+                                                    <option
+                                                        key={option.value}
+                                                        value={option.value}
+                                                    >
+                                                        {statusLabels[
+                                                            option.value
+                                                        ] ?? option.label}
+                                                    </option>
+                                                ),
+                                            )}
+                                        </select>
+                                    </label>
+                                    <label className="grid min-w-0 gap-2 text-sm font-semibold">
+                                        Koneksi
+                                        <select
+                                            value={connectionFilter}
+                                            onChange={(event) =>
+                                                setConnectionFilter(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            disabled={busy}
+                                            className={cn(
+                                                campusControlClass,
+                                                'cursor-pointer',
+                                            )}
+                                        >
+                                            <option value="0">
+                                                Semua koneksi
+                                            </option>
+                                            {filters.connection_options.map(
+                                                (option) => (
+                                                    <option
+                                                        key={option.id}
+                                                        value={String(
+                                                            option.id,
+                                                        )}
+                                                    >
+                                                        {option.label}
+                                                    </option>
+                                                ),
+                                            )}
+                                        </select>
+                                    </label>
+                                    <Button type="submit" disabled={busy}>
+                                        <RotateCcw
+                                            aria-hidden="true"
+                                            className="size-4"
+                                        />
+                                        Terapkan
+                                    </Button>
+                                </form>
+                                <div
+                                    aria-busy={isPending}
+                                    className="min-w-0 space-y-3"
+                                >
+                                    {isPending && (
+                                        <p
+                                            role="status"
+                                            className="flex items-center gap-2 rounded-xl bg-accent p-3 text-sm text-primary"
+                                        >
+                                            <LoaderCircle
+                                                aria-hidden="true"
+                                                className="size-4 animate-spin motion-reduce:animate-none"
+                                            />
+                                            Memperbarui antrean. Hasil
+                                            sebelumnya tetap terlihat.
+                                        </p>
+                                    )}
+                                    {syncs.data.length === 0 ? (
+                                        <div
+                                            className="rounded-3xl border border-border bg-white p-6 text-center shadow-sm"
+                                            data-test="sync-empty"
+                                        >
+                                            <DashboardArchiveArt className="mx-auto size-20" />
+                                            <h3 className="mt-3 text-lg font-bold">
+                                                Belum ada hasil pada filter ini
+                                            </h3>
+                                            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                                Ubah filter untuk melihat
+                                                riwayat lain. Status muncul
+                                                setelah request sinkronisasi
+                                                tersedia.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <SyncTable
+                                            syncs={syncs.data}
+                                            disabled={busy}
+                                            onRetry={(sync) => {
+                                                setFeedback(null);
+                                                setConfirmingRetry(sync);
+                                            }}
+                                            onReconcile={(sync) => {
+                                                setFeedback(null);
+                                                setReasonError(null);
+                                                setConfirmingReconcile(sync);
+                                                setReconcileReason('');
+                                            }}
+                                            onOpenTimeline={setActiveSync}
+                                        />
+                                    )}
+                                </div>
+                                {syncs.meta.last_page > 1 && (
+                                    <nav
+                                        aria-label="Paginasi sinkronisasi akademik"
+                                        className="flex flex-wrap items-center justify-between gap-3"
+                                    >
+                                        <p className="text-xs text-muted-foreground">
+                                            Halaman {syncs.meta.current_page}{' '}
+                                            dari {syncs.meta.last_page}
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                            <Button
+                                                variant="outline"
+                                                disabled={
+                                                    busy ||
+                                                    syncs.meta.current_page ===
+                                                        1
+                                                }
+                                                onClick={() =>
+                                                    applyFilters(
+                                                        syncs.meta
+                                                            .current_page - 1,
+                                                    )
+                                                }
+                                            >
+                                                Sebelumnya
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                disabled={
+                                                    busy ||
+                                                    syncs.meta.current_page ===
+                                                        syncs.meta.last_page
+                                                }
+                                                onClick={() =>
+                                                    applyFilters(
+                                                        syncs.meta
+                                                            .current_page + 1,
+                                                    )
+                                                }
+                                            >
+                                                Berikutnya
+                                            </Button>
+                                        </div>
+                                    </nav>
+                                )}
+                            </section>
+                        </>
+                    )}
+                </div>
             </AppPage>
-
             <Dialog
                 open={confirmingRetry !== null}
                 onOpenChange={(open) => {
-                    if (!open) {
+                    if (!open && !processing) {
                         setConfirmingRetry(null);
                     }
                 }}
             >
-                <DialogContent>
+                <DialogContent
+                    closeButtonDisabled={processing}
+                    onEscapeKeyDown={(event) => {
+                        if (processing) {
+                            event.preventDefault();
+                        }
+                    }}
+                    onInteractOutside={(event) => {
+                        if (processing) {
+                            event.preventDefault();
+                        }
+                    }}
+                >
                     <DialogHeader>
-                        <DialogTitle>Ulangi sinkronisasi</DialogTitle>
+                        <DialogTitle>Ulangi sinkronisasi?</DialogTitle>
                         <DialogDescription>
-                            Mengirim ulang payload versi terakhir. Proses ini
-                            tidak akan menduplikasi record yang sudah berhasil,
-                            karena sync bersifat idempoten.
+                            Payload versi terakhir masuk antrean lagi.
+                            Pengiriman memakai kunci idempotensi untuk mencegah
+                            duplikasi. Ini bukan jaminan sukses penyedia.
                         </DialogDescription>
                     </DialogHeader>
+                    {confirmingRetry && (
+                        <p className="rounded-2xl bg-accent p-4 text-sm leading-6 wrap-anywhere">
+                            {confirmingRetry.source}. Versi pemetaan{' '}
+                            {confirmingRetry.mapping_version}.
+                        </p>
+                    )}
+                    {feedback && (
+                        <p
+                            role="alert"
+                            className="text-sm leading-6 text-correction-subtle-foreground"
+                        >
+                            {feedback}
+                        </p>
+                    )}
                     <DialogFooter>
                         <Button
-                            type="button"
                             variant="outline"
+                            disabled={processing}
                             onClick={() => setConfirmingRetry(null)}
                         >
                             Batal
                         </Button>
                         <Button
-                            type="button"
-                            onClick={submitRetry}
-                            disabled={isPending}
+                            disabled={processing}
+                            onClick={() => submitCommand('retry')}
                         >
-                            {isPending ? 'Memproses...' : 'Ulangi'}
+                            {processing ? 'Memproses...' : 'Ya, ulangi'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
             <Dialog
                 open={confirmingReconcile !== null}
                 onOpenChange={(open) => {
-                    if (!open) {
+                    if (!open && !processing) {
                         setConfirmingReconcile(null);
                         setReconcileReason('');
                     }
                 }}
             >
-                <DialogContent>
+                <DialogContent
+                    closeButtonDisabled={processing}
+                    onEscapeKeyDown={(event) => {
+                        if (processing) {
+                            event.preventDefault();
+                        }
+                    }}
+                    onInteractOutside={(event) => {
+                        if (processing) {
+                            event.preventDefault();
+                        }
+                    }}
+                >
                     <DialogHeader>
                         <DialogTitle>Rekonsiliasi manual</DialogTitle>
                         <DialogDescription>
-                            Tandai sync ini sebagai telah diselesaikan secara
-                            manual. Tindakan ini dicatat di audit trail.
+                            Tandai berkas telah diselesaikan secara manual.
+                            Alasan dan keputusan menjadi riwayat yang tidak
+                            dapat ditimpa.
                         </DialogDescription>
                     </DialogHeader>
-                    <label className="grid gap-1.5">
-                        <span className="font-label text-label font-semibold text-muted-foreground">
-                            Alasan rekonsiliasi
-                        </span>
-                        <textarea
-                            value={reconcileReason}
-                            onChange={(e) => setReconcileReason(e.target.value)}
-                            placeholder="Jelaskan bagaimana konflik atau kegagalan diselesaikan..."
-                            rows={3}
-                            className="rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                        />
-                    </label>
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                                setConfirmingReconcile(null);
-                                setReconcileReason('');
-                            }}
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            onClick={submitReconcile}
-                            disabled={
-                                isPending || reconcileReason.trim() === ''
-                            }
-                        >
-                            {isPending ? 'Memproses...' : 'Rekonsiliasi'}
-                        </Button>
-                    </DialogFooter>
+                    {confirmingReconcile && (
+                        <p className="rounded-2xl bg-accent p-4 text-sm leading-6 wrap-anywhere">
+                            {confirmingReconcile.source}. Versi pemetaan{' '}
+                            {confirmingReconcile.mapping_version}.
+                        </p>
+                    )}
+                    <form
+                        aria-label="Rekonsiliasi manual"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            submitCommand('reconcile');
+                        }}
+                        className="grid gap-4"
+                    >
+                        <div className="grid gap-2">
+                            <label
+                                htmlFor="sync-reconcile-reason"
+                                className="text-sm font-semibold"
+                            >
+                                Alasan rekonsiliasi (wajib)
+                            </label>
+                            <textarea
+                                id="sync-reconcile-reason"
+                                required
+                                rows={3}
+                                maxLength={1000}
+                                disabled={processing}
+                                value={reconcileReason}
+                                onChange={(event) =>
+                                    setReconcileReason(event.target.value)
+                                }
+                                placeholder="Jelaskan bagaimana masalah telah diselesaikan."
+                                aria-invalid={Boolean(reasonError)}
+                                aria-describedby="sync-reason-help sync-reason-error"
+                                className={cn(campusControlClass, 'resize-y')}
+                            />
+                            <p
+                                id="sync-reason-help"
+                                className="text-xs leading-5 text-muted-foreground"
+                            >
+                                Maksimum 1.000 karakter. Rekonsiliasi tidak
+                                mengirim ulang payload.
+                            </p>
+                            {reasonError && (
+                                <p
+                                    role="alert"
+                                    id="sync-reason-error"
+                                    className="text-sm text-correction-subtle-foreground"
+                                >
+                                    {reasonError}
+                                </p>
+                            )}
+                        </div>
+                        {feedback && (
+                            <p
+                                role="alert"
+                                className="text-sm leading-6 text-correction-subtle-foreground"
+                            >
+                                {feedback}
+                            </p>
+                        )}
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={processing}
+                                onClick={() => {
+                                    setConfirmingReconcile(null);
+                                    setReconcileReason('');
+                                }}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={
+                                    processing || reconcileReason.trim() === ''
+                                }
+                            >
+                                {processing
+                                    ? 'Memproses...'
+                                    : 'Catat rekonsiliasi'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
-
             <Dialog
                 open={activeSync !== null}
                 onOpenChange={(open) => {
@@ -835,74 +994,50 @@ export default function AcademicIntegrations({
                     }
                 }}
             >
-                <DialogContent className="sm:max-w-lg">
+                <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Riwayat sync</DialogTitle>
-                        <DialogDescription>
+                        <DialogTitle>Riwayat sinkronisasi</DialogTitle>
+                        <DialogDescription className="wrap-anywhere">
                             {activeSync
-                                ? `${activeSync.source} - versi ${activeSync.mapping_version}`
+                                ? `${activeSync.source}. Versi pemetaan ${activeSync.mapping_version}.`
                                 : ''}
                         </DialogDescription>
                     </DialogHeader>
-                    {activeSync && (
-                        <ol className="max-h-80 divide-y divide-border/80 overflow-y-auto rounded-lg border border-border/80">
-                            {[...activeSync.timeline]
-                                .reverse()
-                                .map((entry, index) => (
-                                    <li
-                                        key={`${entry.created_at}-${index}`}
-                                        className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 px-4 py-3"
-                                    >
-                                        <span className="flex items-start pt-1">
-                                            {entry.status === 'succeeded' ||
-                                            entry.status === 'reconciled' ? (
-                                                <CheckCircle2
-                                                    aria-hidden="true"
-                                                    className="size-4 text-verified"
-                                                />
-                                            ) : entry.status === 'queued' ? (
-                                                <Clock
-                                                    aria-hidden="true"
-                                                    className="size-4 text-muted-foreground"
-                                                />
-                                            ) : (
-                                                <ShieldAlert
-                                                    aria-hidden="true"
-                                                    className="size-4 text-correction"
-                                                />
-                                            )}
-                                        </span>
-                                        <div className="min-w-0">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <StatusBadge
-                                                    status={entry.status}
-                                                />
-                                                <time
-                                                    dateTime={entry.created_at}
-                                                    className="font-label text-label text-muted-foreground"
-                                                >
-                                                    {new Date(
-                                                        entry.created_at,
-                                                    ).toLocaleString('id-ID')}
-                                                </time>
-                                            </div>
+                    {activeSync &&
+                        (activeSync.timeline.length === 0 ? (
+                            <p className="text-sm leading-6 text-muted-foreground">
+                                Riwayat proses belum tersedia untuk berkas ini.
+                            </p>
+                        ) : (
+                            <ol className="max-h-80 space-y-4 overflow-y-auto">
+                                {[...activeSync.timeline]
+                                    .reverse()
+                                    .map((entry, entryIndex) => (
+                                        <li
+                                            key={`${entry.created_at}-${entryIndex}`}
+                                            className="min-w-0 border-b border-border pb-4 last:border-0"
+                                        >
+                                            <StatusBadge
+                                                status={entry.status}
+                                            />
+                                            <p className="mt-2 text-xs text-muted-foreground">
+                                                {syncDate(entry.created_at)}
+                                            </p>
                                             {entry.reason && (
-                                                <p className="mt-1 text-sm leading-5 wrap-anywhere text-muted-foreground">
+                                                <p className="mt-2 text-sm leading-6 wrap-anywhere text-muted-foreground">
                                                     {entry.reason}
                                                 </p>
                                             )}
-                                        </div>
-                                    </li>
-                                ))}
-                        </ol>
-                    )}
+                                        </li>
+                                    ))}
+                            </ol>
+                        ))}
                     <DialogFooter>
                         <Button
-                            type="button"
                             variant="outline"
                             onClick={() => setActiveSync(null)}
                         >
-                            Tutup
+                            Tutup riwayat
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -910,3 +1045,10 @@ export default function AcademicIntegrations({
         </>
     );
 }
+
+AcademicIntegrations.layout = {
+    breadcrumbs: [
+        { title: 'Operasi Kampus', href: '#' },
+        { title: 'Sinkronisasi Akademik', href: '#' },
+    ],
+};

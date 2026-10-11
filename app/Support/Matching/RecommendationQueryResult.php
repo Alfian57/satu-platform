@@ -17,5 +17,6 @@ final readonly class RecommendationQueryResult
         public Institution $institution,
         public ?int $currentVersionId,
         public LengthAwarePaginator $paginator,
+        public int $staleCount = 0,
     ) {}
 }

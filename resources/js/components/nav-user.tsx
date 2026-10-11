@@ -27,7 +27,7 @@ export function NavUser() {
             <DropdownMenuTrigger asChild>
                 <Button
                     aria-label={`Buka menu ${workspace.accountLabel} ${auth.user.name}`}
-                    className="h-control-lg min-h-control-lg max-w-56 min-w-control-lg gap-2 rounded-full bg-white/70 px-2 md:h-control-md md:min-h-control-md"
+                    className="h-11 min-h-11 max-w-56 min-w-11 gap-2 rounded-lg border border-border bg-card px-2 text-foreground shadow-xs data-[state=open]:bg-accent"
                     data-test="user-menu-button"
                     variant="ghost"
                 >
@@ -62,7 +62,12 @@ export function NavUser() {
                     />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuContent
+                align="end"
+                sideOffset={8}
+                className="w-72 max-w-[calc(100vw-1.5rem)] rounded-2xl border-border p-2 shadow-md"
+                data-test="user-menu-content"
+            >
                 <UserMenuContent user={auth.user} />
             </DropdownMenuContent>
         </DropdownMenu>

@@ -1,23 +1,36 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    ArrowLeft,
     Ban,
-    Bookmark,
-    Calendar,
+    BookmarkCheck,
+    CalendarDays,
+    Check,
     CheckCircle2,
     ChevronRight,
-    Clock,
-    Lock,
-    Mail,
+    Clock3,
+    FileText,
+    RefreshCw,
     Search,
     Send,
-    UserCheck,
-    UserRound,
+    ShieldCheck,
+    TimerOff,
+    XCircle,
 } from 'lucide-react';
-import React, { useState, useTransition } from 'react';
+import { useRef, useState } from 'react';
 import { index as talentSearch } from '@/actions/App/Http/Controllers/TalentSearchController';
 import { AppPage } from '@/components/app-page';
+import { DashboardArchiveArt } from '@/components/dashboard-archive-art';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import { saved as savedCandidates } from '@/routes/recruiter/talent';
 import {
     cancel,
@@ -38,179 +51,352 @@ interface ContactRequestItem {
 
 interface RecruiterContactRequestsProps {
     requests: ContactRequestItem[];
-    entitlement: {
-        has_entitlement: boolean;
-    };
+    entitlement: { has_entitlement: boolean };
 }
 
-function statusMeta(status: string): {
-    label: string;
-    dotColor: string;
-    badgeColor: string;
-} {
+const statusOptions = [
+    { value: 'all', label: 'Semua' },
+    { value: 'pending', label: 'Menunggu' },
+    { value: 'accepted', label: 'Disetujui' },
+    { value: 'declined', label: 'Ditolak' },
+    { value: 'expired', label: 'Kedaluwarsa' },
+    { value: 'canceled', label: 'Dibatalkan' },
+];
+
+function statusMeta(status: string) {
     switch (status) {
         case 'pending':
             return {
                 label: 'Menunggu tanggapan',
-                dotColor: 'bg-amber-500',
-                badgeColor: 'border-amber-200/80 bg-amber-50/90 text-amber-800',
+                Icon: Clock3,
+                className:
+                    'border-pending/20 bg-pending-subtle text-pending-subtle-foreground',
+                description:
+                    'Kandidat belum memberikan tanggapan. Persetujuan tidak diberikan otomatis.',
             };
         case 'accepted':
             return {
                 label: 'Disetujui kandidat',
-                dotColor: 'bg-emerald-500',
-                badgeColor:
-                    'border-emerald-200/80 bg-emerald-50/90 text-emerald-800',
+                Icon: CheckCircle2,
+                className:
+                    'border-verified/20 bg-verified-subtle text-verified-subtle-foreground',
+                description:
+                    'Kandidat menyetujui permintaan ini. Halaman ini mencatat tanggapan, bukan menampilkan kontak langsung.',
             };
         case 'declined':
             return {
                 label: 'Ditolak kandidat',
-                dotColor: 'bg-rose-500',
-                badgeColor: 'border-rose-200/80 bg-rose-50/90 text-rose-800',
+                Icon: XCircle,
+                className:
+                    'border-correction/20 bg-correction-subtle text-correction-subtle-foreground',
+                description:
+                    'Kandidat memilih untuk tidak melanjutkan permintaan ini. Hormati keputusan tersebut.',
             };
         case 'expired':
             return {
                 label: 'Kedaluwarsa',
-                dotColor: 'bg-slate-400',
-                badgeColor: 'border-slate-200 bg-slate-50 text-slate-700',
+                Icon: TimerOff,
+                className: 'border-border bg-background text-muted-foreground',
+                description: 'Masa tanggapan permintaan ini telah berakhir.',
             };
-        case 'cancelled':
+        case 'canceled':
             return {
                 label: 'Dibatalkan',
-                dotColor: 'bg-slate-400',
-                badgeColor: 'border-slate-200 bg-slate-50 text-slate-700',
+                Icon: Ban,
+                className: 'border-border bg-background text-muted-foreground',
+                description:
+                    'Organisasi telah membatalkan permintaan ini. Catatannya tetap ada dalam riwayat.',
             };
         default:
             return {
-                label: status.replaceAll('_', ' '),
-                dotColor: 'bg-slate-400',
-                badgeColor: 'border-slate-200 bg-slate-50 text-slate-700',
+                label: 'Status belum dikenali',
+                Icon: FileText,
+                className: 'border-border bg-background text-muted-foreground',
+                description:
+                    'Muat ulang untuk memeriksa status terbaru dari server.',
             };
     }
 }
 
-function ContactRequestsContextRail({
-    totalCount,
-    pendingCount,
-    acceptedCount,
+function RequestDate({
+    label,
+    value,
 }: {
-    totalCount: number;
-    pendingCount: number;
-    acceptedCount: number;
+    label: string;
+    value: string | null;
+}) {
+    const date = value ? new Date(value) : null;
+
+    return (
+        <div className="min-w-0">
+            <dt className="text-xs leading-5 text-muted-foreground">{label}</dt>
+            <dd className="mt-1 text-sm font-medium">
+                {date && !Number.isNaN(date.getTime()) ? (
+                    <time dateTime={value ?? undefined}>
+                        {new Intl.DateTimeFormat('id-ID', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                        }).format(date)}
+                    </time>
+                ) : (
+                    'Belum tersedia'
+                )}
+            </dd>
+        </div>
+    );
+}
+
+function RequestCard({
+    request,
+    checkedAt,
+    disabled,
+    onCancel,
+}: {
+    request: ContactRequestItem;
+    checkedAt: number;
+    disabled: boolean;
+    onCancel: (button: HTMLButtonElement) => void;
+}) {
+    const meta = statusMeta(request.status);
+    const pastDeadline =
+        request.status === 'pending' &&
+        new Date(request.expires_at).getTime() < checkedAt;
+
+    return (
+        <article
+            aria-labelledby={`contact-request-${request.id}`}
+            className="min-w-0 rounded-3xl border border-border bg-white shadow-sm focus-within:border-primary/30 focus-within:shadow-md"
+        >
+            <div className="p-5 sm:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="font-label text-xs text-muted-foreground">
+                        PERMINTAAN-{request.id}
+                    </p>
+                    <span
+                        className={cn(
+                            'inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold',
+                            meta.className,
+                        )}
+                    >
+                        <meta.Icon
+                            aria-hidden="true"
+                            className="size-3.5 shrink-0"
+                        />
+                        {meta.label}
+                    </span>
+                </div>
+                <h3
+                    id={`contact-request-${request.id}`}
+                    className="mt-4 text-xl leading-tight font-bold tracking-tight break-words sm:text-2xl"
+                >
+                    {request.candidate_name || 'Kandidat'}
+                </h3>
+                <p className="mt-2 text-sm leading-6 break-words text-muted-foreground">
+                    {request.candidate_headline ||
+                        'Ringkasan profil belum tersedia.'}
+                </p>
+                <div className="mt-5 rounded-2xl border border-primary/10 bg-accent/55 p-4 sm:p-5">
+                    <p className="flex items-center gap-2 text-xs font-semibold text-primary">
+                        <Send aria-hidden="true" className="size-4" />
+                        Tujuan permintaan
+                    </p>
+                    <p className="mt-2 text-base leading-6 font-semibold break-words">
+                        {request.purpose || 'Tujuan belum tersedia.'}
+                    </p>
+                    <div className="mt-4 border-t border-primary/10 pt-4">
+                        <p className="text-xs font-semibold text-muted-foreground">
+                            Pesan untuk kandidat
+                        </p>
+                        <p className="mt-2 text-sm leading-6 break-words whitespace-pre-wrap text-muted-foreground">
+                            {request.message || 'Tidak ada pesan tambahan.'}
+                        </p>
+                    </div>
+                </div>
+                <dl className="mt-5 grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+                    <RequestDate label="Dikirim" value={request.created_at} />
+                    <RequestDate
+                        label="Batas tanggapan"
+                        value={request.expires_at}
+                    />
+                    {request.responded_at && (
+                        <RequestDate
+                            label="Ditanggapi"
+                            value={request.responded_at}
+                        />
+                    )}
+                </dl>
+                {pastDeadline && (
+                    <p className="mt-4 flex items-start gap-2 text-sm leading-6 text-pending-subtle-foreground">
+                        <CalendarDays
+                            aria-hidden="true"
+                            className="mt-1 size-4 shrink-0"
+                        />
+                        Batas waktu terlewati. Status server masih menunggu
+                        tanggapan; muat ulang untuk memeriksanya.
+                    </p>
+                )}
+            </div>
+            <footer className="flex flex-col gap-4 border-t border-border p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
+                <p className="max-w-prose text-sm leading-6 text-muted-foreground">
+                    {meta.description}
+                </p>
+                {request.status === 'pending' && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11 shrink-0 border-correction/25 text-correction hover:bg-correction-subtle hover:text-correction"
+                        aria-label={`Batalkan permintaan kepada ${request.candidate_name || 'kandidat'}`}
+                        disabled={disabled}
+                        onClick={(event) => onCancel(event.currentTarget)}
+                    >
+                        <Ban aria-hidden="true" className="size-4" />
+                        Batalkan permintaan
+                    </Button>
+                )}
+            </footer>
+        </article>
+    );
+}
+
+function ContactRequestsContextRail({
+    requests,
+    hasEntitlement,
+    isForbidden,
+}: {
+    requests: ContactRequestItem[];
+    hasEntitlement: boolean;
+    isForbidden: boolean;
 }) {
     return (
-        <div className="grid gap-6">
-            {/* Card 1: Aturan Permintaan Kontak */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-                <div className="flex items-center gap-2">
-                    <span className="flex size-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                        <Lock className="size-3.5" aria-hidden="true" />
-                    </span>
-                    <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
-                        ATURAN KONTAK
-                    </p>
-                </div>
-
-                <h2 className="mt-3 text-base font-bold tracking-tight text-slate-900">
-                    Persetujuan Langsung
+        <aside
+            aria-label="Panduan permintaan kontak"
+            className="min-w-0 space-y-6"
+        >
+            <section className="rounded-3xl border border-primary/15 bg-linear-to-b from-white to-accent/60 p-5 shadow-sm sm:p-6">
+                <span className="flex size-11 items-center justify-center rounded-2xl border border-primary/10 bg-white text-primary">
+                    <ShieldCheck aria-hidden="true" className="size-5" />
+                </span>
+                <h2 className="mt-4 text-xl leading-tight font-bold tracking-tight">
+                    Persetujuan tetap milik kandidat.
                 </h2>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                    Kandidat memiliki kendali penuh atas privasi mereka. Nomor
-                    WhatsApp dan kontak langsung baru diberikan setelah kandidat
-                    menyetujui permohonan Anda.
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    Mengirim permintaan tidak membuka kontak langsung. Kandidat
+                    dapat menyetujui atau menolak sesuai tujuan yang
+                    disampaikan.
                 </p>
-            </div>
-
-            {/* Card 2: Ringkasan Metrik Permintaan */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-                <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
-                    RINGKASAN PERMINTAAN
+                <p className="mt-4 border-t border-primary/10 pt-4 text-sm leading-6 text-muted-foreground">
+                    Halaman ini menampilkan riwayat dan tanggapan, bukan nomor
+                    WhatsApp atau data kontak privat.
                 </p>
-
-                <div className="mt-4 grid divide-y divide-slate-100">
-                    <div className="flex items-center justify-between py-3">
-                        <div className="flex items-center gap-2.5">
-                            <Send className="size-4 text-blue-600" />
-                            <span className="text-sm font-medium text-slate-700">
-                                Total terkirim
+            </section>
+            {!isForbidden && (
+                <section
+                    className="px-1"
+                    aria-labelledby="contact-summary-heading"
+                >
+                    <h2
+                        id="contact-summary-heading"
+                        className="text-base font-semibold"
+                    >
+                        Catatan organisasi
+                    </h2>
+                    <dl className="mt-3 divide-y divide-border">
+                        {[
+                            {
+                                label: 'Permintaan tercatat',
+                                value: requests.length,
+                                Icon: Send,
+                            },
+                            {
+                                label: 'Menunggu tanggapan',
+                                value: requests.filter(
+                                    (request) => request.status === 'pending',
+                                ).length,
+                                Icon: Clock3,
+                            },
+                            {
+                                label: 'Disetujui kandidat',
+                                value: requests.filter(
+                                    (request) => request.status === 'accepted',
+                                ).length,
+                                Icon: CheckCircle2,
+                            },
+                        ].map(({ label, value, Icon }) => (
+                            <div
+                                key={label}
+                                className="flex items-center justify-between gap-3 py-3"
+                            >
+                                <dt className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Icon
+                                        aria-hidden="true"
+                                        className="size-4 shrink-0 text-primary"
+                                    />
+                                    {label}
+                                </dt>
+                                <dd className="font-label text-lg font-semibold">
+                                    {value}
+                                </dd>
+                            </div>
+                        ))}
+                    </dl>
+                    <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                        {hasEntitlement
+                            ? 'Hak akses pencarian aktif.'
+                            : 'Hak akses pencarian belum aktif. Riwayat yang diizinkan server tetap ditampilkan.'}
+                    </p>
+                </section>
+            )}
+            <section
+                className="border-t border-border px-1 pt-5"
+                aria-labelledby="contact-navigation-heading"
+            >
+                <h2
+                    id="contact-navigation-heading"
+                    className="text-base font-semibold"
+                >
+                    Lanjutkan penelusuran
+                </h2>
+                <div className="mt-3 divide-y divide-border">
+                    {[
+                        {
+                            href: talentSearch(),
+                            label: 'Cari talenta',
+                            description: 'Telusuri portofolio yang dibagikan.',
+                            Icon: Search,
+                        },
+                        {
+                            href: savedCandidates(),
+                            label: 'Kandidat tersimpan',
+                            description: 'Tinjau koleksi organisasi.',
+                            Icon: BookmarkCheck,
+                        },
+                    ].map(({ href, label, description, Icon }) => (
+                        <Link
+                            key={label}
+                            href={href}
+                            className="flex min-h-16 cursor-pointer items-center gap-3 rounded-xl py-3 transition-colors hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                        >
+                            <Icon
+                                aria-hidden="true"
+                                className="size-5 shrink-0 text-primary"
+                            />
+                            <span className="min-w-0 flex-1">
+                                <span className="block text-sm font-semibold">
+                                    {label}
+                                </span>
+                                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                                    {description}
+                                </span>
                             </span>
-                        </div>
-                        <span className="inline-flex size-6 items-center justify-center rounded-full bg-blue-50 font-mono text-xs font-bold text-blue-700">
-                            {totalCount}
-                        </span>
-                    </div>
-
-                    <div className="flex items-center justify-between py-3">
-                        <div className="flex items-center gap-2.5">
-                            <Clock className="size-4 text-amber-600" />
-                            <span className="text-sm font-medium text-slate-700">
-                                Menunggu respon
-                            </span>
-                        </div>
-                        <span className="inline-flex size-6 items-center justify-center rounded-full bg-amber-50 font-mono text-xs font-bold text-amber-700">
-                            {pendingCount}
-                        </span>
-                    </div>
-
-                    <div className="flex items-center justify-between py-3">
-                        <div className="flex items-center gap-2.5">
-                            <CheckCircle2 className="size-4 text-emerald-600" />
-                            <span className="text-sm font-medium text-slate-700">
-                                Disetujui
-                            </span>
-                        </div>
-                        <span className="inline-flex size-6 items-center justify-center rounded-full bg-emerald-50 font-mono text-xs font-bold text-emerald-700">
-                            {acceptedCount}
-                        </span>
-                    </div>
+                            <ChevronRight
+                                aria-hidden="true"
+                                className="size-4 shrink-0 text-muted-foreground"
+                            />
+                        </Link>
+                    ))}
                 </div>
-            </div>
-
-            {/* Card 3: Navigasi Cepat */}
-            <div className="grid gap-2.5">
-                <Link
-                    href={talentSearch()}
-                    prefetch
-                    className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="flex size-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
-                            <Search className="size-4" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-slate-900">
-                                Cari Talenta
-                            </p>
-                            <p className="text-[0.6875rem] text-slate-500">
-                                Temukan portofolio baru
-                            </p>
-                        </div>
-                    </div>
-                    <ChevronRight className="size-4 text-slate-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-blue-600" />
-                </Link>
-
-                <Link
-                    href={savedCandidates()}
-                    prefetch
-                    className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="flex size-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                            <Bookmark className="size-4" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-slate-900">
-                                Kandidat Tersimpan
-                            </p>
-                            <p className="text-[0.6875rem] text-slate-500">
-                                Bookmark internal tim
-                            </p>
-                        </div>
-                    </div>
-                    <ChevronRight className="size-4 text-slate-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-blue-600" />
-                </Link>
-            </div>
-        </div>
+            </section>
+        </aside>
     );
 }
 
@@ -218,332 +404,509 @@ export default function RecruiterContactRequests({
     requests,
     entitlement,
 }: RecruiterContactRequestsProps) {
-    const [isPending, startTransition] = useTransition();
-    const [statusFilter, setStatusFilter] = useState<string>('all');
-
-    const handleCancel = (requestId: number) => {
-        startTransition(() => {
-            router.delete(cancel(requestId).url, {
-                preserveState: true,
-                preserveScroll: true,
-            });
-        });
-    };
-
-    const pendingCount = requests.filter((r) => r.status === 'pending').length;
-    const acceptedCount = requests.filter(
-        (r) => r.status === 'accepted',
-    ).length;
-
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [checkedAt, setCheckedAt] = useState(() => Date.now());
+    const [requestToCancel, setRequestToCancel] =
+        useState<ContactRequestItem | null>(null);
+    const [cancelingId, setCancelingId] = useState<number | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isForbidden, setIsForbidden] = useState(false);
+    const [hasError, setHasError] = useState(false);
+    const [feedback, setFeedback] = useState('');
+    const headingRef = useRef<HTMLHeadingElement>(null);
+    const cancelTriggerRef = useRef<HTMLButtonElement | null>(null);
+    const didCancelRef = useRef(false);
+    const isBusy = cancelingId !== null || isRefreshing;
     const filteredRequests =
         statusFilter === 'all'
             ? requests
-            : requests.filter((r) => r.status === statusFilter);
+            : requests.filter((request) => request.status === statusFilter);
+
+    const failRequest = (forbidden = false): false => {
+        if (forbidden) {
+            setIsForbidden(true);
+            setRequestToCancel(null);
+        }
+
+        setHasError(true);
+        setFeedback(
+            'Belum dapat memastikan status permintaan. Muat ulang untuk memeriksa catatan terbaru sebelum mencoba lagi.',
+        );
+
+        return false;
+    };
+
+    const refreshRequests = () => {
+        if (isBusy) {
+            return;
+        }
+
+        setIsRefreshing(true);
+        setHasError(false);
+        setFeedback('Memuat riwayat permintaan kontak.');
+        router.get(
+            contactRequestsIndex(),
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    setCheckedAt(Date.now());
+                    setIsForbidden(false);
+                    setHasError(false);
+                    setFeedback('Riwayat permintaan kontak telah diperbarui.');
+                },
+                onError: () => {
+                    failRequest();
+                },
+                onHttpException: (response) =>
+                    failRequest(response.status === 403),
+                onNetworkError: () => failRequest(),
+                onFinish: () => setIsRefreshing(false),
+            },
+        );
+    };
+
+    const confirmCancellation = () => {
+        if (!requestToCancel || isBusy || isForbidden) {
+            return;
+        }
+
+        setCancelingId(requestToCancel.id);
+        setHasError(false);
+        setFeedback('Membatalkan permintaan kontak organisasi.');
+        router.delete(cancel(requestToCancel.id), {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                didCancelRef.current = true;
+                setRequestToCancel(null);
+                setHasError(false);
+                setFeedback('Permintaan kontak telah dibatalkan.');
+            },
+            onError: () => {
+                failRequest();
+            },
+            onHttpException: (response) => failRequest(response.status === 403),
+            onNetworkError: () => failRequest(),
+            onFinish: () => setCancelingId(null),
+        });
+    };
 
     return (
         <>
-            <Head title="Permintaan Kontak | SATU" />
-
-            <AppPage
-                contextRail={
-                    <ContactRequestsContextRail
-                        acceptedCount={acceptedCount}
-                        pendingCount={pendingCount}
-                        totalCount={requests.length}
-                    />
-                }
-                contextRailLabel="Konteks Permintaan Kontak"
-            >
+            <Head title="Permintaan kontak | SATU" />
+            <AppPage className="max-w-none min-w-0">
                 <div
                     className="space-y-6"
                     data-test="recruiter-contact-requests-root"
                 >
-                    {/* Header Banner */}
-                    <header className="relative isolate overflow-hidden rounded-2xl border border-blue-100 bg-white px-6 py-6 shadow-[0_18px_50px_-36px_rgba(30,64,175,0.35)] sm:px-8 sm:py-7">
-                        <div
-                            aria-hidden="true"
-                            className="absolute -top-28 -right-24 size-80 rounded-full bg-blue-100/75 blur-3xl sm:-right-12"
-                        />
-                        <div
-                            aria-hidden="true"
-                            className="absolute right-14 bottom-0 hidden h-24 w-24 rounded-tl-[2.5rem] border-t border-l border-indigo-100 sm:block"
-                        />
-
-                        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <Link
-                                    href={talentSearch()}
-                                    prefetch
-                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 transition-colors hover:text-blue-800"
-                                >
-                                    <ArrowLeft className="size-3.5" />
-                                    Kembali ke Cari Talenta
-                                </Link>
-
-                                <div className="mt-3 flex items-center gap-3">
-                                    <h1 className="text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
-                                        Permintaan Kontak
+                    <header className="rounded-3xl border border-border bg-white p-5 shadow-sm sm:p-6">
+                        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 items-start gap-4">
+                                <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-primary/15 bg-accent text-primary">
+                                    <Send
+                                        aria-hidden="true"
+                                        className="size-6"
+                                    />
+                                </span>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold tracking-wide text-primary uppercase">
+                                        Korespondensi organisasi
+                                    </p>
+                                    <h1 className="mt-1 text-2xl leading-tight font-bold tracking-tight break-words sm:text-3xl">
+                                        Permintaan kontak
                                     </h1>
-                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                                        <Send className="size-3 text-blue-600" />
-                                        Kontak Keluar
-                                    </span>
+                                    <p className="mt-2 max-w-prose text-sm leading-6 text-muted-foreground">
+                                        Pantau tujuan dan tanggapan kandidat
+                                        dalam satu catatan.
+                                    </p>
                                 </div>
-
-                                <p className="mt-2 max-w-[60ch] text-sm leading-relaxed text-slate-600">
-                                    Pantau status permohonan kontak dan tawaran
-                                    kolaborasi yang dikirimkan kepada talenta
-                                    mahasiswa terverifikasi.
-                                </p>
                             </div>
-
-                            {entitlement.has_entitlement && (
-                                <div className="flex shrink-0 items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-2.5 text-xs font-semibold text-blue-800">
-                                    <UserCheck className="size-4 text-blue-600" />
-                                    <span>Hak Akses Aktif</span>
-                                </div>
-                            )}
+                            <div className="flex shrink-0 items-center gap-2 self-start rounded-xl border border-primary/10 bg-accent/60 px-3 py-2.5 text-xs font-semibold text-primary sm:self-center">
+                                <ShieldCheck
+                                    aria-hidden="true"
+                                    className="size-4"
+                                />
+                                Persetujuan kandidat
+                            </div>
                         </div>
                     </header>
-
-                    {/* Filter Status Tabs & Meta Bar */}
-                    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                            <button
-                                className={`cursor-pointer rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                                    statusFilter === 'all'
-                                        ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                }`}
-                                onClick={() => setStatusFilter('all')}
-                                type="button"
-                            >
-                                Semua ({requests.length})
-                            </button>
-                            <button
-                                className={`cursor-pointer rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                                    statusFilter === 'pending'
-                                        ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                }`}
-                                onClick={() => setStatusFilter('pending')}
-                                type="button"
-                            >
-                                Menunggu ({pendingCount})
-                            </button>
-                            <button
-                                className={`cursor-pointer rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                                    statusFilter === 'accepted'
-                                        ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                }`}
-                                onClick={() => setStatusFilter('accepted')}
-                                type="button"
-                            >
-                                Disetujui ({acceptedCount})
-                            </button>
-                            <button
-                                className={`cursor-pointer rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                                    statusFilter === 'declined'
-                                        ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                }`}
-                                onClick={() => setStatusFilter('declined')}
-                                type="button"
-                            >
-                                Ditolak (
-                                {
-                                    requests.filter(
-                                        (r) => r.status === 'declined',
-                                    ).length
-                                }
-                                )
-                            </button>
-                        </div>
-
-                        <span className="text-xs text-slate-500">
-                            Menampilkan {filteredRequests.length} permohonan
-                        </span>
-                    </div>
-
-                    {/* Content Section */}
-                    <div className="space-y-4">
-                        {/* Empty State */}
-                        {filteredRequests.length === 0 && (
-                            <div className="grid justify-items-center gap-4 rounded-2xl border border-slate-200/80 bg-white px-6 py-16 text-center shadow-xs">
-                                <div className="flex size-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-8 ring-blue-50/50">
-                                    <Mail
-                                        aria-hidden="true"
-                                        className="size-7"
-                                    />
-                                </div>
+                    <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
+                        <section
+                            className="min-w-0 space-y-5"
+                            aria-labelledby="contact-list-heading"
+                        >
+                            <div className="flex flex-wrap items-start justify-between gap-3 px-1">
                                 <div>
-                                    <h3 className="text-base font-bold text-slate-900">
-                                        {statusFilter === 'all'
-                                            ? 'Belum ada permintaan kontak yang dikirim'
-                                            : 'Tidak ada permintaan dengan status ini'}
-                                    </h3>
-                                    <p className="mx-auto mt-2 max-w-[46ch] text-xs leading-relaxed text-slate-600">
-                                        Kirimkan permintaan kontak resmi kepada
-                                        kandidat berbakat melalui halaman Cari
-                                        Talenta untuk memulai diskusi proyek.
+                                    <h2
+                                        ref={headingRef}
+                                        id="contact-list-heading"
+                                        tabIndex={-1}
+                                        className="rounded-lg text-xl font-bold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring sm:text-2xl"
+                                    >
+                                        Riwayat permintaan
+                                    </h2>
+                                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                        {isForbidden
+                                            ? 'Akses riwayat perlu diperiksa kembali.'
+                                            : `${requests.length} permintaan tercatat dari organisasi.`}
                                     </p>
                                 </div>
                                 <Button
-                                    asChild
-                                    className="cursor-pointer rounded-xl bg-blue-600 px-5 text-xs font-semibold text-white shadow-xs hover:bg-blue-700"
+                                    type="button"
+                                    variant="outline"
+                                    className="h-11"
+                                    disabled={isBusy}
+                                    onClick={refreshRequests}
                                 >
-                                    <Link href={talentSearch()} prefetch>
-                                        <Search className="mr-1.5 size-3.5" />
-                                        Cari Talenta Sekarang
-                                    </Link>
+                                    {isRefreshing ? (
+                                        <Spinner aria-hidden="true" />
+                                    ) : (
+                                        <RefreshCw
+                                            aria-hidden="true"
+                                            className="size-4"
+                                        />
+                                    )}
+                                    Muat ulang
                                 </Button>
                             </div>
-                        )}
-
-                        {/* Requests Cards List */}
-                        {filteredRequests.length > 0 && (
-                            <div className="grid gap-4">
-                                {filteredRequests.map((req) => {
-                                    const meta = statusMeta(req.status);
-
-                                    return (
-                                        <article
-                                            key={req.id}
-                                            className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
-                                        >
-                                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                                <div className="flex items-start gap-4">
-                                                    {/* Avatar Icon */}
-                                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-base font-bold text-white shadow-xs">
-                                                        <UserRound className="size-6" />
-                                                    </div>
-
-                                                    {/* Candidate & Request Info */}
-                                                    <div>
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <h3 className="text-base font-bold text-slate-900">
-                                                                {
-                                                                    req.candidate_name
-                                                                }
-                                                            </h3>
-                                                            {req.candidate_headline && (
-                                                                <span className="text-xs text-slate-500">
-                                                                    •{' '}
-                                                                    {
-                                                                        req.candidate_headline
-                                                                    }
-                                                                </span>
-                                                            )}
-                                                            <span
-                                                                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${meta.badgeColor}`}
-                                                            >
-                                                                <span
-                                                                    className={`size-1.5 rounded-full ${meta.dotColor}`}
-                                                                />
-                                                                {meta.label}
-                                                            </span>
-                                                        </div>
-
-                                                        {/* Purpose & Message Container */}
-                                                        <div className="mt-3 space-y-1.5 rounded-xl border border-slate-100 bg-slate-50/70 p-3.5">
-                                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                                                                <Send className="size-3 text-blue-600" />
-                                                                <span>
-                                                                    Tujuan:{' '}
-                                                                    {
-                                                                        req.purpose
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                            {req.message && (
-                                                                <p className="text-xs leading-relaxed text-slate-600">
-                                                                    {
-                                                                        req.message
-                                                                    }
-                                                                </p>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Dates Info */}
-                                                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                                                            <span className="inline-flex items-center gap-1">
-                                                                <Calendar className="size-3.5 text-slate-400" />
-                                                                Dikirim:{' '}
-                                                                {new Intl.DateTimeFormat(
-                                                                    'id-ID',
-                                                                    {
-                                                                        dateStyle:
-                                                                            'medium',
-                                                                    },
-                                                                ).format(
-                                                                    new Date(
-                                                                        req.created_at,
-                                                                    ),
-                                                                )}
-                                                            </span>
-                                                            <span className="inline-flex items-center gap-1">
-                                                                <Clock className="size-3.5 text-slate-400" />
-                                                                Batas respon:{' '}
-                                                                {new Intl.DateTimeFormat(
-                                                                    'id-ID',
-                                                                    {
-                                                                        dateStyle:
-                                                                            'medium',
-                                                                    },
-                                                                ).format(
-                                                                    new Date(
-                                                                        req.expires_at,
-                                                                    ),
-                                                                )}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Action: Cancel request button if pending */}
-                                                {req.status === 'pending' && (
-                                                    <div className="shrink-0 sm:self-start">
-                                                        <Button
-                                                            aria-label="Batalkan permohonan kontak"
-                                                            className="cursor-pointer rounded-xl border-rose-200 bg-rose-50 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100 hover:text-rose-800"
-                                                            disabled={isPending}
-                                                            onClick={() =>
-                                                                handleCancel(
-                                                                    req.id,
-                                                                )
-                                                            }
-                                                            size="sm"
-                                                            type="button"
-                                                            variant="outline"
-                                                        >
-                                                            <Ban className="mr-1.5 size-3.5 text-rose-600" />
-                                                            Batalkan Permintaan
-                                                        </Button>
-                                                    </div>
+                            {!isForbidden && !entitlement.has_entitlement && (
+                                <p className="rounded-2xl border border-pending/20 bg-pending-subtle px-4 py-3 text-sm leading-6 text-pending-subtle-foreground">
+                                    Hak akses pencarian belum aktif. Anda tetap
+                                    dapat membaca riwayat yang tersedia;
+                                    pencarian dan pengiriman baru mengikuti izin
+                                    organisasi.
+                                </p>
+                            )}
+                            {!isForbidden && (
+                                <div className="rounded-3xl border border-primary/15 bg-white p-4 shadow-sm sm:p-5">
+                                    <p
+                                        id="contact-filter-label"
+                                        className="text-sm font-semibold"
+                                    >
+                                        Saring status permintaan
+                                    </p>
+                                    <div
+                                        role="group"
+                                        aria-labelledby="contact-filter-label"
+                                        className="mt-3 flex flex-wrap gap-2"
+                                    >
+                                        {statusOptions.map((option) => (
+                                            <Button
+                                                key={option.value}
+                                                type="button"
+                                                variant="outline"
+                                                aria-pressed={
+                                                    statusFilter ===
+                                                    option.value
+                                                }
+                                                aria-controls="contact-request-results"
+                                                disabled={isBusy}
+                                                onClick={() =>
+                                                    setStatusFilter(
+                                                        option.value,
+                                                    )
+                                                }
+                                                className={cn(
+                                                    'h-auto min-h-11 max-w-full gap-2 px-3 py-2 text-sm whitespace-normal',
+                                                    statusFilter ===
+                                                        option.value
+                                                        ? 'border-primary/25 bg-accent text-primary hover:bg-accent hover:text-primary'
+                                                        : 'border-border text-muted-foreground',
                                                 )}
-                                            </div>
-                                        </article>
-                                    );
-                                })}
+                                            >
+                                                {statusFilter ===
+                                                    option.value && (
+                                                    <Check
+                                                        aria-hidden="true"
+                                                        className="size-4 shrink-0"
+                                                    />
+                                                )}
+                                                {option.label}
+                                                <span className="font-label text-xs">
+                                                    {option.value === 'all'
+                                                        ? requests.length
+                                                        : requests.filter(
+                                                              (request) =>
+                                                                  request.status ===
+                                                                  option.value,
+                                                          ).length}
+                                                </span>
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <p
+                                        role="status"
+                                        className="mt-4 text-xs leading-5 text-muted-foreground"
+                                    >
+                                        Menampilkan {filteredRequests.length}{' '}
+                                        permintaan. Filter hanya menyaring
+                                        riwayat yang dimuat.
+                                    </p>
+                                </div>
+                            )}
+                            <div
+                                className="min-h-6"
+                                role={
+                                    hasError && !requestToCancel
+                                        ? 'alert'
+                                        : 'status'
+                                }
+                            >
+                                {!requestToCancel && feedback && (
+                                    <p
+                                        className={cn(
+                                            'text-sm leading-6',
+                                            hasError
+                                                ? 'text-correction'
+                                                : 'text-muted-foreground',
+                                        )}
+                                    >
+                                        {feedback}
+                                    </p>
+                                )}
+                                {hasError && !requestToCancel && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="mt-3 h-11"
+                                        disabled={isBusy}
+                                        onClick={refreshRequests}
+                                    >
+                                        Muat ulang status
+                                    </Button>
+                                )}
                             </div>
-                        )}
+                            <div
+                                id="contact-request-results"
+                                aria-busy={isRefreshing}
+                                className="space-y-5"
+                            >
+                                {isForbidden ? (
+                                    <div className="rounded-3xl border border-border bg-white p-6 shadow-sm">
+                                        <ShieldCheck
+                                            aria-hidden="true"
+                                            className="size-8 text-primary"
+                                        />
+                                        <h3 className="mt-4 text-xl font-semibold">
+                                            Akses riwayat tidak tersedia
+                                        </h3>
+                                        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                                            Catatan sebelumnya disembunyikan.
+                                            Muat ulang untuk memeriksa izin
+                                            organisasi terbaru.
+                                        </p>
+                                    </div>
+                                ) : isRefreshing && requests.length === 0 ? (
+                                    <div
+                                        aria-hidden="true"
+                                        className="space-y-5"
+                                    >
+                                        {[1, 2, 3].map((key) => (
+                                            <div
+                                                key={key}
+                                                className="space-y-5 rounded-3xl border border-border bg-white p-5 sm:p-6"
+                                            >
+                                                <Skeleton className="h-4 w-32 motion-reduce:animate-none" />
+                                                <Skeleton className="h-7 w-3/4 motion-reduce:animate-none" />
+                                                <Skeleton className="h-36 w-full rounded-2xl motion-reduce:animate-none" />
+                                                <Skeleton className="h-11 w-full motion-reduce:animate-none" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : filteredRequests.length === 0 ? (
+                                    <div className="rounded-3xl border border-dashed border-primary/25 bg-white px-5 py-10 text-center sm:px-8">
+                                        <DashboardArchiveArt className="mx-auto size-24" />
+                                        <h3 className="mt-4 text-xl font-semibold">
+                                            {requests.length === 0
+                                                ? 'Belum ada permintaan kontak'
+                                                : 'Belum ada permintaan dengan status ini'}
+                                        </h3>
+                                        <p className="mx-auto mt-3 max-w-prose text-sm leading-6 text-muted-foreground">
+                                            {requests.length === 0
+                                                ? 'Permintaan yang tercatat untuk organisasi akan muncul di sini beserta tujuan dan tanggapan kandidat.'
+                                                : 'Pilih Semua untuk meninjau riwayat lainnya. Tidak ada catatan yang dihapus saat filter berubah.'}
+                                        </p>
+                                        {requests.length > 0 ? (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="mt-5 h-11"
+                                                disabled={isBusy}
+                                                onClick={() =>
+                                                    setStatusFilter('all')
+                                                }
+                                            >
+                                                Tampilkan semua
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                                className="mt-5 h-11"
+                                            >
+                                                <Link href={talentSearch()}>
+                                                    <Search
+                                                        aria-hidden="true"
+                                                        className="size-4"
+                                                    />
+                                                    Kembali ke Cari Talenta
+                                                </Link>
+                                            </Button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <ul
+                                        aria-label="Riwayat permintaan kontak"
+                                        className="space-y-5"
+                                    >
+                                        {filteredRequests.map((request) => (
+                                            <li key={request.id}>
+                                                <RequestCard
+                                                    request={request}
+                                                    checkedAt={checkedAt}
+                                                    disabled={isBusy}
+                                                    onCancel={(button) => {
+                                                        cancelTriggerRef.current =
+                                                            button;
+                                                        didCancelRef.current = false;
+                                                        setHasError(false);
+                                                        setFeedback('');
+                                                        setRequestToCancel(
+                                                            request,
+                                                        );
+                                                    }}
+                                                />
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </section>
+                        <ContactRequestsContextRail
+                            requests={requests}
+                            hasEntitlement={entitlement.has_entitlement}
+                            isForbidden={isForbidden}
+                        />
                     </div>
                 </div>
             </AppPage>
+            <Dialog
+                open={requestToCancel !== null}
+                onOpenChange={(open) => {
+                    if (!open && !isBusy) {
+                        setRequestToCancel(null);
+                    }
+                }}
+            >
+                <DialogContent
+                    closeButtonDisabled={isBusy}
+                    onEscapeKeyDown={(event) => {
+                        if (isBusy) {
+                            event.preventDefault();
+                        }
+                    }}
+                    onInteractOutside={(event) => {
+                        if (isBusy) {
+                            event.preventDefault();
+                        }
+                    }}
+                    onCloseAutoFocus={(event) => {
+                        event.preventDefault();
+
+                        if (
+                            didCancelRef.current ||
+                            !cancelTriggerRef.current?.isConnected
+                        ) {
+                            headingRef.current?.focus();
+                        } else {
+                            cancelTriggerRef.current.focus();
+                        }
+
+                        didCancelRef.current = false;
+                    }}
+                >
+                    <DialogHeader>
+                        <DialogTitle>Batalkan permintaan kontak?</DialogTitle>
+                        <DialogDescription>
+                            Permintaan organisasi ini akan dibatalkan dan tidak
+                            lagi menunggu tanggapan kandidat. Riwayat tetap
+                            tersimpan; profil kandidat tidak dihapus.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="rounded-2xl border border-primary/10 bg-accent/60 p-4">
+                        <p className="text-xs font-semibold text-muted-foreground">
+                            Permintaan kepada
+                        </p>
+                        <p className="mt-2 text-base font-semibold break-words">
+                            {requestToCancel?.candidate_name || 'Kandidat'}
+                        </p>
+                        <p className="mt-2 text-sm leading-6 break-words text-muted-foreground">
+                            {requestToCancel?.purpose}
+                        </p>
+                    </div>
+                    <p
+                        role={hasError ? 'alert' : 'status'}
+                        className={cn(
+                            'min-h-5 text-sm leading-6',
+                            hasError
+                                ? 'text-correction'
+                                : 'text-muted-foreground',
+                        )}
+                    >
+                        {requestToCancel ? feedback : ''}
+                    </p>
+                    <DialogFooter>
+                        {hasError && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="h-11"
+                                disabled={isBusy}
+                                onClick={() => {
+                                    setRequestToCancel(null);
+                                    refreshRequests();
+                                }}
+                            >
+                                Muat ulang status
+                            </Button>
+                        )}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="h-11"
+                            disabled={isBusy}
+                            onClick={() => setRequestToCancel(null)}
+                        >
+                            Kembali
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            className="h-11"
+                            disabled={isBusy || isForbidden || hasError}
+                            onClick={confirmCancellation}
+                        >
+                            {cancelingId !== null ? (
+                                <Spinner aria-hidden="true" />
+                            ) : (
+                                <Ban aria-hidden="true" className="size-4" />
+                            )}
+                            {cancelingId !== null
+                                ? 'Membatalkan'
+                                : 'Ya, batalkan'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
 
 RecruiterContactRequests.layout = {
     breadcrumbs: [
-        {
-            title: 'Talent Portal',
-            href: talentSearch(),
-        },
-        {
-            title: 'Permintaan Kontak',
-            href: contactRequestsIndex(),
-        },
+        { title: 'Talent Portal', href: talentSearch() },
+        { title: 'Permintaan kontak', href: contactRequestsIndex() },
     ],
 };

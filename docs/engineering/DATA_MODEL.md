@@ -46,7 +46,53 @@ Institution/recruiter organization, intended role, normalized phone, token hash,
 
 Project, team, task, message, dan attachment selalu memiliki institution ownership. Attachment memakai private storage path dan authorized download.
 
+T07 tidak menambah schema. Revisi tugas dihitung dari ID/proyek, judul, catatan,
+status, prioritas, tenggat, updated-at, serta pasangan assignment ID/user ID
+berurutan. Ini mendeteksi perubahan metadata pada detik yang sama serta perubahan
+penanggung jawab tanpa mengandalkan timestamp tugas. Revisi tidak disimpan atau
+menjadi bukti otorisasi. `attachments.message_id=null` dan `purpose=evidence`
+menjadi daftar bukti tanpa pesan, dengan pagination dan proyeksi metadata aman.
+Relasi tugas dan klaim individual tetap ditentukan melalui Kontribusi existing.
+
+T03 memakai `profile_interests` existing untuk minat dan
+`profile_skills.evidence_metadata` untuk daftar bukti awal privat. Item baru
+memuat `title` dan `url` HTTPS; status belum ditinjau berasal dari serializer,
+bukan field kiriman mahasiswa. Tidak menyimpan berkas baru, menyisipkan klaim
+approval atau mengubah schema. Ketiadaan key `evidence_metadata` pada update
+mempertahankan metadata existing; daftar kosong berarti penghapusan eksplisit.
+Sumber kontribusi disetujui berasal dari relasi kontribusi, versi dan review,
+bukan metadata self-report. Revision hash profil mencakup field profil,
+keahlian/minat/jadwal serta metadata untuk konflik, tanpa menyimpan hash baru
+di database atau mengirimnya ke proyeksi publik/perekrut.
+
 `team_memberships` menyimpan state peserta saat ini secara unik per project dan user. Invitation serta join request memakai state pending yang unik per pasangan project dan user, lalu transition history disimpan melalui audit append-only dan event membership. Perubahan yang memengaruhi capacity mengunci project row dalam transaction.
+
+T06 tidak menambah schema. Ringkasan tiga jawaban memakai `message` existing
+(maksimal 1000 karakter), disusun server dari minat (200), kemampuan (350), dan
+ketersediaan (250). `response_reason` menyimpan alasan yang dibagikan, bukan
+catatan internal. Riwayat memakai record pengajuan terpisah dan audit append-only;
+record terminal tidak ditulis ulang lewat Actions. Revisi keputusan merupakan
+SHA-256 snapshot pengajuan, kebutuhan/kriteria peran, lifecycle dan anggota aktif,
+bukan token timestamp presisi detik. Revisi penarikan hanya snapshot pengajuan,
+agar perubahan kapasitas tidak menghalangi penarikan. Audit keputusan menyimpan
+snapshot kriteria dan ID sumber, tidak jawaban, kontak atau bukti profil.
+
+Penerimaan menyelesaikan tawaran pending lain bagi mahasiswa/proyek yang sama:
+status `expired` berarti Berakhir dengan alasan membership terbentuk melalui
+jalur lain, bukan diagnosis atau keputusan penolakan. Transaksi menyimpan audit
+superseded dan notifikasi. Metadata event membership memiliki `source_id` serta
+`source_type` (`join_request` atau `invitation`) agar ID dua tabel tidak ambigu.
+
+T04 menambah `project_roles.accepts_beginners` nullable boolean dan
+`selection_criteria` nullable text (maksimal 2000 karakter) pada migration asal
+tabel proyek. Null berarti belum dinyatakan, bukan false. Tujuan tetap memakai
+`projects.description`; tidak menambah sumber tujuan kedua. `project_roles.id`
+dipertahankan saat edit. Referensi tim, pengajuan, undangan dan riwayat tidak
+diputus lewat penggantian peran. Agregat kapasitas berasal dari keanggotaan aktif
+dengan project ID yang sama. Data agregat hanya dihitung pada pembacaan,
+tanpa menyimpan count atau rekomendasi. Untuk database existing, pembaruan schema
+bersifat aditif dan idempotent melalui command eksplisit, bukan GET atau reset
+database. Tidak ada migration `add_*_column_*` tambahan.
 
 ## 4. Matching
 
@@ -57,6 +103,15 @@ Project, team, task, message, dan attachment selalu memiliki institution ownersh
 
 Supported dimension hanya `skill_fit`, `project_need`, `availability`, dan `connectivity_opportunity`.
 
+T05 menambah tabel `matching_refresh_requests` untuk status permintaan per
+institusi dan kandidat, revision UUID, versi, waktu permintaan/selesai, serta
+kode hasil aman. Unique institusi/kandidat dan lock row menyerialkan batch;
+job lama dengan revision berbeda tidak menulis hasil. `match_runs` existing
+tetap menyimpan snapshot immutable. Snapshot baru memuat kebijakan, peran yang
+dibandingkan, revision batch dan digest sumber matching, tanpa bukti privat atau
+metadata jaringan. `recommendations` memakai expiry terbatas, bukan record
+default pada GET. Riwayat hasil/feedback tidak dihapus saat invalidasi.
+
 ## 5. Contribution dan Portfolio
 
 - `contributions`: owner, project/team, lifecycle, current version pointer.
@@ -66,6 +121,18 @@ Supported dimension hanya `skill_fit`, `project_need`, `availability`, dan `conn
 - `portfolio_entries`: approved source, visible fields, visibility level, published/withdrawn-at.
 
 Team confirmation tidak menjadi state requirement. Approval campus reviewer adalah validation authority.
+
+T08 memakai struktur existing tanpa kolom baru. `claim` menjadi judul karya
+individual dan `summary` menjadi isi yang dapat dibagikan; `declaration`, bukti
+dan catatan review tetap privat. Revisi mengganti rujukan versi baru dengan
+pilihan lengkap, bukan menghapus rujukan lama. Label sumber dibatasi 160
+karakter sesuai schema MySQL; nama lengkap tetap pada attachment.
+
+Revisi sumber adalah SHA-256 dari identitas/status/pointer versi, tugas dan
+referensi berkas aktual. Path/checksum ikut menentukan digest, tidak dikirim
+sebagai field browser. Karya tersimpan atomik bersama approval dengan default
+private. Replay tidak mereset visibility atau withdrawal. Pencabutan berbagi
+memakai audit existing tanpa menghapus versi, keputusan, atau sumber karya.
 
 ## 6. Gamification
 
@@ -176,3 +243,18 @@ Retention period adalah governance gate. Deletion tidak boleh merusak required a
 ## 13. Migration Review
 
 Saat mengubah tabel yang sudah memiliki migration asal, edit migration asal tabel tersebut secara langsung sesuai project rule. Jangan membuat migration tambahan dengan pola `add_*_column_*` untuk perubahan kolom. Perubahan wajib mempertimbangkan unique constraint, foreign key, tenant index, idempotency, cross-tenant denial, restricted serialization, dan MySQL compatibility.
+
+## T09: Permintaan Bantuan Kesempatan
+
+Dua tabel baru, tanpa perubahan tabel existing: `opportunity_support_requests` menyimpan institusi, pemilik, kebutuhan, penjelasan, notice/tujuan, referensi governance/manifest, dataset kind, masa akses, status dan revisi; `opportunity_support_events` menyimpan actor, action, alasan, peran tawaran, waktu dan revisi sebagai riwayat append-only. Kunci command unik per pemilik/institusi mencegah pengajuan ganda pada retry identik. Event tidak bisa diubah atau dihapus melalui model. Consent purpose per berkas menggunakan ConsentRecorder existing; audit hanya menyimpan referensi dan perubahan status, bukan teks kebutuhan.
+
+Expiry membatasi exposure, bukan jadwal penghapusan yang dianggap telah disetujui. Retensi penyimpanan dan pemulihan/deletion masih mengikuti governance gate. Tidak ada field diagnosis, skor jaringan, kontak, atau salinan bukti privat.
+
+Factory bantuan tidak membuat consent otomatis. OpportunitySupportSeeder hanya
+berjalan pada testing dengan SQLite di memori, memakai institusi/pemilik yang
+dipilih eksplisit melalui konfigurasi fixture. Seeder tidak membuka gate,
+tidak didaftarkan untuk seeding database aplikasi, dan idempoten pada command
+key tetap. Riwayat tawaran mempertahankan referensi peran; penghapusan peran
+bersejarah ditolak dengan validasi, bukan error foreign key. Migration event
+memakai nama constraint pendek yang kompatibel MySQL serta dapat melengkapi
+struktur parsial tanpa menghapus record.

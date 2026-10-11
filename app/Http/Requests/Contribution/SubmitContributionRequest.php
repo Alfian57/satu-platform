@@ -27,6 +27,6 @@ final class SubmitContributionRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [];
+        return ['expected_revision' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/D']];
     }
 }

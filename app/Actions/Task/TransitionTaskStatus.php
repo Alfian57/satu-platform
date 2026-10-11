@@ -12,12 +12,9 @@ use App\Models\Institution;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
-use Carbon\Carbon;
+use App\Support\Task\TaskSnapshot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
-use Throwable;
 
 final class TransitionTaskStatus
 {
@@ -29,11 +26,11 @@ final class TransitionTaskStatus
         User $actor,
         Task $task,
         TaskStatus $targetStatus,
-        ?string $expectedUpdatedAt = null,
+        string $expectedRevision,
     ): Task {
         Gate::forUser($actor)->authorize('transition', $task);
 
-        return DB::transaction(function () use ($actor, $task, $targetStatus, $expectedUpdatedAt): Task {
+        return DB::transaction(function () use ($actor, $task, $targetStatus, $expectedRevision): Task {
             $lockedProject = Project::query()
                 ->lockForUpdate()
                 ->whereKey($task->project_id)
@@ -44,7 +41,7 @@ final class TransitionTaskStatus
                 ->firstOrFail();
 
             Gate::forUser($actor)->authorize('transition', $lockedTask);
-            $this->ensureFresh($lockedTask, $expectedUpdatedAt);
+            TaskSnapshot::ensureFresh($lockedTask, $expectedRevision);
 
             if ($lockedTask->status === $targetStatus) {
                 return $lockedTask->refresh();
@@ -73,35 +70,12 @@ final class TransitionTaskStatus
                 projectId: (int) $lockedProject->getKey(),
                 resourceId: (int) $lockedTask->getKey(),
                 operation: 'task.status_changed',
-                version: $lockedTask->updated_at->toIso8601String(),
-                occurredAt: now()->toIso8601String(),
+                version: TaskSnapshot::revision($lockedTask),
+                occurredAt: now()->toISOString(),
             );
 
             return $lockedTask->refresh();
         }, attempts: 3);
-    }
-
-    private function ensureFresh(Task $task, ?string $expectedUpdatedAt): void
-    {
-        if ($expectedUpdatedAt === null || $expectedUpdatedAt === '') {
-            return;
-        }
-
-        try {
-            $expected = Carbon::parse($expectedUpdatedAt);
-        } catch (Throwable) {
-            throw ValidationException::withMessages([
-                'expected_updated_at' => 'Versi task tidak valid.',
-            ]);
-        }
-
-        if ($task->updated_at->equalTo($expected)) {
-            return;
-        }
-
-        throw new ConflictHttpException(
-            'Task ini sudah berubah di sesi lain. Muat data terbaru sebelum mengubah status.',
-        );
     }
 
     /**

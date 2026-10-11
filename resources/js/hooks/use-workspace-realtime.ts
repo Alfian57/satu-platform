@@ -9,13 +9,16 @@ import type {
 
 const TASK_EVENT = '.workspace.task.changed';
 const DISCUSSION_EVENT = '.workspace.discussion.changed';
+const ATTACHMENT_EVENT = '.workspace.attachment.changed';
 const MAX_REMEMBERED_EVENTS = 300;
 
 type WorkspaceRealtimeOptions = {
+    enabled?: boolean;
     institutionId: number;
     projectId: number;
     onTaskDelta: (delta: WorkspaceRealtimeDelta) => void;
     onDiscussionDelta: (delta: WorkspaceRealtimeDelta) => void;
+    onAttachmentDelta: (delta: WorkspaceRealtimeDelta) => void;
     onReconnect: () => void;
 };
 
@@ -46,8 +49,27 @@ function parseDelta(
     if (
         typeof resourceId !== 'number' ||
         !Number.isInteger(resourceId) ||
+        resourceId <= 0 ||
         eventResource !== resource ||
         typeof operation !== 'string' ||
+        !{
+            task: [
+                'task.created',
+                'task.updated',
+                'task.assigned',
+                'task.unassigned',
+                'task.status_changed',
+                'task.deleted',
+            ],
+            discussion: [
+                'discussion.created',
+                'discussion.updated',
+                'discussion.deleted',
+                'discussion.attachment.created',
+                'discussion.attachment.deleted',
+            ],
+            attachment: ['attachment.created', 'attachment.deleted'],
+        }[resource].includes(operation) ||
         typeof eventInstitutionId !== 'number' ||
         typeof eventProjectId !== 'number' ||
         eventInstitutionId !== institutionId ||
@@ -162,10 +184,12 @@ function isOlderEvent(
 }
 
 export function useWorkspaceRealtime({
+    enabled = true,
     institutionId,
     projectId,
     onTaskDelta,
     onDiscussionDelta,
+    onAttachmentDelta,
     onReconnect,
 }: WorkspaceRealtimeOptions) {
     const [connectionState, setConnectionState] =
@@ -177,16 +201,26 @@ export function useWorkspaceRealtime({
     const callbacks = useRef({
         onTaskDelta,
         onDiscussionDelta,
+        onAttachmentDelta,
         onReconnect,
     });
     const seenEvents = useRef<Map<string, true>>(new Map());
     const latestEvents = useRef<Map<string, string>>(new Map());
 
     useEffect(() => {
-        callbacks.current = { onTaskDelta, onDiscussionDelta, onReconnect };
-    }, [onDiscussionDelta, onReconnect, onTaskDelta]);
+        callbacks.current = {
+            onTaskDelta,
+            onDiscussionDelta,
+            onAttachmentDelta,
+            onReconnect,
+        };
+    }, [onDiscussionDelta, onAttachmentDelta, onReconnect, onTaskDelta]);
 
     useEffect(() => {
+        if (!enabled) {
+            return;
+        }
+
         let isActive = true;
         let hasConnected = false;
         let isBrowserOffline = false;
@@ -200,7 +234,7 @@ export function useWorkspaceRealtime({
                 return;
             }
 
-            const shouldReconcile = needsReconciliation;
+            const shouldReconcile = !hasConnected || needsReconciliation;
             hasConnected = true;
             needsReconciliation = false;
             setConnectionState('connected');
@@ -375,10 +409,36 @@ export function useWorkspaceRealtime({
             }
         };
 
+        const handleAttachmentDelta = (payload: unknown): void => {
+            const delta = parseDelta(
+                payload,
+                'attachment',
+                institutionId,
+                projectId,
+            );
+
+            if (
+                delta === null ||
+                isOlderEvent(latestEvents.current, delta) ||
+                seenEvents.current.has(eventKey(delta))
+            ) {
+                return;
+            }
+
+            rememberEvent(seenEvents.current, eventKey(delta));
+            rememberLatestEvent(
+                latestEvents.current,
+                eventResourceKey(delta),
+                delta.occurred_at,
+            );
+            callbacks.current.onAttachmentDelta(delta);
+        };
+
         const workspaceChannel = echo
             .private(workspaceChannelName)
             .listen(TASK_EVENT, handleTaskDelta)
             .listen(DISCUSSION_EVENT, handleDiscussionDelta)
+            .listen(ATTACHMENT_EVENT, handleAttachmentDelta)
             .subscribed(markConnected)
             .error(handleChannelError);
 
@@ -418,13 +478,17 @@ export function useWorkspaceRealtime({
             window.removeEventListener('online', handleBrowserOnline);
             workspaceChannel.stopListening(TASK_EVENT, handleTaskDelta);
             workspaceChannel.stopListening(
+                ATTACHMENT_EVENT,
+                handleAttachmentDelta,
+            );
+            workspaceChannel.stopListening(
                 DISCUSSION_EVENT,
                 handleDiscussionDelta,
             );
             echo.leave(workspaceChannelName);
             echo.leave(presenceChannelName);
         };
-    }, [institutionId, projectId, retryNonce]);
+    }, [enabled, institutionId, projectId, retryNonce]);
 
     function retryConnection(): void {
         setConnectionState('reconnecting');

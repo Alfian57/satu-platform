@@ -1,4 +1,4 @@
-import { Deferred, Head, Link, router, useHttp } from '@inertiajs/react';
+import { Deferred, Head, router, useHttp } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowDownToLine,
@@ -6,15 +6,12 @@ import {
     ChevronLeft,
     ChevronRight,
     CircleDot,
-    ClipboardCheck,
     Clock3,
     Eye,
     FileCheck2,
-    FileSpreadsheet,
     FileText,
     FileWarning,
     History,
-    Lock,
     LockKeyhole,
     RefreshCw,
     ShieldCheck,
@@ -22,17 +19,20 @@ import {
     XCircle,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ContributionController from '@/actions/App/Http/Controllers/ContributionController';
 import { AppPage } from '@/components/app-page';
+import {
+    CampusOperationHeader,
+    CampusTechnicalDetails,
+    campusControlClass,
+} from '@/components/campus-operation-layout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import { index as affiliationIndex } from '@/routes/campus/affiliations';
 import { index as campusContributionsIndex } from '@/routes/campus/contributions';
-import { show as campusRoster } from '@/routes/campus/roster';
 import {
     download as downloadAttachment,
     preview as previewAttachment,
@@ -80,6 +80,7 @@ type Props = {
 type ReviewPayload = {
     decision: ReviewDecision;
     expected_version: number;
+    expected_revision: string;
     reason: string | null;
     note: string | null;
 };
@@ -93,32 +94,36 @@ const statusMeta: Record<
     draft: {
         label: 'Draft',
         description: 'Belum dikirim untuk validasi.',
-        className: 'border-slate-200 bg-slate-50 text-slate-600',
+        className: 'border-border bg-accent/35 text-muted-foreground',
     },
     pending: {
         label: 'Menunggu validasi',
-        description: 'Menunggu keputusan reviewer kampus.',
-        className: 'border-amber-200/80 bg-amber-50 text-amber-800',
+        description: 'Menunggu keputusan peninjau kampus.',
+        className:
+            'border-pending/30 bg-pending-subtle text-pending-subtle-foreground',
     },
     revision: {
         label: 'Perlu diperbaiki',
         description: 'Pemilik menerima catatan untuk membuat versi baru.',
-        className: 'border-rose-200/80 bg-rose-50 text-rose-800',
+        className:
+            'border-correction/30 bg-correction-subtle text-correction-subtle-foreground',
     },
     approved: {
         label: 'Tervalidasi',
         description: 'Keputusan validasi tersimpan di ledger.',
-        className: 'border-emerald-200/80 bg-emerald-50 text-emerald-800',
+        className:
+            'border-verified/30 bg-verified-subtle text-verified-subtle-foreground',
     },
     rejected: {
         label: 'Ditolak',
         description: 'Keputusan penolakan tersimpan di riwayat.',
-        className: 'border-rose-200/80 bg-rose-50 text-rose-800',
+        className:
+            'border-correction/30 bg-correction-subtle text-correction-subtle-foreground',
     },
     archived: {
         label: 'Diarsipkan',
         description: 'Kontribusi tidak menerima keputusan baru.',
-        className: 'border-slate-200 bg-slate-50 text-slate-600',
+        className: 'border-border bg-accent/35 text-muted-foreground',
     },
 };
 
@@ -128,22 +133,22 @@ const decisionMeta: Record<
 > = {
     approved: {
         label: 'Setujui Kontribusi',
-        description: 'Kontribusi valid dan dapat menjadi capaian portfolio.',
+        description: 'Kontribusi valid dan dapat menjadi capaian portofolio.',
         className:
-            'border-emerald-200 bg-emerald-50/40 text-emerald-950 hover:bg-emerald-50',
+            'border-verified/30 bg-verified-subtle text-verified-subtle-foreground hover:bg-verified-subtle',
     },
     revision: {
         label: 'Minta Perbaikan',
         description:
-            'Mahasiswa perlu membuat versi baru berdasarkan catatan reviewer.',
+            'Mahasiswa perlu membuat versi baru berdasarkan catatan peninjau.',
         className:
-            'border-amber-200 bg-amber-50/40 text-amber-950 hover:bg-amber-50',
+            'border-pending/30 bg-pending-subtle text-pending-subtle-foreground hover:bg-pending-subtle',
     },
     rejected: {
         label: 'Tolak Kontribusi',
         description: 'Tolak kontribusi dengan alasan tertulis faktual.',
         className:
-            'border-rose-200 bg-rose-50/40 text-rose-950 hover:bg-rose-50',
+            'border-correction/30 bg-correction-subtle text-correction-subtle-foreground hover:bg-correction-subtle',
     },
 };
 
@@ -157,7 +162,6 @@ function formatDate(value: string): string {
     return new Intl.DateTimeFormat('id-ID', {
         dateStyle: 'medium',
         timeStyle: 'short',
-        timeZone: 'UTC',
     }).format(date);
 }
 
@@ -219,31 +223,31 @@ function QueueSkeleton() {
     return (
         <div
             aria-busy="true"
-            aria-label="Antrean validasi contribution sedang dimuat"
-            className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white"
+            aria-label="Antrean validasi kontribusi sedang dimuat"
+            className="overflow-hidden rounded-3xl border border-border bg-white"
             data-test="campus-contribution-queue-loading"
         >
             <p className="sr-only" role="status">
-                Memuat antrean validasi contribution.
+                Memuat antrean validasi kontribusi.
             </p>
             {Array.from({ length: 5 }, (_, index) => (
                 <div
                     key={index}
                     aria-hidden="true"
-                    className="grid min-h-24 gap-4 border-b border-slate-100 p-6 last:border-b-0 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_10rem] sm:items-center"
+                    className="grid min-h-24 gap-4 border-b border-border p-6 last:border-b-0 @min-[46rem]:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_9rem] @min-[46rem]:items-center"
                 >
                     <div className="flex items-center gap-3">
-                        <Skeleton className="size-10 rounded-xl bg-slate-100" />
+                        <Skeleton className="size-10 rounded-xl bg-accent" />
                         <div className="space-y-2">
-                            <Skeleton className="h-4 w-32 bg-slate-100" />
-                            <Skeleton className="h-3 w-48 bg-slate-100" />
+                            <Skeleton className="h-4 w-32 bg-accent" />
+                            <Skeleton className="h-3 w-48 bg-accent" />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Skeleton className="h-4 w-28 bg-slate-100" />
-                        <Skeleton className="h-3 w-36 bg-slate-100" />
+                        <Skeleton className="h-4 w-28 bg-accent" />
+                        <Skeleton className="h-3 w-36 bg-accent" />
                     </div>
-                    <Skeleton className="h-10 w-full rounded-xl bg-slate-100" />
+                    <Skeleton className="h-10 w-full rounded-xl bg-accent" />
                 </div>
             ))}
         </div>
@@ -256,145 +260,83 @@ function QueueRefreshState() {
             role="status"
             aria-live="polite"
             aria-busy="true"
-            className="flex items-center gap-2.5 rounded-2xl border border-blue-100 bg-blue-50/50 p-4 text-xs font-semibold text-blue-800"
+            className="flex items-center gap-2.5 rounded-3xl border border-primary/15 bg-accent/70 p-4 text-xs font-semibold text-primary"
             data-test="campus-contribution-queue-refreshing"
         >
             <RefreshCw
                 aria-hidden="true"
-                className="size-4 animate-spin text-blue-600 motion-reduce:animate-none"
+                className="size-4 animate-spin text-primary motion-reduce:animate-none"
             />
             <span>
-                Menyegarkan antrean tanpa menghapus contribution yang sedang
+                Menyegarkan antrean tanpa menghapus kontribusi yang sedang
                 terlihat.
             </span>
         </div>
     );
 }
 
-function SummaryRail({
-    reviewQueue,
-    institution,
-}: {
-    reviewQueue: ReviewQueue;
-    institution: Props['institution'];
-}) {
+function SummaryRail({ reviewQueue }: { reviewQueue: ReviewQueue }) {
+    const stats = [
+        {
+            label: 'Menunggu validasi',
+            value: reviewQueue.summary.pending,
+            icon: Clock3,
+            tone: 'text-pending-subtle-foreground',
+        },
+        {
+            label: 'Tervalidasi',
+            value: reviewQueue.summary.approved,
+            icon: CheckCircle2,
+            tone: 'text-verified-subtle-foreground',
+        },
+        {
+            label: 'Perlu diperbaiki',
+            value: reviewQueue.summary.revision,
+            icon: FileWarning,
+            tone: 'text-correction-subtle-foreground',
+        },
+        {
+            label: 'Ditolak',
+            value: reviewQueue.summary.rejected,
+            icon: XCircle,
+            tone: 'text-muted-foreground',
+        },
+    ];
+
     return (
-        <div className="grid gap-6">
-            {/* Card 1: Ringkasan Antrean */}
-            <section
-                aria-labelledby="contribution-review-summary-title"
-                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs"
-            >
-                <div className="flex items-center gap-2">
-                    <span className="flex size-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                        <FileCheck2 className="size-3.5" aria-hidden="true" />
+        <section
+            aria-label="Ringkasan validasi kampus"
+            className="grid grid-cols-2 gap-x-4 gap-y-5 border-y border-border px-1 py-5 lg:grid-cols-4"
+        >
+            {stats.map(({ label, value, icon: Icon, tone }) => (
+                <div key={label} className="flex min-w-0 items-start gap-3">
+                    <span
+                        className={cn(
+                            'flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent/70',
+                            tone,
+                        )}
+                    >
+                        <Icon aria-hidden="true" className="size-4" />
                     </span>
-                    <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
-                        RINGKASAN VALIDASI
-                    </p>
-                </div>
-
-                <h2
-                    id="contribution-review-summary-title"
-                    className="mt-3 text-base font-bold tracking-tight text-slate-950"
-                >
-                    {reviewQueue.summary.pending} Menunggu Keputusan
-                </h2>
-
-                <dl className="mt-4 divide-y divide-slate-100 border-t border-slate-100 text-xs">
-                    <div className="flex items-center justify-between py-3">
-                        <dt className="text-slate-600">Menunggu validasi</dt>
-                        <dd className="font-mono font-bold text-amber-700">
-                            {reviewQueue.summary.pending}
-                        </dd>
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                        <dt className="text-slate-600">Sudah tervalidasi</dt>
-                        <dd className="font-mono font-bold text-emerald-700">
-                            {reviewQueue.summary.approved}
-                        </dd>
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                        <dt className="text-slate-600">Perlu diperbaiki</dt>
-                        <dd className="font-mono font-bold text-rose-700">
-                            {reviewQueue.summary.revision}
-                        </dd>
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                        <dt className="text-slate-600">Ditolak</dt>
-                        <dd className="font-mono font-bold text-slate-700">
-                            {reviewQueue.summary.rejected}
-                        </dd>
-                    </div>
-                </dl>
-            </section>
-
-            {/* Card 2: Batas Privasi & Keputusan */}
-            <section
-                aria-labelledby="review-boundary-title"
-                className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/80 to-indigo-50/40 p-4.5"
-            >
-                <div className="flex items-start gap-3">
-                    <Lock className="mt-0.5 size-4.5 shrink-0 text-blue-600" />
-                    <div>
-                        <h2
-                            id="review-boundary-title"
-                            className="text-xs font-bold text-blue-900"
-                        >
-                            Batas Keputusan & Audit
-                        </h2>
-                        <p className="mt-1 text-xs leading-relaxed text-blue-800/80">
-                            Evidence yang dibuka tetap private. Setiap keputusan
-                            menyimpan reviewer, alasan, waktu, dan versi policy
-                            dalam riwayat ledger yang tidak dapat ditimpa.
+                    <div className="min-w-0">
+                        <p className="text-xs leading-5 text-muted-foreground">
+                            {label}
+                        </p>
+                        <p className="mt-1 text-2xl font-bold tabular-nums">
+                            {value}
                         </p>
                     </div>
                 </div>
-            </section>
-
-            {/* Card 3: Akses Cepat */}
-            <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-                <p className="font-label text-xs font-bold tracking-[0.1em] text-slate-500 uppercase">
-                    MODUL OPERASIONAL
-                </p>
-
-                <div className="mt-3.5 grid gap-2">
-                    <Link
-                        href={affiliationIndex({
-                            institution: institution.id,
-                        })}
-                        prefetch
-                        className="group flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs font-semibold text-slate-800 transition-all hover:border-blue-200 hover:bg-blue-50/50 hover:text-blue-900"
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <ClipboardCheck className="size-4 text-blue-600" />
-                            <span>Review Afiliasi</span>
-                        </div>
-                        <ChevronRight className="size-3.5 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-blue-600" />
-                    </Link>
-
-                    <Link
-                        href={campusRoster({ institution: institution.id })}
-                        prefetch
-                        className="group flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs font-semibold text-slate-800 transition-all hover:border-blue-200 hover:bg-blue-50/50 hover:text-blue-900"
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <FileSpreadsheet className="size-4 text-emerald-600" />
-                            <span>Roster Mahasiswa</span>
-                        </div>
-                        <ChevronRight className="size-3.5 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-blue-600" />
-                    </Link>
-                </div>
-            </section>
-        </div>
+            ))}
+        </section>
     );
 }
 
 function ReviewHistory({ reviews }: { reviews: ContributionReview[] }) {
     if (reviews.length === 0) {
         return (
-            <p className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-center text-xs text-slate-500">
-                Belum ada keputusan reviewer pada contribution ini.
+            <p className="rounded-xl border border-border bg-accent/35 p-4 text-center text-xs text-muted-foreground">
+                Belum ada keputusan peninjau pada kontribusi ini.
             </p>
         );
     }
@@ -407,7 +349,7 @@ function ReviewHistory({ reviews }: { reviews: ContributionReview[] }) {
                 .map((review) => (
                     <li
                         key={review.id}
-                        className="space-y-2 rounded-xl border border-slate-100 bg-slate-50/50 p-3 text-xs"
+                        className="space-y-2 rounded-xl border border-border bg-accent/35 p-3 text-sm leading-6"
                     >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <StatusChip
@@ -419,25 +361,25 @@ function ReviewHistory({ reviews }: { reviews: ContributionReview[] }) {
                             />
                             <time
                                 dateTime={review.reviewed_at}
-                                className="font-mono text-[0.6875rem] text-slate-400"
+                                className="font-mono text-xs text-muted-foreground"
                             >
                                 {formatDate(review.reviewed_at)}
                             </time>
                         </div>
-                        <p className="font-semibold text-slate-900">
+                        <p className="font-semibold wrap-anywhere text-foreground">
                             {review.reviewer.name}
                         </p>
                         {review.reason && (
-                            <p className="leading-relaxed text-slate-700">
+                            <p className="leading-relaxed text-foreground">
                                 {review.reason}
                             </p>
                         )}
                         {review.note && (
-                            <p className="border-l-2 border-slate-200 pl-2.5 text-slate-500 italic">
+                            <p className="border-l-2 border-border pl-2.5 text-muted-foreground italic">
                                 {review.note}
                             </p>
                         )}
-                        <p className="font-mono text-[0.6875rem] text-slate-400">
+                        <p className="font-mono text-xs text-muted-foreground">
                             {review.policy_version}
                         </p>
                     </li>
@@ -451,20 +393,28 @@ function ReviewWorkspace({
     filters,
     reviewQueue,
     isFilterLoading,
+    onAccessUnavailable,
 }: {
     institution: Props['institution'];
     filters: ReviewFilters;
     reviewQueue: ReviewQueue;
     isFilterLoading: boolean;
+    onAccessUnavailable: () => void;
 }) {
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isQueueLoading, setQueueLoading] = useState(false);
     const [queueError, setQueueError] = useState<string | null>(null);
     const [actionMessage, setActionMessage] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
+    const [accessUnavailable, setAccessUnavailable] = useState(false);
+    const commandLock = useRef(false);
+    const [needsCheck, setNeedsCheck] = useState(false);
+    const [commandBlocked, setCommandBlocked] = useState(false);
+    const validationFocus = useRef(false);
     const reviewForm = useHttp<ReviewPayload, ContributionApiResponse>({
         decision: 'approved',
         expected_version: 0,
+        expected_revision: '',
         reason: null,
         note: null,
     });
@@ -479,26 +429,90 @@ function ReviewWorkspace({
     const noteError = firstError(formErrors, 'note');
     const selectedDecision = reviewForm.data.decision;
     const isLoading = isQueueLoading || isFilterLoading;
+    const stale =
+        selected !== null &&
+        selected.revision !== reviewForm.data.expected_revision;
+    const blocked =
+        reviewForm.processing ||
+        commandBlocked ||
+        needsCheck ||
+        stale ||
+        isLoading ||
+        queueError !== null;
+    useEffect(() => {
+        if (validationFocus.current && !reviewForm.processing) {
+            validationFocus.current = false;
+            document
+                .querySelector<HTMLElement>(
+                    '[data-test="campus-contribution-review-form"] [aria-invalid="true"]',
+                )
+                ?.focus();
+        }
+    }, [reviewForm.errors, reviewForm.processing]);
 
     useEffect(() => {
         function closeDocket(event: KeyboardEvent): void {
-            if (event.key === 'Escape' && selectedId !== null) {
+            if (
+                event.key === 'Escape' &&
+                selectedId !== null &&
+                !reviewForm.processing
+            ) {
+                if (
+                    (reviewForm.data.reason || reviewForm.data.note) &&
+                    !window.confirm(
+                        'Tutup berkas dan buang catatan keputusan yang belum disimpan?',
+                    )
+                ) {
+                    return;
+                }
+
                 setSelectedId(null);
+                window.setTimeout(
+                    () =>
+                        document
+                            .querySelector<HTMLButtonElement>(
+                                `[data-test="campus-contribution-select-${selectedId}"]`,
+                            )
+                            ?.focus(),
+                    0,
+                );
             }
         }
 
         document.addEventListener('keydown', closeDocket);
 
         return () => document.removeEventListener('keydown', closeDocket);
-    }, [selectedId]);
+    }, [
+        selectedId,
+        reviewForm.processing,
+        reviewForm.data.reason,
+        reviewForm.data.note,
+    ]);
 
     function selectItem(item: ContributionReviewQueueItem): void {
+        if (commandLock.current || isLoading || needsCheck) {
+            return;
+        }
+
+        if (
+            (selectedId !== item.id || stale) &&
+            (reviewForm.data.reason || reviewForm.data.note) &&
+            !window.confirm(
+                'Pindah berkas dan buang catatan keputusan yang belum disimpan?',
+            )
+        ) {
+            return;
+        }
+
         setSelectedId(item.id);
+        reviewForm.clearErrors();
+        setCommandBlocked(false);
         setActionMessage(null);
         setActionError(null);
         reviewForm.setData({
             decision: 'approved',
             expected_version: item.current_version?.version_number ?? 0,
+            expected_revision: item.revision,
             reason: null,
             note: null,
         });
@@ -508,6 +522,19 @@ function ReviewWorkspace({
     }
 
     function updateFilters(next: Partial<ReviewFilters> & { page?: number }) {
+        if (commandLock.current || isLoading || needsCheck) {
+            return;
+        }
+
+        if (
+            (reviewForm.data.reason || reviewForm.data.note) &&
+            !window.confirm(
+                'Ganti antrean dan buang catatan keputusan belum disimpan?',
+            )
+        ) {
+            return;
+        }
+
         const merged = { ...filters, ...next };
 
         setQueueLoading(true);
@@ -525,13 +552,21 @@ function ReviewWorkspace({
                 preserveScroll: true,
                 preserveState: true,
                 replace: true,
-                onSuccess: () => setQueueError(null),
+                onSuccess: () => {
+                    setQueueError(null);
+                    setAccessUnavailable(false);
+                },
                 onError: () => {
                     setQueueError(
                         'Antrean belum diperbarui. Data yang sedang terlihat tetap aman. Coba lagi.',
                     );
                 },
-                onHttpException: () => {
+                onHttpException: (response) => {
+                    if (response.status === 403 || response.status === 404) {
+                        setAccessUnavailable(true);
+                        onAccessUnavailable();
+                    }
+
                     setQueueError(
                         'Antrean belum diperbarui. Data yang sedang terlihat tetap aman. Coba lagi.',
                     );
@@ -551,17 +586,29 @@ function ReviewWorkspace({
     }
 
     function refreshQueue(): void {
+        if (commandLock.current || isLoading) {
+            return;
+        }
+
         setQueueLoading(true);
         setQueueError(null);
         router.reload({
             only: ['reviewQueue'],
-            onSuccess: () => setQueueError(null),
+            onSuccess: () => {
+                setQueueError(null);
+                setNeedsCheck(false);
+            },
             onError: () => {
                 setQueueError(
                     'Antrean belum diperbarui. Data yang sedang terlihat tetap aman. Coba lagi.',
                 );
             },
-            onHttpException: () => {
+            onHttpException: (response) => {
+                if (response.status === 403 || response.status === 404) {
+                    setAccessUnavailable(true);
+                    onAccessUnavailable();
+                }
+
                 setQueueError(
                     'Antrean belum diperbarui. Data yang sedang terlihat tetap aman. Coba lagi.',
                 );
@@ -586,11 +633,13 @@ function ReviewWorkspace({
             selected === null ||
             version === null ||
             selected.status !== 'pending' ||
-            reviewForm.processing
+            blocked ||
+            commandLock.current
         ) {
             return;
         }
 
+        commandLock.current = true;
         setActionMessage(null);
         setActionError(null);
         reviewForm.transform((data) => ({
@@ -601,66 +650,134 @@ function ReviewWorkspace({
         reviewForm
             .post(ContributionController.review(selected.id).url, {
                 onSuccess: () => {
-                    const nextItem = reviewQueue.items.find(
-                        (item) =>
-                            item.id !== selected.id &&
-                            item.status === 'pending',
-                    );
-
-                    if (nextItem !== undefined) {
-                        setSelectedId(nextItem.id);
-                        reviewForm.setData({
-                            decision: 'approved',
-                            expected_version:
-                                nextItem.current_version?.version_number ?? 0,
-                            reason: null,
-                            note: null,
-                        });
-                    } else {
-                        setSelectedId(null);
-                    }
-
+                    setSelectedId(null);
+                    setCommandBlocked(false);
+                    reviewForm.setData({
+                        decision: 'approved',
+                        expected_version: 0,
+                        expected_revision: '',
+                        reason: null,
+                        note: null,
+                    });
                     setActionMessage(
-                        'Keputusan tersimpan. Riwayat audit contribution sudah diperbarui.',
+                        'Keputusan tersimpan. Persetujuan menghasilkan karya privat, bukan publikasi bukti.',
                     );
                     setActionError(null);
+                    setNeedsCheck(true);
+                    setQueueLoading(true);
                     router.reload({
                         only: ['reviewQueue'],
+                        onSuccess: () => {
+                            setQueueError(null);
+                            setNeedsCheck(false);
+                        },
+                        onHttpException: (response) => {
+                            if (
+                                response.status === 403 ||
+                                response.status === 404
+                            ) {
+                                setAccessUnavailable(true);
+                                onAccessUnavailable();
+                            }
+
+                            setQueueError(
+                                'Keputusan tersimpan, tetapi antrean terbaru belum terbaca. Periksa antrean sebelum keputusan lain.',
+                            );
+
+                            return false;
+                        },
+                        onNetworkError: () => {
+                            setQueueError(
+                                'Keputusan tersimpan, tetapi antrean terbaru belum terbaca. Periksa koneksi.',
+                            );
+
+                            return false;
+                        },
+                        onFinish: () => setQueueLoading(false),
                     });
                 },
+                onError: (errors) => {
+                    validationFocus.current = true;
+
+                    if (
+                        'status' in errors ||
+                        'evidence' in errors ||
+                        'expected_revision' in errors ||
+                        'expected_version' in errors
+                    ) {
+                        setCommandBlocked(true);
+                        setActionError(
+                            'Berkas atau bukti perlu diperiksa. Perbaikan dan penolakan tetap memerlukan sumber terbaru.',
+                        );
+                    }
+                },
                 onHttpException: (response: { status: number }) => {
+                    setNeedsCheck(true);
+                    setCommandBlocked(true);
+
+                    if (response.status === 403 || response.status === 404) {
+                        setAccessUnavailable(true);
+                        onAccessUnavailable();
+                    }
+
                     setActionError(
                         response.status === 403
                             ? 'Akses review sudah tidak tersedia. Data yang terlihat tetap aman.'
                             : response.status === 422
                               ? 'Keputusan belum disimpan. Berkas mungkin berubah, atau field perlu diperbaiki.'
-                              : 'Keputusan belum disimpan. Coba lagi.',
+                              : response.status === 409
+                                ? 'Berkas berubah. Periksa antrean dan gunakan berkas terbaru sebelum memutuskan.'
+                                : 'Hasil keputusan belum dapat dipastikan. Periksa antrean sebelum mengirim lagi.',
                     );
 
                     return false;
                 },
                 onNetworkError: () => {
+                    setNeedsCheck(true);
+                    setCommandBlocked(true);
                     setActionError(
-                        'Keputusan belum disimpan. Periksa koneksi lalu coba lagi.',
+                        'Hasil keputusan belum pasti. Catatan tetap ada. Periksa antrean, jangan langsung mengirim ulang.',
                     );
 
                     return false;
                 },
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(() => {
+                commandLock.current = false;
+            });
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 motion-reduce:[&_*]:animate-none motion-reduce:[&_*]:transition-none">
+            <details
+                className="rounded-3xl border border-border bg-card p-5"
+                data-test="campus-contribution-guidance"
+            >
+                <summary className="min-h-11 cursor-pointer font-semibold focus-visible:outline-2 focus-visible:outline-ring">
+                    Batas dan panduan validasi individual
+                </summary>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    Periksa bagian pekerjaan mahasiswa, hubungan klaim dengan
+                    bukti, dan pernyataannya. Berkas bersama tidak membuktikan
+                    semua anggota mengerjakan bagian yang sama. Persetujuan
+                    hanya menilai kontribusi pada versi ini, bukan semua
+                    keahlian atau kualitas mutlak. Ringkasan menjadi karya
+                    privat; bukti dan catatan keputusan tidak ikut
+                    dipublikasikan. Panduan teknis ini bukan standar final atau
+                    SLA kampus. Nyatakan bagian yang perlu diperbaiki pada
+                    alasan; catatan dapat dibaca pemilik.
+                </p>
+            </details>
             {/* Status alerts */}
             {actionMessage && (
-                <Alert className="rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-950 shadow-xs">
-                    <CheckCircle2 className="size-4 text-emerald-600" />
+                <Alert className="rounded-3xl border-verified/30 bg-verified-subtle text-verified-subtle-foreground shadow-sm">
+                    <CheckCircle2 className="size-4 text-verified-subtle-foreground" />
                     <AlertTitle className="font-bold">
                         Perubahan Tersimpan
                     </AlertTitle>
                     <AlertDescription
-                        className="text-xs text-emerald-800"
+                        className="text-xs text-verified-subtle-foreground"
                         data-test="campus-contribution-action-success"
                     >
                         {actionMessage}
@@ -671,14 +788,14 @@ function ReviewWorkspace({
             {actionError && (
                 <Alert
                     variant="destructive"
-                    className="rounded-2xl border-rose-200 bg-rose-50 text-rose-950 shadow-xs"
+                    className="rounded-3xl border-correction/30 bg-correction-subtle text-correction-subtle-foreground shadow-sm"
                     data-test="campus-contribution-action-error"
                 >
-                    <AlertTriangle className="size-4 text-rose-600" />
+                    <AlertTriangle className="size-4 text-correction-subtle-foreground" />
                     <AlertTitle className="font-bold">
-                        Keputusan Belum Tersimpan
+                        Keputusan belum tersimpan
                     </AlertTitle>
-                    <AlertDescription className="text-xs text-rose-800">
+                    <AlertDescription className="text-xs text-correction-subtle-foreground">
                         {actionError}
                     </AlertDescription>
                 </Alert>
@@ -687,14 +804,14 @@ function ReviewWorkspace({
             {queueError && (
                 <div
                     role="alert"
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-900 shadow-xs"
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-correction/30 bg-correction-subtle p-4 text-xs font-semibold text-correction-subtle-foreground shadow-sm"
                     data-test="campus-contribution-queue-error"
                 >
                     <span>{queueError}</span>
                     <Button
                         type="button"
                         variant="outline"
-                        className="h-8 cursor-pointer rounded-xl bg-white text-xs disabled:cursor-not-allowed"
+                        className="min-h-11 cursor-pointer rounded-xl bg-white text-xs disabled:cursor-not-allowed"
                         disabled={isLoading}
                         onClick={refreshQueue}
                         data-test="campus-contribution-queue-error-retry"
@@ -702,705 +819,868 @@ function ReviewWorkspace({
                         {isLoading ? (
                             <Spinner className="mr-1 size-3" />
                         ) : (
-                            <RefreshCw className="mr-1 size-3 text-slate-500" />
+                            <RefreshCw className="mr-1 size-3 text-muted-foreground" />
                         )}
                         Coba lagi
                     </Button>
                 </div>
             )}
 
-            <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_26rem]">
-                <section
-                    aria-labelledby="contribution-review-queue-title"
-                    aria-busy={isLoading}
-                    className="min-w-0"
-                >
-                    {/* Header bar */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-6 py-5 shadow-xs">
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <FileCheck2 className="size-4.5 text-blue-600" />
-                                <h2
-                                    id="contribution-review-queue-title"
-                                    className="text-base font-bold text-slate-900"
-                                >
-                                    Antrean Validasi
-                                </h2>
+            {accessUnavailable ? (
+                <section className="rounded-3xl border border-border bg-white p-5">
+                    <h2 className="text-lg font-bold">
+                        Akses validasi tidak tersedia
+                    </h2>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        Berkas sebelumnya disembunyikan. Periksa izin kampus
+                        sebelum memuat ulang.
+                    </p>
+                    <Button
+                        variant="outline"
+                        disabled={isLoading}
+                        onClick={refreshQueue}
+                        className="mt-4"
+                    >
+                        Muat ulang antrean
+                    </Button>
+                </section>
+            ) : (
+                <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_26rem]">
+                    <section
+                        aria-labelledby="contribution-review-queue-title"
+                        aria-busy={isLoading}
+                        className="@container min-w-0"
+                    >
+                        {/* Header bar */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-border bg-white px-6 py-5 shadow-sm">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <FileCheck2 className="size-4.5 text-primary" />
+                                    <h2
+                                        id="contribution-review-queue-title"
+                                        tabIndex={-1}
+                                        className="text-base font-bold text-foreground"
+                                    >
+                                        Antrean Validasi
+                                    </h2>
+                                </div>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    {reviewQueue.pagination.total} kontribusi
+                                    sesuai filter
+                                </p>
                             </div>
-                            <p className="mt-1 text-xs text-slate-500">
-                                {reviewQueue.pagination.total} contribution
-                                sesuai filter
-                            </p>
-                        </div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="h-9 cursor-pointer rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed"
-                            disabled={isLoading}
-                            onClick={refreshQueue}
-                            data-test="campus-contribution-refresh"
-                        >
-                            {isLoading ? (
-                                <Spinner className="mr-1.5 size-3.5" />
-                            ) : (
-                                <RefreshCw className="mr-1.5 size-3.5 text-slate-500" />
-                            )}
-                            Muat ulang
-                        </Button>
-                    </div>
-
-                    <div className="mt-4">
-                        {reviewQueue.items.length === 0 ? (
-                            <div
-                                className="grid justify-items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-6 py-16 text-center shadow-xs"
-                                data-test="campus-contribution-queue-empty"
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="min-h-11 cursor-pointer rounded-xl text-xs font-semibold text-foreground hover:bg-accent/35 disabled:cursor-not-allowed"
+                                disabled={isLoading}
+                                onClick={refreshQueue}
+                                data-test="campus-contribution-refresh"
                             >
-                                <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/50">
-                                    <CheckCircle2
+                                {isLoading ? (
+                                    <Spinner className="mr-1.5 size-3.5" />
+                                ) : (
+                                    <RefreshCw className="mr-1.5 size-3.5 text-muted-foreground" />
+                                )}
+                                Muat ulang
+                            </Button>
+                        </div>
+
+                        <div className="mt-4">
+                            {reviewQueue.items.length === 0 ? (
+                                <div
+                                    className="grid justify-items-center gap-3 rounded-3xl border border-border bg-white px-6 py-16 text-center shadow-sm"
+                                    data-test="campus-contribution-queue-empty"
+                                >
+                                    <div className="flex size-14 items-center justify-center rounded-3xl bg-verified-subtle text-verified-subtle-foreground ring-8 ring-verified-subtle">
+                                        <CheckCircle2
+                                            aria-hidden="true"
+                                            className="size-7"
+                                        />
+                                    </div>
+                                    <h3 className="text-base font-bold text-foreground">
+                                        Antrean kosong
+                                    </h3>
+                                    <p className="mx-auto max-w-[50ch] text-xs leading-relaxed text-muted-foreground">
+                                        Tidak ada kontribusi pada filter ini.
+                                        Ubah status atau urutan untuk menelusuri
+                                        berkas lain.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="grid gap-3">
+                                    {isLoading && <QueueRefreshState />}
+                                    {reviewQueue.items.map((item) => {
+                                        const itemStatus =
+                                            statusMeta[item.status];
+
+                                        return (
+                                            <article
+                                                key={item.id}
+                                                className={cn(
+                                                    'group relative overflow-hidden rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-5',
+                                                    selectedId === item.id &&
+                                                        'border-primary bg-accent/70 shadow-md ring-2 ring-primary/20',
+                                                )}
+                                                data-test={`campus-contribution-row-${item.id}`}
+                                            >
+                                                <button
+                                                    type="button"
+                                                    disabled={
+                                                        reviewForm.processing
+                                                    }
+                                                    className="grid w-full cursor-pointer gap-4 rounded-xl text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 @min-[46rem]:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_9rem] @min-[46rem]:items-center"
+                                                    aria-pressed={
+                                                        selectedId === item.id
+                                                    }
+                                                    onClick={() =>
+                                                        selectItem(item)
+                                                    }
+                                                    data-test={`campus-contribution-select-${item.id}`}
+                                                >
+                                                    <div className="flex items-start gap-3.5">
+                                                        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/70 text-primary">
+                                                            <FileText className="size-5" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <span className="font-mono text-xs font-bold text-muted-foreground">
+                                                                {item.reference}
+                                                            </span>
+                                                            <h3 className="mt-0.5 text-lg font-bold wrap-anywhere text-foreground">
+                                                                {
+                                                                    item.project
+                                                                        .title
+                                                                }
+                                                            </h3>
+                                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                                Oleh:{' '}
+                                                                <strong className="font-semibold text-foreground">
+                                                                    {
+                                                                        item
+                                                                            .contributor
+                                                                            .name
+                                                                    }
+                                                                </strong>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="min-w-0 text-xs">
+                                                        <p className="font-semibold break-words text-foreground">
+                                                            {item
+                                                                .current_version
+                                                                ?.task?.title ??
+                                                                'Tugas belum tersedia'}
+                                                        </p>
+                                                        <p className="mt-1 text-xs text-muted-foreground">
+                                                            {item.current_version
+                                                                ? `Versi ${item.current_version.version_number}`
+                                                                : 'Versi belum tersedia'}{' '}
+                                                            •{' '}
+                                                            {formatDate(
+                                                                item.updated_at,
+                                                            )}
+                                                        </p>
+                                                        <p className="mt-1.5 text-muted-foreground">
+                                                            {
+                                                                itemStatus.description
+                                                            }
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between gap-3 @min-[46rem]:flex-col @min-[46rem]:items-end">
+                                                        <StatusChip
+                                                            status={item.status}
+                                                        />
+                                                        <span
+                                                            className={`text-xs font-semibold ${
+                                                                selectedId ===
+                                                                item.id
+                                                                    ? 'text-primary'
+                                                                    : 'text-muted-foreground group-hover:text-primary'
+                                                            }`}
+                                                        >
+                                                            {selectedId ===
+                                                            item.id
+                                                                ? 'Berkas dipilih'
+                                                                : 'Buka berkas'}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            </article>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Pagination */}
+                        {reviewQueue.pagination.last_page > 1 && (
+                            <nav
+                                aria-label="Paginasi antrean validasi kontribusi"
+                                className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border bg-white p-4 shadow-sm"
+                            >
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="cursor-pointer rounded-xl text-xs font-semibold disabled:cursor-not-allowed"
+                                    disabled={
+                                        isLoading ||
+                                        reviewQueue.pagination.current_page ===
+                                            1
+                                    }
+                                    onClick={() =>
+                                        updateFilters({
+                                            page:
+                                                reviewQueue.pagination
+                                                    .current_page - 1,
+                                        })
+                                    }
+                                >
+                                    <ChevronLeft className="mr-1 size-3.5" />
+                                    Sebelumnya
+                                </Button>
+                                <p className="font-mono text-xs font-semibold text-muted-foreground">
+                                    Halaman{' '}
+                                    {reviewQueue.pagination.current_page} dari{' '}
+                                    {reviewQueue.pagination.last_page}
+                                </p>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="cursor-pointer rounded-xl text-xs font-semibold disabled:cursor-not-allowed"
+                                    disabled={
+                                        isLoading ||
+                                        reviewQueue.pagination.current_page ===
+                                            reviewQueue.pagination.last_page
+                                    }
+                                    onClick={() =>
+                                        updateFilters({
+                                            page:
+                                                reviewQueue.pagination
+                                                    .current_page + 1,
+                                        })
+                                    }
+                                >
+                                    Berikutnya
+                                    <ChevronRight className="ml-1 size-3.5" />
+                                </Button>
+                            </nav>
+                        )}
+                    </section>
+
+                    {/* Sticky Docket Aside */}
+                    <aside
+                        aria-labelledby="campus-review-decision-title"
+                        className={cn(
+                            'min-w-0 xl:order-last',
+                            selected !== null ? 'order-first' : 'order-last',
+                        )}
+                    >
+                        {selected === null ? (
+                            <div className="grid justify-items-center gap-3 rounded-3xl border border-border bg-white p-8 text-center shadow-sm xl:sticky xl:top-6">
+                                <div className="flex size-12 items-center justify-center rounded-3xl bg-accent/70 text-primary">
+                                    <UserRoundCheck
                                         aria-hidden="true"
-                                        className="size-7"
+                                        className="size-6"
                                     />
                                 </div>
-                                <h3 className="text-base font-bold text-slate-900">
-                                    Antrean kosong
-                                </h3>
-                                <p className="mx-auto max-w-[50ch] text-xs leading-relaxed text-slate-500">
-                                    Semua contribution pada filter ini sudah
-                                    memiliki status yang tercatat. Ubah filter
-                                    untuk melihat riwayat lain.
+                                <h2 className="text-base font-bold text-foreground">
+                                    Pilih kontribusi untuk ditinjau
+                                </h2>
+                                <p className="text-xs leading-relaxed text-muted-foreground">
+                                    Klik salah satu baris kontribusi untuk
+                                    memeriksa deskripsi tugas, klaim hasil, dan
+                                    tautan bukti privat.
                                 </p>
                             </div>
                         ) : (
-                            <div className="grid gap-3">
-                                {isLoading && <QueueRefreshState />}
-                                {reviewQueue.items.map((item) => {
-                                    const itemStatus = statusMeta[item.status];
-
-                                    return (
-                                        <article
-                                            key={item.id}
-                                            className={cn(
-                                                'group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md sm:p-6',
-                                                selectedId === item.id &&
-                                                    'border-blue-500 bg-blue-50/20 shadow-md ring-2 ring-blue-500/20',
-                                            )}
-                                            data-test={`campus-contribution-row-${item.id}`}
-                                        >
-                                            <button
-                                                type="button"
-                                                className="grid w-full cursor-pointer gap-4 text-left sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_10rem] sm:items-center"
-                                                aria-pressed={
-                                                    selectedId === item.id
-                                                }
-                                                onClick={() => selectItem(item)}
-                                                data-test={`campus-contribution-select-${item.id}`}
-                                            >
-                                                <div className="flex items-start gap-3.5">
-                                                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                                                        <FileText className="size-5" />
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <span className="font-mono text-xs font-bold text-slate-400">
-                                                            {item.reference}
-                                                        </span>
-                                                        <h3 className="mt-0.5 text-sm font-bold break-words text-slate-900">
-                                                            {item.project.title}
-                                                        </h3>
-                                                        <p className="mt-1 text-xs text-slate-500">
-                                                            Oleh:{' '}
-                                                            <strong className="font-semibold text-slate-700">
-                                                                {
-                                                                    item
-                                                                        .contributor
-                                                                        .name
-                                                                }
-                                                            </strong>
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="min-w-0 text-xs">
-                                                    <p className="font-semibold break-words text-slate-800">
-                                                        {item.current_version
-                                                            ?.task?.title ??
-                                                            'Task belum tersedia'}
-                                                    </p>
-                                                    <p className="mt-1 text-[0.6875rem] text-slate-400">
-                                                        {item.current_version
-                                                            ? `Versi ${item.current_version.version_number}`
-                                                            : 'Versi belum tersedia'}{' '}
-                                                        •{' '}
-                                                        {formatDate(
-                                                            item.updated_at,
-                                                        )}
-                                                    </p>
-                                                    <p className="mt-1.5 text-slate-500">
-                                                        {itemStatus.description}
-                                                    </p>
-                                                </div>
-
-                                                <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
-                                                    <StatusChip
-                                                        status={item.status}
-                                                    />
-                                                    <span
-                                                        className={`text-xs font-semibold ${
-                                                            selectedId ===
-                                                            item.id
-                                                                ? 'text-blue-600'
-                                                                : 'text-slate-400 group-hover:text-blue-600'
-                                                        }`}
-                                                    >
-                                                        {selectedId === item.id
-                                                            ? 'Sedang Dibuka'
-                                                            : 'Buka Docket →'}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        </article>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Pagination */}
-                    {reviewQueue.pagination.last_page > 1 && (
-                        <nav
-                            aria-label="Paginasi antrean validasi contribution"
-                            className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs"
-                        >
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="cursor-pointer rounded-xl text-xs font-semibold disabled:cursor-not-allowed"
-                                disabled={
-                                    isLoading ||
-                                    reviewQueue.pagination.current_page === 1
-                                }
-                                onClick={() =>
-                                    updateFilters({
-                                        page:
-                                            reviewQueue.pagination
-                                                .current_page - 1,
-                                    })
-                                }
+                            <div
+                                className="grid min-w-0 gap-5 rounded-3xl border border-primary/15 bg-white p-4 shadow-md sm:p-5 xl:sticky xl:top-6"
+                                data-test="campus-contribution-docket"
                             >
-                                <ChevronLeft className="mr-1 size-3.5" />
-                                Sebelumnya
-                            </Button>
-                            <p className="font-mono text-xs font-semibold text-slate-600">
-                                Halaman {reviewQueue.pagination.current_page}{' '}
-                                dari {reviewQueue.pagination.last_page}
-                            </p>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="cursor-pointer rounded-xl text-xs font-semibold disabled:cursor-not-allowed"
-                                disabled={
-                                    isLoading ||
-                                    reviewQueue.pagination.current_page ===
-                                        reviewQueue.pagination.last_page
-                                }
-                                onClick={() =>
-                                    updateFilters({
-                                        page:
-                                            reviewQueue.pagination
-                                                .current_page + 1,
-                                    })
-                                }
-                            >
-                                Berikutnya
-                                <ChevronRight className="ml-1 size-3.5" />
-                            </Button>
-                        </nav>
-                    )}
-                </section>
-
-                {/* Sticky Docket Aside */}
-                <aside
-                    aria-labelledby="campus-review-decision-title"
-                    className="min-w-0"
-                >
-                    {selected === null ? (
-                        <div className="sticky top-6 grid justify-items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-8 text-center shadow-xs">
-                            <div className="flex size-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                                <UserRoundCheck
-                                    aria-hidden="true"
-                                    className="size-6"
-                                />
-                            </div>
-                            <h2 className="text-base font-bold text-slate-900">
-                                Pilih Contribution untuk Ditinjau
-                            </h2>
-                            <p className="text-xs leading-relaxed text-slate-500">
-                                Klik salah satu baris kontribusi untuk memeriksa
-                                deskripsi tugas, klaim hasil, dan tautan
-                                evidence private.
-                            </p>
-                        </div>
-                    ) : (
-                        <div
-                            className="sticky top-6 grid min-w-0 gap-5 rounded-2xl border border-blue-200 bg-white p-6 shadow-md"
-                            data-test="campus-contribution-docket"
-                        >
-                            {/* Docket Header */}
-                            <header className="border-b border-slate-100 pb-4">
-                                <span className="font-mono text-xs font-bold text-blue-600">
-                                    {selected.reference}
-                                </span>
-                                <h2
-                                    id="campus-review-decision-title"
-                                    tabIndex={-1}
-                                    className="mt-1 text-lg font-bold break-words text-slate-950 focus-visible:outline-none"
-                                >
-                                    {selected.project.title}
-                                </h2>
-                                <div className="mt-2 flex flex-wrap items-center gap-2">
-                                    <StatusChip status={selected.status} />
-                                    <span className="text-xs text-slate-500">
-                                        Oleh {selected.contributor.name}
-                                    </span>
-                                </div>
-                            </header>
-
-                            {statusError && (
-                                <Alert
-                                    variant="destructive"
-                                    className="rounded-xl"
-                                >
-                                    <AlertDescription className="text-xs">
-                                        {statusError}
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-
-                            {/* Provenance Facts */}
-                            <section
-                                aria-labelledby="contribution-provenance-title"
-                                className="space-y-2"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <History
-                                        aria-hidden="true"
-                                        className="size-4 text-blue-600"
-                                    />
-                                    <h3
-                                        id="contribution-provenance-title"
-                                        className="text-xs font-bold text-slate-800"
+                                {(stale || commandBlocked || needsCheck) && (
+                                    <div
+                                        role="alert"
+                                        className="grid gap-3 rounded-2xl border border-correction/30 bg-correction-subtle p-4 text-sm leading-6"
+                                        data-test="campus-contribution-recovery"
                                     >
-                                        Provenance Tinjauan
-                                    </h3>
-                                </div>
-                                <dl className="space-y-1.5 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs">
-                                    <div className="flex items-center justify-between">
-                                        <dt className="text-slate-500">Task</dt>
-                                        <dd className="font-semibold text-slate-900">
-                                            {version?.task?.title ??
-                                                'Belum ada task'}
-                                        </dd>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <dt className="text-slate-500">
-                                            Versi Aktif
-                                        </dt>
-                                        <dd className="font-semibold text-slate-900">
-                                            {version === null
-                                                ? 'Belum tersedia'
-                                                : `Versi ${version.version_number}`}
-                                        </dd>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <dt className="text-slate-500">
-                                            Diperbarui
-                                        </dt>
-                                        <dd className="text-slate-700">
-                                            {formatDate(selected.updated_at)}
-                                        </dd>
-                                    </div>
-                                </dl>
-                            </section>
-
-                            {/* Version Claim & Summary */}
-                            {version && (
-                                <>
-                                    <section
-                                        aria-labelledby="contribution-claim-title"
-                                        className="space-y-2 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs"
-                                    >
-                                        <h3
-                                            id="contribution-claim-title"
-                                            className="font-bold text-slate-900"
-                                        >
-                                            Klaim & Ringkasan Kontribusi
-                                        </h3>
-                                        <p className="leading-relaxed font-semibold text-slate-800">
-                                            {version.claim}
+                                        <p>
+                                            Keputusan ditahan. Catatan tetap
+                                            ada. Periksa antrean lalu gunakan
+                                            berkas terbaru secara eksplisit.
                                         </p>
-                                        <p className="leading-relaxed text-slate-600">
-                                            {version.summary}
-                                        </p>
-                                        <p className="border-l-2 border-blue-400 pl-2 text-slate-500 italic">
-                                            {version.declaration}
-                                        </p>
-                                    </section>
-
-                                    {/* Evidence List */}
-                                    <section
-                                        aria-labelledby="contribution-evidence-title"
-                                        className="space-y-2"
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <h3
-                                                id="contribution-evidence-title"
-                                                className="text-xs font-bold text-slate-800"
-                                            >
-                                                Evidence Private
-                                            </h3>
-                                            <span className="font-mono text-[0.6875rem] text-slate-400">
-                                                {version.evidence.length} berkas
-                                            </span>
-                                        </div>
-                                        {version.evidence.length === 0 ? (
-                                            <p className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 text-center text-xs text-slate-500">
-                                                Tidak ada evidence yang
-                                                ditautkan ke versi ini.
-                                            </p>
-                                        ) : (
-                                            <ul className="space-y-2">
-                                                {version.evidence.map(
-                                                    (evidence) => {
-                                                        const attachment =
-                                                            evidence.attachment;
-
-                                                        return (
-                                                            <li
-                                                                key={
-                                                                    evidence.id
-                                                                }
-                                                                className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs"
-                                                            >
-                                                                <div className="flex items-start gap-2.5">
-                                                                    <FileCheck2
-                                                                        aria-hidden="true"
-                                                                        className="mt-0.5 size-4 shrink-0 text-emerald-600"
-                                                                    />
-                                                                    <div className="min-w-0">
-                                                                        <p className="font-bold break-words text-slate-900">
-                                                                            {attachment?.original_name ??
-                                                                                evidence.source_label}
-                                                                        </p>
-                                                                        {attachment && (
-                                                                            <p className="font-mono text-[0.6875rem] text-slate-400">
-                                                                                {
-                                                                                    attachment.mime_type
-                                                                                }{' '}
-                                                                                •{' '}
-                                                                                {formatFileSize(
-                                                                                    attachment.size_bytes,
-                                                                                )}
-                                                                            </p>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                                {evidence.notes && (
-                                                                    <p className="mt-1.5 pl-6 text-slate-600">
-                                                                        {
-                                                                            evidence.notes
-                                                                        }
-                                                                    </p>
-                                                                )}
-                                                                {evidence.available &&
-                                                                    attachment && (
-                                                                        <div className="mt-2 flex items-center gap-3 pl-6 font-semibold">
-                                                                            <a
-                                                                                href={
-                                                                                    previewAttachment(
-                                                                                        {
-                                                                                            project:
-                                                                                                selected
-                                                                                                    .project
-                                                                                                    .id,
-                                                                                            attachment:
-                                                                                                attachment.id,
-                                                                                        },
-                                                                                    )
-                                                                                        .url
-                                                                                }
-                                                                                target="_blank"
-                                                                                rel="noreferrer"
-                                                                                className="inline-flex cursor-pointer items-center gap-1 text-blue-600 hover:underline"
-                                                                            >
-                                                                                <Eye className="size-3.5" />
-                                                                                Pratinjau
-                                                                            </a>
-                                                                            <a
-                                                                                href={
-                                                                                    downloadAttachment(
-                                                                                        {
-                                                                                            project:
-                                                                                                selected
-                                                                                                    .project
-                                                                                                    .id,
-                                                                                            attachment:
-                                                                                                attachment.id,
-                                                                                        },
-                                                                                    )
-                                                                                        .url
-                                                                                }
-                                                                                className="inline-flex cursor-pointer items-center gap-1 text-blue-600 hover:underline"
-                                                                            >
-                                                                                <ArrowDownToLine className="size-3.5" />
-                                                                                Unduh
-                                                                            </a>
-                                                                        </div>
-                                                                    )}
-                                                            </li>
-                                                        );
-                                                    },
-                                                )}
-                                            </ul>
-                                        )}
-                                    </section>
-                                </>
-                            )}
-
-                            {/* Riwayat Keputusan */}
-                            <section
-                                aria-labelledby="contribution-history-title"
-                                className="space-y-2"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <History
-                                        aria-hidden="true"
-                                        className="size-4 text-blue-600"
-                                    />
-                                    <h3
-                                        id="contribution-history-title"
-                                        className="text-xs font-bold text-slate-800"
-                                    >
-                                        Riwayat Keputusan
-                                    </h3>
-                                </div>
-                                <ReviewHistory reviews={selected.reviews} />
-                            </section>
-
-                            {/* Decision Form */}
-                            {selected.status === 'pending' && version ? (
-                                <form
-                                    className="grid gap-4 border-t border-slate-100 pt-4"
-                                    onSubmit={submitReview}
-                                    data-test="campus-contribution-review-form"
-                                >
-                                    <fieldset className="grid gap-2">
-                                        <legend className="text-xs font-bold tracking-wider text-slate-700 uppercase">
-                                            Tindakan Reviewer
-                                        </legend>
-                                        {(
-                                            Object.keys(
-                                                decisionMeta,
-                                            ) as ReviewDecision[]
-                                        ).map((decision) => (
-                                            <label
-                                                key={decision}
-                                                className={cn(
-                                                    'flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition-all',
-                                                    decisionMeta[decision]
-                                                        .className,
-                                                    selectedDecision ===
-                                                        decision &&
-                                                        'ring-2 ring-blue-600/30',
-                                                )}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="decision"
-                                                    value={decision}
-                                                    checked={
-                                                        selectedDecision ===
-                                                        decision
-                                                    }
-                                                    onChange={() =>
-                                                        reviewForm.setData(
-                                                            'decision',
-                                                            decision,
-                                                        )
-                                                    }
-                                                    className="mt-0.5 size-4 cursor-pointer accent-blue-600"
-                                                />
-                                                <div>
-                                                    <span className="font-bold text-slate-900">
-                                                        {
-                                                            decisionMeta[
-                                                                decision
-                                                            ].label
-                                                        }
-                                                    </span>
-                                                    <p className="mt-0.5 text-[0.6875rem] text-slate-500">
-                                                        {
-                                                            decisionMeta[
-                                                                decision
-                                                            ].description
-                                                        }
-                                                    </p>
-                                                </div>
-                                            </label>
-                                        ))}
-                                    </fieldset>
-
-                                    {decisionError && (
-                                        <p
-                                            role="alert"
-                                            className="text-xs font-semibold text-rose-600"
-                                        >
-                                            {decisionError}
-                                        </p>
-                                    )}
-
-                                    {/* Alasan */}
-                                    <div className="grid gap-1.5">
-                                        <label
-                                            htmlFor="campus-contribution-review-reason"
-                                            className="text-xs font-bold text-slate-700"
-                                        >
-                                            Alasan Keputusan
-                                            {selectedDecision !==
-                                                'approved' && (
-                                                <span className="text-rose-600">
-                                                    {' '}
-                                                    *
-                                                </span>
-                                            )}
-                                        </label>
-                                        <textarea
-                                            id="campus-contribution-review-reason"
-                                            value={reviewForm.data.reason ?? ''}
-                                            maxLength={1000}
-                                            rows={3}
-                                            required={
-                                                selectedDecision !== 'approved'
-                                            }
-                                            aria-invalid={Boolean(reasonError)}
-                                            onChange={(event) =>
-                                                reviewForm.setData(
-                                                    'reason',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-xs font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-600 focus:bg-white"
-                                            placeholder="Tulis alasan faktual yang membantu mahasiswa..."
-                                        />
-                                        <p className="text-right font-mono text-[0.6875rem] text-slate-400">
-                                            {
-                                                (reviewForm.data.reason ?? '')
-                                                    .length
-                                            }{' '}
-                                            / 1.000
-                                        </p>
-                                        {reasonError && (
-                                            <p
-                                                role="alert"
-                                                className="text-xs font-semibold text-rose-600"
-                                            >
-                                                {reasonError}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Catatan internal */}
-                                    <div className="grid gap-1.5">
-                                        <label
-                                            htmlFor="campus-contribution-review-note"
-                                            className="text-xs font-bold text-slate-700"
-                                        >
-                                            Catatan Internal (Opsional)
-                                        </label>
-                                        <textarea
-                                            id="campus-contribution-review-note"
-                                            value={reviewForm.data.note ?? ''}
-                                            maxLength={1000}
-                                            rows={2}
-                                            aria-invalid={Boolean(noteError)}
-                                            onChange={(event) =>
-                                                reviewForm.setData(
-                                                    'note',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-xs font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-600 focus:bg-white"
-                                            placeholder="Konteks tambahan untuk reviewer kampus..."
-                                        />
-                                        {noteError && (
-                                            <p
-                                                role="alert"
-                                                className="text-xs font-semibold text-rose-600"
-                                            >
-                                                {noteError}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Action Buttons */}
-                                    <div className="grid gap-2 border-t border-slate-100 pt-3">
-                                        <Button
-                                            type="submit"
-                                            variant={
-                                                selectedDecision === 'rejected'
-                                                    ? 'destructive'
-                                                    : 'default'
-                                            }
-                                            className={`h-10 cursor-pointer rounded-xl text-xs font-semibold text-white shadow-xs ${
-                                                selectedDecision === 'approved'
-                                                    ? 'bg-emerald-700 hover:bg-emerald-800'
-                                                    : selectedDecision ===
-                                                        'revision'
-                                                      ? 'bg-amber-700 hover:bg-amber-800'
-                                                      : 'bg-rose-600 hover:bg-rose-700'
-                                            }`}
-                                            disabled={reviewForm.processing}
-                                            data-test="campus-contribution-decision-submit"
-                                        >
-                                            {reviewForm.processing ? (
-                                                <Spinner className="mr-1.5 size-3.5" />
-                                            ) : selectedDecision ===
-                                              'approved' ? (
-                                                <ShieldCheck className="mr-1.5 size-3.5" />
-                                            ) : selectedDecision ===
-                                              'revision' ? (
-                                                <FileWarning className="mr-1.5 size-3.5" />
-                                            ) : (
-                                                <XCircle className="mr-1.5 size-3.5" />
-                                            )}
-                                            {reviewForm.processing
-                                                ? 'Menyimpan keputusan...'
-                                                : decisionMeta[selectedDecision]
-                                                      .label}
-                                        </Button>
                                         <Button
                                             type="button"
-                                            variant="ghost"
-                                            className="h-9 cursor-pointer rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                                            disabled={reviewForm.processing}
-                                            onClick={() => setSelectedId(null)}
+                                            variant="outline"
+                                            className="h-auto min-h-11 whitespace-normal"
+                                            onClick={refreshQueue}
+                                            disabled={
+                                                isLoading ||
+                                                reviewForm.processing
+                                            }
                                         >
-                                            Tutup docket
+                                            Periksa antrean terbaru
                                         </Button>
+                                        {!needsCheck && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="h-auto min-h-11 whitespace-normal"
+                                                onClick={() => {
+                                                    if (
+                                                        window.confirm(
+                                                            'Gunakan berkas terbaru dan kosongkan catatan keputusan yang belum disimpan?',
+                                                        )
+                                                    ) {
+                                                        reviewForm.clearErrors();
+                                                        reviewForm.setData({
+                                                            decision:
+                                                                'approved',
+                                                            expected_version:
+                                                                selected
+                                                                    .current_version
+                                                                    ?.version_number ??
+                                                                0,
+                                                            expected_revision:
+                                                                selected.revision,
+                                                            reason: null,
+                                                            note: null,
+                                                        });
+                                                        setCommandBlocked(
+                                                            false,
+                                                        );
+                                                        setActionError(null);
+                                                    }
+                                                }}
+                                                data-test="campus-contribution-use-latest"
+                                            >
+                                                Gunakan berkas terbaru
+                                            </Button>
+                                        )}
                                     </div>
-                                </form>
-                            ) : (
-                                <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-xs text-slate-600">
-                                    <LockKeyhole className="size-4 shrink-0 text-slate-500" />
-                                    <span>
-                                        Mode baca. Kontribusi ini sudah memiliki
-                                        keputusan dan tidak menerima perubahan
-                                        baru.
+                                )}
+                                {/* Docket Header */}
+                                <header className="border-b border-border pb-4">
+                                    <span className="font-mono text-xs font-bold text-primary">
+                                        {selected.reference}
                                     </span>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </aside>
-            </div>
+                                    <h2
+                                        id="campus-review-decision-title"
+                                        tabIndex={-1}
+                                        className="mt-1 text-lg font-bold wrap-anywhere text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                    >
+                                        {version?.claim ??
+                                            selected.project.title}
+                                    </h2>
+                                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                                        <StatusChip status={selected.status} />
+                                        <span className="text-xs text-muted-foreground">
+                                            Oleh {selected.contributor.name}
+                                        </span>
+                                    </div>
+                                </header>
+
+                                {statusError && (
+                                    <Alert
+                                        variant="destructive"
+                                        className="rounded-xl"
+                                    >
+                                        <AlertDescription className="text-xs">
+                                            {statusError}
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+
+                                {/* Provenance Facts */}
+                                <section
+                                    aria-labelledby="contribution-provenance-title"
+                                    className="space-y-2"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <History
+                                            aria-hidden="true"
+                                            className="size-4 text-primary"
+                                        />
+                                        <h3
+                                            id="contribution-provenance-title"
+                                            className="text-sm font-semibold text-foreground"
+                                        >
+                                            Konteks versi
+                                        </h3>
+                                    </div>
+                                    <dl className="space-y-1.5 rounded-xl border border-border bg-accent/35 p-3 text-xs">
+                                        <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                                            <dt className="text-muted-foreground">
+                                                Tugas
+                                            </dt>
+                                            <dd className="font-semibold wrap-anywhere text-foreground">
+                                                {version?.task?.title ??
+                                                    'Belum ada tugas'}
+                                            </dd>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <dt className="text-muted-foreground">
+                                                Versi Aktif
+                                            </dt>
+                                            <dd className="font-semibold wrap-anywhere text-foreground">
+                                                {version === null
+                                                    ? 'Belum tersedia'
+                                                    : `Versi ${version.version_number}`}
+                                            </dd>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <dt className="text-muted-foreground">
+                                                Diperbarui
+                                            </dt>
+                                            <dd className="text-foreground">
+                                                {formatDate(
+                                                    selected.updated_at,
+                                                )}
+                                            </dd>
+                                        </div>
+                                    </dl>
+                                </section>
+
+                                {/* Version Claim & Summary */}
+                                {version && (
+                                    <>
+                                        <section
+                                            aria-labelledby="contribution-claim-title"
+                                            className="space-y-2 rounded-xl border border-border bg-accent/35 p-3 text-sm leading-6"
+                                        >
+                                            <h3
+                                                id="contribution-claim-title"
+                                                className="font-bold text-foreground"
+                                            >
+                                                Klaim & Ringkasan Kontribusi
+                                            </h3>
+                                            <p className="leading-relaxed font-semibold text-foreground">
+                                                {version.claim}
+                                            </p>
+                                            <p className="leading-relaxed text-muted-foreground">
+                                                {version.summary}
+                                            </p>
+                                            <p className="border-l-2 border-blue-400 pl-2 text-muted-foreground italic">
+                                                {version.declaration}
+                                            </p>
+                                        </section>
+
+                                        {/* Evidence List */}
+                                        <section
+                                            aria-labelledby="contribution-evidence-title"
+                                            className="space-y-2"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <h3
+                                                    id="contribution-evidence-title"
+                                                    className="text-sm font-semibold text-foreground"
+                                                >
+                                                    Bukti privat
+                                                </h3>
+                                                <span className="font-mono text-xs text-muted-foreground">
+                                                    {version.evidence.length}{' '}
+                                                    berkas
+                                                </span>
+                                            </div>
+                                            {version.evidence.length === 0 ? (
+                                                <p className="rounded-xl border border-border bg-accent/35 p-3 text-center text-xs text-muted-foreground">
+                                                    Tidak ada bukti yang
+                                                    ditautkan ke versi ini.
+                                                </p>
+                                            ) : (
+                                                <ul className="space-y-2">
+                                                    {version.evidence.map(
+                                                        (evidence) => {
+                                                            const attachment =
+                                                                evidence.attachment;
+
+                                                            return (
+                                                                <li
+                                                                    key={
+                                                                        evidence.id
+                                                                    }
+                                                                    className="rounded-xl border border-border bg-accent/35 p-3 text-xs"
+                                                                >
+                                                                    <div className="flex items-start gap-2.5">
+                                                                        <FileCheck2
+                                                                            aria-hidden="true"
+                                                                            className="mt-0.5 size-4 shrink-0 text-verified-subtle-foreground"
+                                                                        />
+                                                                        <div className="min-w-0">
+                                                                            <p className="font-bold break-words text-foreground">
+                                                                                {attachment?.original_name ??
+                                                                                    evidence.source_label}
+                                                                            </p>
+                                                                            {attachment && (
+                                                                                <p className="font-mono text-xs text-muted-foreground">
+                                                                                    {
+                                                                                        attachment.mime_type
+                                                                                    }{' '}
+                                                                                    •{' '}
+                                                                                    {formatFileSize(
+                                                                                        attachment.size_bytes,
+                                                                                    )}
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                    {evidence.notes && (
+                                                                        <p className="mt-1.5 pl-6 text-muted-foreground">
+                                                                            {
+                                                                                evidence.notes
+                                                                            }
+                                                                        </p>
+                                                                    )}
+                                                                    {!evidence.available && (
+                                                                        <p className="mt-2 pl-6 text-xs leading-5 text-muted-foreground">
+                                                                            Bukti
+                                                                            tidak
+                                                                            tersedia
+                                                                            untuk
+                                                                            dibuka.
+                                                                        </p>
+                                                                    )}
+                                                                    {evidence.available &&
+                                                                        attachment && (
+                                                                            <div className="mt-2 flex items-center gap-3 pl-6 font-semibold">
+                                                                                <a
+                                                                                    href={
+                                                                                        previewAttachment(
+                                                                                            {
+                                                                                                project:
+                                                                                                    selected
+                                                                                                        .project
+                                                                                                        .id,
+                                                                                                attachment:
+                                                                                                    attachment.id,
+                                                                                            },
+                                                                                        )
+                                                                                            .url
+                                                                                    }
+                                                                                    target="_blank"
+                                                                                    rel="noreferrer"
+                                                                                    className="inline-flex min-h-11 cursor-pointer items-center gap-1 text-primary hover:underline"
+                                                                                >
+                                                                                    <Eye className="size-3.5" />
+                                                                                    Pratinjau
+                                                                                </a>
+                                                                                <a
+                                                                                    href={
+                                                                                        downloadAttachment(
+                                                                                            {
+                                                                                                project:
+                                                                                                    selected
+                                                                                                        .project
+                                                                                                        .id,
+                                                                                                attachment:
+                                                                                                    attachment.id,
+                                                                                            },
+                                                                                        )
+                                                                                            .url
+                                                                                    }
+                                                                                    className="inline-flex min-h-11 cursor-pointer items-center gap-1 text-primary hover:underline"
+                                                                                >
+                                                                                    <ArrowDownToLine className="size-3.5" />
+                                                                                    Unduh
+                                                                                </a>
+                                                                            </div>
+                                                                        )}
+                                                                </li>
+                                                            );
+                                                        },
+                                                    )}
+                                                </ul>
+                                            )}
+                                        </section>
+                                    </>
+                                )}
+
+                                {/* Riwayat Keputusan */}
+                                <section
+                                    aria-labelledby="contribution-history-title"
+                                    className="space-y-2"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <History
+                                            aria-hidden="true"
+                                            className="size-4 text-primary"
+                                        />
+                                        <h3
+                                            id="contribution-history-title"
+                                            className="text-sm font-semibold text-foreground"
+                                        >
+                                            Riwayat Keputusan
+                                        </h3>
+                                    </div>
+                                    <ReviewHistory reviews={selected.reviews} />
+                                </section>
+
+                                {/* Decision Form */}
+                                {selected.status === 'pending' && version ? (
+                                    <form
+                                        className="grid gap-4 border-t border-border pt-4"
+                                        onSubmit={submitReview}
+                                        data-test="campus-contribution-review-form"
+                                    >
+                                        <fieldset
+                                            disabled={blocked}
+                                            className="grid gap-2"
+                                        >
+                                            <legend className="text-xs font-bold tracking-wide text-foreground">
+                                                Keputusan peninjau
+                                            </legend>
+                                            {(
+                                                Object.keys(
+                                                    decisionMeta,
+                                                ) as ReviewDecision[]
+                                            ).map((decision) => (
+                                                <label
+                                                    key={decision}
+                                                    className={cn(
+                                                        'flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition-colors focus-within:ring-2 focus-within:ring-ring has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60 motion-reduce:transition-none',
+                                                        decisionMeta[decision]
+                                                            .className,
+                                                        selectedDecision ===
+                                                            decision &&
+                                                            'ring-2 ring-primary/20',
+                                                    )}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="decision"
+                                                        value={decision}
+                                                        checked={
+                                                            selectedDecision ===
+                                                            decision
+                                                        }
+                                                        onChange={() =>
+                                                            reviewForm.setData(
+                                                                'decision',
+                                                                decision,
+                                                            )
+                                                        }
+                                                        className="mt-0.5 size-4 cursor-pointer accent-primary"
+                                                    />
+                                                    <div>
+                                                        <span className="font-bold text-foreground">
+                                                            {
+                                                                decisionMeta[
+                                                                    decision
+                                                                ].label
+                                                            }
+                                                        </span>
+                                                        <p className="mt-0.5 text-xs text-muted-foreground">
+                                                            {
+                                                                decisionMeta[
+                                                                    decision
+                                                                ].description
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                </label>
+                                            ))}
+                                        </fieldset>
+
+                                        {decisionError && (
+                                            <p
+                                                role="alert"
+                                                className="text-xs font-semibold text-correction-subtle-foreground"
+                                            >
+                                                {decisionError}
+                                            </p>
+                                        )}
+
+                                        {/* Alasan */}
+                                        <div className="grid gap-1.5">
+                                            <label
+                                                htmlFor="campus-contribution-review-reason"
+                                                className="text-sm font-semibold text-foreground"
+                                            >
+                                                Alasan Keputusan
+                                                {selectedDecision !==
+                                                    'approved' && (
+                                                    <span className="text-correction-subtle-foreground">
+                                                        {' '}
+                                                        *
+                                                    </span>
+                                                )}
+                                            </label>
+                                            <textarea
+                                                id="campus-contribution-review-reason"
+                                                disabled={blocked}
+                                                value={
+                                                    reviewForm.data.reason ?? ''
+                                                }
+                                                maxLength={1000}
+                                                rows={3}
+                                                required={
+                                                    selectedDecision !==
+                                                    'approved'
+                                                }
+                                                aria-invalid={Boolean(
+                                                    reasonError,
+                                                )}
+                                                onChange={(event) =>
+                                                    reviewForm.setData(
+                                                        'reason',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className={cn(
+                                                    campusControlClass,
+                                                    'resize-y',
+                                                )}
+                                                placeholder="Tulis alasan faktual yang membantu mahasiswa..."
+                                            />
+                                            <p className="text-right font-mono text-xs text-muted-foreground">
+                                                {
+                                                    (
+                                                        reviewForm.data
+                                                            .reason ?? ''
+                                                    ).length
+                                                }{' '}
+                                                / 1.000
+                                            </p>
+                                            {reasonError && (
+                                                <p
+                                                    id="campus-review-reason-error"
+                                                    role="alert"
+                                                    className="text-xs font-semibold text-correction-subtle-foreground"
+                                                >
+                                                    {reasonError}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Catatan internal */}
+                                        <div className="grid gap-1.5">
+                                            <label
+                                                htmlFor="campus-contribution-review-note"
+                                                className="text-sm font-semibold text-foreground"
+                                            >
+                                                Catatan untuk pemilik (opsional)
+                                            </label>
+                                            <textarea
+                                                id="campus-contribution-review-note"
+                                                disabled={blocked}
+                                                value={
+                                                    reviewForm.data.note ?? ''
+                                                }
+                                                maxLength={1000}
+                                                rows={2}
+                                                aria-invalid={Boolean(
+                                                    noteError,
+                                                )}
+                                                onChange={(event) =>
+                                                    reviewForm.setData(
+                                                        'note',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className={cn(
+                                                    campusControlClass,
+                                                    'resize-y',
+                                                )}
+                                                placeholder="Catatan ini dapat dibaca mahasiswa pemilik..."
+                                            />
+                                            {noteError && (
+                                                <p
+                                                    id="campus-review-note-error"
+                                                    role="alert"
+                                                    className="text-xs font-semibold text-correction-subtle-foreground"
+                                                >
+                                                    {noteError}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Action Buttons */}
+                                        <div className="grid gap-2 border-t border-border pt-3">
+                                            <Button
+                                                type="submit"
+                                                variant={
+                                                    selectedDecision ===
+                                                    'rejected'
+                                                        ? 'destructive'
+                                                        : 'default'
+                                                }
+                                                className={`min-h-11 cursor-pointer rounded-xl text-sm font-semibold text-white shadow-sm ${
+                                                    selectedDecision ===
+                                                    'approved'
+                                                        ? 'bg-emerald-700 hover:bg-emerald-800'
+                                                        : selectedDecision ===
+                                                            'revision'
+                                                          ? 'bg-amber-700 hover:bg-amber-800'
+                                                          : 'bg-rose-600 hover:bg-rose-700'
+                                                }`}
+                                                disabled={blocked}
+                                                data-test="campus-contribution-decision-submit"
+                                            >
+                                                {reviewForm.processing ? (
+                                                    <Spinner className="mr-1.5 size-3.5" />
+                                                ) : selectedDecision ===
+                                                  'approved' ? (
+                                                    <ShieldCheck className="mr-1.5 size-3.5" />
+                                                ) : selectedDecision ===
+                                                  'revision' ? (
+                                                    <FileWarning className="mr-1.5 size-3.5" />
+                                                ) : (
+                                                    <XCircle className="mr-1.5 size-3.5" />
+                                                )}
+                                                {reviewForm.processing
+                                                    ? 'Menyimpan keputusan...'
+                                                    : decisionMeta[
+                                                          selectedDecision
+                                                      ].label}
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                className="min-h-11 cursor-pointer rounded-xl text-xs font-semibold text-muted-foreground hover:bg-accent"
+                                                disabled={blocked}
+                                                onClick={() => {
+                                                    if (
+                                                        (reviewForm.data
+                                                            .reason ||
+                                                            reviewForm.data
+                                                                .note) &&
+                                                        !window.confirm(
+                                                            'Tutup berkas dan buang catatan keputusan yang belum disimpan?',
+                                                        )
+                                                    ) {
+                                                        return;
+                                                    }
+
+                                                    setSelectedId(null);
+                                                    window.setTimeout(() => {
+                                                        document
+                                                            .querySelector<HTMLButtonElement>(
+                                                                `[data-test="campus-contribution-select-${selectedId}"]`,
+                                                            )
+                                                            ?.focus();
+                                                    }, 0);
+                                                }}
+                                            >
+                                                Tutup berkas
+                                            </Button>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <div className="flex items-center gap-2.5 rounded-xl border border-border bg-accent/35 p-3.5 text-xs text-muted-foreground">
+                                        <LockKeyhole className="size-4 shrink-0 text-muted-foreground" />
+                                        <span>
+                                            Mode baca. Kontribusi ini sudah
+                                            memiliki keputusan dan tidak
+                                            menerima perubahan baru.
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </aside>
+                </div>
+            )}
         </div>
     );
 }
@@ -1412,6 +1692,7 @@ export default function CampusContributions({
 }: Props) {
     const [isFilterLoading, setFilterLoading] = useState(false);
     const [filterError, setFilterError] = useState<string | null>(null);
+    const [accessUnavailable, setAccessUnavailable] = useState(false);
 
     function updateFilters(next: Partial<ReviewFilters>): void {
         const merged = { ...filters, ...next };
@@ -1429,13 +1710,20 @@ export default function CampusContributions({
                 preserveScroll: true,
                 preserveState: true,
                 replace: true,
-                onSuccess: () => setFilterError(null),
+                onSuccess: () => {
+                    setFilterError(null);
+                    setAccessUnavailable(false);
+                },
                 onError: () => {
                     setFilterError(
                         'Filter belum diterapkan. Data antrean yang terlihat tetap aman. Coba lagi.',
                     );
                 },
-                onHttpException: () => {
+                onHttpException: (response) => {
+                    if (response.status === 403 || response.status === 404) {
+                        setAccessUnavailable(true);
+                    }
+
                     setFilterError(
                         'Filter belum diterapkan. Data antrean yang terlihat tetap aman. Coba lagi.',
                     );
@@ -1460,87 +1748,53 @@ export default function CampusContributions({
                 title={`Validasi Kontribusi Mahasiswa - ${institution.name} | SATU`}
             />
 
-            <AppPage
-                contextRail={
+            <AppPage>
+                <div
+                    className="space-y-6"
+                    data-test="campus-contribution-review-root"
+                >
+                    <CampusOperationHeader
+                        title="Validasi kontribusi"
+                        description="Periksa versi pekerjaan dan bukti privat, lalu berikan keputusan yang membantu mahasiswa memahami langkah berikutnya."
+                        institution={institution.name}
+                        icon={FileCheck2}
+                        eyebrow="Meja peninjauan"
+                    />
                     <Deferred
                         data="reviewQueue"
                         fallback={
                             <div
                                 aria-busy="true"
-                                className="grid gap-4"
-                                data-test="campus-contribution-summary-loading"
+                                className="grid grid-cols-2 gap-4 lg:grid-cols-4"
                             >
-                                <Skeleton className="h-4 w-32 bg-slate-100" />
-                                <Skeleton className="h-8 w-52 bg-slate-100" />
-                                <Skeleton className="h-44 w-full rounded-2xl bg-slate-100" />
-                                <Skeleton className="h-28 w-full rounded-2xl bg-slate-100" />
+                                <p role="status" className="sr-only">
+                                    Memuat ringkasan validasi.
+                                </p>
+                                {[0, 1, 2, 3].map((item) => (
+                                    <Skeleton
+                                        key={item}
+                                        className="h-16 w-full rounded-3xl"
+                                    />
+                                ))}
                             </div>
                         }
                     >
-                        <SummaryRail
-                            reviewQueue={reviewQueue!}
-                            institution={institution}
-                        />
+                        {!accessUnavailable && (
+                            <SummaryRail reviewQueue={reviewQueue!} />
+                        )}
                     </Deferred>
-                }
-                contextRailLabel="Ringkasan dan batas validasi contribution"
-            >
-                <div
-                    className="space-y-6"
-                    data-test="campus-contribution-review-root"
-                >
-                    {/* Header Banner */}
-                    <header className="relative isolate overflow-hidden rounded-2xl border border-blue-100 bg-white px-6 py-6 shadow-[0_18px_50px_-36px_rgba(30,64,175,0.35)] sm:px-8 sm:py-7">
-                        <div
-                            aria-hidden="true"
-                            className="absolute -top-28 -right-24 size-80 rounded-full bg-blue-100/75 blur-3xl sm:-right-12"
-                        />
-                        <div
-                            aria-hidden="true"
-                            className="absolute right-14 bottom-0 hidden h-24 w-24 rounded-tl-[2.5rem] border-t border-l border-indigo-100 sm:block"
-                        />
-
-                        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                                    <FileCheck2 className="size-3 text-blue-600" />
-                                    Meja Validasi Kampus
-                                </div>
-
-                                <h1 className="mt-3 text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
-                                    Validasi Kontribusi {institution.name}
-                                </h1>
-
-                                <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-slate-600">
-                                    Periksa pekerjaan, task, evidence private,
-                                    dan provenance sebelum menetapkan keputusan
-                                    validasi kampus di{' '}
-                                    <span className="font-semibold text-slate-900">
-                                        {institution.name}
-                                    </span>
-                                    .
-                                </p>
-                            </div>
-
-                            <div className="flex shrink-0 items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-2.5 text-xs font-semibold text-blue-800">
-                                <ShieldCheck className="size-4 text-blue-600" />
-                                <span>Akses Reviewer Kampus</span>
-                            </div>
-                        </div>
-                    </header>
-
                     {/* Filter error */}
                     {filterError && (
                         <div
                             role="alert"
-                            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-900 shadow-xs"
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-correction/30 bg-correction-subtle p-4 text-xs font-semibold text-correction-subtle-foreground shadow-sm"
                             data-test="campus-contribution-filter-error"
                         >
                             <span>{filterError}</span>
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="h-8 cursor-pointer rounded-xl bg-white text-xs disabled:cursor-not-allowed"
+                                className="min-h-11 cursor-pointer rounded-xl bg-white text-xs disabled:cursor-not-allowed"
                                 disabled={isFilterLoading}
                                 onClick={() => updateFilters({})}
                                 data-test="campus-contribution-filter-error-retry"
@@ -1548,7 +1802,7 @@ export default function CampusContributions({
                                 {isFilterLoading ? (
                                     <Spinner className="mr-1 size-3" />
                                 ) : (
-                                    <RefreshCw className="mr-1 size-3 text-slate-500" />
+                                    <RefreshCw className="mr-1 size-3 text-muted-foreground" />
                                 )}
                                 Coba lagi
                             </Button>
@@ -1557,14 +1811,14 @@ export default function CampusContributions({
 
                     {/* Filter Card */}
                     <section
-                        aria-label="Filter antrean validasi contribution"
+                        aria-label="Filter antrean validasi kontribusi"
                         aria-busy={isFilterLoading}
-                        className="grid gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:grid-cols-2"
+                        className="grid gap-4 rounded-3xl border border-border bg-white p-4 shadow-sm sm:grid-cols-2 sm:p-5"
                     >
                         <div className="space-y-1.5">
                             <label
                                 htmlFor="filter-status"
-                                className="text-xs font-bold text-slate-700"
+                                className="text-sm font-semibold text-foreground"
                             >
                                 Status Validasi
                             </label>
@@ -1578,7 +1832,10 @@ export default function CampusContributions({
                                             ContributionStatus | 'all',
                                     })
                                 }
-                                className="h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-900 outline-none focus:border-blue-600 focus:bg-white"
+                                className={cn(
+                                    campusControlClass,
+                                    'cursor-pointer',
+                                )}
                                 data-test="campus-contribution-status-filter"
                             >
                                 <option value="pending">
@@ -1596,7 +1853,7 @@ export default function CampusContributions({
                         <div className="space-y-1.5">
                             <label
                                 htmlFor="filter-sort"
-                                className="text-xs font-bold text-slate-700"
+                                className="text-sm font-semibold text-foreground"
                             >
                                 Urutan Pengajuan
                             </label>
@@ -1610,7 +1867,10 @@ export default function CampusContributions({
                                             'oldest' | 'newest',
                                     })
                                 }
-                                className="h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-900 outline-none focus:border-blue-600 focus:bg-white"
+                                className={cn(
+                                    campusControlClass,
+                                    'cursor-pointer',
+                                )}
                                 data-test="campus-contribution-sort-filter"
                             >
                                 <option value="oldest">Paling lama</option>
@@ -1619,14 +1879,45 @@ export default function CampusContributions({
                         </div>
                     </section>
 
+                    <CampusTechnicalDetails title="Panduan keputusan dan privasi">
+                        <p>
+                            Periksa versi aktif dan bukti yang tersedia sebelum
+                            memutuskan. Perbaikan atau penolakan memerlukan
+                            alasan faktual. Bukti tetap privat dan keputusan
+                            tersimpan bersama versi serta riwayat peninjauan.
+                        </p>
+                    </CampusTechnicalDetails>
                     {/* Review Workspace with Deferred queue */}
                     <Deferred data="reviewQueue" fallback={<QueueSkeleton />}>
-                        <ReviewWorkspace
-                            institution={institution}
-                            filters={filters}
-                            reviewQueue={reviewQueue!}
-                            isFilterLoading={isFilterLoading}
-                        />
+                        {!accessUnavailable ? (
+                            <ReviewWorkspace
+                                institution={institution}
+                                filters={filters}
+                                reviewQueue={reviewQueue!}
+                                isFilterLoading={isFilterLoading}
+                                onAccessUnavailable={() =>
+                                    setAccessUnavailable(true)
+                                }
+                            />
+                        ) : (
+                            <section className="rounded-3xl border border-border bg-white p-5">
+                                <h2 className="text-lg font-bold">
+                                    Akses validasi tidak tersedia
+                                </h2>
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                    Data sebelumnya disembunyikan. Periksa izin
+                                    institusi lalu muat ulang filter.
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    disabled={isFilterLoading}
+                                    onClick={() => updateFilters({})}
+                                    className="mt-4"
+                                >
+                                    Muat ulang antrean
+                                </Button>
+                            </section>
+                        )}
                     </Deferred>
                 </div>
             </AppPage>

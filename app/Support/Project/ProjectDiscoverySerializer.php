@@ -56,6 +56,7 @@ final class ProjectDiscoverySerializer
             'status' => $project->status->value,
             'visibility' => $project->visibility->value,
             'capacity' => $project->capacity,
+            'capacity_stats' => ProjectOpportunityCapacity::project($project),
             'deadline' => $project->deadline->toIso8601String(),
             'roles' => $project->roles->map(
                 static fn (ProjectRole $role): array => [
@@ -63,6 +64,9 @@ final class ProjectDiscoverySerializer
                     'title' => $role->title,
                     'description' => $role->description,
                     'capacity' => $role->capacity,
+                    'capacity_stats' => ProjectOpportunityCapacity::role($role, $project),
+                    'accepts_beginners' => $role->accepts_beginners,
+                    'selection_criteria' => $role->selection_criteria,
                     'skills' => $role->skills->map(
                         static fn (ProjectRoleSkill $skill): array => [
                             'id' => $skill->getKey(),

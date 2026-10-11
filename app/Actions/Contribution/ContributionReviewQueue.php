@@ -60,6 +60,9 @@ final class ContributionReviewQueue
                         'id',
                         'project_id',
                         'purpose',
+                        'disk',
+                        'path',
+                        'sha256',
                         'original_name',
                         'mime_type',
                         'size_bytes',
@@ -122,6 +125,6 @@ final class ContributionReviewQueue
             throw new AuthorizationException('You are not authorized to review contributions for this institution.');
         }
 
-        return Contribution::query()->forInstitution($institution);
+        return Contribution::query()->forInstitution($institution)->where('status', '!=', ContributionStatus::Draft)->where('owner_id', '!=', $reviewer->getKey());
     }
 }

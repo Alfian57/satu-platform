@@ -32,7 +32,7 @@ final class TeamDecisionRequest extends FormRequest
         return $invitation instanceof TeamInvitation
             ? Gate::forUser($user)->allows($ability, $invitation)
             : $joinRequest instanceof TeamJoinRequest
-                && Gate::forUser($user)->allows($ability, $joinRequest);
+                && Gate::forUser($user)->allows('decide', $joinRequest);
     }
 
     /**
@@ -40,8 +40,17 @@ final class TeamDecisionRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'reason' => ['sometimes', 'nullable', 'string', 'max:1000'],
-        ];
+        return $this->route('teamJoinRequest') instanceof TeamJoinRequest
+            ? [
+                'reason' => ['required', 'string', 'max:1000'],
+                'expected_revision' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]{64}$/'],
+            ]
+            : ['reason' => ['sometimes', 'nullable', 'string', 'max:1000']];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return ['reason.required' => 'Jelaskan alasan terkait kebutuhan peran. Alasan ini dibagikan kepada pemohon.', 'reason.max' => 'Alasan maksimal 1000 karakter.', 'expected_revision.required' => 'Periksa status terbaru sebelum mengambil keputusan.'];
     }
 }

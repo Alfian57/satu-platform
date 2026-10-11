@@ -6,6 +6,7 @@ namespace App\Actions\Project;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\ProjectStatus;
+use App\Events\MatchingInputsChanged;
 use App\Exceptions\InvalidProjectTransition;
 use App\Models\Institution;
 use App\Models\Project;
@@ -84,6 +85,8 @@ final class TransitionProjectStatus
                     reason: $reason,
                 );
             }
+
+            MatchingInputsChanged::dispatch($lockedProject->institution_id);
 
             return $lockedProject->refresh();
         }, attempts: 3);

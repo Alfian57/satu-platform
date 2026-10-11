@@ -7,6 +7,7 @@ namespace App\Actions\Matching;
 use App\Enums\MatchingDimension;
 use App\Models\MatchScoreVersion;
 use App\Models\User;
+use App\Support\Matching\MatchingAvailability;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Gate;
 use InvalidArgumentException;
@@ -91,27 +92,32 @@ final class CreateMatchScoreVersion
 
     /**
      * @param  array<string, mixed>  $parameters
-     * @return array{availability_target_minutes: int, connectivity_cap: int}
+     * @return array{availability_target_minutes: int, connectivity_cap: int, policy?: string}
      */
     private function normalizeParameters(array $parameters): array
     {
         $required = ['availability_target_minutes', 'connectivity_cap'];
 
-        if (array_diff(array_keys($parameters), $required) !== [] || count($parameters) !== count($required)) {
+        if (array_diff(array_keys($parameters), [...$required, 'policy']) !== [] || array_diff($required, array_keys($parameters)) !== []) {
             throw new InvalidArgumentException(
                 'Parameter matching harus memuat availability_target_minutes dan connectivity_cap saja.',
             );
         }
 
-        foreach ($required as $parameter) {
-            if (! is_int($parameters[$parameter]) || $parameters[$parameter] < 1) {
-                throw new InvalidArgumentException("Parameter {$parameter} harus berupa bilangan positif.");
-            }
+        if (array_key_exists('policy', $parameters) && $parameters['policy'] !== MatchingAvailability::POLICY) {
+            throw new InvalidArgumentException('Kebijakan pencocokan tidak didukung.');
         }
 
-        return [
-            'availability_target_minutes' => $parameters['availability_target_minutes'],
-            'connectivity_cap' => $parameters['connectivity_cap'],
-        ];
+        $availabilityTarget = $parameters['availability_target_minutes'];
+        $connectivityCap = $parameters['connectivity_cap'];
+        if (! is_int($availabilityTarget) || $availabilityTarget < 1 || ! is_int($connectivityCap) || $connectivityCap < 1) {
+            throw new InvalidArgumentException('Parameter pencocokan harus berupa bilangan positif.');
+        }
+        $normalized = ['availability_target_minutes' => $availabilityTarget, 'connectivity_cap' => $connectivityCap];
+        if (isset($parameters['policy'])) {
+            $normalized['policy'] = MatchingAvailability::POLICY;
+        }
+
+        return $normalized;
     }
 }

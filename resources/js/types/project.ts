@@ -1,3 +1,5 @@
+import type { CapacityStats } from '@/lib/project-opportunities';
+
 export type ProjectStatus =
     'draft' | 'open' | 'forming' | 'full' | 'closed' | 'cancelled' | 'archived';
 
@@ -15,6 +17,9 @@ export type ProjectRole = {
     title: string;
     description: string | null;
     capacity: number;
+    accepts_beginners?: boolean | null;
+    selection_criteria?: string | null;
+    capacity_stats?: CapacityStats;
     skills: ProjectSkill[];
 };
 
@@ -38,6 +43,7 @@ export type ProjectDetail = {
     visibility: ProjectVisibility | string;
     capacity: number;
     deadline: string;
+    capacity_stats?: CapacityStats;
     roles: ProjectRole[];
     created_at: string;
     updated_at: string;
@@ -48,9 +54,12 @@ export type ProjectApiResponse = {
 };
 
 export type ProjectFormRole = {
+    id?: number;
     title: string;
     description: string;
     capacity: number;
+    accepts_beginners: boolean | null;
+    selection_criteria: string;
     skills: ProjectSkill[];
 };
 
@@ -103,12 +112,22 @@ export type TeamInvitation = {
 export type TeamJoinRequest = {
     id: number;
     project_role_id: number | null;
-    role: TeamRoleReference | null;
+    role: (TeamRoleReference & { selection_criteria?: string | null }) | null;
     requester: TeamPerson | null;
     status:
         'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'expired' | string;
     message: string | null;
     requested_at: string;
+    responded_at?: string | null;
+    response_reason?: string | null;
+    revision?: string;
+    can_accept?: boolean;
+    shared_work?: {
+        id: number;
+        title: string;
+        summary: string;
+        verification_label: string;
+    }[];
 };
 
 export type TeamMembership = {
@@ -126,6 +145,7 @@ export type TeamFormationState = {
         can_manage_requests: boolean;
         can_manage_invitations: boolean;
         can_leave: boolean;
+        can_withdraw?: boolean;
     };
     current_membership: TeamMembership | null;
     pending_invitations: TeamInvitation[];
@@ -133,4 +153,9 @@ export type TeamFormationState = {
     join_requests: TeamJoinRequest[];
     sent_invitations: TeamInvitation[];
     active_members: TeamMembership[];
+    request_history?: {
+        data: TeamJoinRequest[];
+        current_page: number;
+        last_page: number;
+    };
 };

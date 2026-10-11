@@ -13,9 +13,12 @@ final class TeamJoinRequestReceivedNotification extends Notification implements 
 {
     use Queueable;
 
+    private readonly string $status;
+
     public function __construct(
         public readonly TeamJoinRequest $request,
     ) {
+        $this->status = $request->status->value;
         $this->afterCommit();
     }
 
@@ -35,9 +38,9 @@ final class TeamJoinRequestReceivedNotification extends Notification implements 
         return [
             'team_join_request_id' => $this->request->getKey(),
             'project_id' => $this->request->project_id,
-            'message' => 'Ada permintaan baru untuk bergabung ke project kamu.',
+            'message' => $this->status === 'withdrawn' ? 'Pemohon menarik pengajuan bergabung. Tidak ada tempat tim yang terpakai.' : 'Ada pengajuan baru untuk bergabung ke proyekmu.',
             'action_url' => route('projects.show', $this->request->project_id),
-            'action_label' => 'Tinjau request',
+            'action_label' => 'Periksa pengajuan',
             'purpose' => 'team_join_request',
         ];
     }

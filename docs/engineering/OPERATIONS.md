@@ -146,3 +146,32 @@ Lihat [BACKUP_RECOVERY.md](./BACKUP_RECOVERY.md) untuk:
 - Escalation procedures
 - Privacy incident response
 - Recovery objectives (RTO/RPO)
+
+## 14. Verifikasi dan Demo Inti T10
+
+Jalankan `composer test:core` untuk suite backend terisolasi, unit frontend
+serta tautan dan referensi dokumen. `composer ci:check` juga menjalankan
+suite ini setelah static checks. Tidak memerlukan reset database aplikasi.
+
+Untuk pemeriksaan browser, jalankan Laravel dan Vite lokal existing, kemudian
+`node .github/scripts/check-core-release.cjs --browser`. Playwright perlu
+tersedia pada lingkungan QA; `SATU_PLAYWRIGHT_MODULE` boleh menunjuk modul
+existing dan `SATU_BROWSER_EXECUTABLE` executable Chromium existing.
+`SATU_QA_ORIGIN` default localhost port 8000 dan wajib loopback. Tidak
+menambah dependency atau menonaktifkan web security. Mutasi browser dicegat;
+screenshot hanya memakai fixture synthetic pada direktori sementara.
+
+Reset demo publik memakai Reset perjalanan; reset skenario backend adalah
+menjalankan ulang `php .github/scripts/check-core-journey.php`. Seeder T10
+tidak dipasang ke DatabaseSeeder atau dipakai pada database aplikasi. Jangan
+menggunakan migrate:fresh, menghapus data pengguna, atau membuka gate produksi
+untuk demonstrasi.
+
+Verifikasi recovery T10 hanya snapshot logical SQLite dan berkas synthetic.
+Drill MySQL, restore storage/deployment lengkap, concurrency multiworker,
+Reverb websocket nyata, OTP/undangan serta provider nyata harus diuji pada
+staging berizin sebelum rilis. Jalankan studi usability SC-01 pada
+[Audit Alur](../product/COLLABORATION_AUDIT.md#6-rencana-validasi-masalah-dan-usability):
+catat langkah, pemahaman, kegagalan dan bantuan yang diperlukan tanpa mengarang
+hasil. Final UAT, institusi pilot, baseline, target, retensi dan persetujuan
+kampus tetap belum ditutup oleh tes otomatis.

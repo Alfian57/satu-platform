@@ -16,6 +16,7 @@ function isStudentPage(name: string): boolean {
         'portfolio/',
         'leaderboards/',
         'student/',
+        'opportunity-support/',
     ].some((studentPage) =>
         studentPage.endsWith('/')
             ? name.startsWith(studentPage)

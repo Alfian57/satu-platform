@@ -21,6 +21,7 @@ final class ContributionReviewQueueSerializer
     {
         return [
             'id' => $contribution->getKey(),
+            'revision' => ContributionSnapshot::revision($contribution),
             'reference' => sprintf('CN-%06d', $contribution->getKey()),
             'project' => [
                 'id' => $contribution->project->getKey(),

@@ -34,6 +34,7 @@ final class LinkContributionEvidenceRequest extends FormRequest
         $projectId = $contribution instanceof Contribution ? $contribution->project_id : 0;
 
         return [
+            'expected_revision' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/D'],
             'evidence' => ['required', 'array', 'min:1', 'max:20'],
             'evidence.*' => [
                 'integer',

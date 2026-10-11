@@ -1,6 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertCircle,
+    ArrowUpRight,
+    BriefcaseBusiness,
     CalendarDays,
     CheckCircle2,
     ChevronLeft,
@@ -10,21 +12,29 @@ import {
     CircleX,
     Clock3,
     Filter,
-    FolderSearch,
     Plus,
     Search,
     ShieldCheck,
     UsersRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppPage } from '@/components/app-page';
+import { DashboardArchiveArt as ArchiveArt } from '@/components/dashboard-archive-art';
+import Mascot from '@/components/mascot';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+    beginnerLabel,
+    capacityLabel,
+    opportunityStatus,
+} from '@/lib/project-opportunities';
+import type { CapacityStats } from '@/lib/project-opportunities';
 import { cn } from '@/lib/utils';
+import { index as opportunitySupport } from '@/routes/opportunity-support';
 import {
     create as projectsCreate,
     index as projectsIndex,
@@ -32,15 +42,8 @@ import {
 } from '@/routes/projects';
 import type { QueryParams } from '@/wayfinder';
 
-/**
- * THESIS: Project discovery is an opportunity register, not a card gallery.
- * OWN-WORLD: Ruled ledger rows, indexed controls, restrained institutional blue, and status marks.
- * STORY: A student sees which project needs help, what it requires, and when to act.
- * FIRST VIEWPORT: Context and search lead into filters, then the first result rows and their facts.
- * FORM: Operate surface using a dense ledger list, with URL filters and progressive loading states.
- */
-
-type ProjectStatus = 'open' | 'forming' | 'full' | 'closed' | 'cancelled';
+type ProjectStatus =
+    'draft' | 'open' | 'forming' | 'full' | 'closed' | 'cancelled' | 'archived';
 type ProjectVisibility = 'private' | 'institution' | 'public';
 
 type ProjectRole = {
@@ -48,6 +51,9 @@ type ProjectRole = {
     title: string;
     description: string | null;
     capacity: number;
+    accepts_beginners?: boolean | null;
+    selection_criteria?: string | null;
+    capacity_stats?: CapacityStats;
     skills: {
         id: number;
         name: string;
@@ -73,6 +79,7 @@ type ProjectSummary = {
     visibility: ProjectVisibility | string;
     capacity: number;
     deadline: string;
+    capacity_stats?: CapacityStats;
     roles: ProjectRole[];
     created_at: string;
     updated_at: string;
@@ -96,6 +103,9 @@ type ProjectPagination = {
 };
 
 type DiscoveryFilters = {
+    view: 'opportunities' | 'mine';
+    beginner?: 'all' | 'accepting';
+    availability?: 'all' | 'available';
     q: string;
     status: string[];
     visibility: string[];
@@ -128,6 +138,8 @@ type ProjectIndexProps = {
 };
 
 const statusLabels: Record<ProjectStatus, string> = {
+    draft: 'Draft',
+    archived: 'Diarsipkan',
     open: 'Terbuka',
     forming: 'Membentuk tim',
     full: 'Kapasitas penuh',
@@ -136,12 +148,14 @@ const statusLabels: Record<ProjectStatus, string> = {
 };
 
 const visibilityLabels: Record<ProjectVisibility, string> = {
-    private: 'Pribadi milikmu',
+    private: 'Privat',
     institution: 'Kampus',
     public: 'Publik',
 };
 
 const statusIcons: Record<ProjectStatus, LucideIcon> = {
+    draft: CircleDot,
+    archived: Circle,
     open: CheckCircle2,
     forming: Clock3,
     full: UsersRound,
@@ -150,6 +164,8 @@ const statusIcons: Record<ProjectStatus, LucideIcon> = {
 };
 
 const statusClasses: Record<ProjectStatus, string> = {
+    draft: 'border-border bg-muted text-muted-foreground',
+    archived: 'border-border bg-muted text-muted-foreground',
     open: 'border-verified/40 bg-verified-subtle text-verified-subtle-foreground',
     forming:
         'border-pending/40 bg-pending-subtle text-pending-subtle-foreground',
@@ -160,7 +176,7 @@ const statusClasses: Record<ProjectStatus, string> = {
 };
 
 const selectClassName =
-    'h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger hover:border-blue-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50';
+    'h-11 min-w-0 w-full cursor-pointer rounded-xl border border-input bg-card px-3 text-base text-foreground transition-colors duration-fast hover:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm';
 
 const dateFormatter = new Intl.DateTimeFormat('id-ID', {
     day: 'numeric',
@@ -178,7 +194,14 @@ function displayVisibility(visibility: string): string {
 }
 
 function displayProficiency(proficiency: string): string {
-    return proficiency.charAt(0).toUpperCase() + proficiency.slice(1);
+    const labels: Record<string, string> = {
+        beginner: 'Pemula',
+        intermediate: 'Menengah',
+        advanced: 'Mahir',
+        expert: 'Ahli',
+    };
+
+    return labels[proficiency] ?? proficiency;
 }
 
 function formatDeadline(deadline: string): string {
@@ -198,10 +221,6 @@ function formatDeadline(deadline: string): string {
         : dateFormatter.format(date);
 }
 
-function formatCapacity(capacity: number): string {
-    return `${capacity} orang`;
-}
-
 function pageNumbers(currentPage: number, lastPage: number): number[] {
     const windowSize = 5;
     const end = Math.min(lastPage, Math.max(currentPage + 2, windowSize));
@@ -217,7 +236,7 @@ function ProjectStatusBadge({ status }: { status: string }) {
     return (
         <span
             className={cn(
-                'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-semibold',
+                'inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
                 statusClasses[normalizedStatus] ??
                     'border-border bg-muted text-muted-foreground',
             )}
@@ -245,16 +264,19 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
         <li
             data-project-id={project.id}
             data-test="project-row"
-            className="min-w-0 border-b border-slate-100 transition-colors last:border-b-0 hover:bg-slate-50/70"
+            className="min-w-0 rounded-3xl border border-border bg-card shadow-sm focus-within:border-primary/30 focus-within:shadow-md motion-safe:transition-[border-color,box-shadow] motion-safe:duration-standard motion-safe:ease-ledger"
         >
-            <article className="grid min-w-0 gap-5 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,0.42fr)] lg:gap-8">
+            <article className="flex h-full min-w-0 flex-col gap-5 p-5 sm:p-6">
                 <div className="min-w-0 space-y-4">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        <span className="font-label text-label text-slate-500">
-                            PROJECT {String(project.id).padStart(4, '0')}
+                        <span className="mr-auto flex size-11 items-center justify-center rounded-2xl border border-border bg-accent text-primary">
+                            <BriefcaseBusiness
+                                aria-hidden="true"
+                                className="size-5"
+                            />
                         </span>
                         <ProjectStatusBadge status={project.status} />
-                        <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground">
                             <ShieldCheck
                                 aria-hidden="true"
                                 className="size-3.5"
@@ -264,62 +286,87 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                     </div>
 
                     <div className="min-w-0 space-y-2">
-                        <h3 className="text-xl font-bold tracking-[-0.025em] break-words">
+                        <h3 className="text-xl leading-tight font-bold tracking-tight break-words sm:text-2xl">
                             <Link
                                 href={projectShow(project.id)}
-                                className="cursor-pointer text-slate-950 underline-offset-4 transition-colors hover:text-blue-700 hover:underline"
+                                className="cursor-pointer wrap-anywhere text-foreground underline-offset-4 hover:text-primary hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring motion-safe:transition-colors motion-safe:duration-standard"
                                 data-test="project-detail-link"
                             >
                                 {project.title}
                             </Link>
                         </h3>
                         {project.description && (
-                            <p className="max-w-[70ch] text-sm leading-6 break-words whitespace-pre-line text-slate-600">
+                            <p className="line-clamp-3 text-sm leading-6 wrap-anywhere text-muted-foreground">
                                 {project.description}
                             </p>
                         )}
                     </div>
 
-                    <div className="grid min-w-0 gap-5 border-t border-slate-100 pt-4 sm:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
-                        <div className="min-w-0 space-y-2">
-                            <p className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
-                                PERAN YANG DIBUTUHKAN
+                    <div className="grid min-w-0 gap-4">
+                        <div className="min-w-0 space-y-3 rounded-2xl bg-linear-to-br from-accent/80 to-background p-4">
+                            <p className="flex items-center gap-2 text-xs font-semibold text-primary">
+                                <UsersRound
+                                    aria-hidden="true"
+                                    className="size-4 shrink-0"
+                                />
+                                Peran yang dibutuhkan
                             </p>
                             {project.roles.length > 0 ? (
-                                <ul className="space-y-2 text-sm">
-                                    {project.roles.map((role) => (
+                                <ul className="flex flex-wrap gap-2 text-sm">
+                                    {project.roles.slice(0, 3).map((role) => (
                                         <li
                                             key={role.id}
-                                            className="flex min-w-0 items-start justify-between gap-3 text-slate-800"
+                                            className="flex max-w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-white bg-card/80 px-3 py-2 text-foreground"
                                         >
-                                            <span className="min-w-0 font-medium break-words">
+                                            <span className="min-w-0 font-medium wrap-anywhere">
                                                 {role.title}
                                             </span>
                                             <span className="shrink-0 text-xs text-muted-foreground">
-                                                {role.capacity} slot
+                                                {beginnerLabel(
+                                                    role.accepts_beginners,
+                                                )}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">
+                                                {capacityLabel(
+                                                    role.capacity_stats,
+                                                    role.capacity,
+                                                )}
                                             </span>
                                         </li>
                                     ))}
+                                    {project.roles.length > 3 && (
+                                        <li className="self-center text-xs text-muted-foreground">
+                                            +{project.roles.length - 3} peran
+                                            lainnya
+                                        </li>
+                                    )}
                                 </ul>
                             ) : (
                                 <p className="text-sm text-muted-foreground">
                                     Rincian peran belum tersedia.
                                 </p>
                             )}
+                            {project.roles.length > 0 && (
+                                <p className="text-xs leading-5 text-muted-foreground">
+                                    Sisa peran tetap dibatasi kapasitas tim.
+                                    Kriteria lengkap tersedia pada detail
+                                    proyek.
+                                </p>
+                            )}
                         </div>
 
                         <div className="min-w-0 space-y-2">
-                            <p className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
-                                SKILL YANG DIBUTUHKAN
+                            <p className="text-xs font-semibold text-muted-foreground">
+                                Keahlian minimum
                             </p>
                             {skills.length > 0 ? (
                                 <ul className="flex flex-wrap gap-1.5">
-                                    {skills.map((skill) => (
+                                    {skills.slice(0, 3).map((skill) => (
                                         <li
                                             key={skill.name}
-                                            className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700"
+                                            className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-lg bg-background px-2.5 py-1.5 text-xs text-foreground"
                                         >
-                                            <span className="break-words">
+                                            <span className="min-w-0 wrap-anywhere">
                                                 {skill.name}
                                             </span>
                                             <span className="text-muted-foreground">
@@ -329,20 +376,26 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                                             </span>
                                         </li>
                                     ))}
+                                    {skills.length > 3 && (
+                                        <li className="self-center text-xs text-muted-foreground">
+                                            +{skills.length - 3} keahlian
+                                            lainnya
+                                        </li>
+                                    )}
                                 </ul>
                             ) : (
                                 <p className="text-sm text-muted-foreground">
-                                    Skill belum dirinci.
+                                    Keahlian belum dirinci.
                                 </p>
                             )}
                         </div>
                     </div>
                 </div>
 
-                <dl className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-4 border-t border-slate-100 pt-4 lg:grid-cols-1 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+                <dl className="mt-auto grid min-w-0 grid-cols-2 gap-3 border-t border-border/70 pt-4">
                     <div className="min-w-0 space-y-1">
-                        <dt className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
-                            DEADLINE
+                        <dt className="text-xs text-muted-foreground">
+                            Batas waktu
                         </dt>
                         <dd className="flex min-w-0 items-start gap-2 text-sm font-medium">
                             <CalendarDays
@@ -356,8 +409,8 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                     </div>
 
                     <div className="min-w-0 space-y-1">
-                        <dt className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
-                            KAPASITAS TIM
+                        <dt className="text-xs text-muted-foreground">
+                            Kapasitas tim
                         </dt>
                         <dd className="flex min-w-0 items-start gap-2 text-sm font-medium">
                             <UsersRound
@@ -365,20 +418,43 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                                 className="mt-0.5 size-4 shrink-0 text-primary"
                             />
                             <span className="break-words">
-                                {formatCapacity(project.capacity)}
+                                {capacityLabel(
+                                    project.capacity_stats,
+                                    project.capacity,
+                                )}
                             </span>
                         </dd>
                     </div>
 
-                    <div className="col-span-2 min-w-0 space-y-1 border-t border-slate-100 pt-4 lg:col-span-1">
-                        <dt className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
-                            PEMILIK PROJECT
+                    <div className="col-span-2 min-w-0 space-y-1 border-t border-border/60 pt-3">
+                        <p className="mb-2 text-xs leading-5 text-muted-foreground">
+                            {opportunityStatus(
+                                project.capacity_stats,
+                                project.status,
+                                project.deadline,
+                            )}
+                        </p>
+                        <dt className="text-xs text-muted-foreground">
+                            Pemilik proyek
                         </dt>
                         <dd className="text-sm font-medium break-words">
                             {project.owner.name}
                         </dd>
                     </div>
                 </dl>
+                <Button
+                    asChild
+                    variant="outline"
+                    className="min-h-11 w-full rounded-xl border-primary/25 bg-accent/30 text-primary hover:border-primary hover:bg-accent hover:text-primary motion-safe:transition-[background-color,border-color] motion-safe:duration-standard motion-safe:active:translate-y-0.5"
+                >
+                    <Link
+                        href={projectShow(project.id)}
+                        aria-label={`Lihat proyek ${project.title}`}
+                    >
+                        Lihat proyek{' '}
+                        <ArrowUpRight aria-hidden="true" className="size-4" />
+                    </Link>
+                </Button>
             </article>
         </li>
     );
@@ -389,9 +465,9 @@ function ProjectLedgerSkeleton() {
         <li
             aria-hidden="true"
             data-test="project-skeleton-row"
-            className="border-b border-border/80 py-6 first:border-t"
+            className="grid min-w-0 gap-5 rounded-3xl border border-border bg-card p-5 sm:p-6"
         >
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(15rem,0.42fr)] lg:gap-8">
+            <div className="grid gap-5">
                 <div className="space-y-4">
                     <div className="flex gap-2">
                         <Skeleton className="h-4 w-28" />
@@ -400,38 +476,53 @@ function ProjectLedgerSkeleton() {
                     <Skeleton className="h-6 w-3/5 max-w-sm" />
                     <Skeleton className="h-4 w-full max-w-2xl" />
                     <Skeleton className="h-4 w-4/5 max-w-xl" />
-                    <div className="flex gap-2">
-                        <Skeleton className="h-6 w-24" />
-                        <Skeleton className="h-6 w-28" />
-                        <Skeleton className="h-6 w-20" />
+                    <div className="grid gap-3 rounded-2xl bg-accent/50 p-4">
+                        <Skeleton className="h-4 w-36" />
+                        <div className="flex flex-wrap gap-2">
+                            <Skeleton className="h-9 w-24 rounded-xl" />
+                            <Skeleton className="h-9 w-28 rounded-xl" />
+                        </div>
+                        <Skeleton className="h-3 w-4/5" />
                     </div>
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-7 w-4/5 rounded-lg" />
                 </div>
-                <div className="grid grid-cols-2 gap-4 border-t border-border/70 pt-4 lg:grid-cols-1 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+                <div className="grid grid-cols-2 gap-4 border-t border-border/70 pt-4">
                     <Skeleton className="h-4 w-28" />
                     <Skeleton className="h-4 w-24" />
-                    <Skeleton className="col-span-2 h-4 w-36 lg:col-span-1" />
+                    <Skeleton className="col-span-2 h-4 w-36" />
                 </div>
+                <Skeleton className="h-11 w-full rounded-xl" />
             </div>
         </li>
     );
 }
 
-function ProjectEmptyState({ onReset }: { onReset: () => void }) {
+function ProjectEmptyState({
+    onReset,
+    isMine,
+    onExplore,
+}: {
+    onReset: () => void;
+    isMine: boolean;
+    onExplore: () => void;
+}) {
     return (
         <section
             data-test="projects-empty"
-            className="grid justify-items-center gap-4 rounded-2xl border border-slate-200 bg-white px-6 py-14 text-center shadow-[0_14px_32px_-30px_rgba(30,64,175,0.34)]"
+            className="grid justify-items-center gap-4 rounded-3xl border border-dashed border-border bg-linear-to-b from-card to-background px-5 py-10 text-center"
         >
-            <div className="grid size-12 place-items-center rounded-md border border-border bg-muted text-primary">
-                <FolderSearch aria-hidden="true" className="size-6" />
-            </div>
+            <ArchiveArt className="w-28" />
             <div className="grid max-w-lg gap-2">
                 <h3 className="text-title font-semibold">
-                    Belum ada project yang cocok
+                    {isMine
+                        ? 'Belum ada proyek saya yang cocok'
+                        : 'Belum ada proyek yang cocok'}
                 </h3>
                 <p className="text-sm leading-6 text-muted-foreground">
-                    Coba ubah kata pencarian atau longgarkan filter status dan
-                    visibilitas untuk melihat peluang kolaborasi lain.
+                    {isMine
+                        ? 'Proyek yang kamu kelola atau tim yang masih kamu ikuti akan muncul di sini. Coba atur ulang filter, atau temukan peluang untuk mulai bergabung.'
+                        : 'Coba ubah kata pencarian atau longgarkan filter status dan visibilitas untuk melihat peluang kolaborasi lain.'}
                 </p>
             </div>
             <Button
@@ -440,13 +531,26 @@ function ProjectEmptyState({ onReset }: { onReset: () => void }) {
                 onClick={onReset}
                 data-test="projects-reset-empty"
             >
-                Hapus semua filter
+                Atur ulang filter
             </Button>
+            {isMine && (
+                <Button type="button" onClick={onExplore}>
+                    Temukan peluang
+                </Button>
+            )}
         </section>
     );
 }
 
-function ProjectErrorState({ onRetry }: { onRetry: () => void }) {
+function ProjectErrorState({
+    onRetry,
+    forbidden,
+    processing,
+}: {
+    onRetry: () => void;
+    forbidden: boolean;
+    processing: boolean;
+}) {
     return (
         <section
             role="alert"
@@ -460,11 +564,14 @@ function ProjectErrorState({ onRetry }: { onRetry: () => void }) {
                 />
                 <div className="min-w-0 space-y-1">
                     <h3 className="font-semibold">
-                        Daftar project belum termuat
+                        {forbidden
+                            ? 'Daftar proyek tidak dapat diakses'
+                            : 'Daftar proyek belum termuat'}
                     </h3>
                     <p className="text-sm leading-6">
-                        Filter tetap tersimpan. Coba muat ulang daftar project
-                        untuk melanjutkan.
+                        {forbidden
+                            ? 'Akses daftar proyek tidak tersedia untuk akunmu saat ini. Periksa afiliasi kampus atau coba muat ulang.'
+                            : 'Filter tetap tersimpan. Coba muat ulang daftar proyek untuk melanjutkan.'}
                     </p>
                 </div>
             </div>
@@ -472,9 +579,11 @@ function ProjectErrorState({ onRetry }: { onRetry: () => void }) {
                 type="button"
                 variant="outline"
                 onClick={onRetry}
+                disabled={processing}
+                aria-busy={processing}
                 className="shrink-0 border-correction/50 bg-transparent text-correction-subtle-foreground hover:bg-correction/10"
             >
-                Coba lagi
+                {processing ? 'Memuat ulang...' : 'Coba lagi'}
             </Button>
         </section>
     );
@@ -486,6 +595,11 @@ export default function ProjectIndex({
     filters,
     filter_options: filterOptions,
 }: ProjectIndexProps) {
+    const isMine = filters.view === 'mine';
+    const lastQuery = useRef<QueryParams>({
+        view: filters.view,
+        institution_id: filters.institution_id,
+    });
     const [searchQuery, setSearchQuery] = useState(filters.q);
     const [selectedStatuses, setSelectedStatuses] = useState(filters.status);
     const [selectedVisibilities, setSelectedVisibilities] = useState(
@@ -496,28 +610,15 @@ export default function ProjectIndex({
         filters.direction,
     );
     const [selectedPerPage, setSelectedPerPage] = useState(filters.per_page);
+    const [selectedBeginner, setSelectedBeginner] = useState(
+        filters.beginner ?? 'all',
+    );
+    const [selectedAvailability, setSelectedAvailability] = useState(
+        filters.availability ?? 'all',
+    );
     const [isPending, setIsPending] = useState(false);
     const [hasError, setHasError] = useState(false);
-
-    useEffect(() => {
-        const handleVisitFailure = (): void => {
-            setHasError(true);
-            setIsPending(false);
-        };
-        const removeNetworkErrorListener = router.on(
-            'networkError',
-            handleVisitFailure,
-        );
-        const removeHttpExceptionListener = router.on(
-            'httpException',
-            handleVisitFailure,
-        );
-
-        return () => {
-            removeNetworkErrorListener();
-            removeHttpExceptionListener();
-        };
-    }, []);
+    const [isForbidden, setIsForbidden] = useState(false);
 
     useEffect(() => {
         const frame = requestAnimationFrame(() => {
@@ -527,64 +628,80 @@ export default function ProjectIndex({
             setSelectedSort(filters.sort);
             setSelectedDirection(filters.direction);
             setSelectedPerPage(filters.per_page);
+            setSelectedBeginner(filters.beginner ?? 'all');
+            setSelectedAvailability(filters.availability ?? 'all');
         });
 
         return () => cancelAnimationFrame(frame);
     }, [
         filters.direction,
+        filters.beginner,
+        filters.availability,
         filters.institution_id,
         filters.per_page,
         filters.q,
         filters.sort,
         filters.status,
+        filters.view,
         filters.visibility,
     ]);
 
-    const queryForPage = (page: number): QueryParams => ({
-        q: searchQuery.trim() || undefined,
-        status: selectedStatuses.join(','),
-        visibility: selectedVisibilities.join(','),
-        sort: selectedSort,
-        direction: selectedDirection,
+    const queryForPage = (page: number, applied = false): QueryParams => ({
+        view: filters.view,
+        q: (applied ? filters.q : searchQuery).trim() || undefined,
+        beginner: applied ? filters.beginner : selectedBeginner,
+        availability: applied ? filters.availability : selectedAvailability,
+        status: (applied ? filters.status : selectedStatuses).join(','),
+        visibility: (applied ? filters.visibility : selectedVisibilities).join(
+            ',',
+        ),
+        sort: applied ? filters.sort : selectedSort,
+        direction: applied ? filters.direction : selectedDirection,
         institution_id: filters.institution_id,
-        per_page: selectedPerPage,
+        per_page: applied ? filters.per_page : selectedPerPage,
         page: page > 1 ? page : undefined,
     });
 
-    const visitDiscovery = (page: number = 1): void => {
-        setHasError(false);
+    const handleDiscoveryFailure = (forbidden = false): false => {
+        setHasError(true);
+        setIsForbidden((current) => current || forbidden);
+        setIsPending(false);
+
+        return false;
+    };
+
+    const visitQuery = (query: QueryParams, preserveScroll = false): void => {
+        lastQuery.current = query;
         setIsPending(true);
 
-        router.visit(projectsIndex({ query: queryForPage(page) }), {
-            preserveScroll: page > 1,
+        router.visit(projectsIndex({ query }), {
+            preserveScroll,
             preserveState: true,
             replace: true,
-            onSuccess: () => setHasError(false),
+            onSuccess: () => {
+                setHasError(false);
+                setIsForbidden(false);
+            },
             onError: () => setHasError(true),
+            onHttpException: (response) =>
+                handleDiscoveryFailure(response.status === 403),
+            onNetworkError: () => handleDiscoveryFailure(),
             onFinish: () => setIsPending(false),
         });
     };
 
-    const resetFilters = (): void => {
-        setSearchQuery('');
-        setSelectedStatuses(filterOptions.status.slice(0, 3));
-        setSelectedVisibilities(
-            filterOptions.visibility.filter((visibility) =>
-                ['institution', 'public'].includes(visibility),
-            ),
-        );
-        setSelectedSort('deadline');
-        setSelectedDirection('asc');
-        setSelectedPerPage(filterOptions.per_page.default);
-        setHasError(false);
-        setIsPending(true);
+    const visitDiscovery = (page = 1, applied = false): void =>
+        visitQuery(queryForPage(page, applied), page > 1);
+    const changeView = (view: DiscoveryFilters['view']): void => {
+        if (view !== filters.view) {
+            visitQuery({ view, institution_id: filters.institution_id });
+        }
+    };
 
-        router.visit(projectsIndex(), {
-            preserveScroll: false,
-            preserveState: false,
-            replace: true,
-            onFinish: () => setIsPending(false),
-            onError: () => setHasError(true),
+    const resetFilters = (): void => {
+        visitQuery({
+            view: filters.view,
+            institution_id: filters.institution_id,
         });
     };
 
@@ -613,83 +730,143 @@ export default function ProjectIndex({
     };
 
     const resultSummary = isPending
-        ? 'Memuat ulang daftar project.'
-        : projects.meta.total === 0
-          ? 'Tidak ada project yang cocok dengan filter saat ini.'
-          : `${projects.meta.from} sampai ${projects.meta.to} dari ${projects.meta.total} project.`;
+        ? 'Memuat ulang daftar proyek.'
+        : hasError
+          ? 'Hasil belum dapat ditampilkan. Coba lagi untuk memeriksa akses dan data terbaru.'
+          : projects.meta.total === 0
+            ? 'Tidak ada proyek yang cocok dengan filter saat ini.'
+            : `${projects.meta.from} sampai ${projects.meta.to} dari ${projects.meta.total} proyek.`;
 
     return (
         <>
-            <Head title="Temukan project" />
+            <Head title={isMine ? 'Proyek saya' : 'Temukan proyek'} />
             <AppPage className="min-w-0">
                 <div
                     data-test="projects-root"
-                    className="mx-auto max-w-7xl min-w-0 space-y-6"
+                    className="w-full min-w-0 space-y-6"
                 >
                     <header
-                        className="relative isolate overflow-hidden rounded-2xl border border-blue-100 bg-white px-5 py-6 shadow-[0_18px_50px_-40px_rgba(30,64,175,0.42)] sm:px-7 sm:py-7"
+                        className="relative overflow-hidden rounded-4xl border border-white bg-linear-to-br from-accent via-sky-100 to-blue-100 p-5 shadow-md sm:p-7"
                         data-test="project-discovery-header"
                     >
                         <div
                             aria-hidden="true"
-                            className="absolute -top-24 -right-20 size-72 rounded-full bg-blue-100/70 blur-3xl"
+                            className="pointer-events-none absolute -top-24 -right-12 size-80 rounded-full border border-white/70 bg-white/30"
                         />
-                        <div className="relative grid gap-7 xl:grid-cols-[minmax(0,1fr)_minmax(17rem,0.48fr)] xl:items-stretch xl:gap-10">
-                            <div className="min-w-0">
-                                <p className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold tracking-[0.12em] text-blue-700 uppercase">
-                                    <span className="size-1.5 rounded-full bg-blue-600" />
-                                    Ruang penemuan project
-                                </p>
-                                <h1 className="mt-4 max-w-[24ch] text-headline font-bold tracking-[-0.035em] text-balance text-slate-950">
-                                    Temukan project yang bisa kamu kerjakan
-                                    bersama.
-                                </h1>
-                                <p className="mt-3 max-w-[66ch] text-sm leading-6 text-slate-600">
-                                    Telusuri peran, skill, kapasitas, dan
-                                    deadline dalam satu daftar peluang
-                                    kolaborasi.
-                                </p>
-                            </div>
-
-                            <div className="flex flex-col justify-end border-t border-slate-200 pt-6 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-8">
-                                <div className="flex items-center gap-2 text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
-                                    <ShieldCheck
+                        <ArchiveArt className="absolute top-5 right-28 hidden w-36 -rotate-6 opacity-55 sm:block lg:right-36 lg:w-44" />
+                        <span
+                            aria-hidden="true"
+                            className="absolute top-7 right-7 h-1.5 w-10 -rotate-12 rounded-full bg-satu-feather/70"
+                        />
+                        <div className="relative flex items-center justify-between gap-4">
+                            <div className="max-w-2xl min-w-0">
+                                <p className="inline-flex items-center gap-2 rounded-full border border-white bg-white/80 px-3 py-1.5 text-xs font-semibold text-primary">
+                                    <BriefcaseBusiness
                                         aria-hidden="true"
-                                        className="size-4 shrink-0 text-verified"
+                                        className="size-3.5"
                                     />
-                                    Konteks aktif
-                                </div>
-                                <p className="mt-2 text-base font-bold break-words text-slate-950">
-                                    {institution.name}
+                                    {isMine
+                                        ? 'Pekerjaan bersama tim'
+                                        : 'Peluang kolaborasi'}
                                 </p>
-                                <p className="mt-2 text-sm leading-5 text-slate-500">
-                                    Peluang yang ditampilkan mengikuti afiliasi
-                                    kampus pada akunmu.
+                                <h1 className="mt-4 text-2xl leading-snug font-bold tracking-tight text-foreground sm:text-3xl">
+                                    {isMine
+                                        ? 'Lanjutkan proyek dan pekerjaanmu.'
+                                        : 'Temukan tim untuk ide dan keahlianmu.'}
+                                </h1>
+                                <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+                                    {isMine
+                                        ? 'Temukan proyek yang kamu kelola dan tim yang masih kamu ikuti, termasuk draft milikmu. Buka proyek untuk melanjutkan pekerjaan.'
+                                        : 'Jelajahi proyek, kenali kebutuhan tim, dan pilih peluang yang ingin kamu kerjakan bersama.'}
                                 </p>
-                                <Button
-                                    asChild
-                                    className="mt-5 w-full self-start xl:w-auto"
-                                    data-test="create-project-link"
-                                >
-                                    <Link
-                                        href={projectsCreate({
-                                            query: {
-                                                institution_id: institution.id,
-                                            },
-                                        })}
-                                    >
-                                        <Plus aria-hidden="true" />
-                                        Buat project baru
-                                    </Link>
-                                </Button>
                             </div>
+                            <Mascot
+                                pose="guide"
+                                className="hidden w-32 shrink-0 sm:block lg:w-40"
+                            />
+                        </div>
+                        <div className="relative mt-5 flex flex-col gap-4 border-t border-white/80 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="flex min-w-0 items-start gap-2 text-sm font-medium text-foreground">
+                                <ShieldCheck
+                                    aria-hidden="true"
+                                    className="mt-0.5 size-4 shrink-0 text-primary"
+                                />
+                                <span className="min-w-0 wrap-anywhere">
+                                    {institution.name}
+                                </span>
+                            </p>
+                            <Button
+                                asChild
+                                className="min-h-11 w-full shrink-0 rounded-xl shadow-sm hover:bg-primary sm:w-auto dark:hover:bg-primary"
+                                data-test="create-project-link"
+                            >
+                                <Link
+                                    href={projectsCreate({
+                                        query: {
+                                            institution_id: institution.id,
+                                        },
+                                    })}
+                                >
+                                    <Plus
+                                        aria-hidden="true"
+                                        className="size-4"
+                                    />
+                                    Buat proyek
+                                </Link>
+                            </Button>
                         </div>
                     </header>
 
+                    <div className="rounded-2xl border border-primary/15 bg-white px-5 py-4 text-sm leading-6 shadow-sm">
+                        <p>
+                            Belum menemukan peran yang sesuai? Bantuan kampus
+                            bersifat pilihan, bukan syarat mengajukan minat.
+                        </p>
+                        <Button
+                            variant="link"
+                            className="mt-1 min-h-11 px-0"
+                            asChild
+                        >
+                            <Link href={opportunitySupport(institution.id)}>
+                                Bantuan kesempatan
+                            </Link>
+                        </Button>
+                    </div>
+                    <nav
+                        aria-label="Tampilan proyek"
+                        className="flex flex-wrap items-center gap-2 rounded-2xl border border-primary/15 bg-card p-2 shadow-sm"
+                        data-test="project-views"
+                    >
+                        <Button
+                            type="button"
+                            variant={isMine ? 'ghost' : 'default'}
+                            disabled={isPending}
+                            aria-pressed={!isMine}
+                            onClick={() => changeView('opportunities')}
+                            className="min-h-11 flex-1 sm:flex-none"
+                        >
+                            Peluang
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={isMine ? 'default' : 'ghost'}
+                            disabled={isPending}
+                            aria-pressed={isMine}
+                            onClick={() => changeView('mine')}
+                            className="min-h-11 flex-1 sm:flex-none"
+                        >
+                            Proyek saya
+                        </Button>
+                        <p className="basis-full px-3 py-1 text-xs leading-5 text-muted-foreground sm:basis-auto">
+                            {isMine
+                                ? 'Proyek milikmu atau dengan keanggotaan tim aktif.'
+                                : 'Pahami kebutuhan peran sebelum mengajukan bergabung.'}
+                        </p>
+                    </nav>
                     <section
                         aria-labelledby="project-filters-title"
                         data-test="project-filters"
-                        className="rounded-2xl border border-slate-200 bg-white shadow-[0_14px_32px_-30px_rgba(30,64,175,0.34)]"
+                        className="min-w-0 rounded-3xl border border-primary/20 bg-card shadow-md"
                     >
                         <form
                             className="grid gap-5 p-5 sm:p-6"
@@ -702,24 +879,24 @@ export default function ProjectIndex({
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                                         <div>
-                                            <p className="text-xs font-bold tracking-[0.13em] text-blue-700 uppercase">
+                                            <p className="text-xs font-bold tracking-[0.13em] text-primary uppercase">
                                                 Temukan peluang
                                             </p>
                                             <h2
                                                 id="project-filters-title"
-                                                className="mt-1 text-title font-bold tracking-[-0.02em] text-slate-950"
+                                                className="mt-1 text-title font-bold tracking-[-0.02em] text-foreground"
                                             >
-                                                Cari project yang sesuai
+                                                Cari proyek yang sesuai
                                             </h2>
                                         </div>
-                                        <p className="text-xs text-slate-500">
+                                        <p className="text-xs text-muted-foreground">
                                             Filter tersimpan di URL
                                         </p>
                                     </div>
                                     <div className="relative mt-4">
                                         <Search
                                             aria-hidden="true"
-                                            className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400"
+                                            className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground"
                                         />
                                         <Input
                                             id="project-search"
@@ -729,8 +906,9 @@ export default function ProjectIndex({
                                                     event.target.value,
                                                 )
                                             }
-                                            placeholder="Cari judul, peran, atau skill"
-                                            className="h-12 border-slate-200 bg-slate-50 pl-11 shadow-none hover:border-blue-300"
+                                            aria-label="Cari proyek berdasarkan judul, peran, atau keahlian"
+                                            placeholder="Cari judul, peran, atau keahlian"
+                                            className="h-12 min-w-0 border-input bg-background/60 pl-11 text-base shadow-none hover:border-ring"
                                             autoComplete="off"
                                         />
                                     </div>
@@ -746,197 +924,345 @@ export default function ProjectIndex({
                                 </Button>
                             </div>
 
-                            <div className="grid gap-5 border-t border-slate-100 pt-5 lg:grid-cols-2">
-                                <fieldset className="min-w-0 space-y-3">
-                                    <legend className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
-                                        Status project
-                                    </legend>
-                                    <div className="flex flex-wrap gap-2">
-                                        {filterOptions.status.map((status) => (
-                                            <div
-                                                key={status}
-                                                className={cn(
-                                                    'flex min-h-10 items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors duration-fast motion-reduce:transition-none',
-                                                    selectedStatuses.includes(
-                                                        status,
-                                                    )
-                                                        ? 'border-blue-200 bg-blue-50 text-blue-800'
-                                                        : 'border-slate-200 bg-white text-slate-600',
-                                                )}
-                                            >
-                                                <Checkbox
-                                                    id={`status-${status}`}
-                                                    checked={selectedStatuses.includes(
-                                                        status,
-                                                    )}
-                                                    onCheckedChange={(
-                                                        checked,
-                                                    ) =>
-                                                        toggleStatus(
-                                                            status,
-                                                            checked === true,
-                                                        )
-                                                    }
-                                                />
-                                                <Label
-                                                    htmlFor={`status-${status}`}
-                                                    className="cursor-pointer text-sm font-medium"
-                                                >
-                                                    {displayStatus(status)}
-                                                </Label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <p className="text-xs leading-5 text-slate-500">
-                                        Pilih minimal satu status.
-                                    </p>
-                                </fieldset>
-
-                                <fieldset className="min-w-0 space-y-3">
-                                    <legend className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
-                                        Visibilitas
-                                    </legend>
-                                    <div className="flex flex-wrap gap-2">
-                                        {filterOptions.visibility.map(
-                                            (visibility) => (
-                                                <div
-                                                    key={visibility}
-                                                    className={cn(
-                                                        'flex min-h-10 items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors duration-fast motion-reduce:transition-none',
-                                                        selectedVisibilities.includes(
-                                                            visibility,
-                                                        )
-                                                            ? 'border-blue-200 bg-blue-50 text-blue-800'
-                                                            : 'border-slate-200 bg-white text-slate-600',
-                                                    )}
-                                                >
-                                                    <Checkbox
-                                                        id={`visibility-${visibility}`}
-                                                        checked={selectedVisibilities.includes(
-                                                            visibility,
-                                                        )}
-                                                        onCheckedChange={(
-                                                            checked,
-                                                        ) =>
-                                                            toggleVisibility(
-                                                                visibility,
-                                                                checked ===
-                                                                    true,
-                                                            )
-                                                        }
-                                                    />
-                                                    <Label
-                                                        htmlFor={`visibility-${visibility}`}
-                                                        className="cursor-pointer text-sm font-medium"
-                                                    >
-                                                        {displayVisibility(
-                                                            visibility,
-                                                        )}
-                                                    </Label>
-                                                </div>
-                                            ),
-                                        )}
-                                    </div>
-                                    <p className="text-xs leading-5 text-slate-500">
-                                        Project pribadi hanya muncul jika kamu
-                                        pemiliknya.
-                                    </p>
-                                </fieldset>
-                            </div>
-
-                            <div className="grid gap-4 border-t border-slate-100 pt-5 sm:grid-cols-3">
-                                <div className="min-w-0 space-y-2">
-                                    <Label
-                                        htmlFor="project-sort"
-                                        className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase"
-                                    >
-                                        Urutkan berdasarkan
-                                    </Label>
-                                    <select
-                                        id="project-sort"
-                                        className={selectClassName}
-                                        value={selectedSort}
-                                        onChange={(event) =>
-                                            setSelectedSort(event.target.value)
-                                        }
-                                    >
-                                        {filterOptions.sort.map((sort) => (
-                                            <option key={sort} value={sort}>
-                                                {sort === 'deadline'
-                                                    ? 'Batas waktu'
-                                                    : sort === 'newest'
-                                                      ? 'Project terbaru'
-                                                      : sort === 'title'
-                                                        ? 'Judul project'
-                                                        : sort}
+                            <details
+                                className="min-w-0 border-t border-border/60 pt-4"
+                                data-test="project-advanced-filters"
+                            >
+                                <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center gap-2 rounded-xl px-3 text-sm font-semibold text-primary hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-safe:transition-colors motion-safe:duration-standard [&::-webkit-details-marker]:hidden">
+                                    <Filter
+                                        aria-hidden="true"
+                                        className="size-4"
+                                    />
+                                    Filter tambahan
+                                    <ChevronRight
+                                        aria-hidden="true"
+                                        className="ml-auto size-4 in-open:rotate-90 motion-safe:transition-transform motion-safe:duration-standard"
+                                    />
+                                </summary>
+                                <div className="mt-4 grid gap-5 lg:grid-cols-2">
+                                    <div className="min-w-0 space-y-2">
+                                        <Label htmlFor="project-beginner-filter">
+                                            Penerimaan pemula
+                                        </Label>
+                                        <select
+                                            id="project-beginner-filter"
+                                            className={selectClassName}
+                                            value={selectedBeginner}
+                                            disabled={isPending}
+                                            onChange={(event) =>
+                                                setSelectedBeginner(
+                                                    event.target.value as
+                                                        'all' | 'accepting',
+                                                )
+                                            }
+                                            aria-describedby="project-beginner-help"
+                                        >
+                                            <option value="all">
+                                                Semua peran
                                             </option>
-                                        ))}
-                                    </select>
+                                            <option value="accepting">
+                                                Menerima pemula
+                                            </option>
+                                        </select>
+                                        <p
+                                            id="project-beginner-help"
+                                            className="text-xs leading-5 text-muted-foreground"
+                                        >
+                                            Mengikuti pernyataan pemilik. Bukan
+                                            jaminan diterima dan tidak
+                                            mensyaratkan karya terdahulu.
+                                        </p>
+                                    </div>
+                                    <div className="min-w-0 space-y-2">
+                                        <Label htmlFor="project-availability-filter">
+                                            Tempat tersedia
+                                        </Label>
+                                        <select
+                                            id="project-availability-filter"
+                                            className={selectClassName}
+                                            value={selectedAvailability}
+                                            disabled={isPending}
+                                            onChange={(event) =>
+                                                setSelectedAvailability(
+                                                    event.target.value as
+                                                        'all' | 'available',
+                                                )
+                                            }
+                                            aria-describedby="project-availability-help"
+                                        >
+                                            <option value="all">
+                                                Semua keadaan
+                                            </option>
+                                            <option value="available">
+                                                Masih menerima pengajuan
+                                            </option>
+                                        </select>
+                                        <p
+                                            id="project-availability-help"
+                                            className="text-xs leading-5 text-muted-foreground"
+                                        >
+                                            Tenggat belum lewat dan ada tempat
+                                            pada tim serta peran. Pengajuan
+                                            pending tidak memesan tempat.
+                                        </p>
+                                    </div>
+                                    <fieldset className="min-w-0 space-y-3">
+                                        <legend className="text-xs font-bold tracking-[0.13em] text-muted-foreground uppercase">
+                                            Status proyek
+                                        </legend>
+                                        <div className="flex flex-wrap gap-2">
+                                            {filterOptions.status.map(
+                                                (status) => (
+                                                    <div
+                                                        key={status}
+                                                        className={cn(
+                                                            'flex min-h-11 max-w-full items-center gap-2 rounded-xl border px-3 py-1 text-sm transition-colors duration-fast motion-reduce:transition-none',
+                                                            selectedStatuses.includes(
+                                                                status,
+                                                            )
+                                                                ? 'border-primary/30 bg-accent text-primary'
+                                                                : 'border-border bg-card text-muted-foreground',
+                                                        )}
+                                                    >
+                                                        <Checkbox
+                                                            id={`status-${status}`}
+                                                            checked={selectedStatuses.includes(
+                                                                status,
+                                                            )}
+                                                            onCheckedChange={(
+                                                                checked,
+                                                            ) =>
+                                                                toggleStatus(
+                                                                    status,
+                                                                    checked ===
+                                                                        true,
+                                                                )
+                                                            }
+                                                        />
+                                                        <Label
+                                                            htmlFor={`status-${status}`}
+                                                            className="flex min-h-11 min-w-0 cursor-pointer items-center text-sm font-medium wrap-anywhere"
+                                                        >
+                                                            {displayStatus(
+                                                                status,
+                                                            )}
+                                                        </Label>
+                                                    </div>
+                                                ),
+                                            )}
+                                        </div>
+                                        <p className="text-xs leading-5 text-muted-foreground">
+                                            Pilih minimal satu status.
+                                        </p>
+                                    </fieldset>
+
+                                    <fieldset className="min-w-0 space-y-3">
+                                        <legend className="text-xs font-bold tracking-[0.13em] text-muted-foreground uppercase">
+                                            Visibilitas
+                                        </legend>
+                                        <div className="flex flex-wrap gap-2">
+                                            {filterOptions.visibility.map(
+                                                (visibility) => (
+                                                    <div
+                                                        key={visibility}
+                                                        className={cn(
+                                                            'flex min-h-11 max-w-full items-center gap-2 rounded-xl border px-3 py-1 text-sm transition-colors duration-fast motion-reduce:transition-none',
+                                                            selectedVisibilities.includes(
+                                                                visibility,
+                                                            )
+                                                                ? 'border-primary/30 bg-accent text-primary'
+                                                                : 'border-border bg-card text-muted-foreground',
+                                                        )}
+                                                    >
+                                                        <Checkbox
+                                                            id={`visibility-${visibility}`}
+                                                            checked={selectedVisibilities.includes(
+                                                                visibility,
+                                                            )}
+                                                            onCheckedChange={(
+                                                                checked,
+                                                            ) =>
+                                                                toggleVisibility(
+                                                                    visibility,
+                                                                    checked ===
+                                                                        true,
+                                                                )
+                                                            }
+                                                        />
+                                                        <Label
+                                                            htmlFor={`visibility-${visibility}`}
+                                                            className="flex min-h-11 min-w-0 cursor-pointer items-center text-sm font-medium wrap-anywhere"
+                                                        >
+                                                            {displayVisibility(
+                                                                visibility,
+                                                            )}
+                                                        </Label>
+                                                    </div>
+                                                ),
+                                            )}
+                                        </div>
+                                        <p className="text-xs leading-5 text-muted-foreground">
+                                            Proyek pribadi hanya muncul jika
+                                            kamu pemiliknya.
+                                        </p>
+                                    </fieldset>
                                 </div>
-                                <div className="min-w-0 space-y-2">
-                                    <Label
-                                        htmlFor="project-direction"
-                                        className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase"
-                                    >
-                                        Arah urutan
-                                    </Label>
-                                    <select
-                                        id="project-direction"
-                                        className={selectClassName}
-                                        value={selectedDirection}
-                                        onChange={(event) =>
-                                            setSelectedDirection(
-                                                event.target.value,
-                                            )
-                                        }
-                                    >
-                                        {filterOptions.direction.map(
-                                            (direction) => (
-                                                <option
-                                                    key={direction}
-                                                    value={direction}
-                                                >
-                                                    {direction === 'asc'
-                                                        ? 'Naik'
-                                                        : 'Turun'}
-                                                </option>
-                                            ),
-                                        )}
-                                    </select>
-                                </div>
-                                <div className="min-w-0 space-y-2">
-                                    <Label
-                                        htmlFor="project-per-page"
-                                        className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase"
-                                    >
-                                        Hasil per halaman
-                                    </Label>
-                                    <select
-                                        id="project-per-page"
-                                        className={selectClassName}
-                                        value={selectedPerPage}
-                                        onChange={(event) =>
-                                            setSelectedPerPage(
-                                                Number(event.target.value),
-                                            )
-                                        }
-                                    >
-                                        {[10, 20, 50]
-                                            .filter(
-                                                (amount) =>
-                                                    amount <=
-                                                    filterOptions.per_page.max,
-                                            )
-                                            .map((amount) => (
-                                                <option
-                                                    key={amount}
-                                                    value={amount}
-                                                >
-                                                    {amount} project
+
+                                <div className="grid gap-4 border-t border-border/60 pt-5 sm:grid-cols-3">
+                                    <div className="min-w-0 space-y-2">
+                                        <Label
+                                            htmlFor="project-sort"
+                                            className="text-xs font-bold tracking-[0.13em] text-muted-foreground uppercase"
+                                        >
+                                            Urutkan berdasarkan
+                                        </Label>
+                                        <select
+                                            id="project-sort"
+                                            className={selectClassName}
+                                            value={selectedSort}
+                                            onChange={(event) =>
+                                                setSelectedSort(
+                                                    event.target.value,
+                                                )
+                                            }
+                                        >
+                                            {filterOptions.sort.map((sort) => (
+                                                <option key={sort} value={sort}>
+                                                    {sort === 'deadline'
+                                                        ? 'Batas waktu'
+                                                        : sort === 'newest'
+                                                          ? 'Proyek terbaru'
+                                                          : sort === 'title'
+                                                            ? 'Judul proyek'
+                                                            : sort}
                                                 </option>
                                             ))}
-                                    </select>
+                                        </select>
+                                    </div>
+                                    <div className="min-w-0 space-y-2">
+                                        <Label
+                                            htmlFor="project-direction"
+                                            className="text-xs font-bold tracking-[0.13em] text-muted-foreground uppercase"
+                                        >
+                                            Arah urutan
+                                        </Label>
+                                        <select
+                                            id="project-direction"
+                                            className={selectClassName}
+                                            value={selectedDirection}
+                                            onChange={(event) =>
+                                                setSelectedDirection(
+                                                    event.target.value,
+                                                )
+                                            }
+                                        >
+                                            {filterOptions.direction.map(
+                                                (direction) => (
+                                                    <option
+                                                        key={direction}
+                                                        value={direction}
+                                                    >
+                                                        {direction === 'asc'
+                                                            ? 'Naik'
+                                                            : 'Turun'}
+                                                    </option>
+                                                ),
+                                            )}
+                                        </select>
+                                    </div>
+                                    <div className="min-w-0 space-y-2">
+                                        <Label
+                                            htmlFor="project-per-page"
+                                            className="text-xs font-bold tracking-[0.13em] text-muted-foreground uppercase"
+                                        >
+                                            Hasil per halaman
+                                        </Label>
+                                        <select
+                                            id="project-per-page"
+                                            className={selectClassName}
+                                            value={selectedPerPage}
+                                            onChange={(event) =>
+                                                setSelectedPerPage(
+                                                    Number(event.target.value),
+                                                )
+                                            }
+                                        >
+                                            {Array.from(
+                                                new Set([
+                                                    filterOptions.per_page
+                                                        .default,
+                                                    filters.per_page,
+                                                    10,
+                                                    20,
+                                                    50,
+                                                ]),
+                                            )
+                                                .filter(
+                                                    (amount) =>
+                                                        amount <=
+                                                        filterOptions.per_page
+                                                            .max,
+                                                )
+                                                .map((amount) => (
+                                                    <option
+                                                        key={amount}
+                                                        value={amount}
+                                                    >
+                                                        {amount} proyek
+                                                    </option>
+                                                ))}
+                                        </select>
+                                    </div>
                                 </div>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={resetFilters}
+                                    disabled={isPending}
+                                    className="mt-4 min-h-11 w-full text-muted-foreground sm:w-auto"
+                                >
+                                    Atur ulang filter
+                                </Button>
+                            </details>
+                            <div
+                                className="flex min-w-0 flex-wrap items-center gap-2 border-t border-border/60 pt-4"
+                                aria-label="Filter yang diterapkan"
+                                data-test="project-applied-filters"
+                            >
+                                <span className="text-xs text-muted-foreground">
+                                    Diterapkan:
+                                </span>
+                                {filters.q && (
+                                    <span className="max-w-full rounded-lg bg-background px-2.5 py-1.5 text-xs wrap-anywhere text-foreground">
+                                        Pencarian: {filters.q}
+                                    </span>
+                                )}
+                                {filters.beginner === 'accepting' && (
+                                    <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-primary">
+                                        Menerima pemula
+                                    </span>
+                                )}
+                                {filters.availability === 'available' && (
+                                    <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-primary">
+                                        Masih menerima pengajuan
+                                    </span>
+                                )}
+                                {filters.status.map((value) => (
+                                    <span
+                                        key={value}
+                                        className="rounded-lg bg-accent px-2.5 py-1.5 text-xs font-medium text-primary"
+                                    >
+                                        {displayStatus(value)}
+                                    </span>
+                                ))}
+                                {filters.visibility.map((value) => (
+                                    <span
+                                        key={value}
+                                        className="rounded-lg border border-border px-2.5 py-1.5 text-xs text-muted-foreground"
+                                    >
+                                        {displayVisibility(value)}
+                                    </span>
+                                ))}
                             </div>
                         </form>
                     </section>
@@ -947,26 +1273,28 @@ export default function ProjectIndex({
                         data-test="projects-results"
                         className="min-w-0 space-y-4"
                     >
-                        <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
                             <div className="min-w-0 space-y-1">
-                                <p className="text-xs font-bold tracking-[0.13em] text-blue-700 uppercase">
-                                    Daftar peluang
+                                <p className="text-xs font-bold tracking-[0.13em] text-primary uppercase">
+                                    {isMine
+                                        ? 'Pekerjaan dan arsip saya'
+                                        : 'Daftar peluang'}
                                 </p>
                                 <h2
                                     id="project-results-title"
-                                    className="text-title font-bold tracking-[-0.02em] text-slate-950"
+                                    className="text-title font-bold tracking-[-0.02em] text-foreground"
                                 >
-                                    Peluang project
+                                    {isMine ? 'Proyek saya' : 'Peluang proyek'}
                                 </h2>
-                                <p className="text-sm text-slate-500">
-                                    Hasil discovery dalam konteks{' '}
-                                    {institution.name}.
+                                <p className="text-sm text-muted-foreground">
+                                    {isMine ? 'Pekerjaan' : 'Peluang'} dalam
+                                    konteks {institution.name}.
                                 </p>
                             </div>
                             <div
                                 role="status"
                                 aria-live="polite"
-                                className="shrink-0 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-800"
+                                className="max-w-full rounded-full border border-border bg-accent px-3 py-1.5 text-sm font-medium wrap-anywhere text-primary"
                             >
                                 {resultSummary}
                             </div>
@@ -974,21 +1302,26 @@ export default function ProjectIndex({
 
                         {hasError && (
                             <ProjectErrorState
-                                onRetry={() =>
-                                    visitDiscovery(projects.meta.current_page)
-                                }
+                                onRetry={() => visitQuery(lastQuery.current)}
+                                forbidden={isForbidden}
+                                processing={isPending}
                             />
                         )}
 
                         {isPending && (
                             <div
                                 data-test="projects-refresh-skeleton"
-                                className="overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 sm:px-6"
+                                className="min-w-0"
+                                role="status"
+                                aria-live="polite"
                             >
                                 <p className="sr-only">
-                                    Memuat project terbaru.
+                                    Memuat proyek terbaru.
                                 </p>
-                                <ul aria-hidden="true">
+                                <ul
+                                    aria-hidden="true"
+                                    className="grid min-w-0 gap-5 xl:grid-cols-2"
+                                >
                                     <ProjectLedgerSkeleton />
                                 </ul>
                             </div>
@@ -997,13 +1330,19 @@ export default function ProjectIndex({
                         {!hasError &&
                             projects.data.length === 0 &&
                             !isPending && (
-                                <ProjectEmptyState onReset={resetFilters} />
+                                <ProjectEmptyState
+                                    onReset={resetFilters}
+                                    isMine={isMine}
+                                    onExplore={() =>
+                                        changeView('opportunities')
+                                    }
+                                />
                             )}
 
                         {!hasError && projects.data.length > 0 && (
                             <ul
                                 data-test="project-ledger"
-                                className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 shadow-[0_14px_32px_-30px_rgba(30,64,175,0.34)] sm:px-6"
+                                className="grid min-w-0 gap-5 xl:grid-cols-2"
                             >
                                 {projects.data.map((project) => (
                                     <ProjectLedgerRow
@@ -1014,11 +1353,11 @@ export default function ProjectIndex({
                             </ul>
                         )}
 
-                        {projects.meta.last_page > 1 && (
+                        {!hasError && projects.meta.last_page > 1 && (
                             <nav
-                                aria-label="Navigasi halaman project"
+                                aria-label="Navigasi halaman proyek"
                                 data-test="project-pagination"
-                                className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between"
+                                className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <p className="text-sm text-muted-foreground">
                                     Halaman {projects.meta.current_page} dari{' '}
@@ -1036,9 +1375,11 @@ export default function ProjectIndex({
                                         onClick={() =>
                                             visitDiscovery(
                                                 projects.meta.current_page - 1,
+                                                true,
                                             )
                                         }
                                         aria-label="Halaman sebelumnya"
+                                        className="min-h-11"
                                     >
                                         <ChevronLeft aria-hidden="true" />
                                         Sebelumnya
@@ -1065,8 +1406,10 @@ export default function ProjectIndex({
                                                     : undefined
                                             }
                                             aria-label={`Buka halaman ${page}`}
-                                            onClick={() => visitDiscovery(page)}
-                                            className="min-w-10"
+                                            onClick={() =>
+                                                visitDiscovery(page, true)
+                                            }
+                                            className="min-h-11 min-w-11"
                                         >
                                             {page}
                                         </Button>
@@ -1083,9 +1426,11 @@ export default function ProjectIndex({
                                         onClick={() =>
                                             visitDiscovery(
                                                 projects.meta.current_page + 1,
+                                                true,
                                             )
                                         }
                                         aria-label="Halaman berikutnya"
+                                        className="min-h-11"
                                     >
                                         Berikutnya
                                         <ChevronRight aria-hidden="true" />

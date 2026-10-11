@@ -33,6 +33,7 @@ class UpdateStudentProfileVisibilityRequest extends FormRequest
             ],
             'recruiter_discoverable' => ['sometimes', 'boolean'],
             'expected_updated_at' => ['sometimes', 'nullable', 'date'],
+            'expected_profile_revision' => ['sometimes', 'nullable', 'string', 'regex:/^[a-f0-9]{64}$/'],
         ];
     }
 

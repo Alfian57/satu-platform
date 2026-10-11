@@ -84,7 +84,10 @@ final class ContributionPageController extends Controller
         ContributionSerializer $serializer,
     ): JsonResponse|Response {
         if ($request->expectsJson()) {
-            return response()->json(['data' => $serializer->contribution($contribution)]);
+            return response()->json(['data' => $serializer->contribution($contribution), 'permissions' => [
+                'can_update' => $request->user()?->can('update', $contribution) ?? false,
+                'can_submit' => $request->user()?->can('submit', $contribution) ?? false,
+            ]]);
         }
 
         $user = $this->user($request);

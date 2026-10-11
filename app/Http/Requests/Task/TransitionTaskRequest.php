@@ -30,6 +30,7 @@ final class TransitionTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'expected_revision' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/D'],
             'status' => ['required', Rule::enum(TaskStatus::class)],
             'expected_updated_at' => ['sometimes', 'nullable', 'date'],
         ];

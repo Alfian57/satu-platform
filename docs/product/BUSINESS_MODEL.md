@@ -2,6 +2,8 @@
 
 ## 1. Model
 
+Fokus rilis inti pada 9 Oktober 2026 adalah kesempatan kolaborasi berbasis kemampuan sampai pengakuan kontribusi. Mahasiswa dan kampus merupakan pengguna inti. Gamifikasi, Talent Portal, kredit/sinkronisasi akademik, serta graf dan engine inklusi lanjutan bukan dependensi rilis inti. Bagian perekrut, entitlement, eksperimen akademik, dan metrik modul lanjutan di bawah tetap hipotesis pengembangan, bukan kemampuan atau target pilot inti yang telah terbukti. Prioritas mengikuti [PRODUCT](../../PRODUCT.md) dan [PRD](./PRD.md).
+
 SATU menggunakan hipotesis B2B2C. Student tidak dibebankan biaya. Institution memperoleh collaboration operations dan verified activity workflow. Recruiter organization memperoleh Talent Portal melalui entitlement yang dikelola platform.
 
 Rilis perlombaan menguji kelayakan produk dan alur nilai, bukan transaksi komersial. Billing provider, pricing production, pelanggan, dan revenue tidak boleh direkayasa.
@@ -40,6 +42,8 @@ Rilis perlombaan menguji kelayakan produk dan alur nilai, bukan transaksi komers
 Talent access pada rilis memakai internal entitlement dengan status, start, end, scope, issuer, dan audit history. Entitlement bukan bukti pembayaran. Package name dan tier boleh digunakan sebagai synthetic demo label hanya jika ditandai synthetic.
 
 ## 5. Metrics
+
+Evaluasi inti mengikuti FR-12 pada PRD: kesempatan sampai pengajuan, keputusan, bergabung, hubungan kerja baru, dan pengakuan. Jumlah profil atau rekomendasi bukan bukti kolaborasi. Mahasiswa tanpa kontribusi terdahulu tetap masuk populasi yang eligible; denominator tidak otomatis memakai active member gamifikasi. Baseline dan target disepakati setelah validasi awal, bukan diisi hasil sintetis. Metrik perekrut, kredit, dan analitik inklusi lanjutan bukan kriteria kelulusan rilis inti.
 
 - activation: phone verified, affiliation outcome, profile completion;
 - collaboration: join-to-team, active project, task completion, validated contribution;

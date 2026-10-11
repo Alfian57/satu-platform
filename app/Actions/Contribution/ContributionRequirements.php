@@ -6,12 +6,35 @@ namespace App\Actions\Contribution;
 
 use App\Enums\AttachmentPurpose;
 use App\Models\Attachment;
+use App\Models\ContributionVersion;
 use App\Models\Project;
 use App\Models\Task;
+use App\Support\Attachment\AttachmentStorage;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 final class ContributionRequirements
 {
+    public function __construct(private readonly AttachmentStorage $storage) {}
+
+    public function ensureAvailableEvidence(ContributionVersion $version, Project $project): void
+    {
+        $version->loadMissing('evidence.attachment');
+        if ($version->evidence->isEmpty()) {
+            throw ValidationException::withMessages(['evidence' => 'Minimal satu bukti aktif wajib dilampirkan.']);
+        }
+        foreach ($version->evidence as $evidence) {
+            $attachment = $evidence->attachment;
+            if ($attachment === null || $attachment->trashed()
+                || $attachment->project_id !== $project->getKey()
+                || $attachment->purpose !== AttachmentPurpose::Evidence
+                || ! $this->storage->isManagedPath($attachment)
+                || ! Storage::disk(AttachmentStorage::DISK)->exists($attachment->path)) {
+                throw ValidationException::withMessages(['evidence' => 'Sebagian bukti tidak tersedia atau tidak sah. Perbaiki pilihan bukti sebelum melanjutkan.']);
+            }
+        }
+    }
+
     public function claim(mixed $value): string
     {
         return $this->requiredText($value, 'claim', 160);
@@ -92,7 +115,7 @@ final class ContributionRequirements
             ->keyBy(fn (Attachment $attachment): int => $attachment->getKey());
 
         foreach ($ids as $index => $id) {
-            if (! $attachments->has($id)) {
+            if (! $attachments->has($id) || ! $this->storage->isManagedPath($attachments->get($id))) {
                 throw ValidationException::withMessages([
                     "evidence.{$index}" => 'Evidence harus berasal dari project dan purpose evidence.',
                 ]);

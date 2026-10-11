@@ -9,7 +9,11 @@ export function AppContent({
     return (
         <SidebarInset
             id="main-content"
-            className={cn('overflow-x-hidden', className)}
+            tabIndex={-1}
+            className={cn(
+                'min-w-0 overflow-x-clip focus:outline-none',
+                className,
+            )}
             {...props}
         />
     );

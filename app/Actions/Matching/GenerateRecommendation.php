@@ -13,17 +13,23 @@ use App\Models\Project;
 use App\Models\Recommendation;
 use App\Models\StudentProfile;
 use App\Models\User;
+use App\Support\Matching\MatchingAvailability;
 use App\Support\Matching\MatchingInput;
 use App\Support\Matching\MatchingScorer;
+use App\Support\Matching\MatchingSource;
+use App\Support\Project\ProjectOpportunityCapacity;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use InvalidArgumentException;
 
 final class GenerateRecommendation
 {
     public function __construct(
         private readonly MatchingScorer $scorer,
+        private readonly MatchingSource $source,
+        private readonly MatchingAvailability $availability,
     ) {}
 
     /**
@@ -38,6 +44,14 @@ final class GenerateRecommendation
         MatchScoreVersion $version,
         ?array $requiredAvailabilityWindows = null,
     ): Recommendation {
+        if (($version->parameters['policy'] ?? null) === MatchingAvailability::POLICY) {
+            if ($requiredAvailabilityWindows !== null) {
+                throw new InvalidArgumentException('Jadwal proyek tidak dapat diisi asumsi oleh pemanggil.');
+            }
+
+            return $this->executeOpportunity($actor, $studentProfile, $project, $version)
+                ?? throw new InvalidArgumentException('Peluang tidak tersedia untuk rekomendasi.');
+        }
         Gate::forUser($actor)->authorize('view', $studentProfile);
         Gate::forUser($actor)->authorize('view', $project);
 
@@ -93,6 +107,66 @@ final class GenerateRecommendation
                 'total_score' => $result->totalScore,
                 'reason_candidates' => $result->reasonCandidates,
                 'expires_at' => null,
+            ]);
+        }, attempts: 3);
+    }
+
+    public function executeOpportunity(User $actor, StudentProfile $profile, Project $project, MatchScoreVersion $version, ?string $refreshRevision = null): ?Recommendation
+    {
+        if (! $this->availability->enabled() || ! $this->availability->candidateAllowed($profile->institution_id, $actor->getKey())
+            || $actor->getKey() !== $profile->user_id || $profile->institution_id !== $project->institution_id
+            || ! $version->exists || $version->isDirty() || ($version->parameters['policy'] ?? null) !== MatchingAvailability::POLICY) {
+            throw new AuthorizationException('Konteks pencocokan tidak sesuai.');
+        }
+
+        return DB::transaction(function () use ($actor, $profile, $project, $version, $refreshRevision): ?Recommendation {
+            $profile = StudentProfile::query()->whereKey($profile->getKey())->where('user_id', $actor->getKey())
+                ->where('institution_id', $project->institution_id)->lockForUpdate()->firstOrFail();
+            $project = Project::query()->whereKey($project->getKey())->where('institution_id', $profile->institution_id)->lockForUpdate()->firstOrFail();
+            Gate::forUser($actor)->authorize('view', $profile);
+            if (Gate::forUser($actor)->denies('view', $project)) {
+                return null;
+            }
+            $this->source->loadProfile($profile);
+            $this->source->loadProject($project);
+            if (! $this->source->eligible($project, $actor->getKey()) || $profile->skills->isEmpty() || $profile->availabilityWindows->isEmpty()) {
+                return null;
+            }
+            $best = null;
+            $selectedRole = null;
+            $selectedInput = null;
+            foreach ($project->roles->sortBy('id') as $role) {
+                if (! ProjectOpportunityCapacity::role($role, $project)['accepting']) {
+                    continue;
+                }
+                $input = $this->source->input($profile, $project, $role);
+                $result = $this->scorer->score($input, $version->weights, $version->parameters);
+                if ($best === null || $result->totalScore > $best->totalScore) {
+                    $best = $result;
+                    $selectedRole = $role;
+                    $selectedInput = $input;
+                }
+            }
+            if ($best === null || $selectedRole === null || $selectedInput === null) {
+                return null;
+            }
+            $run = MatchRun::query()->create([
+                'institution_id' => $project->institution_id, 'actor_id' => $actor->getKey(),
+                'project_id' => $project->getKey(), 'version_id' => $version->getKey(), 'computed_at' => now(),
+                'input_snapshot' => [...$selectedInput->toSnapshot(),
+                    'schema_version' => 'matching-input-v2', 'policy' => MatchingAvailability::POLICY,
+                    'refresh_revision' => $refreshRevision, 'source_digest' => $this->source->digest($profile, $project),
+                    'selected_role' => ['id' => $selectedRole->getKey(), 'title' => $selectedRole->title, 'accepts_beginners' => $selectedRole->accepts_beginners],
+                    'limitations' => ['Keahlian berasal dari pernyataan mahasiswa, bukan penilaian bukti.', 'Kebutuhan waktu proyek belum tersedia. Jadwal perlu disepakati dengan tim.', 'Hasil pencocokan tidak menjamin penerimaan.'],
+                ],
+            ]);
+
+            return Recommendation::query()->create([
+                'match_run_id' => $run->getKey(), 'institution_id' => $project->institution_id,
+                'project_id' => $project->getKey(), 'candidate_id' => $actor->getKey(),
+                'component_scores' => $best->components, 'total_score' => $best->totalScore,
+                'reason_candidates' => $best->reasonCandidates,
+                'expires_at' => now()->addMinutes((int) config('matching.ttl_minutes', 360))->min($project->deadline),
             ]);
         }, attempts: 3);
     }

@@ -12,6 +12,7 @@ use App\Models\MatchScoreVersion;
 use App\Models\Recommendation;
 use App\Models\RecommendationFeedback;
 use App\Models\User;
+use App\Support\Matching\MatchingFreshness;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use InvalidArgumentException;
@@ -20,6 +21,7 @@ final class RecordRecommendationFeedback
 {
     public function __construct(
         private readonly AuditRecorder $auditRecorder,
+        private readonly MatchingFreshness $freshness,
     ) {}
 
     public function execute(
@@ -33,7 +35,7 @@ final class RecordRecommendationFeedback
             $lockedRecommendation = Recommendation::query()
                 ->whereKey($recommendation->getKey())
                 ->where('institution_id', $recommendation->institution_id)
-                ->with('matchRun:id,version_id')
+                ->with('matchRun')
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -41,7 +43,7 @@ final class RecordRecommendationFeedback
 
             $currentVersion = MatchScoreVersion::current();
 
-            if ($lockedRecommendation->isStaleAgainst($currentVersion?->getKey())) {
+            if (! $this->freshness->isFresh($lockedRecommendation, $currentVersion?->getKey())) {
                 throw new StaleRecommendation(
                     'Recommendation menggunakan score version yang sudah tidak aktif. Jalankan query terbaru sebelum memberi feedback.',
                 );

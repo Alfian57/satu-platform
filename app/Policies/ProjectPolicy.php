@@ -9,6 +9,7 @@ use App\Enums\ProjectVisibility;
 use App\Enums\TeamMembershipStatus;
 use App\Models\Institution;
 use App\Models\Project;
+use App\Models\TeamInvitation;
 use App\Models\TeamMembership;
 use App\Models\User;
 
@@ -28,6 +29,11 @@ final class ProjectPolicy
                 ->where('user_id', $user->getKey())
                 ->where('status', TeamMembershipStatus::Active)
                 ->exists()
+            && ! (
+                $this->hasActiveProjectContext($user, $project, [InstitutionMembershipRole::Student])
+                && TeamInvitation::query()->whereBelongsTo($project)->whereBelongsTo($user, 'invitee')
+                    ->pending()->where('expires_at', '>', now())->exists()
+            )
         ) {
             return false;
         }

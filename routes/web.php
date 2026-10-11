@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OpportunitySupportController;
 use App\Http\Controllers\PlatformAffiliationController;
 use App\Http\Controllers\PlatformInstitutionController;
 use App\Http\Controllers\PlatformInvitationController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectDiscussionController;
 use App\Http\Controllers\ProjectWorkspaceController;
 use App\Http\Controllers\RecommendationFeedbackController;
+use App\Http\Controllers\RecommendationRefreshController;
 use App\Http\Controllers\RecruiterContactRequestController;
 use App\Http\Controllers\RosterImportController;
 use App\Http\Controllers\SavedCandidatesController;
@@ -101,12 +103,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', DashboardController::class)
         ->name('dashboard');
 
+    Route::scopeBindings()->prefix('institutions/{institution}/opportunity-support')->name('opportunity-support.')->group(function () {
+        Route::get('/', [OpportunitySupportController::class, 'index'])->name('index');
+        Route::post('/', [OpportunitySupportController::class, 'store'])->name('store')->middleware('throttle:10,1');
+        Route::post('{supportRequest}/transition', [OpportunitySupportController::class, 'transition'])->name('transition')->middleware('throttle:20,1');
+    });
+
     Route::prefix('leaderboards')->name('leaderboards.')->group(function () {
         Route::get('/', [LeaderboardController::class, 'index'])
             ->name('index');
         Route::post('preferences/individual', [LeaderboardController::class, 'updateIndividualPreference'])
             ->name('preferences.individual');
     });
+
+    Route::post('dashboard/recommendations/refresh', RecommendationRefreshController::class)
+        ->name('dashboard.recommendations.refresh')->middleware('throttle:10,1');
 
     Route::prefix('dashboard/recommendations/{recommendation}')
         ->name('dashboard.recommendations.')
@@ -145,6 +156,8 @@ Route::middleware(['auth'])->group(function () {
                 ->name('workspace.discussions.destroy');
             Route::post('attachments', [ProjectAttachmentController::class, 'store'])
                 ->name('workspace.attachments.store');
+            Route::get('attachments', [ProjectAttachmentController::class, 'index'])
+                ->name('workspace.attachments.index');
             Route::get('attachments/{attachment}', [ProjectAttachmentController::class, 'download'])
                 ->name('workspace.attachments.download');
             Route::get('attachments/{attachment}/preview', [ProjectAttachmentController::class, 'preview'])
@@ -215,6 +228,9 @@ Route::middleware(['auth'])->group(function () {
         ->name('team.join-requests.accept');
     Route::post('team-join-requests/{teamJoinRequest}/reject', [TeamTransitionController::class, 'rejectJoinRequest'])
         ->name('team.join-requests.reject');
+    Route::post('team-join-requests/{teamJoinRequest}/withdraw', [TeamTransitionController::class, 'withdrawJoinRequest'])
+        ->middleware('throttle:10,1')
+        ->name('team.join-requests.withdraw');
     Route::post('team-memberships/{teamMembership}/leave', [TeamTransitionController::class, 'leave'])
         ->name('team.memberships.leave');
     Route::post('team-memberships/{teamMembership}/remove', [TeamTransitionController::class, 'remove'])
@@ -360,6 +376,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('skills.taxonomy.store');
 
     Route::prefix('student-profiles')->name('student-profiles.')->group(function () {
+        Route::get('/edit', [StudentProfileController::class, 'edit'])
+            ->name('edit');
         Route::post('/', [StudentProfileController::class, 'store'])
             ->name('store');
         Route::scopeBindings()->prefix('/{studentProfile}/portfolio')->group(function () {

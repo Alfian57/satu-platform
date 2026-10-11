@@ -31,6 +31,7 @@ const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarContext = {
+  navigationId: string
   state: "expanded" | "collapsed"
   open: boolean
   setOpen: (open: boolean) => void
@@ -65,6 +66,7 @@ function SidebarProvider({
   onOpenChange?: (open: boolean) => void
 }) {
   const isMobile = useIsMobile()
+  const navigationId = React.useId()
   const [openMobile, setOpenMobile] = React.useState(false)
 
   // This is the internal state of the sidebar.
@@ -113,6 +115,7 @@ function SidebarProvider({
 
   const contextValue = React.useMemo<SidebarContext>(
     () => ({
+      navigationId,
       state,
       open,
       setOpen,
@@ -121,7 +124,7 @@ function SidebarProvider({
       setOpenMobile,
       toggleSidebar,
     }),
-    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+    [navigationId, state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
   )
 
   return (
@@ -159,7 +162,7 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
 }) {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const { isMobile, state, openMobile, setOpenMobile, navigationId } = useSidebar()
 
   if (collapsible === "none") {
     return (
@@ -184,11 +187,12 @@ function Sidebar({
           <SheetDescription>Navigasi utama dan konteks akun.</SheetDescription>
         </SheetHeader>
         <SheetContent
+          id={navigationId}
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
           className={cn(
-            "bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden",
+            "bg-sidebar text-sidebar-foreground w-(--sidebar-width) max-w-[calc(100vw-1rem)] p-0 [&>button]:hidden",
             className
           )}
           style={
@@ -197,6 +201,10 @@ function Sidebar({
             } as React.CSSProperties
           }
           side={side}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault()
+            document.querySelector<HTMLButtonElement>('[data-test="sidebar-trigger"]')?.focus({ preventScroll: true })
+          }}
         >
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
@@ -239,6 +247,9 @@ function Sidebar({
         {...props}
       >
         <div
+          id={navigationId}
+          inert={state === "collapsed" && collapsible === "offcanvas"}
+          aria-hidden={state === "collapsed" && collapsible === "offcanvas" ? true : undefined}
           data-sidebar="sidebar"
           className={cn(
             "bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm",
@@ -257,9 +268,11 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar, isMobile, state } = useSidebar()
+  const { toggleSidebar, isMobile, state, openMobile, navigationId } = useSidebar()
   const label = isMobile
-    ? "Buka atau tutup navigasi"
+    ? openMobile
+      ? "Tutup navigasi"
+      : "Buka navigasi"
     : state === "collapsed"
       ? "Buka navigasi"
       : "Tutup navigasi"
@@ -267,6 +280,8 @@ function SidebarTrigger({
   return (
     <Button
       aria-label={label}
+      aria-expanded={isMobile ? openMobile : state === "expanded"}
+      aria-controls={navigationId}
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
       variant="ghost"
