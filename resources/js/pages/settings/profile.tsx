@@ -22,13 +22,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { edit } from '@/routes/profile';
-import type { AuthenticatedAuth } from '@/types';
 
 export default function Profile() {
-    const { auth } = usePage<{ auth: AuthenticatedAuth }>().props;
+    const { account } = usePage<{
+        account: { name: string; username: string };
+    }>().props;
     const form = useForm({
-        name: auth.user.name,
-        username: auth.user.username,
+        name: account.name,
+        username: account.username,
     });
     const { errors, processing, recentlySuccessful, isDirty } = form;
     const [actionError, setActionError] = useState<string | null>(null);

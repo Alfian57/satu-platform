@@ -4,6 +4,7 @@ import {
     Clock,
     History,
     LoaderCircle,
+    Plus,
     RefreshCw,
     RotateCcw,
     ServerCog,
@@ -169,7 +170,7 @@ function ConnectionOverview({
                 Koneksi akademik
             </h2>
             {connections.length === 0 ? (
-                <div className="flex items-start gap-3 rounded-3xl border border-border bg-white p-5 shadow-sm">
+                <div className="flex flex-wrap items-start gap-3 rounded-3xl border border-border bg-white p-5 shadow-sm">
                     <ServerCog
                         aria-hidden="true"
                         className="mt-1 size-5 shrink-0 text-primary"
@@ -180,8 +181,9 @@ function ConnectionOverview({
                         </h3>
                         <p className="mt-1 text-sm leading-6 text-muted-foreground">
                             Status sinkronisasi tersedia setelah koneksi kampus
-                            dikonfigurasi melalui alur yang diizinkan. Halaman
-                            ini tidak membuat koneksi baru.
+                            dikonfigurasi melalui alur yang diizinkan. Buat
+                            koneksi sandbox secara eksplisit untuk uji coba;
+                            pembacaan halaman tidak membuat data baru.
                         </p>
                     </div>
                     {onCreate && (
@@ -189,7 +191,7 @@ function ConnectionOverview({
                             type="button"
                             size="sm"
                             onClick={onCreate}
-                            className="shrink-0 gap-1.5"
+                            className="min-h-11 shrink-0 gap-1.5"
                         >
                             <Plus aria-hidden="true" className="size-4" />
                             Buat Koneksi Sandbox
@@ -410,6 +412,7 @@ export default function AcademicIntegrations({
     const [reconcileReason, setReconcileReason] = useState('');
     const [creatingConnection, setCreatingConnection] = useState(false);
     const [providerKey, setProviderKey] = useState('');
+    const [providerError, setProviderError] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState(filters.status);
     const [connectionFilter, setConnectionFilter] = useState(
         String(filters.connection),
@@ -434,6 +437,41 @@ export default function AcademicIntegrations({
         );
 
         return false;
+    }
+
+    function submitCreateConnection() {
+        if (!institution || busy || unavailable || !providerKey.trim()) {
+            return;
+        }
+
+        setProcessing(true);
+        setFeedback(null);
+        setProviderError(null);
+        setSuccess(null);
+        router.post(
+            integrationsStore({ institution: institution.id }).url,
+            { provider_key: providerKey.trim(), mode: 'sandbox' },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    setCreatingConnection(false);
+                    setProviderKey('');
+                    setSuccess(
+                        'Koneksi sandbox berhasil dibuat. Ini bukan koneksi akademik nyata.',
+                    );
+                },
+                onError: (errors) =>
+                    setProviderError(
+                        errors.provider_key ||
+                            errors.mode ||
+                            'Koneksi belum tersimpan. Periksa isian.',
+                    ),
+                onHttpException: (response) => requestFailure(response.status),
+                onNetworkError: () => requestFailure(),
+                onFinish: () => setProcessing(false),
+            },
+        );
     }
 
     function applyFilters(page = 1) {
@@ -600,7 +638,17 @@ export default function AcademicIntegrations({
                                     </p>
                                 </div>
                             )}
-                            <ConnectionOverview connections={connections} />
+                            <ConnectionOverview
+                                connections={connections}
+                                onCreate={
+                                    busy
+                                        ? undefined
+                                        : () => {
+                                              setProviderError(null);
+                                              setCreatingConnection(true);
+                                          }
+                                }
+                            />
                             <CampusTechnicalDetails title="Kapan memilih Ulangi atau Rekonsiliasi?">
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div>
@@ -830,13 +878,25 @@ export default function AcademicIntegrations({
             <Dialog
                 open={creatingConnection}
                 onOpenChange={(open) => {
-                    if (!open) {
+                    if (!open && !busy) {
                         setCreatingConnection(false);
                         setProviderKey('');
                     }
                 }}
             >
-                <DialogContent>
+                <DialogContent
+                    closeButtonDisabled={busy}
+                    onEscapeKeyDown={(event) => {
+                        if (busy) {
+                            event.preventDefault();
+                        }
+                    }}
+                    onInteractOutside={(event) => {
+                        if (busy) {
+                            event.preventDefault();
+                        }
+                    }}
+                >
                     <DialogHeader>
                         <DialogTitle>Buat koneksi akademik sandbox</DialogTitle>
                         <DialogDescription>
@@ -851,20 +911,44 @@ export default function AcademicIntegrations({
                         </span>
                         <input
                             type="text"
+                            disabled={busy}
+                            maxLength={100}
+                            aria-invalid={Boolean(providerError)}
+                            aria-describedby={
+                                providerError ? 'provider-error' : undefined
+                            }
                             value={providerKey}
                             onChange={(e) => setProviderKey(e.target.value)}
                             placeholder="Contoh: siakad, feeder, atau pd_dikti"
-                            className="h-control-md rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                            className="min-h-11 rounded-xl border border-input bg-transparent px-3 text-base shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                         />
                         <span className="text-xs text-muted-foreground">
                             Koneksi dibuat dalam mode Sandbox untuk pengujian
                             terisolasi.
                         </span>
                     </label>
+                    {providerError && (
+                        <p
+                            id="provider-error"
+                            role="alert"
+                            className="text-sm text-correction-subtle-foreground"
+                        >
+                            {providerError}
+                        </p>
+                    )}
+                    {feedback && (
+                        <p
+                            role="alert"
+                            className="text-sm text-correction-subtle-foreground"
+                        >
+                            {feedback}
+                        </p>
+                    )}
                     <DialogFooter>
                         <Button
                             type="button"
                             variant="outline"
+                            disabled={busy}
                             onClick={() => {
                                 setCreatingConnection(false);
                                 setProviderKey('');
@@ -875,9 +959,11 @@ export default function AcademicIntegrations({
                         <Button
                             type="button"
                             onClick={submitCreateConnection}
-                            disabled={isPending || !providerKey.trim()}
+                            disabled={
+                                busy || unavailable || !providerKey.trim()
+                            }
                         >
-                            {isPending ? 'Menyimpan...' : 'Simpan Koneksi'}
+                            {busy ? 'Menyimpan...' : 'Simpan koneksi'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

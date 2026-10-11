@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Consent\ConsentRecorder;
 use App\Actions\Recruiter\VerifyRecruiterEntitlement;
 use App\Actions\Talent\CancelContactRequest;
+use App\Actions\Talent\RespondContactRequest;
 use App\Actions\Talent\SendContactRequest;
 use App\Enums\ContactRequestStatus;
 use App\Enums\RecruiterEntitlementScope;
@@ -22,6 +24,7 @@ use InvalidArgumentException;
 class RecruiterContactRequestController extends Controller
 {
     public function __construct(
+        private readonly ConsentRecorder $consentRecorder,
         private readonly SendContactRequest $sendAction,
         private readonly CancelContactRequest $cancelAction,
         private readonly VerifyRecruiterEntitlement $verifyEntitlement,
@@ -60,10 +63,10 @@ class RecruiterContactRequestController extends Controller
 
         $requests = RecruiterContactRequest::query()
             ->where('recruiter_organization_id', $activeOrg->id)
-            ->with(['candidateProjection.institution', 'candidateUser.phoneNumber'])
+            ->with(['candidateProjection.institution', 'candidateUser.phoneNumber' => fn ($phones) => $phones->verified()])
             ->orderByDesc('created_at')
             ->get()
-            ->map(function (RecruiterContactRequest $req) {
+            ->map(function (RecruiterContactRequest $req) use ($hasEntitlement) {
                 return [
                     'id' => $req->id,
                     'purpose' => $req->purpose,
@@ -74,7 +77,9 @@ class RecruiterContactRequestController extends Controller
                     'responded_at' => $req->responded_at?->toIso8601String(),
                     'candidate_name' => $req->candidateUser->name,
                     'candidate_headline' => $req->candidateProjection->headline,
-                    'candidate_phone' => $req->status === ContactRequestStatus::Accepted
+                    'candidate_phone' => $hasEntitlement && $req->status === ContactRequestStatus::Accepted
+                        && $req->candidateProjection->is_visible
+                        && $this->consentRecorder->current($req->candidateUser, RespondContactRequest::CONSENT_PURPOSE)?->isGrant()
                         ? $req->candidateUser->phoneNumber?->number
                         : null,
                 ];

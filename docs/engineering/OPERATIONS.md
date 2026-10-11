@@ -175,3 +175,11 @@ staging berizin sebelum rilis. Jalankan studi usability SC-01 pada
 catat langkah, pemahaman, kegagalan dan bantuan yang diperlukan tanpa mengarang
 hasil. Final UAT, institusi pilot, baseline, target, retensi dan persetujuan
 kampus tetap belum ditutup oleh tes otomatis.
+
+## Sinkronisasi Schema Backend Lokal
+
+Penggabungan backend menambah `users.remember_token` dan `inclusion_signals.is_synthetic` pada migration asli. Database lama tidak menerima perubahan kolom hanya dengan `migrate`.
+
+Periksa melalui `php artisan backend:sync-integration-schema --database=mysql`. Penerapan lokal memakai `--apply --dump-tool=<executable mysqldump> --backup=<path SQL baru pada direktori privat>`. Command hanya menerima MySQL loopback pada environment local, membuat cadangan lengkap terlebih dahulu, memeriksa kelengkapan dump dan jumlah baris seluruh tabel, lalu menambah kolom yang belum ada. Cadangan berisi data sensitif, tidak boleh masuk Git atau direktori publik. Command tidak menghapus data atau menjalankan migration ulang; nilai awal mengikuti migration sumber. Production dan klasifikasi dataset lama memerlukan prosedur serta persetujuan tersendiri.
+
+Verifikasi tambahan hasil penggabungan: `php .github/scripts/check-backend-integration.php`. Seluruh fixture memakai SQLite di memori. Suite PHPUnit dari backend memerlukan runner yang belum tercantum pada dependensi repository; jangan menganggap suite tersebut sudah berjalan.

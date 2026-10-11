@@ -675,3 +675,11 @@ Append-only review dan audit data mengikuti approved retention serta legal excep
 Penerimaan tawaran tidak membuka ruang kerja atau kontak. Mahasiswa dapat mencabut izin kapan saja, termasuk setelah menerima tawaran. Riwayat pemilik dipertahankan; kampus tidak menerima snapshot baru setelah pencabutan atau expiry. Peninjau ditetapkan dalam konfigurasi institusi, bukan seluruh operator secara otomatis. Catatan tindak lanjut merupakan tindakan manusia, bukan klaim dukungan tercapai.
 
 Setelah konflik atau hasil jaringan belum pasti, pengguna membaca ulang sebelum command berikutnya. Draft dipertahankan; memakai revisi terbaru untuk keputusan memerlukan tindakan eksplisit. Tidak mengulang command otomatis. Aktivasi dan kebijakan data nyata tetap keputusan manusia.
+
+## Penggabungan modul lanjutan dengan alur inti
+
+Hak Data tersedia dari Pengaturan. Ekspor memakai unduhan JSON, bukan navigasi Inertia. Koreksi dan pembatasan hanya mencatat permintaan untuk tindak lanjut. Hapus akun memakai dialog bersama dengan password saat ini dan mempertahankan audit.
+
+Nomor WhatsApp pada detail kandidat atau riwayat permintaan hanya muncul dari handoff backend setelah persetujuan yang diizinkan. Nomor tidak dibuka oleh klik melihat profil. Snapshot lama disembunyikan ketika akses dicabut.
+
+Operator berwenang dapat memilih Buat koneksi sandbox, memasukkan kunci penyedia, dan mengirim POST eksplisit. GET tidak membuat koneksi default. Validasi mempertahankan isian; hasil jaringan belum pasti diperiksa melalui muat ulang. Provider nyata tetap memerlukan persetujuan eksternal.

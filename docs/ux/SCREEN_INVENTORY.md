@@ -380,3 +380,10 @@ Urutan outcome rilis inti mengikuti [ROADMAP.md](../implementation/ROADMAP.md) t
 - Agregat memerlukan persetujuan evaluasi serta ambang kelompok kecil khusus yang eksplisit; tidak memakai minimum gamifikasi. Di bawah ambang, nilai dan denominator disembunyikan. Denominator kosong tidak menghasilkan 0%.
 - Sel indikator dan komplemennya yang kecil juga disembunyikan. Status Disembunyikan untuk privasi berbeda dari Belum dapat dihitung karena sumber belum tersedia; tidak mengungkap nilai lewat persentase, tooltip atau metadata.
 - Evaluasi pilot tetap membutuhkan snapshot E pada T0, consent/dasar pemrosesan, periode, retensi dan definisi kerja bersama yang disetujui menurut COLLABORATION_AUDIT.md. Ringkasan operasional ini tidak menggantikannya.
+
+## Penggabungan backend dan UI lokal
+
+- Hak Data menjadi kategori pengaturan bersama. Ekspor mengunduh JSON melalui request biasa, bukan kunjungan Inertia. Koreksi dan pembatasan mencatat permintaan, bukan mengklaim sudah dipenuhi. Riwayat consent tetap append-only. Penghapusan memakai dialog bersama dan password saat ini; tidak menghapus riwayat audit.
+- Detail kandidat dan riwayat permintaan dapat menampilkan nomor WhatsApp hanya jika backend mengirim handoff yang diizinkan setelah persetujuan. Nomor tidak dibuat dari projection atau data contoh. Ketika akses tidak tersedia, snapshot kontak ikut disembunyikan.
+- Sinkronisasi akademik menyediakan pembuatan koneksi sandbox eksplisit melalui POST bagi operator berwenang. GET tetap baca-saja. Dialog berlabel, mempertahankan kunci penyedia saat validasi gagal, mengunci pengiriman ganda, dan memberi pemulihan jaringan. Koneksi sandbox tidak diklaim sebagai koneksi nyata.
+- Desain lokal, pemisahan navigasi inti/lanjutan, reflow 320px sampai ultrawide, fokus, target 44px, dan reduced motion tetap berlaku.

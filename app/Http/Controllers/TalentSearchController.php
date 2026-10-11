@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Consent\ConsentRecorder;
 use App\Actions\Recruiter\VerifyRecruiterEntitlement;
+use App\Actions\Talent\RespondContactRequest;
 use App\Actions\Talent\SearchTalentCandidates;
 use App\Enums\ContactRequestStatus;
 use App\Enums\RecruiterEntitlementScope;
@@ -23,6 +25,7 @@ use Inertia\Response;
 class TalentSearchController extends Controller
 {
     public function __construct(
+        private readonly ConsentRecorder $consentRecorder,
         private readonly SearchTalentCandidates $searchAction,
         private readonly VerifyRecruiterEntitlement $verifyEntitlement,
         private readonly RecruiterSafeCandidateSerializer $serializer,
@@ -195,13 +198,17 @@ class TalentSearchController extends Controller
         $acceptedContact = RecruiterContactRequest::query()
             ->where('recruiter_organization_id', $activeOrg->id)
             ->where('candidate_user_id', $projection->user_id)
+            ->where('talent_candidate_projection_id', $projection->id)
             ->where('status', ContactRequestStatus::Accepted)
             ->exists();
 
         $revealedPhone = null;
         if ($acceptedContact) {
-            $projection->loadMissing('user.phoneNumber');
-            $revealedPhone = $projection->user?->phoneNumber?->number;
+            $projection->loadMissing(['user', 'user.phoneNumber' => fn ($phones) => $phones->verified()]);
+            $candidate = $projection->user;
+            if ($candidate !== null && $this->consentRecorder->current($candidate, RespondContactRequest::CONSENT_PURPOSE)?->isGrant()) {
+                $revealedPhone = $candidate->phoneNumber?->number;
+            }
         }
 
         $serializedCandidate = $this->serializer->toArray($projection, $revealedPhone);

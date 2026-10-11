@@ -82,7 +82,7 @@ function statusMeta(status: string) {
                 className:
                     'border-verified/20 bg-verified-subtle text-verified-subtle-foreground',
                 description:
-                    'Kandidat menyetujui permintaan ini. Halaman ini mencatat tanggapan, bukan menampilkan kontak langsung.',
+                    'Kandidat menyetujui permintaan ini. Kontak hanya tampil bila aksesnya diizinkan server.',
             };
         case 'declined':
             return {
@@ -226,6 +226,24 @@ function RequestCard({
                         />
                     )}
                 </dl>
+                {request.status === 'accepted' && request.candidate_phone && (
+                    <div className="mt-4 grid gap-3 rounded-2xl border border-verified/25 bg-verified-subtle p-4 text-verified-subtle-foreground">
+                        <p className="text-sm font-semibold">
+                            Nomor WhatsApp yang diizinkan kandidat
+                        </p>
+                        <p className="text-base font-semibold wrap-anywhere">
+                            {request.candidate_phone}
+                        </p>
+                        <a
+                            href={`https://wa.me/${request.candidate_phone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex min-h-11 w-fit cursor-pointer items-center justify-center rounded-xl border border-verified/30 px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                        >
+                            Hubungi via WhatsApp
+                        </a>
+                    </div>
+                )}
                 {pastDeadline && (
                     <p className="mt-4 flex items-start gap-2 text-sm leading-6 text-pending-subtle-foreground">
                         <CalendarDays
@@ -286,8 +304,8 @@ function ContactRequestsContextRail({
                     disampaikan.
                 </p>
                 <p className="mt-4 border-t border-primary/10 pt-4 text-sm leading-6 text-muted-foreground">
-                    Halaman ini menampilkan riwayat dan tanggapan, bukan nomor
-                    WhatsApp atau data kontak privat.
+                    Nomor WhatsApp hanya tampil setelah kandidat menyetujui
+                    permintaan dan server mengizinkan akses kontak.
                 </p>
             </section>
             {!isForbidden && (

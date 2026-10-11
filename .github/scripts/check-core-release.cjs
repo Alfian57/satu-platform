@@ -12,6 +12,7 @@ const suites = [
     ['php', ['.github/scripts/check-contribution-recognition.php']],
     ['php', ['.github/scripts/check-opportunity-support.php']],
     ['php', ['.github/scripts/check-core-journey.php']],
+    ['php', ['.github/scripts/check-backend-integration.php']],
     [
         'node',
         [
@@ -28,6 +29,7 @@ const suites = [
 if (process.argv.includes('--browser')) {
     for (const suite of [
         'core-journey-browser',
+        'backend-integration-browser',
         'student-capabilities',
         'project-opportunities',
         'workspace-collaboration',

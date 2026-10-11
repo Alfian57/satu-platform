@@ -446,6 +446,24 @@ function CandidateProfile({
                                         </p>
                                     </div>
                                 </div>
+                                {candidate.phone && (
+                                    <div className="mt-5 grid gap-3 rounded-2xl border border-verified/25 bg-verified-subtle p-4 text-verified-subtle-foreground">
+                                        <p className="text-sm font-semibold">
+                                            Kontak disetujui kandidat
+                                        </p>
+                                        <p className="text-base font-semibold wrap-anywhere">
+                                            {candidate.phone}
+                                        </p>
+                                        <a
+                                            href={`https://wa.me/${candidate.phone.replace(/\D/g, '')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-verified/30 px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                                        >
+                                            Hubungi via WhatsApp
+                                        </a>
+                                    </div>
+                                )}
                                 <div className="mt-5 border-t border-border pt-5">
                                     <Button
                                         type="button"

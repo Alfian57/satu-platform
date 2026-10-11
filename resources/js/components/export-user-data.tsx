@@ -84,13 +84,13 @@ export default function ExportUserData() {
                     variant="outline"
                     onClick={handleExport}
                     disabled={isExporting}
-                    className="w-fit cursor-pointer disabled:cursor-not-allowed"
+                    className="min-h-11 w-full cursor-pointer whitespace-normal disabled:cursor-not-allowed sm:w-fit"
                     data-test="export-user-data-button"
                 >
                     {isExporting ? (
                         <Loader2
                             aria-hidden="true"
-                            className="size-4 animate-spin"
+                            className="size-4 animate-spin motion-reduce:animate-none"
                         />
                     ) : (
                         <Download aria-hidden="true" className="size-4" />

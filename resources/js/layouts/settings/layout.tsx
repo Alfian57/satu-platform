@@ -1,11 +1,18 @@
 import { Link } from '@inertiajs/react';
-import { CircleUserRound, Settings2, ShieldCheck, Sun } from 'lucide-react';
+import {
+    CircleUserRound,
+    Settings2,
+    ShieldAlert,
+    ShieldCheck,
+    Sun,
+} from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import { AppPage } from '@/components/app-page';
 import Mascot from '@/components/mascot';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editDataRights } from '@/routes/data-rights';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 
@@ -30,6 +37,13 @@ const settingsItems = [
         description: 'Gaya ruang kerja yang digunakan',
         href: editAppearance(),
         icon: Sun,
+    },
+    {
+        key: 'data-rights',
+        title: 'Hak Data',
+        description: 'Arsip dan kendali data pribadi',
+        href: editDataRights(),
+        icon: ShieldAlert,
     },
 ];
 
