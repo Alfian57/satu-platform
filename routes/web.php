@@ -10,6 +10,7 @@ use App\Http\Controllers\CampusOverviewController;
 use App\Http\Controllers\ContributionController;
 use App\Http\Controllers\ContributionPageController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DataRightsController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\PlatformAffiliationController;
 use App\Http\Controllers\PlatformInstitutionController;
 use App\Http\Controllers\PlatformInvitationController;
 use App\Http\Controllers\PlatformOperationsController;
+use App\Http\Controllers\PlatformRecruiterController;
 use App\Http\Controllers\PlatformSkillTaxonomyController;
 use App\Http\Controllers\PortfolioEntryController;
 use App\Http\Controllers\PortfolioPageController;
@@ -282,6 +284,15 @@ Route::middleware(['auth'])->group(function () {
     Route::post('platform/invitations/{invitation}/revoke', [PlatformInvitationController::class, 'revoke'])
         ->name('platform.invitations.revoke');
 
+    Route::post('platform/recruiter-organizations/{organization}/review', [PlatformRecruiterController::class, 'review'])
+        ->name('platform.recruiter-organizations.review');
+
+    Route::post('platform/recruiter-organizations/{organization}/entitlements', [PlatformRecruiterController::class, 'grantEntitlement'])
+        ->name('platform.recruiter-organizations.entitlements.store');
+
+    Route::post('platform/recruiter-entitlements/{entitlement}/revoke', [PlatformRecruiterController::class, 'revokeEntitlement'])
+        ->name('platform.recruiter-entitlements.revoke');
+
     Route::prefix('platform/skills')->name('platform.skills.')->group(function () {
         Route::get('/', [PlatformSkillTaxonomyController::class, 'index'])->name('index');
         Route::post('/', [PlatformSkillTaxonomyController::class, 'store'])->name('store');
@@ -364,6 +375,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('campus/{institution}/integrations', [AcademicIntegrationController::class, 'index'])
         ->name('campus.integrations.index');
 
+    Route::post('campus/{institution}/integrations', [AcademicIntegrationController::class, 'store'])
+        ->name('campus.integrations.store');
+
     Route::post('campus/{institution}/integrations/syncs/{id}/retry', [AcademicIntegrationController::class, 'retry'])
         ->name('campus.integrations.syncs.retry');
 
@@ -396,6 +410,11 @@ Route::middleware(['auth'])->group(function () {
             ->name('visibility.update');
         Route::put('/{studentProfile}/availability', [StudentProfileController::class, 'replaceAvailability'])
             ->name('availability.update');
+    });
+
+    Route::prefix('account/data-rights')->name('account.data-rights.')->group(function () {
+        Route::post('export', [DataRightsController::class, 'export'])->name('export');
+        Route::post('delete', [DataRightsController::class, 'delete'])->name('delete');
     });
 });
 

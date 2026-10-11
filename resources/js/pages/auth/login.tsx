@@ -95,7 +95,11 @@ export default function Login({ status }: Props) {
 
                             <div className="flex min-h-11 flex-wrap items-center justify-between gap-x-3">
                                 <div className="flex items-center space-x-2.5">
-                                    <Checkbox id="remember" name="remember" />
+                                    <Checkbox
+                                        id="remember"
+                                        name="remember"
+                                        className="cursor-pointer"
+                                    />
                                     <Label
                                         htmlFor="remember"
                                         className="inline-flex min-h-11 cursor-pointer items-center text-sm text-slate-600"

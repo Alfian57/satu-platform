@@ -11,7 +11,7 @@
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
         "types:check": "php artisan wayfinder:generate && tsc --noEmit",
-        "prepare": "husky"
+        "prepare": "node -e \"if (process.env.NODE_ENV !== 'production' && !process.env.CI) { try { (await import('husky')).default() } catch {} }\""
     },
     "devDependencies": {
         "@commitlint/cli": "^21.2.1",

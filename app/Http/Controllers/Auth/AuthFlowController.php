@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Actions\Auth\DispatchAuthOtp;
+use App\Actions\Consent\ConsentRecorder;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Institution\AcceptInvitation;
@@ -46,6 +47,7 @@ class AuthFlowController extends Controller
         private readonly VerifyOtp $verifyOtp,
         private readonly CreateNewUser $createNewUser,
         private readonly ResetUserPassword $resetUserPassword,
+        private readonly ConsentRecorder $consentRecorder,
     ) {}
 
     /**
@@ -190,6 +192,13 @@ class AuthFlowController extends Controller
                     'status' => PhoneNumberStatus::Verified,
                     'verified_at' => Carbon::now(),
                 ])->save();
+
+                $this->consentRecorder->grant(
+                    $user,
+                    'registration.terms',
+                    'v1.0',
+                    'registration',
+                );
 
                 return $user;
             });

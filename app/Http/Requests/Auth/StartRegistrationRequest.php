@@ -34,6 +34,7 @@ class StartRegistrationRequest extends FormRequest
             ],
             'phone' => ['required', 'string', 'regex:/^\+\d{10,15}$/'],
             'password' => ['required', 'string', Password::default(), 'confirmed'],
+            'terms_accepted' => ['required', 'accepted'],
         ];
     }
 

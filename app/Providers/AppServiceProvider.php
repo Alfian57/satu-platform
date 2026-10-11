@@ -2,18 +2,21 @@
 
 namespace App\Providers;
 
+use App\Models\Institution;
 use App\Support\Integration\AcademicGateway;
 use App\Support\Integration\SandboxGateway;
 use App\Support\Notification\FonnteGateway;
 use App\Support\Notification\WhatsAppGateway;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Pennant\Feature;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,6 +48,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        Feature::define('inclusion-signal-engine', fn (Institution $scope) => false);
     }
 
     /**
@@ -57,6 +62,8 @@ class AppServiceProvider extends ServiceProvider
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
         );
+
+        Model::preventLazyLoading(! app()->isProduction());
 
         Password::defaults(fn (): ?Password => app()->isProduction()
             ? Password::min(12)

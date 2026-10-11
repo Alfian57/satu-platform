@@ -9,6 +9,7 @@ import {
 import { useState } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
+import ExportUserData from '@/components/export-user-data';
 import InputError from '@/components/input-error';
 import { SettingsFormFeedback } from '@/components/settings/settings-form-feedback';
 import {
@@ -206,6 +207,7 @@ export default function Profile() {
                             </div>
                         </form>
                     </section>
+                    <ExportUserData />
                     <DeleteUser />
                 </div>
                 <SettingsHelpCard

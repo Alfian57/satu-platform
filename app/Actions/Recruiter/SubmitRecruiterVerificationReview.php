@@ -25,6 +25,7 @@ final class SubmitRecruiterVerificationReview
      * Submit a verification review decision for a recruiter organization as platform admin.
      *
      * @throws AuthorizationException
+     * @throws InvalidArgumentException
      */
     public function execute(
         User $admin,
@@ -57,6 +58,8 @@ final class SubmitRecruiterVerificationReview
         };
 
         return DB::transaction(function () use ($admin, $organization, $enumConclusion, $newStatus, $trimmedReason) {
+            $previousStatus = $organization->status;
+
             $organization->update([
                 'status' => $newStatus->value,
             ]);
@@ -75,7 +78,7 @@ final class SubmitRecruiterVerificationReview
                 actor: $admin,
                 institution: null,
                 before: [
-                    'status' => $organization->getOriginal('status'),
+                    'status' => $previousStatus->value,
                 ],
                 after: [
                     'status' => $newStatus->value,

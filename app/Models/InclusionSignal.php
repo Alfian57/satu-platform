@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\InclusionSignalFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,7 +20,24 @@ class InclusionSignal extends Model
         'evidence_summary' => 'array',
         'restricted_feature_state' => 'boolean',
         'data_sufficiency_met' => 'boolean',
+        'is_synthetic' => 'boolean',
     ];
+
+    /**
+     * @param  Builder<InclusionSignal>  $query
+     */
+    public function scopeRealOnly(Builder $query): void
+    {
+        $query->where('is_synthetic', false);
+    }
+
+    /**
+     * @param  Builder<InclusionSignal>  $query
+     */
+    public function scopeSyntheticOnly(Builder $query): void
+    {
+        $query->where('is_synthetic', true);
+    }
 
     /**
      * @return BelongsTo<Institution, $this>

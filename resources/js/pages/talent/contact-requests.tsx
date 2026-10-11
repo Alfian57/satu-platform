@@ -47,6 +47,7 @@ interface ContactRequestItem {
     responded_at: string | null;
     candidate_name: string;
     candidate_headline: string | null;
+    candidate_phone?: string | null;
 }
 
 interface RecruiterContactRequestsProps {

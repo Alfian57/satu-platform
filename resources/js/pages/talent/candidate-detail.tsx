@@ -43,6 +43,7 @@ interface Candidate {
     availability_status: string;
     verified_at: string | null;
     institution_name: string | null;
+    phone?: string | null;
 }
 
 interface CandidateDetailProps {

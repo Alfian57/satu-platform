@@ -39,4 +39,13 @@ final class IntegrationConnectionPolicy
             [InstitutionMembershipRole::CampusAdmin]
         ) !== null;
     }
+
+    public function create(User $user, Institution $institution): bool
+    {
+        return $this->institutionContextResolver->resolve(
+            $user,
+            $institution,
+            [InstitutionMembershipRole::CampusAdmin]
+        ) !== null;
+    }
 }

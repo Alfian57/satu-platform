@@ -302,17 +302,15 @@ class FetchCampusOverviewMetrics
         /** @var LengthAwarePaginator<int, mixed> $paginator */
         $paginator = $query->orderByDesc('created_at')->paginate($perPage, ['*'], 'page', $page);
 
-        $paginator->getCollection()->transform(function (InstitutionMembership $m) {
+        return $paginator->through(function (InstitutionMembership $m): array {
             return [
                 'id' => $m->getKey(),
-                'username' => $m->user->username,
+                'username' => $m->user->username ?? 'Unknown',
                 'role' => $m->role->value,
                 'status' => $m->status->value,
-                'program' => $m->user->studentProfiles->first()?->study_program,
+                'program' => $m->user?->studentProfiles->first()?->study_program,
                 'createdAt' => $m->created_at?->toIso8601String(),
             ];
         });
-
-        return $paginator;
     }
 }

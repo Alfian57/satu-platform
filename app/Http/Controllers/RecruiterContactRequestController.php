@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\Recruiter\VerifyRecruiterEntitlement;
 use App\Actions\Talent\CancelContactRequest;
 use App\Actions\Talent\SendContactRequest;
+use App\Enums\ContactRequestStatus;
 use App\Enums\RecruiterEntitlementScope;
 use App\Models\RecruiterContactRequest;
 use App\Models\RecruiterMembership;
@@ -59,7 +60,7 @@ class RecruiterContactRequestController extends Controller
 
         $requests = RecruiterContactRequest::query()
             ->where('recruiter_organization_id', $activeOrg->id)
-            ->with(['candidateProjection.institution', 'candidateUser:id,name'])
+            ->with(['candidateProjection.institution', 'candidateUser.phoneNumber'])
             ->orderByDesc('created_at')
             ->get()
             ->map(function (RecruiterContactRequest $req) {
@@ -73,6 +74,9 @@ class RecruiterContactRequestController extends Controller
                     'responded_at' => $req->responded_at?->toIso8601String(),
                     'candidate_name' => $req->candidateUser->name,
                     'candidate_headline' => $req->candidateProjection->headline,
+                    'candidate_phone' => $req->status === ContactRequestStatus::Accepted
+                        ? $req->candidateUser->phoneNumber?->number
+                        : null,
                 ];
             });
 

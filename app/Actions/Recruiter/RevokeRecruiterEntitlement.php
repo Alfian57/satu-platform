@@ -38,6 +38,10 @@ final class RevokeRecruiterEntitlement
             throw new InvalidArgumentException('A reason is required when revoking a recruiter entitlement.');
         }
 
+        if ($entitlement->status !== RecruiterEntitlementStatus::Active) {
+            throw new InvalidArgumentException("Cannot revoke entitlement with status: {$entitlement->status->value}");
+        }
+
         return DB::transaction(function () use ($actor, $entitlement, $trimmedReason) {
             $previousStatus = $entitlement->status;
 

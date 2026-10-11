@@ -30,7 +30,7 @@ class CampusInclusionController extends Controller
 
     public function index(Request $request, Institution $institution): Response
     {
-        if (! Feature::active('inclusion-signal-engine')) {
+        if (! Feature::for($institution)->active('inclusion-signal-engine')) {
             return Inertia::render('campus/inclusion', [
                 'institution' => [
                     'id' => $institution->id,

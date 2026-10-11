@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Actions\User\DeleteUserAccount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,9 +30,11 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        abort_unless($user !== null, 401);
 
-        $request->user()->save();
+        $user->fill($request->validated());
+        $user->save();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profil berhasil diperbarui.')]);
 
@@ -40,13 +44,14 @@ class ProfileController extends Controller
     /**
      * Delete the user's profile.
      */
-    public function destroy(ProfileDeleteRequest $request): RedirectResponse
+    public function destroy(ProfileDeleteRequest $request, DeleteUserAccount $deleteUserAccount): RedirectResponse
     {
         $user = $request->user();
+        abort_unless($user instanceof User, 401);
+
+        $deleteUserAccount->handle($user);
 
         Auth::logout();
-
-        $user->delete();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

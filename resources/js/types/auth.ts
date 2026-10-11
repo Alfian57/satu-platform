@@ -1,7 +1,7 @@
-﻿export type User = {
+export type User = {
     id: number;
     name: string;
-    username: string;
+    username?: string;
     avatar?: string;
     is_platform_admin?: boolean;
     workspace: UserWorkspace;

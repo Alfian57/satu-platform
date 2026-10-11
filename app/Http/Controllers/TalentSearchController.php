@@ -6,8 +6,10 @@ namespace App\Http\Controllers;
 
 use App\Actions\Recruiter\VerifyRecruiterEntitlement;
 use App\Actions\Talent\SearchTalentCandidates;
+use App\Enums\ContactRequestStatus;
 use App\Enums\RecruiterEntitlementScope;
 use App\Models\Institution;
+use App\Models\RecruiterContactRequest;
 use App\Models\RecruiterMembership;
 use App\Models\RecruiterOrganization;
 use App\Models\RecruiterSavedCandidate;
@@ -190,12 +192,26 @@ class TalentSearchController extends Controller
             ->where('talent_candidate_projection_id', $projection->id)
             ->exists();
 
-        $serializedCandidate = $this->serializer->toArray($projection);
+        $acceptedContact = RecruiterContactRequest::query()
+            ->where('recruiter_organization_id', $activeOrg->id)
+            ->where('candidate_user_id', $projection->user_id)
+            ->where('status', ContactRequestStatus::Accepted)
+            ->exists();
+
+        $revealedPhone = null;
+        if ($acceptedContact) {
+            $projection->loadMissing('user.phoneNumber');
+            $revealedPhone = $projection->user?->phoneNumber?->number;
+        }
+
+        $serializedCandidate = $this->serializer->toArray($projection, $revealedPhone);
 
         return Inertia::render('talent/candidate-detail', [
             'candidate' => $serializedCandidate,
             'isSaved' => $isSaved,
-            'contactConsequenceNotice' => 'Nomor telepon dan kontak langsung hanya terbuka setelah kandidat menyetujui permintaan kontak.',
+            'contactConsequenceNotice' => $revealedPhone !== null
+                ? 'Kandidat telah menyetujui permintaan kontak Anda. Nomor WhatsApp dapat dihubungi secara langsung.'
+                : 'Nomor telepon dan kontak langsung hanya terbuka setelah kandidat menyetujui permintaan kontak.',
         ]);
     }
 }

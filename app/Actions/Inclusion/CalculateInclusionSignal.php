@@ -18,22 +18,34 @@ class CalculateInclusionSignal
      *
      * @throws \Exception
      */
-    public function execute(Institution $institution, User $subject, string $period, InclusionSignalVersion $version): InclusionSignal
-    {
-        if (! Feature::active('inclusion-signal-engine')) {
-            throw new \Exception('Inclusion signal engine is not active.');
+    public function execute(
+        Institution $institution,
+        User $subject,
+        string $period,
+        InclusionSignalVersion $version,
+        bool $isSynthetic = false,
+    ): InclusionSignal {
+        if (! Feature::for($institution)->active('inclusion-signal-engine')) {
+            throw new \Exception('Inclusion signal engine is not active for this institution.');
         }
 
         // Data sufficiency check
         $minEvents = $version->rules['min_collaboration_events'] ?? 5;
 
         // Total events involving the subject (either as actor or target)
-        $eventCount = CollaborationEvent::where('institution_id', $institution->id)
+        $eventQuery = CollaborationEvent::where('institution_id', $institution->id)
             ->where(function ($query) use ($subject) {
                 $query->where('actor_id', $subject->id)
                     ->orWhere('target_id', $subject->id);
-            })
-            ->count();
+            });
+
+        if ($isSynthetic) {
+            $eventQuery->syntheticOnly();
+        } else {
+            $eventQuery->realOnly();
+        }
+
+        $eventCount = $eventQuery->count();
 
         $dataSufficiencyMet = $eventCount >= $minEvents;
 
@@ -41,13 +53,21 @@ class CalculateInclusionSignal
         $evidenceSummary = [
             'event_count' => $eventCount,
             'threshold_used' => $minEvents,
+            'is_synthetic' => $isSynthetic,
         ];
 
         if ($dataSufficiencyMet) {
             // Check if the user is targeted by others in collaboration
-            $receivedCount = CollaborationEvent::where('institution_id', $institution->id)
-                ->where('target_id', $subject->id)
-                ->count();
+            $receivedQuery = CollaborationEvent::where('institution_id', $institution->id)
+                ->where('target_id', $subject->id);
+
+            if ($isSynthetic) {
+                $receivedQuery->syntheticOnly();
+            } else {
+                $receivedQuery->realOnly();
+            }
+
+            $receivedCount = $receivedQuery->count();
 
             $evidenceSummary['received_count'] = $receivedCount;
 
@@ -63,7 +83,7 @@ class CalculateInclusionSignal
             $evidenceSummary['factor'] = 'Data tidak cukup untuk melakukan perhitungan sinyal inclusion.';
         }
 
-        return DB::transaction(function () use ($institution, $subject, $version, $period, $dataSufficiencyMet, $isRestrictedCandidate, $evidenceSummary) {
+        return DB::transaction(function () use ($institution, $subject, $version, $period, $dataSufficiencyMet, $isRestrictedCandidate, $evidenceSummary, $isSynthetic) {
             return InclusionSignal::create([
                 'institution_id' => $institution->id,
                 'subject_id' => $subject->id,
@@ -72,6 +92,7 @@ class CalculateInclusionSignal
                 'data_sufficiency_met' => $dataSufficiencyMet,
                 'restricted_feature_state' => $isRestrictedCandidate,
                 'evidence_summary' => $evidenceSummary,
+                'is_synthetic' => $isSynthetic,
             ]);
         });
     }

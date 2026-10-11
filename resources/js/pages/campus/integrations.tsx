@@ -29,7 +29,10 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { index as integrationsIndex } from '@/routes/campus/integrations';
+import {
+    index as integrationsIndex,
+    store as integrationsStore,
+} from '@/routes/campus/integrations';
 import { reconcile, retry } from '@/routes/campus/integrations/syncs';
 
 interface TimelineEntry {
@@ -152,8 +155,10 @@ function syncDate(value: string | null) {
 
 function ConnectionOverview({
     connections,
+    onCreate,
 }: {
     connections: ConnectionItem[];
+    onCreate?: () => void;
 }) {
     return (
         <section
@@ -179,6 +184,17 @@ function ConnectionOverview({
                             ini tidak membuat koneksi baru.
                         </p>
                     </div>
+                    {onCreate && (
+                        <Button
+                            type="button"
+                            size="sm"
+                            onClick={onCreate}
+                            className="shrink-0 gap-1.5"
+                        >
+                            <Plus aria-hidden="true" className="size-4" />
+                            Buat Koneksi Sandbox
+                        </Button>
+                    )}
                 </div>
             ) : (
                 <div className="grid gap-3 @min-[42rem]:grid-cols-2 @min-[72rem]:grid-cols-3">
@@ -392,6 +408,8 @@ export default function AcademicIntegrations({
     const [confirmingReconcile, setConfirmingReconcile] =
         useState<SyncItem | null>(null);
     const [reconcileReason, setReconcileReason] = useState('');
+    const [creatingConnection, setCreatingConnection] = useState(false);
+    const [providerKey, setProviderKey] = useState('');
     const [statusFilter, setStatusFilter] = useState(filters.status);
     const [connectionFilter, setConnectionFilter] = useState(
         String(filters.connection),
@@ -809,6 +827,62 @@ export default function AcademicIntegrations({
                     )}
                 </div>
             </AppPage>
+            <Dialog
+                open={creatingConnection}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setCreatingConnection(false);
+                        setProviderKey('');
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Buat koneksi akademik sandbox</DialogTitle>
+                        <DialogDescription>
+                            Tambahkan provider koneksi sandbox untuk
+                            mensimulasikan sinkronisasi kredit akademik dan
+                            memetakan aktivitas mahasiswa.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <label className="grid gap-1.5">
+                        <span className="font-label text-label font-semibold text-muted-foreground">
+                            Kunci penyedia (Provider Key)
+                        </span>
+                        <input
+                            type="text"
+                            value={providerKey}
+                            onChange={(e) => setProviderKey(e.target.value)}
+                            placeholder="Contoh: siakad, feeder, atau pd_dikti"
+                            className="h-control-md rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                        />
+                        <span className="text-xs text-muted-foreground">
+                            Koneksi dibuat dalam mode Sandbox untuk pengujian
+                            terisolasi.
+                        </span>
+                    </label>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                setCreatingConnection(false);
+                                setProviderKey('');
+                            }}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={submitCreateConnection}
+                            disabled={isPending || !providerKey.trim()}
+                        >
+                            {isPending ? 'Menyimpan...' : 'Simpan Koneksi'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <Dialog
                 open={confirmingRetry !== null}
                 onOpenChange={(open) => {

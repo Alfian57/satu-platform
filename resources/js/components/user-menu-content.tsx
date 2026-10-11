@@ -32,7 +32,7 @@ export function UserMenuContent({ user }: Props) {
             <DropdownMenuLabel className="p-0 font-normal">
                 <div className="rounded-xl bg-muted/60 px-3 py-3 text-left text-sm">
                     <div className="flex items-center gap-3">
-                        <UserInfo user={user} />
+                        <UserInfo user={user} showUsername={false} />
                     </div>
                     <p className="mt-2 text-xs font-medium text-muted-foreground">
                         {workspace.accountLabel}

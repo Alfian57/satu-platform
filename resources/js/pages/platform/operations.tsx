@@ -43,6 +43,9 @@ import {
     revoke,
 } from '@/routes/platform/invitations';
 import { index as operationsIndex } from '@/routes/platform/operations';
+import { revoke as revokeRecruiterEntitlement } from '@/routes/platform/recruiter-entitlements';
+import { review as reviewRecruiterOrganization } from '@/routes/platform/recruiter-organizations';
+import { store as grantRecruiterEntitlement } from '@/routes/platform/recruiter-organizations/entitlements';
 
 type InstitutionStatus = 'pending' | 'active' | 'suspended' | 'archived';
 type InvitationStatus = 'issued' | 'accepted' | 'expired' | 'revoked';
@@ -71,6 +74,14 @@ type Invitation = {
     canRevoke: boolean;
 };
 
+type ActiveEntitlement = {
+    id: number;
+    scope: string;
+    status: string;
+    startsAt: string;
+    endsAt: string | null;
+};
+
 type RecruiterOrganization = {
     id: number;
     name: string;
@@ -78,6 +89,7 @@ type RecruiterOrganization = {
     status: RecruiterOrganizationStatus;
     activeMembershipsCount: number;
     activeEntitlementsCount: number;
+    activeEntitlements?: ActiveEntitlement[];
 };
 
 type AuditLog = {
@@ -117,7 +129,21 @@ type Command =
     | { kind: 'approve'; institution: Institution }
     | { kind: 'suspend'; institution: Institution }
     | { kind: 'invite'; institution: Institution }
-    | { kind: 'revoke'; invitation: Invitation };
+    | { kind: 'revoke'; invitation: Invitation }
+    | {
+          kind: 'reviewRecruiter';
+          organization: RecruiterOrganization;
+          conclusion: 'verified' | 'rejected' | 'suspended' | 'unsuspend';
+      }
+    | {
+          kind: 'grantEntitlement';
+          organization: RecruiterOrganization;
+      }
+    | {
+          kind: 'revokeEntitlement';
+          entitlement: ActiveEntitlement;
+          organizationName: string;
+      };
 
 const institutionStatusMeta: Record<
     InstitutionStatus,
@@ -272,7 +298,14 @@ export default function PlatformOperations({
         filters.status,
     );
     const [command, setCommand] = useState<Command | null>(null);
-    const commandForm = useForm({ phone: '', reason: '' });
+    const commandForm = useForm({
+        phone: '',
+        reason: '',
+        conclusion: '',
+        scope: 'candidate_search',
+        starts_at: '',
+        ends_at: '',
+    });
 
     function closeCommand(): void {
         setCommand(null);
@@ -332,6 +365,33 @@ export default function PlatformOperations({
             return;
         }
 
+        if (command.kind === 'reviewRecruiter') {
+            commandForm.post(
+                reviewRecruiterOrganization(command.organization.id).url,
+                options,
+            );
+
+            return;
+        }
+
+        if (command.kind === 'grantEntitlement') {
+            commandForm.post(
+                grantRecruiterEntitlement(command.organization.id).url,
+                options,
+            );
+
+            return;
+        }
+
+        if (command.kind === 'revokeEntitlement') {
+            commandForm.post(
+                revokeRecruiterEntitlement(command.entitlement.id).url,
+                options,
+            );
+
+            return;
+        }
+
         commandForm.post(revoke(command.invitation.id).url, options);
     }
 
@@ -344,7 +404,21 @@ export default function PlatformOperations({
                 ? 'Setujui ' + command.institution.name
                 : command.kind === 'suspend'
                   ? 'Tangguhkan ' + command.institution.name
-                  : 'Undang admin kampus untuk ' + command.institution.name;
+                  : command.kind === 'invite'
+                    ? 'Undang admin kampus untuk ' + command.institution.name
+                    : command.kind === 'reviewRecruiter'
+                      ? command.conclusion === 'verified'
+                          ? 'Verifikasi ' + command.organization.name
+                          : command.conclusion === 'rejected'
+                            ? 'Tolak ' + command.organization.name
+                            : command.conclusion === 'suspended'
+                              ? 'Tangguhkan ' + command.organization.name
+                              : 'Cabut penangguhan ' + command.organization.name
+                      : command.kind === 'grantEntitlement'
+                        ? 'Beri Hak Akses Talent Portal: ' +
+                          command.organization.name
+                        : 'Cabut Hak Akses Talent Portal: ' +
+                          command.organizationName;
 
     const commandDescription =
         command === null
@@ -355,7 +429,19 @@ export default function PlatformOperations({
                 ? 'Akses operasional institusi akan ditangguhkan. Tindakan ini perlu alasan dan tercatat pada audit.'
                 : command.kind === 'invite'
                   ? 'Undangan satu kali akan dikirim ke nomor WhatsApp yang diberikan.'
-                  : 'Tautan undangan tidak akan bisa lagi dipakai. Tindakan ini perlu alasan dan tercatat pada audit.';
+                  : command.kind === 'revoke'
+                    ? 'Tautan undangan tidak akan bisa lagi dipakai. Tindakan ini perlu alasan dan tercatat pada audit.'
+                    : command.kind === 'reviewRecruiter'
+                      ? command.conclusion === 'verified'
+                          ? 'Organisasi perekrut akan diverifikasi sehingga dapat mengelola tim dan menerima hak akses Talent Portal.'
+                          : command.conclusion === 'rejected'
+                            ? 'Pendaftaran organisasi perekrut akan ditolak. Berikan alasan penolakan.'
+                            : command.conclusion === 'suspended'
+                              ? 'Akses operasional organisasi perekrut akan ditangguhkan. Berikan alasan penangguhan.'
+                              : 'Penangguhan organisasi perekrut akan dicabut dan status kembali aktif terverifikasi.'
+                      : command.kind === 'grantEntitlement'
+                        ? 'Berikan hak akses pencarian kandidat (candidate_search) kepada organisasi perekrut yang terverifikasi.'
+                        : 'Hak akses pencarian kandidat organisasi perekrut akan dicabut segera. Tindakan ini membutuhkan alasan.';
 
     const commandButtonLabel =
         command === null || command.kind === 'revoke'
@@ -364,7 +450,19 @@ export default function PlatformOperations({
               ? 'Setujui institusi'
               : command.kind === 'suspend'
                 ? 'Tangguhkan institusi'
-                : 'Kirim undangan';
+                : command.kind === 'invite'
+                  ? 'Kirim undangan'
+                  : command.kind === 'reviewRecruiter'
+                    ? command.conclusion === 'verified'
+                        ? 'Verifikasi organisasi'
+                        : command.conclusion === 'rejected'
+                          ? 'Tolak organisasi'
+                          : command.conclusion === 'suspended'
+                            ? 'Tangguhkan organisasi'
+                            : 'Aktifkan kembali'
+                    : command.kind === 'grantEntitlement'
+                      ? 'Terbitkan hak akses'
+                      : 'Cabut hak akses';
 
     return (
         <>
@@ -377,13 +475,15 @@ export default function PlatformOperations({
                             Ruang kendali platform
                         </p>
                         <p className="text-sm leading-6 text-muted-foreground">
-                            Semua keputusan institusi membutuhkan alasan dan
-                            tersimpan pada audit. Nomor, payload provider, dan
-                            data mahasiswa tidak diproyeksikan di sini.
+                            Semua keputusan institusi dan organisasi perekrut
+                            membutuhkan alasan dan tersimpan pada audit. Nomor,
+                            payload provider, dan data mahasiswa tidak
+                            diproyeksikan di sini.
                         </p>
-                        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950">
                             Verifikasi organisasi perekrut dan penerbitan hak
-                            akses Talent Portal masih terkunci oleh GATE-004.
+                            akses Talent Portal kini dapat dikelola langsung
+                            oleh admin platform.
                         </div>
                     </div>
                 }
@@ -764,7 +864,7 @@ export default function PlatformOperations({
                     <section className="grid gap-6 xl:grid-cols-2">
                         <section className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6">
                             <div className="flex items-start gap-3">
-                                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
                                     <UserRoundCog
                                         aria-hidden="true"
                                         className="size-5"
@@ -775,15 +875,14 @@ export default function PlatformOperations({
                                         Recruiter Organization dan Entitlement
                                     </p>
                                     <h2 className="mt-2 text-xl font-bold tracking-[-0.02em] text-foreground">
-                                        Antrean terlihat, keputusan terkunci
+                                        Kelola verifikasi dan hak akses
                                     </h2>
                                 </div>
                             </div>
-                            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-                                GATE-004 masih terbuka. Bukti wajib, model
-                                peninjau, scope, durasi, dan dampak penangguhan
-                                belum diputuskan, sehingga perintah verifikasi
-                                dan entitlement tidak tersedia.
+                            <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-950">
+                                Organisasi perekrut terverifikasi dapat menerima
+                                hak akses Talent Portal untuk mencari kandidat
+                                mahasiswa.
                             </div>
                             <div className="mt-5 grid gap-3">
                                 {recruiterOrganizations.length === 0 ? (
@@ -835,6 +934,228 @@ export default function PlatformOperations({
                                                     }{' '}
                                                     hak akses aktif.
                                                 </p>
+
+                                                {/* Active entitlements list if any */}
+                                                {organization.activeEntitlements &&
+                                                    organization
+                                                        .activeEntitlements
+                                                        .length > 0 && (
+                                                        <div className="mt-3 space-y-2 rounded-lg border border-border bg-muted/30 p-2.5">
+                                                            <p className="text-xs font-semibold text-foreground">
+                                                                Hak Akses Aktif:
+                                                            </p>
+                                                            {organization.activeEntitlements.map(
+                                                                (ent) => (
+                                                                    <div
+                                                                        key={
+                                                                            ent.id
+                                                                        }
+                                                                        className="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+                                                                    >
+                                                                        <span>
+                                                                            {ent.scope ===
+                                                                            'candidate_search'
+                                                                                ? 'Pencarian Talenta'
+                                                                                : ent.scope}
+                                                                            {ent.endsAt &&
+                                                                                ` (s.d. ${new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(new Date(ent.endsAt))})`}
+                                                                        </span>
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="h-6 cursor-pointer px-2 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                                                            onClick={() => {
+                                                                                commandForm.setData(
+                                                                                    {
+                                                                                        phone: '',
+                                                                                        reason: '',
+                                                                                        conclusion:
+                                                                                            '',
+                                                                                        scope: 'candidate_search',
+                                                                                        starts_at:
+                                                                                            '',
+                                                                                        ends_at:
+                                                                                            '',
+                                                                                    },
+                                                                                );
+                                                                                setCommand(
+                                                                                    {
+                                                                                        kind: 'revokeEntitlement',
+                                                                                        entitlement:
+                                                                                            ent,
+                                                                                        organizationName:
+                                                                                            organization.name,
+                                                                                    },
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            Cabut
+                                                                        </Button>
+                                                                    </div>
+                                                                ),
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                {/* Action buttons */}
+                                                <div className="mt-4 flex flex-wrap gap-2">
+                                                    {organization.status ===
+                                                        'pending' && (
+                                                        <>
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                className="cursor-pointer"
+                                                                onClick={() => {
+                                                                    commandForm.setData(
+                                                                        {
+                                                                            phone: '',
+                                                                            reason: '',
+                                                                            conclusion:
+                                                                                'verified',
+                                                                            scope: 'candidate_search',
+                                                                            starts_at:
+                                                                                '',
+                                                                            ends_at:
+                                                                                '',
+                                                                        },
+                                                                    );
+                                                                    setCommand({
+                                                                        kind: 'reviewRecruiter',
+                                                                        organization,
+                                                                        conclusion:
+                                                                            'verified',
+                                                                    });
+                                                                }}
+                                                            >
+                                                                Verifikasi
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="cursor-pointer text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                                                onClick={() => {
+                                                                    commandForm.setData(
+                                                                        {
+                                                                            phone: '',
+                                                                            reason: '',
+                                                                            conclusion:
+                                                                                'rejected',
+                                                                            scope: 'candidate_search',
+                                                                            starts_at:
+                                                                                '',
+                                                                            ends_at:
+                                                                                '',
+                                                                        },
+                                                                    );
+                                                                    setCommand({
+                                                                        kind: 'reviewRecruiter',
+                                                                        organization,
+                                                                        conclusion:
+                                                                            'rejected',
+                                                                    });
+                                                                }}
+                                                            >
+                                                                Tolak
+                                                            </Button>
+                                                        </>
+                                                    )}
+
+                                                    {organization.status ===
+                                                        'verified' && (
+                                                        <>
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                className="cursor-pointer"
+                                                                onClick={() => {
+                                                                    commandForm.setData(
+                                                                        {
+                                                                            phone: '',
+                                                                            reason: '',
+                                                                            conclusion:
+                                                                                '',
+                                                                            scope: 'candidate_search',
+                                                                            starts_at:
+                                                                                '',
+                                                                            ends_at:
+                                                                                '',
+                                                                        },
+                                                                    );
+                                                                    setCommand({
+                                                                        kind: 'grantEntitlement',
+                                                                        organization,
+                                                                    });
+                                                                }}
+                                                            >
+                                                                Beri Hak Akses
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="cursor-pointer text-amber-700 hover:bg-amber-50"
+                                                                onClick={() => {
+                                                                    commandForm.setData(
+                                                                        {
+                                                                            phone: '',
+                                                                            reason: '',
+                                                                            conclusion:
+                                                                                'suspended',
+                                                                            scope: 'candidate_search',
+                                                                            starts_at:
+                                                                                '',
+                                                                            ends_at:
+                                                                                '',
+                                                                        },
+                                                                    );
+                                                                    setCommand({
+                                                                        kind: 'reviewRecruiter',
+                                                                        organization,
+                                                                        conclusion:
+                                                                            'suspended',
+                                                                    });
+                                                                }}
+                                                            >
+                                                                Tangguhkan
+                                                            </Button>
+                                                        </>
+                                                    )}
+
+                                                    {organization.status ===
+                                                        'suspended' && (
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            className="cursor-pointer"
+                                                            onClick={() => {
+                                                                commandForm.setData(
+                                                                    {
+                                                                        phone: '',
+                                                                        reason: '',
+                                                                        conclusion:
+                                                                            'unsuspend',
+                                                                        scope: 'candidate_search',
+                                                                        starts_at:
+                                                                            '',
+                                                                        ends_at:
+                                                                            '',
+                                                                    },
+                                                                );
+                                                                setCommand({
+                                                                    kind: 'reviewRecruiter',
+                                                                    organization,
+                                                                    conclusion:
+                                                                        'unsuspend',
+                                                                });
+                                                            }}
+                                                        >
+                                                            Cabut Penangguhan
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </article>
                                         ),
                                     )
@@ -984,7 +1305,7 @@ export default function PlatformOperations({
                         </DialogDescription>
                     </DialogHeader>
                     <form className="grid gap-4" onSubmit={submitCommand}>
-                        {command?.kind === 'invite' ? (
+                        {command?.kind === 'invite' && (
                             <div className="grid gap-2">
                                 <Label htmlFor="invitation-phone">
                                     Nomor WhatsApp
@@ -1015,43 +1336,150 @@ export default function PlatformOperations({
                                     message={commandForm.errors.phone}
                                 />
                             </div>
-                        ) : (
-                            <div className="grid gap-2">
-                                <Label htmlFor="command-reason">
-                                    Alasan keputusan
-                                </Label>
-                                <textarea
-                                    id="command-reason"
-                                    value={commandForm.data.reason}
-                                    onChange={(event) =>
-                                        commandForm.setData(
-                                            'reason',
-                                            event.target.value,
-                                        )
-                                    }
-                                    className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                    aria-invalid={Boolean(
-                                        commandForm.errors.reason,
-                                    )}
-                                    required
-                                    minLength={3}
-                                    maxLength={1000}
-                                />
-                                <InputError
-                                    message={commandForm.errors.reason}
-                                />
-                                <InputError
-                                    message={
-                                        (
-                                            commandForm.errors as Record<
-                                                string,
-                                                string | undefined
-                                            >
-                                        ).institution
-                                    }
-                                />
+                        )}
+
+                        {command?.kind === 'grantEntitlement' && (
+                            <div className="grid gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="entitlement-scope">
+                                        Scope Hak Akses
+                                    </Label>
+                                    <select
+                                        id="entitlement-scope"
+                                        value={commandForm.data.scope}
+                                        onChange={(event) =>
+                                            commandForm.setData(
+                                                'scope',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                    >
+                                        <option value="candidate_search">
+                                            Pencarian Talenta (candidate_search)
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="entitlement-ends-at">
+                                        Tanggal Berakhir (Opsional)
+                                    </Label>
+                                    <Input
+                                        id="entitlement-ends-at"
+                                        type="date"
+                                        value={commandForm.data.ends_at}
+                                        onChange={(event) =>
+                                            commandForm.setData(
+                                                'ends_at',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Kosongkan jika hak akses tidak memiliki
+                                        batas waktu berakhir.
+                                    </p>
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="entitlement-reason">
+                                        Catatan / Alasan (Opsional)
+                                    </Label>
+                                    <textarea
+                                        id="entitlement-reason"
+                                        value={commandForm.data.reason}
+                                        onChange={(event) =>
+                                            commandForm.setData(
+                                                'reason',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                        maxLength={1000}
+                                        placeholder="Kemitraan kampus resmi..."
+                                    />
+                                </div>
                             </div>
                         )}
+
+                        {command?.kind !== 'invite' &&
+                            command?.kind !== 'grantEntitlement' && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="command-reason">
+                                        Alasan keputusan
+                                        {(command?.kind === 'suspend' ||
+                                            command?.kind === 'revoke' ||
+                                            command?.kind ===
+                                                'revokeEntitlement' ||
+                                            (command?.kind ===
+                                                'reviewRecruiter' &&
+                                                (command.conclusion ===
+                                                    'rejected' ||
+                                                    command.conclusion ===
+                                                        'suspended'))) && (
+                                            <span className="text-rose-500">
+                                                {' '}
+                                                *
+                                            </span>
+                                        )}
+                                    </Label>
+                                    <textarea
+                                        id="command-reason"
+                                        value={commandForm.data.reason}
+                                        onChange={(event) =>
+                                            commandForm.setData(
+                                                'reason',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                        aria-invalid={Boolean(
+                                            commandForm.errors.reason,
+                                        )}
+                                        required={
+                                            command?.kind === 'suspend' ||
+                                            command?.kind === 'revoke' ||
+                                            command?.kind ===
+                                                'revokeEntitlement' ||
+                                            (command?.kind ===
+                                                'reviewRecruiter' &&
+                                                (command.conclusion ===
+                                                    'rejected' ||
+                                                    command.conclusion ===
+                                                        'suspended'))
+                                        }
+                                        minLength={
+                                            command?.kind === 'suspend' ||
+                                            command?.kind === 'revoke' ||
+                                            command?.kind ===
+                                                'revokeEntitlement' ||
+                                            (command?.kind ===
+                                                'reviewRecruiter' &&
+                                                (command.conclusion ===
+                                                    'rejected' ||
+                                                    command.conclusion ===
+                                                        'suspended'))
+                                                ? 3
+                                                : 0
+                                        }
+                                        maxLength={1000}
+                                    />
+                                    <InputError
+                                        message={commandForm.errors.reason}
+                                    />
+                                    <InputError
+                                        message={
+                                            (
+                                                commandForm.errors as Record<
+                                                    string,
+                                                    string | undefined
+                                                >
+                                            ).institution
+                                        }
+                                    />
+                                </div>
+                            )}
                         <DialogFooter>
                             <Button
                                 type="button"
@@ -1067,7 +1495,11 @@ export default function PlatformOperations({
                                 className="cursor-pointer"
                                 variant={
                                     command?.kind === 'suspend' ||
-                                    command?.kind === 'revoke'
+                                    command?.kind === 'revoke' ||
+                                    command?.kind === 'revokeEntitlement' ||
+                                    (command?.kind === 'reviewRecruiter' &&
+                                        (command.conclusion === 'rejected' ||
+                                            command.conclusion === 'suspended'))
                                         ? 'destructive'
                                         : 'default'
                                 }

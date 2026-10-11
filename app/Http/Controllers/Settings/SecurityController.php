@@ -29,7 +29,10 @@ class SecurityController extends Controller
      */
     public function update(PasswordUpdateRequest $request): RedirectResponse
     {
-        $request->user()->update([
+        $user = $request->user();
+        abort_unless($user !== null, 401);
+
+        $user->update([
             'password' => $request->password,
         ]);
 
