@@ -64,4 +64,5 @@ jobs:
           timeout: 120s
           command_timeout: 15m
           script: |
-            /opt/docker-stack/applications/satu-platform/update.sh
+            cd /opt/docker-stack/applications/satu-platform
+            ./update.sh
