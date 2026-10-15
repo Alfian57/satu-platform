@@ -26,7 +26,7 @@ return new class extends Migration
 
             $table->index(['institution_id', 'status']);
             $table->index(['activity_type', 'status']);
-            $table->unique(['institution_id', 'activity_type', 'version']);
+            $table->unique(['institution_id', 'activity_type', 'version'], 'acm_inst_act_ver_unique');
         });
     }
 
