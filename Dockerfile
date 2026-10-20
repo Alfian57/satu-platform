@@ -50,11 +50,32 @@ RUN cp .env.example .env \
 
 FROM php-base AS runtime
 
+RUN apk add --no-cache \
+    nginx \
+    supervisor \
+    procps
+
+# Ensure php-fpm and nginx use www-data
+RUN sed -i "s/user = www-data/user = www-data/g" /usr/local/etc/php-fpm.d/www.conf \
+    && sed -i "s/group = www-data/group = www-data/g" /usr/local/etc/php-fpm.d/www.conf \
+    && sed -i 's/user nginx;/user www-data;/' /etc/nginx/nginx.conf
+
+COPY ./docker/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ./docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 COPY --from=app-dependencies /var/www/html /var/www/html
 COPY --from=node-builder /var/www/html/public/build /var/www/html/public/build
 
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN mkdir -p /var/log/supervisor /var/run/supervisor \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chown -R www-data:www-data /var/lib/nginx /var/log/nginx
 
-EXPOSE 9000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD (pidof nginx && pidof php-fpm) || exit 1
 
-CMD ["php-fpm"]
+EXPOSE 80
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
