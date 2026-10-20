@@ -44,6 +44,12 @@ class Institution extends Model
         return $this->hasMany(InstitutionDomain::class);
     }
 
+    /** @return HasMany<OpportunitySupportRequest, $this> */
+    public function supportRequests(): HasMany
+    {
+        return $this->hasMany(OpportunitySupportRequest::class);
+    }
+
     /**
      * @return HasMany<InstitutionMembership, $this>
      */

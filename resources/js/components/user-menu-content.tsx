@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings, UserRoundCog } from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -8,8 +8,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
+import { getWorkspaceContext } from '@/lib/workspace-context';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
+import { edit as editCapabilities } from '@/routes/student-profiles';
 import type { User } from '@/types';
 
 type Props = {
@@ -18,6 +20,7 @@ type Props = {
 
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
+    const workspace = getWorkspaceContext(user.workspace.role);
 
     const handleLogout = () => {
         cleanup();
@@ -27,15 +30,38 @@ export function UserMenuContent({ user }: Props) {
     return (
         <>
             <DropdownMenuLabel className="p-0 font-normal">
-                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <UserInfo user={user} showUsername={false} />
+                <div className="rounded-xl bg-muted/60 px-3 py-3 text-left text-sm">
+                    <div className="flex items-center gap-3">
+                        <UserInfo user={user} showUsername={false} />
+                    </div>
+                    <p className="mt-2 text-xs font-medium text-muted-foreground">
+                        {workspace.accountLabel}
+                    </p>
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-                <DropdownMenuItem asChild>
+                {user.workspace.role === 'student' && (
+                    <DropdownMenuItem
+                        asChild
+                        className="min-h-11 cursor-pointer rounded-xl px-3"
+                    >
+                        <Link
+                            className="flex w-full cursor-pointer items-center"
+                            href={editCapabilities()}
+                            onClick={cleanup}
+                        >
+                            <UserRoundCog className="mr-2" aria-hidden="true" />
+                            Profil kemampuan
+                        </Link>
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                    asChild
+                    className="min-h-11 cursor-pointer rounded-xl px-3"
+                >
                     <Link
-                        className="block w-full cursor-pointer"
+                        className="flex w-full cursor-pointer items-center"
                         href={edit()}
                         prefetch
                         onClick={cleanup}
@@ -46,9 +72,12 @@ export function UserMenuContent({ user }: Props) {
                 </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem
+                asChild
+                className="min-h-11 cursor-pointer rounded-xl px-3 text-correction focus:text-correction"
+            >
                 <Link
-                    className="block w-full cursor-pointer"
+                    className="flex w-full cursor-pointer items-center"
                     href={logout()}
                     as="button"
                     onClick={handleLogout}

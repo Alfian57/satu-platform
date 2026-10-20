@@ -20,7 +20,7 @@ type Props = {
 };
 
 function formatRole(role?: string | null): string {
-    return role === 'campus_admin' ? 'Admin kampus' : 'Operator terundang';
+    return role === 'campus_admin' ? 'Admin Universitas' : 'Pengguna terundang';
 }
 
 export default function Invitation({ invitation }: Props) {
@@ -63,7 +63,7 @@ export default function Invitation({ invitation }: Props) {
 
                     <p className="text-sm leading-relaxed text-muted-foreground">
                         {isExpired
-                            ? 'Minta pengelola platform mengirim undangan baru agar akses dapat diproses dengan aman.'
+                            ? 'Minta Admin Universitas mengirim undangan baru agar akses dapat diproses dengan aman.'
                             : 'Masuk atau buat akun menggunakan nomor WhatsApp yang sesuai untuk melanjutkan proses undangan.'}
                     </p>
                 </div>

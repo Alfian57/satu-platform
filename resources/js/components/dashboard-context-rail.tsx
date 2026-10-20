@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import type { InertiaLinkProps } from '@inertiajs/react';
 import {
     ArrowRight,
+    AlertCircle,
     Building2,
     Check,
     ClipboardCheck,
@@ -9,7 +10,9 @@ import {
     Compass,
     EyeOff,
     Lightbulb,
+    Info,
     RefreshCw,
+    Rocket,
     SearchX,
     ShieldAlert,
     Sparkles,
@@ -34,6 +37,8 @@ export type DashboardRecommendationFeedback =
 
 type Props = {
     reviewQueue: DashboardReviewQueue;
+    pendingAffiliation?: boolean;
+    referenceLayout?: boolean;
     recommendationRegion: DashboardRecommendationRegion;
     getActionHref: (action: DashboardAction) => ActionHref | null;
     onAction: (action: DashboardAction) => void;
@@ -44,6 +49,10 @@ type Props = {
     processingFeedback?: DashboardRecommendationFeedback | null;
     profileReadiness: DashboardProfileReadiness;
     institution: DashboardInstitution | null;
+    onRefreshRecommendations?: () => void;
+    refreshingRecommendations?: boolean;
+    refreshError?: string | null;
+    uncertainRefresh?: boolean;
 };
 
 function RegionAction({
@@ -58,13 +67,19 @@ function RegionAction({
     const href = getActionHref(action);
     const content = (
         <>
-            <Compass aria-hidden="true" className="size-4 text-primary" />
-            {action.label}
-            <ArrowRight aria-hidden="true" className="ml-auto size-4" />
+            <Compass
+                aria-hidden="true"
+                className="size-4 shrink-0 text-primary"
+            />
+            <span className="min-w-0 wrap-anywhere">{action.label}</span>
+            <ArrowRight
+                aria-hidden="true"
+                className="ml-auto size-4 shrink-0"
+            />
         </>
     );
     const className =
-        'mt-4 min-h-11 w-full cursor-pointer justify-start rounded-full border-border bg-white text-sm font-semibold text-primary hover:bg-accent';
+        'mt-4 h-auto min-h-11 w-full cursor-pointer justify-start rounded-xl border-border bg-white py-3 text-sm font-semibold whitespace-normal text-primary hover:bg-accent';
 
     if (href !== null) {
         return (
@@ -96,26 +111,40 @@ function RecommendationState({
     region,
     getActionHref,
     onAction,
+    pendingAffiliation = false,
 }: {
     region: Extract<
         DashboardRecommendationRegion,
-        { state: 'empty' | 'error' | 'forbidden' }
+        {
+            state:
+                | 'empty'
+                | 'error'
+                | 'forbidden'
+                | 'processing'
+                | 'stale'
+                | 'unavailable';
+        }
     >;
     getActionHref: Props['getActionHref'];
     onAction: Props['onAction'];
+    pendingAffiliation?: boolean;
 }) {
     const Icon =
         region.state === 'error'
             ? RefreshCw
             : region.state === 'forbidden'
-              ? ShieldAlert
-              : SearchX;
+              ? pendingAffiliation
+                  ? Compass
+                  : ShieldAlert
+              : region.state === 'processing'
+                ? Clock3
+                : SearchX;
 
     return (
         <div
-            className="mt-4 border-t border-border/50 pt-4"
+            className="dashboard-recommendation-state mt-4 border-t border-border/50 pt-4"
             data-test={`dashboard-recommendation-${region.state}`}
-            role={region.state === 'error' ? 'alert' : undefined}
+            role={region.state === 'error' ? 'alert' : 'status'}
         >
             <div className="flex items-start gap-3.5">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-accent text-primary">
@@ -131,7 +160,7 @@ function RecommendationState({
                     <p className="text-sm leading-snug font-bold text-foreground">
                         {region.title}
                     </p>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    <p className="mt-1 text-sm leading-6 wrap-anywhere text-muted-foreground">
                         {region.description}
                     </p>
                 </div>
@@ -168,7 +197,7 @@ function RecommendationLoading({ announcement }: { announcement: string }) {
                 </div>
                 <Skeleton className="h-3 w-full" />
                 <Skeleton className="h-3 w-5/6" />
-                <Skeleton className="h-11 w-full rounded-full" />
+                <Skeleton className="h-11 w-full rounded-xl" />
             </div>
         </div>
     );
@@ -186,6 +215,8 @@ function formatRecommendationDate(value: string): string {
         month: 'short',
         timeZone: 'Asia/Jakarta',
         year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
     }).format(date);
 }
 
@@ -209,7 +240,7 @@ function RecommendationReady({
         projectId: recommendation.projectId ?? undefined,
     };
     const profileAction: DashboardAction = {
-        key: 'onboarding',
+        key: 'profile',
         label: 'Perbarui profil',
     };
     const projectHref = getActionHref(projectAction);
@@ -218,19 +249,24 @@ function RecommendationReady({
     const isStale = recommendation.isStale;
 
     return (
-        <div className="mt-4 overflow-hidden rounded-2xl bg-background/70">
-            <div className="flex items-start gap-3.5 border-b border-border/50 bg-white/70 p-4 sm:p-5">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-accent text-primary">
-                    <UsersRound aria-hidden="true" className="size-5" />
-                </span>
+        <div className="dashboard-recommendation-card mt-5 overflow-hidden rounded-2xl border border-white bg-card shadow-sm">
+            <div className="border-b border-border/60 p-4">
                 <div className="min-w-0 flex-1">
-                    <p className="text-sm leading-tight font-bold wrap-anywhere text-foreground">
+                    <p className="text-lg leading-snug font-bold tracking-tight wrap-anywhere text-foreground">
                         {recommendation.title}
                     </p>
-                    <p className="mt-1 text-xs wrap-anywhere text-muted-foreground">
-                        Peran:{' '}
-                        <span className="font-semibold text-primary">
-                            {recommendation.role}
+                    <p className="mt-3 inline-flex max-w-full items-start gap-2 rounded-xl bg-accent/70 px-3 py-2 text-xs leading-5 wrap-anywhere text-primary">
+                        <UsersRound
+                            aria-hidden="true"
+                            className="mt-0.5 size-4 shrink-0"
+                        />
+                        <span className="min-w-0">
+                            <span className="block font-medium text-muted-foreground">
+                                Peran yang dibandingkan
+                            </span>
+                            <span className="font-semibold">
+                                {recommendation.role}
+                            </span>
                         </span>
                     </p>
                 </div>
@@ -259,74 +295,114 @@ function RecommendationReady({
                 </div>
             )}
 
+            <p className="px-4 pt-4 text-xs font-semibold text-muted-foreground">
+                Mengapa disarankan
+            </p>
             <ul
                 aria-label="Alasan kecocokan proyek"
-                className="grid gap-2.5 p-4 sm:p-5"
+                className="grid gap-3 px-4 pt-3 pb-4"
                 data-test="dashboard-recommendation-reasons"
             >
                 {recommendation.reasons.map((reason, index) => (
                     <li
                         key={`${index}-${reason}`}
-                        className="flex min-w-0 items-start gap-2 text-xs leading-5 text-foreground"
+                        className="flex min-w-0 items-start gap-2.5 text-sm leading-6 text-foreground"
                         data-test="dashboard-recommendation-reason"
                     >
-                        <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-verified-subtle text-verified-subtle-foreground">
-                            <Check
-                                aria-hidden="true"
-                                className="size-3 stroke-[2.5]"
-                            />
+                        <span className="mt-1 flex size-4 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
+                            {recommendation.reasonTypes?.[index] ===
+                            'positive' ? (
+                                <Check
+                                    aria-hidden="true"
+                                    className="size-3 stroke-[2.5]"
+                                />
+                            ) : recommendation.reasonTypes?.[index] ===
+                              'attention' ? (
+                                <AlertCircle
+                                    aria-hidden="true"
+                                    className="size-3"
+                                />
+                            ) : (
+                                <Info aria-hidden="true" className="size-3" />
+                            )}
                         </span>
                         <span className="min-w-0 wrap-anywhere">{reason}</span>
                     </li>
                 ))}
             </ul>
 
-            <dl className="grid gap-2 border-t border-border/50 px-4 py-3 text-xs sm:grid-cols-2 sm:px-5">
+            {recommendation.limitations?.length ? (
+                <div
+                    className="border-t border-border/60 px-4 py-3 text-xs leading-5 text-muted-foreground"
+                    data-test="dashboard-recommendation-limitations"
+                >
+                    <p className="font-semibold text-foreground">
+                        Batas pencocokan
+                    </p>
+                    <ul className="mt-2 list-disc space-y-1 pl-4">
+                        {recommendation.limitations.map((limitation) => (
+                            <li key={limitation}>{limitation}</li>
+                        ))}
+                    </ul>
+                </div>
+            ) : null}
+
+            <dl className="grid gap-2 border-t border-border/60 px-4 py-3 text-xs">
                 {recommendation.scoreVersion && (
                     <div className="flex min-w-0 items-baseline justify-between gap-2">
                         <dt className="text-muted-foreground">
                             Versi pencocokan
                         </dt>
-                        <dd className="min-w-0 truncate font-medium text-foreground">
+                        <dd className="min-w-0 text-right font-label text-[0.6875rem] wrap-anywhere text-foreground">
                             {recommendation.scoreVersion}
                         </dd>
                     </div>
                 )}
-                <div className="flex min-w-0 items-baseline justify-between gap-2 sm:justify-end">
+                <div className="flex min-w-0 items-baseline justify-between gap-2">
                     <dt className="text-muted-foreground">Dibuat</dt>
-                    <dd className="font-medium text-foreground">
+                    <dd className="min-w-0 text-right font-medium wrap-anywhere text-foreground">
                         <time dateTime={recommendation.createdAt}>
                             {formatRecommendationDate(recommendation.createdAt)}
                         </time>
                     </dd>
                 </div>
+                {recommendation.expiresAt && (
+                    <div className="flex min-w-0 items-baseline justify-between gap-2">
+                        <dt className="text-muted-foreground">
+                            Berlaku sampai
+                        </dt>
+                        <dd className="min-w-0 text-right font-medium wrap-anywhere">
+                            <time dateTime={recommendation.expiresAt}>
+                                {formatRecommendationDate(
+                                    recommendation.expiresAt,
+                                )}
+                            </time>
+                        </dd>
+                    </div>
+                )}
             </dl>
 
             <div className="border-t border-border/50 bg-white/65 p-4">
                 {projectHref !== null && (
                     <Button
                         asChild
-                        className="group min-h-11 w-full cursor-pointer rounded-full bg-primary font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                        variant="outline"
+                        className="group min-h-11 w-full cursor-pointer rounded-xl border-primary/25 font-semibold text-primary hover:border-primary hover:bg-accent hover:text-primary motion-safe:transition-[background-color,border-color] motion-safe:duration-standard"
                     >
                         <Link href={projectHref}>
                             {projectAction.label}
                             <ArrowRight
                                 aria-hidden="true"
-                                className="ml-1.5 size-4 transition-transform group-hover:translate-x-1 motion-reduce:transform-none"
+                                className="ml-1.5 size-4 motion-safe:transition-transform motion-safe:duration-standard motion-safe:group-hover:translate-x-1"
                             />
                         </Link>
                     </Button>
                 )}
 
-                {isProcessing && (
-                    <span className="sr-only" role="status">
-                        Memproses masukan rekomendasi.
-                    </span>
-                )}
                 <div className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1 text-xs">
                     <button
                         type="button"
-                        className="inline-flex min-h-10 cursor-pointer items-center gap-1 rounded-lg px-2 font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-lg px-2 font-medium text-muted-foreground hover:bg-accent hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 motion-safe:transition-colors motion-safe:duration-standard"
                         disabled={isProcessing || isStale}
                         data-test="dashboard-recommendation-hide"
                         onClick={() => onFeedback(recommendation.id, 'hide')}
@@ -336,7 +412,7 @@ function RecommendationReady({
                     </button>
                     <button
                         type="button"
-                        className="inline-flex min-h-10 cursor-pointer items-center gap-1 rounded-lg px-2 font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-lg px-2 font-medium text-muted-foreground hover:bg-accent hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 motion-safe:transition-colors motion-safe:duration-standard"
                         disabled={isProcessing || isStale}
                         data-test="dashboard-recommendation-not-relevant"
                         onClick={() =>
@@ -348,7 +424,7 @@ function RecommendationReady({
                     {profileHref !== null && (
                         <Link
                             href={profileHref}
-                            className="inline-flex min-h-10 cursor-pointer items-center gap-1 rounded-lg px-2 font-semibold text-primary hover:bg-accent hover:underline"
+                            className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-lg px-2 font-semibold text-primary hover:bg-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                         >
                             <UserRoundCog
                                 aria-hidden="true"
@@ -358,6 +434,12 @@ function RecommendationReady({
                         </Link>
                     )}
                 </div>
+                <p
+                    className="mt-1 min-h-5 text-xs leading-5 font-medium text-primary"
+                    role="status"
+                >
+                    {isProcessing ? 'Mengirim masukan...' : null}
+                </p>
             </div>
         </div>
     );
@@ -366,9 +448,11 @@ function RecommendationReady({
 function ProfileReadinessCard({
     profileReadiness,
     institution,
+    referenceLayout = false,
 }: {
     profileReadiness: DashboardProfileReadiness;
     institution: DashboardInstitution | null;
+    referenceLayout?: boolean;
 }) {
     const readinessCopy: Record<DashboardProfileReadiness['state'], string> = {
         unavailable:
@@ -384,11 +468,15 @@ function ProfileReadinessCard({
     return (
         <section
             aria-labelledby="dashboard-readiness-heading"
-            className="rounded-3xl border border-white bg-card p-5 shadow-sm"
+            className="min-w-0 border-t border-border px-1 pt-5"
         >
             <div className="flex items-center gap-2.5">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-accent text-primary">
-                    <Sparkles aria-hidden="true" className="size-4" />
+                <span className="flex size-8 shrink-0 items-center justify-center text-primary">
+                    {referenceLayout ? (
+                        <Rocket aria-hidden="true" className="size-4" />
+                    ) : (
+                        <Sparkles aria-hidden="true" className="size-4" />
+                    )}
                 </span>
                 <h2
                     id="dashboard-readiness-heading"
@@ -418,7 +506,7 @@ function ProfileReadinessCard({
                             <span className="text-muted-foreground">
                                 Keahlian di profil
                             </span>
-                            <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-primary">
+                            <span className="text-sm font-semibold text-foreground">
                                 {profileReadiness.skillsCount}
                             </span>
                         </li>
@@ -426,7 +514,7 @@ function ProfileReadinessCard({
                             <span className="text-muted-foreground">
                                 Waktu kolaborasi
                             </span>
-                            <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-primary">
+                            <span className="text-sm font-semibold text-foreground">
                                 {profileReadiness.availabilityCount}
                             </span>
                         </li>
@@ -439,6 +527,8 @@ function ProfileReadinessCard({
 
 export function DashboardContextRail({
     reviewQueue,
+    pendingAffiliation = false,
+    referenceLayout = false,
     recommendationRegion,
     getActionHref,
     onAction,
@@ -446,64 +536,35 @@ export function DashboardContextRail({
     processingFeedback,
     profileReadiness,
     institution,
+    onRefreshRecommendations,
+    refreshingRecommendations = false,
+    refreshError,
+    uncertainRefresh = false,
 }: Props) {
     return (
         <div
-            className="grid content-start gap-5 lg:grid-cols-2 xl:grid-cols-1 xl:pt-10"
+            className="grid min-w-0 content-start gap-6 lg:grid-cols-2 xl:grid-cols-1"
             data-test="dashboard-context-rail"
         >
-            <ProfileReadinessCard
-                profileReadiness={profileReadiness}
-                institution={institution}
-            />
-
-            <section
-                aria-labelledby="review-queue-heading"
-                className="min-w-0 rounded-3xl border border-border/60 bg-white/60 p-5"
-            >
-                <div className="flex items-center gap-2.5">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-accent text-primary">
-                        <ClipboardCheck aria-hidden="true" className="size-4" />
-                    </span>
-                    <h2
-                        id="review-queue-heading"
-                        className="text-sm font-semibold text-foreground"
-                    >
-                        Validasi kontribusi
-                    </h2>
-                </div>
-
-                <div className="mt-3 flex items-start gap-3">
-                    <Clock3
-                        aria-hidden="true"
-                        className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-                    />
-                    <div className="min-w-0">
-                        <p className="text-sm leading-snug font-semibold text-foreground">
-                            {reviewQueue.title}
-                        </p>
-                        <p className="mt-1 text-xs leading-relaxed wrap-anywhere text-muted-foreground">
-                            {reviewQueue.description}
-                        </p>
-                    </div>
-                </div>
-            </section>
-
             <section
                 aria-labelledby="recommendation-heading"
-                className="min-w-0 rounded-3xl border border-white bg-card p-5 shadow-sm lg:col-span-2 xl:col-span-1"
+                className="min-w-0 rounded-3xl border border-border bg-linear-to-br from-accent/80 via-background to-accent/40 p-5 sm:p-6 lg:col-span-2 xl:col-span-1"
             >
                 <div className="flex items-center gap-2.5">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-accent text-primary">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-card text-primary">
                         <Lightbulb aria-hidden="true" className="size-4" />
                     </span>
                     <h2
                         id="recommendation-heading"
+                        tabIndex={-1}
                         className="text-base font-bold text-foreground"
                     >
                         Rekomendasi proyek
                     </h2>
                 </div>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    Peluang yang bisa kamu pertimbangkan.
+                </p>
 
                 {recommendationRegion.state === 'loading' && (
                     <RecommendationLoading
@@ -513,12 +574,57 @@ export function DashboardContextRail({
 
                 {(recommendationRegion.state === 'empty' ||
                     recommendationRegion.state === 'error' ||
+                    recommendationRegion.state === 'processing' ||
+                    recommendationRegion.state === 'stale' ||
+                    recommendationRegion.state === 'unavailable' ||
                     recommendationRegion.state === 'forbidden') && (
                     <RecommendationState
                         region={recommendationRegion}
+                        pendingAffiliation={pendingAffiliation}
                         getActionHref={getActionHref}
                         onAction={onAction}
                     />
+                )}
+                {recommendationRegion.state !== 'loading' &&
+                    recommendationRegion.canRefresh &&
+                    onRefreshRecommendations && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="mt-4 min-h-11 w-full whitespace-normal"
+                            disabled={
+                                refreshingRecommendations || uncertainRefresh
+                            }
+                            onClick={onRefreshRecommendations}
+                            data-test="dashboard-request-recommendations"
+                        >
+                            <RefreshCw aria-hidden="true" className="size-4" />
+                            {refreshingRecommendations
+                                ? 'Meminta pembaruan...'
+                                : 'Perbarui rekomendasi'}
+                        </Button>
+                    )}
+                {refreshError && (
+                    <div
+                        className="mt-3 text-sm leading-6 text-correction"
+                        role="alert"
+                        data-test="dashboard-refresh-error"
+                    >
+                        <p>{refreshError}</p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="mt-2 min-h-11"
+                            onClick={() =>
+                                onAction({
+                                    key: 'refresh',
+                                    label: 'Periksa status',
+                                })
+                            }
+                        >
+                            Periksa status
+                        </Button>
+                    </div>
                 )}
 
                 {recommendationRegion.state === 'ready' && (
@@ -531,6 +637,54 @@ export function DashboardContextRail({
                     />
                 )}
             </section>
+
+            <div
+                className={
+                    referenceLayout
+                        ? 'dashboard-support-card lg:col-span-2 xl:col-span-1'
+                        : 'contents'
+                }
+            >
+                <ProfileReadinessCard
+                    profileReadiness={profileReadiness}
+                    institution={institution}
+                    referenceLayout={referenceLayout}
+                />
+
+                <section
+                    aria-labelledby="review-queue-heading"
+                    className="min-w-0 border-t border-border px-1 pt-5"
+                >
+                    <div className="flex items-center gap-2.5">
+                        <span className="flex size-8 shrink-0 items-center justify-center text-primary">
+                            <ClipboardCheck
+                                aria-hidden="true"
+                                className="size-4"
+                            />
+                        </span>
+                        <h2
+                            id="review-queue-heading"
+                            className="text-sm font-semibold text-foreground"
+                        >
+                            Validasi kontribusi
+                        </h2>
+                    </div>
+                    <div className="mt-3 flex items-start gap-3">
+                        <Clock3
+                            aria-hidden="true"
+                            className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                        />
+                        <div className="min-w-0">
+                            <p className="text-sm leading-snug font-semibold text-foreground">
+                                {reviewQueue.title}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 wrap-anywhere text-muted-foreground">
+                                {reviewQueue.description}
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </div>
     );
 }

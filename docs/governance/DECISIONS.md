@@ -6,38 +6,158 @@ Accepted decision adalah product atau architecture contract. Open gate hanya dap
 
 ## Accepted Decisions
 
-| ID      | Keputusan                                                                          | Dampak                                                                                                                                                           |
-| ------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DEC-001 | Produk perlombaan adalah SATU, bukan competition-management system                 | Seluruh backlog membangun platform SATU                                                                                                                          |
-| DEC-002 | Rilis mencakup proposal kecuali Bab 4.2                                            | Talent, gamification, academic sandbox, inclusion, dan landing masuk release                                                                                     |
-| DEC-003 | Satu kampus pilot lebih dahulu                                                     | Model tetap institution-aware, rollout lintas kampus ditunda                                                                                                     |
-| DEC-004 | Tidak ada email pada target flow                                                   | Identity memakai private username, password, dan verified WhatsApp phone                                                                                         |
-| DEC-005 | Roster exact match memakai NIM dan verified phone                                  | Mismatch atau ambiguity masuk manual review                                                                                                                      |
-| DEC-006 | Platform admin menyetujui institution dan mengundang campus admin via WhatsApp     | Privileged role tidak tersedia lewat open registration                                                                                                           |
-| DEC-007 | Fonnte adalah initial WhatsApp provider melalui backend adapter dan queue          | SATU membuat OTP; tidak memakai unofficial Fonnte package                                                                                                        |
-| DEC-008 | In-app notification center adalah canonical                                        | WhatsApp hanya untuk approved important purpose                                                                                                                  |
-| DEC-009 | Campus reviewer memvalidasi contribution langsung                                  | Team confirmation tidak diperlukan                                                                                                                               |
-| DEC-010 | Hybrid leaderboard memakai group default dan individual opt-in                     | Average verified XP, semester, cohort minimal 5, shared rank                                                                                                     |
-| DEC-011 | Inclusion tidak menjadi leaderboard input                                          | Mencegah stigma dan feedback loop yang tidak adil                                                                                                                |
-| DEC-012 | Inclusion engine/UI production-ready di balik feature flag                         | Synthetic demo diperbolehkan, real activation menunggu governance                                                                                                |
-| DEC-013 | Talent Portal memakai verified organization dan internal entitlement               | Billing provider serta pricing di luar release                                                                                                                   |
-| DEC-014 | Academic integration baseline adalah contract plus sandbox                         | Real campus API adalah external gate                                                                                                                             |
-| DEC-015 | Native Laravel Policies/Gates adalah authorization baseline                        | Role berasal dari membership dan tenant context                                                                                                                  |
-| DEC-016 | Gunakan mature library ketika fit dan kompatibel                                   | Issue wajib menyebut package atau framework-native decision                                                                                                      |
-| DEC-017 | GitHub issues/milestones adalah execution truth                                    | Phase files dan progress file dipensiunkan setelah migration audit                                                                                               |
-| DEC-018 | Main branch dilindungi oleh required checks                                        | Force push dan penghapusan branch dinonaktifkan                                                                                                                  |
-| DEC-019 | Owner ditandai label role, bukan assignee sementara                                | Assignee ditambahkan setelah komposisi tim final                                                                                                                 |
-| DEC-020 | Consumer boleh development dengan stacked branch setelah contract checkpoint       | Parent diberi label `contract-ready`; consumer memakai `Stacked on: #<issue>` dan base branch parent; merge tetap menunggu seluruh hard dependency closed        |
-| DEC-021 | Satu institution pilot untuk rilis perlombaan                                      | Model tenant tetap institution-aware tanpa hardcoded single-tenant; ekspansi lintas institusi tidak memerlukan perubahan model keamanan                          |
-| DEC-022 | Roster adalah milik institution dan disediakan dalam CSV/spreadsheet               | Institution bertanggung jawab atas kebenaran data; SATU hanya mengimpor, memvalidasi, dan tidak memodifikasi roster yang sudah committed                         |
-| DEC-023 | Exact match NIM dan verified phone pada roster aktif adalah jalur verifikasi utama | Normalized NIM dan nomor WhatsApp E.164 dibandingkan terhadap roster; mismatch, ambiguity, atau record tidak aktif masuk manual review                           |
-| DEC-024 | Active member didefinisikan per semester per institution                           | Student dengan verified affiliation, terdaftar pada roster semester aktif, serta memiliki minimal satu approved contribution pada semester tersebut              |
-| DEC-025 | Manual review affiliation memiliki SLA 3 hari kerja                                | Campus reviewer menindaklanjuti affiliation queue dalam 3 hari kerja; eskalasi ke platform admin setelah 5 hari kerja tanpa tindakan                             |
-| DEC-026 | Roster import bersifat immutable setelah committed                                 | Setiap import menyimpan checksum, source filename, timestamp, dan batch identity; correction atau penambahan masuk sebagai batch baru, bukan modifikasi in-place |
-| DEC-027 | Tenant isolation mencakup seluruh layer                                            | Institution-scoped queries, Policies, jobs, cache keys, storage paths, exports, dan Reverb channels; platform admin memakai explicit audited cross-tenant scope  |
-| DEC-028 | XP, badge, dan leaderboard policy versioned dalam dokumen terpisah                 | Seluruh aturan gamification dikonsolidasi di `docs/governance/gamification-policy.md` dengan semantic versioning, audit owner, dan approval gate                 |
+### DEC-035: Tepat Dua Role Aktif (17 Oktober 2026)
+
+Status: accepted, berdasarkan permintaan eksplisit pemilik produk.
+
+Runtime hanya Mahasiswa dan Admin Universitas UTY. Perekrut dan admin platform
+terpisah dihapus dari workspace, navigasi, undangan serta endpoint. Talent Portal
+dan kontak perekrut tidak lagi menjadi modul yang dapat diaktifkan dengan
+konfigurasi. Pilihan berbagi ke perekrut dihapus tanpa memperluas persetujuan
+lama menjadi publik. Akun, schema dan audit historis dipertahankan, tetapi
+membership/flag lama tidak memberikan role atau hak akses. DEC-034 tetap berlaku
+untuk universitas tunggal dan penggabungan admin; bagian perekrut lanjutan
+digantikan keputusan ini. Tidak menutup gate privasi, evaluasi, gamifikasi atau
+penggunaan data nyata yang masih terbuka.
+
+| ID      | Keputusan                                                                            | Dampak                                                                                                                                                                     |
+| ------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DEC-001 | Produk perlombaan adalah SATU, bukan competition-management system                   | Seluruh backlog membangun platform SATU                                                                                                                                    |
+| DEC-002 | Cakupan awal mengikuti proposal kecuali Bab 4.2, digantikan DEC-033 untuk rilis inti | Riwayat keputusan dipertahankan; prioritas rilis mengikuti fokus kesempatan kolaborasi                                                                                     |
+| DEC-003 | Satu kampus pilot lebih dahulu                                                       | Model tetap institution-aware, rollout lintas kampus ditunda                                                                                                               |
+| DEC-004 | Tidak ada email pada target flow                                                     | Identity memakai private username, password, dan verified WhatsApp phone                                                                                                   |
+| DEC-005 | Roster exact match memakai NIM dan verified phone                                    | Mismatch atau ambiguity masuk manual review                                                                                                                                |
+| DEC-006 | Platform admin menyetujui institution dan mengundang campus admin via WhatsApp       | Privileged role tidak tersedia lewat open registration                                                                                                                     |
+| DEC-007 | Fonnte adalah initial WhatsApp provider melalui backend adapter dan queue            | SATU membuat OTP; tidak memakai unofficial Fonnte package                                                                                                                  |
+| DEC-008 | In-app notification center adalah canonical                                          | WhatsApp hanya untuk approved important purpose                                                                                                                            |
+| DEC-009 | Campus reviewer memvalidasi contribution langsung                                    | Team confirmation tidak diperlukan                                                                                                                                         |
+| DEC-010 | Hybrid leaderboard memakai group default dan individual opt-in                       | Average verified XP, semester, cohort minimal 5, shared rank                                                                                                               |
+| DEC-011 | Inclusion tidak menjadi leaderboard input                                            | Mencegah stigma dan feedback loop yang tidak adil                                                                                                                          |
+| DEC-012 | Inclusion engine/UI production-ready di balik feature flag                           | Synthetic demo diperbolehkan, real activation menunggu governance                                                                                                          |
+| DEC-013 | Talent Portal memakai verified organization dan internal entitlement                 | Billing provider serta pricing di luar release                                                                                                                             |
+| DEC-014 | Academic integration baseline adalah contract plus sandbox                           | Real campus API adalah external gate                                                                                                                                       |
+| DEC-015 | Native Laravel Policies/Gates adalah authorization baseline                          | Role berasal dari membership dan tenant context                                                                                                                            |
+| DEC-016 | Gunakan mature library ketika fit dan kompatibel                                     | Issue wajib menyebut package atau framework-native decision                                                                                                                |
+| DEC-017 | GitHub issues/milestones adalah execution truth                                      | Phase files dan progress file dipensiunkan setelah migration audit                                                                                                         |
+| DEC-018 | Main branch dilindungi oleh required checks                                          | Force push dan penghapusan branch dinonaktifkan                                                                                                                            |
+| DEC-019 | Owner ditandai label role, bukan assignee sementara                                  | Assignee ditambahkan setelah komposisi tim final                                                                                                                           |
+| DEC-020 | Consumer boleh development dengan stacked branch setelah contract checkpoint         | Parent diberi label `contract-ready`; consumer memakai `Stacked on: #<issue>` dan base branch parent; merge tetap menunggu seluruh hard dependency closed                  |
+| DEC-021 | Satu institution pilot untuk rilis perlombaan                                        | Model tenant tetap institution-aware tanpa hardcoded single-tenant; ekspansi lintas institusi tidak memerlukan perubahan model keamanan                                    |
+| DEC-022 | Roster adalah milik institution dan disediakan dalam CSV/spreadsheet                 | Institution bertanggung jawab atas kebenaran data; SATU hanya mengimpor, memvalidasi, dan tidak memodifikasi roster yang sudah committed                                   |
+| DEC-023 | Exact match NIM dan verified phone pada roster aktif adalah jalur verifikasi utama   | Normalized NIM dan nomor WhatsApp E.164 dibandingkan terhadap roster; mismatch, ambiguity, atau record tidak aktif masuk manual review                                     |
+| DEC-024 | Active member didefinisikan per semester per institution                             | Student dengan verified affiliation, terdaftar pada roster semester aktif, serta memiliki minimal satu approved contribution pada semester tersebut                        |
+| DEC-025 | Manual review affiliation memiliki SLA 3 hari kerja                                  | Campus reviewer menindaklanjuti affiliation queue dalam 3 hari kerja; eskalasi ke platform admin setelah 5 hari kerja tanpa tindakan                                       |
+| DEC-026 | Roster import bersifat immutable setelah committed                                   | Setiap import menyimpan checksum, source filename, timestamp, dan batch identity; correction atau penambahan masuk sebagai batch baru, bukan modifikasi in-place           |
+| DEC-027 | Tenant isolation mencakup seluruh layer                                              | Institution-scoped queries, Policies, jobs, cache keys, storage paths, exports, dan Reverb channels; platform admin memakai explicit audited cross-tenant scope            |
+| DEC-028 | XP, badge, dan leaderboard policy versioned dalam dokumen terpisah                   | Seluruh aturan gamification dikonsolidasi di `docs/governance/gamification-policy.md` dengan semantic versioning, audit owner, dan approval gate                           |
+| DEC-034 | Satu universitas dan satu role Admin Universitas untuk operasi inti                  | Menggantikan alur pengelolaan banyak institusi dan pemisahan admin; model institution-aware, matriks akses, riwayat serta open gate dipertahankan; transisi U01 sampai U06 |
+
+## Pemfokusan Rilis Kesempatan Kolaborasi
+
+### DEC-033: Fokus yang Disetujui pada 9 Oktober 2026
+
+Pemilik produk secara eksplisit memilih masalah akses kesempatan bagi mahasiswa yang memiliki kemampuan tetapi belum terlihat atau mempunyai jaringan terbatas, lalu meminta pembaruan PRODUCT, PRD, serta tahapan implementasi.
+
+Keputusan ini menggantikan cakupan rilis luas pada DEC-002, bukan menghapus riwayat atau mengubah permission:
+
+- Rilis inti berpusat pada kemampuan/minat, peluang, pencocokan transparan, pengajuan, tim, kolaborasi, kontribusi individual, validasi kampus, dan pengakuan melalui portofolio.
+- Mahasiswa tanpa karya atau relasi terdahulu mempunyai jalur masuk melalui peluang pemula; keahlian yang dinyatakan tidak otomatis terverifikasi.
+- Produk tidak mendeteksi kepribadian, mengutamakan satu kepribadian, atau memakai popularitas sebagai kelayakan.
+- XP, badge, peringkat, Talent Portal, kredit/sinkronisasi akademik, serta graf dan engine inklusi lanjutan ditunda dari acceptance rilis inti. Kontrak modul tetap berlaku bila digunakan.
+- Operasi kampus untuk afiliasi, validasi, serta tindak lanjut kesempatan yang dipilih mahasiswa tetap relevan. Indikator jaringan atau sinyal terbatas tidak dapat dipakai di luar izin dan tata kelola.
+- Penundaan tidak menghapus data, consent, audit, listener, atau job. Implementasi transisi memerlukan inventaris dependensi, keputusan eksplisit, serta pemulihan.
+- Baseline dan target manfaat perlu disepakati serta diuji. Data sintetis tidak membuktikan dampak nyata atau diskriminasi kampus.
+- Open gate tidak ditutup oleh keputusan fokus. Gate institusi, standar bukti, privacy, retensi, analitik nyata, perekrut, gamifikasi, provider akademik, dan UAT tetap dimiliki pemiliknya.
+- Tahapan T01 sampai T10 pada ROADMAP adalah urutan outcome. Tidak mengubah milestone, status issue, atau GitHub Project secara otomatis.
+
+Rujukan: [PRODUCT](../../PRODUCT.md), [PRD](../product/PRD.md), [Business Flow](../product/BUSINESS_FLOW.md), dan [Roadmap](../implementation/ROADMAP.md). Spesifikasi lama yang belum diselaraskan merupakan kontrak modul existing atau lanjutan, bukan otorisasi memperluas rilis inti.
+
+## Universitas Tunggal dan Penggabungan Admin
+
+### DEC-034: Universitas Tunggal dan Admin Universitas (14 Oktober 2026)
+
+Pemilik produk menyampaikan keputusan tim untuk satu universitas dan
+penggabungan role admin platform dengan admin universitas, lalu meminta
+pengerjaan tahap 1 dari enam tahap transisi. Keputusan scope ini diterima;
+konfigurasi universitas, pemetaan akun dan perubahan runtime dilakukan
+bertahap melalui U02 sampai U06. Pada pelaksanaan U02, pemilik produk memilih
+Universitas Teknologi Yogyakarta dan meminta penggantian seeder akun lama
+dengan dataset baru yang mengikuti scope ini.
+
+- Produk inti melayani satu universitas per deployment. Kolaborasi lintas
+  program studi tetap tersedia. Pengelolaan banyak institusi, pendaftaran
+  institusi baru, persetujuan institusi dan perpindahan kampus keluar dari alur
+  inti. Cakupan pilot awal pada DEC-003 dan DEC-021 dalam tabel Accepted
+  Decisions di atas digantikan oleh cakupan ini; ekspansi memerlukan keputusan
+  produk baru.
+- Mahasiswa dan Admin Universitas merupakan dua role inti. Admin Universitas
+  menyatukan pekerjaan platform/kampus yang relevan. Beberapa akun dapat
+  mempunyai role yang sama dengan audit pelaku terpisah. Pemilik proyek
+  merupakan kewenangan resource mahasiswa, bukan role baru.
+- Provisioning admin pertama dilakukan melalui operasi deployment terkontrol;
+  admin berikutnya melalui undangan WhatsApp. Ini menggantikan pemisahan
+  persetujuan institusi dan undangan operator pada DEC-006. Registrasi publik
+  tetap mahasiswa; admin aktif terakhir terlindungi dari penonaktifan atau
+  pencabutan.
+- Admin mengelola universitas sasaran, roster, afiliasi, versi kontribusi yang
+  diajukan, katalog keahlian dan akses admin. Keputusan tim berada pada pemilik
+  proyek; validasi kontribusi sendiri dilarang. Tujuan akses bukti, izin
+  berbagi dan audit append-only tetap berlaku. Matriks kewenangan dimiliki
+  [PRD](../product/PRD.md#matriks-kewenangan-inti).
+- Konfigurasi server menentukan konteks universitas; ID klien tidak memberi
+  akses. `institution_id`, membership, query, Policy, job, cache, storage,
+  export dan broadcast tetap institution-scoped. DEC-027 tetap berlaku untuk
+  isolasi; kewenangan platform lintas institusi dalam target inti digantikan
+  oleh kewenangan Admin Universitas pada universitas sasaran saja.
+- Jalur eskalasi ke role admin platform terpisah pada DEC-025 digantikan oleh
+  penugasan Admin Universitas lain atau penanggung jawab universitas yang
+  berwenang. Nama penanggung jawab, SLA dan mekanisme eskalasi tetap menunggu
+  kesepakatan kampus; keputusan ini tidak mengesahkan SLA draft.
+- Akun, undangan dan data lama dipetakan secara eksplisit. Riwayat actor,
+  review, consent dan versi dipertahankan. Data institusi lain tidak otomatis
+  digabung atau dihapus. Jalur lama ditutup atau dialihkan dengan otorisasi
+  setelah dependensi serta pemulihan diuji, bukan hanya melalui menu.
+- Fokus kesempatan kolaborasi pada DEC-033 tetap berlaku. Perekrut,
+  gamifikasi, kredit/sinkronisasi dan analitik inklusi lanjutan tetap ditunda;
+  otorisasi serta pencabutan existing diinventaris sebelum penghentian flag
+  admin global. Role baru tidak otomatis menerima hak modul lanjutan.
+- Universitas sasaran adalah Universitas Teknologi Yogyakarta (UTY), dengan
+  slug konfigurasi `universitas-teknologi-yogyakarta`, bukan ID numerik tetap.
+  Persetujuan institusi, identitas admin nyata, standar bukti, retensi,
+  privacy, kebijakan pencocokan dan final UAT tetap menunggu keputusan yang
+  berwenang. Semua open gate terkait tetap terbuka. Tidak ada perubahan issue,
+  milestone atau PR melalui penetapan ini.
+- U02 menyediakan inventaris baca-saja dan provisioning CLI privat dengan
+  dry run default, WhatsApp terverifikasi, transaksi serta audit. Dataset UTY
+  lokal menggunakan identitas sintetis dan dua akun admin, tanpa akun admin
+  platform terpisah. Seeder akun lama diganti pada sumber kode/pemanggil;
+  data existing tidak direset atau dihapus, dan pemetaan akun lama tetap U03.
+- U03 menyatukan sumber izin admin UTY pada membership verified. Flag platform
+  dipertahankan hanya sebagai data transisi dan tidak memberi kewenangan.
+  Pemetaan akun lama harus memilih ID eksplisit, memakai dry run, cadangan
+  terenkripsi, audit dan pemulihan tanpa menimpa keputusan baru. Alias teknis
+  `campus_admin` tidak menjadi role lain. Administrasi perekrut/gamifikasi
+  default tertutup dan memerlukan izin konfigurasi tersendiri. Keputusan ini
+  tidak menutup gate institusi, privacy atau modul lanjutan.
+
+Riwayat keputusan lama dan spesifikasi modul lanjutan di bawah dipertahankan
+sebagai konteks transisi. Jika label platform admin atau campus admin muncul
+pada runtime existing, label tersebut bukan role tambahan pada target inti.
+U01 memperbarui kontrak; U02 sampai U06 menerapkan dan membuktikannya sesuai
+[Roadmap](../implementation/ROADMAP.md#transisi-universitas-tunggal-u01-sampai-u06).
 
 ## Approved Library Direction
+
+### Status Teknis Pencocokan T05
+
+Implementasi kebijakan `opportunity-v2-neutral` dan uji sintetis tidak menutup
+gate pilot. Dimensi konektivitas tetap netral dan tidak membaca metadata
+jaringan. Bobot empat dimensi harus diberikan eksplisit ketika membuat versi
+immutable baru; implementer tidak menetapkan bobot produksi atau mengubah
+versi existing. Aktivasi data nyata tetap memerlukan persetujuan kebijakan data
+terbatas, bobot, privacy, notice, retensi, UAT dan peninjauan fairness oleh
+pemilik berwenang. `MATCHING_PRODUCTION_APPROVED` default false adalah pengunci
+operasional, bukan bukti bahwa keputusan eksternal sudah diselesaikan.
 
 | Capability            | Baseline                                                  |
 | --------------------- | --------------------------------------------------------- |

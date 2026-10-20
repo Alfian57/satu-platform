@@ -11,6 +11,7 @@ use App\Models\PortfolioEntry;
 use App\Models\StudentProfile;
 use App\Models\User;
 use App\Support\Portfolio\PortfolioEntrySerializer;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
@@ -24,6 +25,7 @@ final class PortfolioEntryController extends Controller
         /** @var User $user */
         $user = $request->user();
         $query = PortfolioEntry::query()
+            ->withMax(['privacyChanges' => fn (Builder $changes): Builder => $changes->where('institution_id', $studentProfile->institution_id)], 'id')
             ->where('user_id', $studentProfile->user_id)
             ->where('institution_id', $studentProfile->institution_id)
             ->with([

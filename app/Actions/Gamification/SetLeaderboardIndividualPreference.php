@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Actions\Gamification;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Enums\InstitutionRosterStatus;
 use App\Enums\LeaderboardScopeType;
+use App\Jobs\RebuildLeaderboardProjections;
 use App\Models\Institution;
 use App\Models\LeaderboardPreference;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 final class SetLeaderboardIndividualPreference
@@ -23,6 +26,7 @@ final class SetLeaderboardIndividualPreference
         User $actor,
         Institution $institution,
         bool $isOptedIn,
+        int $expectedVersion,
     ): LeaderboardPreference {
         Gate::forUser($actor)->authorize(
             'create',
@@ -36,7 +40,7 @@ final class SetLeaderboardIndividualPreference
             throw new InvalidArgumentException('Leaderboard institution harus persisted.');
         }
 
-        return DB::transaction(function () use ($actor, $institution, $isOptedIn): LeaderboardPreference {
+        return DB::transaction(function () use ($actor, $institution, $isOptedIn, $expectedVersion): LeaderboardPreference {
             $lockedInstitution = Institution::query()
                 ->lockForUpdate()
                 ->whereKey($institution->getKey())
@@ -48,6 +52,14 @@ final class SetLeaderboardIndividualPreference
                 ->where('scope_type', LeaderboardScopeType::Individual->value)
                 ->lockForUpdate()
                 ->first();
+            $currentVersion = $preference === null ? 0 : $preference->version;
+
+            if ($currentVersion !== $expectedVersion) {
+                throw ValidationException::withMessages([
+                    'expected_version' => 'Pengaturan peringkat telah berubah di sesi lain. Periksa status terbaru sebelum mengirim perubahan lagi.',
+                ]);
+            }
+
             $before = $preference === null ? [] : [
                 'is_opted_in' => $preference->is_opted_in,
                 'version' => $preference->version,
@@ -83,6 +95,17 @@ final class SetLeaderboardIndividualPreference
                 ],
                 reason: $isOptedIn ? 'student_opt_in' : 'student_withdrawal',
             );
+
+            $semesters = $lockedInstitution->rosters()
+                ->where('status', InstitutionRosterStatus::Active->value)
+                ->pluck('semester')
+                ->merge($lockedInstitution->leaderboardPeriods()->pluck('semester'))
+                ->filter()->unique()->values();
+            DB::afterCommit(static function () use ($lockedInstitution, $semesters): void {
+                foreach ($semesters as $semester) {
+                    RebuildLeaderboardProjections::dispatch($lockedInstitution->getKey(), (string) $semester);
+                }
+            });
 
             return $preference->refresh();
         }, attempts: 3);

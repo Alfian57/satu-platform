@@ -1,45 +1,35 @@
-﻿export type OnboardingAccount = {
-    username: string;
-};
-
-export type OnboardingInstitution = {
-    id: number;
-    name: string;
-};
-
 export type OnboardingMembershipStatus =
     'unverified' | 'pending' | 'verified' | 'suspended';
-
-export type OnboardingMembership = {
-    institutionId: number;
-    institutionName: string;
-    status: OnboardingMembershipStatus;
-};
 
 export type OnboardingAffiliationStatus =
     'pending_review' | 'verified' | 'revision_required' | 'rejected';
 
-export type OnboardingAffiliation = {
-    status: OnboardingAffiliationStatus;
-    submittedAt: string;
-    needsRefresh: boolean;
-};
-
-export type OnboardingPhone = {
-    masked: string;
-    verified: boolean;
-};
-
-export type OnboardingPageProps = {
-    account: OnboardingAccount;
-    institutions: OnboardingInstitution[];
-    membership: OnboardingMembership | null;
-    studentProfileId: number | null;
-    affiliation: OnboardingAffiliation | null;
-    phone: OnboardingPhone | null;
-    canRequest: boolean;
-    canRetry: boolean;
-    membershipOutcome: OnboardingMembershipStatus | null;
-    affiliationOutcome: OnboardingAffiliationStatus | null;
-    submissionIssue: 'session_expired' | 'forbidden' | 'phone_required' | null;
+export type StudentActivation = {
+    required: boolean;
+    universityState: 'ready' | 'missing' | 'invalid' | 'unavailable';
+    institutionId: number | null;
+    institutionName: string | null;
+    membershipStatus: OnboardingMembershipStatus;
+    affiliationStatus: OnboardingAffiliationStatus | null;
+    matchResult:
+        | 'exact'
+        | 'no_match'
+        | 'ambiguous'
+        | 'inactive'
+        | 'roster_unavailable'
+        | 'stale_roster'
+        | null;
+    phoneVerified: boolean;
+    hasLegacyAffiliation: boolean;
+    canSubmitAffiliation: boolean;
+    needsRosterRefresh: boolean;
+    profileId: number | null;
+    studyProgram: string;
+    faculty: string;
+    admissionYear: number | null;
+    academicOptions: Record<string, string[]>;
+    bio: string;
+    skillsCount: number;
+    availabilityCount: number;
+    nim: string;
 };

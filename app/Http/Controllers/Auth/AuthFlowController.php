@@ -7,12 +7,14 @@ use App\Actions\Consent\ConsentRecorder;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Institution\AcceptInvitation;
+use App\Actions\Institution\ResolveConfiguredUniversity;
 use App\Actions\Otp\VerifyOtp;
 use App\Enums\InvitationStatus;
 use App\Enums\MessageStatus;
 use App\Enums\OtpChallengeStatus;
 use App\Enums\OtpPurpose;
 use App\Enums\PhoneNumberStatus;
+use App\Exceptions\InvalidUniversityConfiguration;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ResetRecoveredPasswordRequest;
 use App\Http\Requests\Auth\StartRecoveryRequest;
@@ -48,6 +50,7 @@ class AuthFlowController extends Controller
         private readonly CreateNewUser $createNewUser,
         private readonly ResetUserPassword $resetUserPassword,
         private readonly ConsentRecorder $consentRecorder,
+        private readonly ResolveConfiguredUniversity $resolveUniversity,
     ) {}
 
     /**
@@ -457,7 +460,7 @@ class AuthFlowController extends Controller
 
         return to_route('dashboard')->with(
             'status',
-            'Akses admin kampus berhasil diaktifkan.',
+            'Akses Admin Universitas berhasil diaktifkan.',
         );
     }
 
@@ -624,7 +627,13 @@ class AuthFlowController extends Controller
 
     private function findInvitation(string $token): ?PrivilegedInvitation
     {
+        try {
+            $university = $this->resolveUniversity->handle();
+        } catch (InvalidUniversityConfiguration) {
+            return null;
+        }
         $invitations = PrivilegedInvitation::query()
+            ->where('institution_id', $university->id)
             ->whereIn('status', [InvitationStatus::Issued, InvitationStatus::Expired])
             ->with('institution:id,name')
             ->get();

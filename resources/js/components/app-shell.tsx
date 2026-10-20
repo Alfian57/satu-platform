@@ -13,7 +13,7 @@ export function AppShell({ children }: Props) {
         <SidebarProvider defaultOpen={isOpen}>
             <a
                 href="#main-content"
-                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-background focus:p-4 focus:ring-2 focus:ring-ring"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-xl focus:border focus:border-border focus:bg-card focus:px-4 focus:py-3 focus:text-primary focus:shadow-md focus:outline-2 focus:outline-offset-2 focus:outline-ring"
             >
                 Lewati ke konten utama
             </a>

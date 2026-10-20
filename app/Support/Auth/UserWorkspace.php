@@ -10,16 +10,12 @@ final readonly class UserWorkspace
         public WorkspaceRole $role,
         public ?int $institutionId = null,
         public ?string $institutionName = null,
-        public ?int $recruiterOrganizationId = null,
-        public ?string $recruiterOrganizationName = null,
     ) {}
 
     public function routeName(): string
     {
         return match ($this->role) {
-            WorkspaceRole::PlatformAdmin => 'platform.affiliations.index',
             WorkspaceRole::CampusAdmin => 'campus.overview.show',
-            WorkspaceRole::Recruiter => 'recruiter.talent.search',
             WorkspaceRole::Student => 'dashboard',
         };
     }
@@ -37,8 +33,7 @@ final readonly class UserWorkspace
     /**
      * @return array{
      *     role: string,
-     *     institution: array{id: int, name: string}|null,
-     *     recruiterOrganization: array{id: int, name: string}|null
+     *     institution: array{id: int, name: string}|null
      * }
      */
     public function toArray(): array
@@ -50,12 +45,6 @@ final readonly class UserWorkspace
                 : [
                     'id' => $this->institutionId,
                     'name' => $this->institutionName,
-                ],
-            'recruiterOrganization' => $this->recruiterOrganizationId === null || $this->recruiterOrganizationName === null
-                ? null
-                : [
-                    'id' => $this->recruiterOrganizationId,
-                    'name' => $this->recruiterOrganizationName,
                 ],
         ];
     }

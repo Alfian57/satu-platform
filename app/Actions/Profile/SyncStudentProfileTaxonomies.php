@@ -9,6 +9,8 @@ use App\Models\ProfileInterest;
 use App\Models\ProfileSkill;
 use App\Models\SkillTaxonomy;
 use App\Models\StudentProfile;
+use App\Rules\ProfileEvidenceUrl;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 final class SyncStudentProfileTaxonomies
@@ -60,10 +62,19 @@ final class SyncStudentProfileTaxonomies
                 $this->invalid('skills.'.$index.'.evidence_metadata', 'Metadata evidence harus berupa object.');
             }
 
+            if ($metadata !== null) {
+                Validator::make(['skills' => [$index => ['evidence_metadata' => $metadata]]], [
+                    'skills.'.$index.'.evidence_metadata' => ['array', 'list', 'max:10'],
+                    'skills.'.$index.'.evidence_metadata.*' => ['array:title,url'],
+                    'skills.'.$index.'.evidence_metadata.*.title' => ['required', 'string', 'max:120'],
+                    'skills.'.$index.'.evidence_metadata.*.url' => ['bail', 'required', 'string', 'max:2048', 'url:https', new ProfileEvidenceUrl],
+                ])->validate();
+            }
+
             $ids[] = $taxonomyId;
             $rows[$taxonomyId] = [
                 'proficiency' => $proficiency->value,
-                'evidence_metadata' => $metadata,
+                ...(array_key_exists('evidence_metadata', $skill) ? ['evidence_metadata' => $metadata] : []),
             ];
         }
 

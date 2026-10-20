@@ -32,6 +32,7 @@ final class ContributionSerializer
 
         return [
             'id' => $contribution->getKey(),
+            'revision' => ContributionSnapshot::revision($contribution),
             'project' => [
                 'id' => $contribution->project->getKey(),
                 'title' => $contribution->project->title,

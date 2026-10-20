@@ -1,9 +1,23 @@
 import { useHttp } from '@inertiajs/react';
-import { Check, Save } from 'lucide-react';
-import { useState } from 'react';
+import { Save, SlidersHorizontal } from 'lucide-react';
+import { useRef, useState } from 'react';
+import {
+    PortfolioFormFeedback,
+    portfolioFieldError,
+} from '@/components/portfolio/portfolio-form-feedback';
+import type { PortfolioErrorMap } from '@/components/portfolio/portfolio-form-feedback';
+import {
+    portfolioVisibilityLabel,
+    portfolioVisibilityOptions,
+} from '@/components/portfolio/portfolio-presentation';
+import {
+    PortfolioPrivacyRecoveryNotice,
+    usePortfolioPrivacyRecovery,
+} from '@/components/portfolio/portfolio-privacy-recovery';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { show as showEntry } from '@/routes/student-profiles/portfolio';
 import { update as updateEntryVisibility } from '@/routes/student-profiles/portfolio/visibility';
 import type {
     PortfolioEntry,
@@ -12,159 +26,219 @@ import type {
     PortfolioVisibility,
 } from '@/types/portfolio';
 
-const entryVisibilityOptions: Array<{
-    value: PortfolioVisibility;
-    label: string;
-}> = [
-    { value: 'private', label: 'Hanya saya' },
-    { value: 'institution', label: 'Kampus' },
-    { value: 'recruiter', label: 'Perekrut' },
-    { value: 'public', label: 'Publik' },
-];
-
 type Props = {
     entry: PortfolioEntry;
     profileId: number;
     onUpdated: (entry: PortfolioEntry) => void;
     dataTestPrefix?: string;
+    onAccessRevoked?: () => void;
 };
 
-type ErrorMap = Record<string, unknown>;
-
-function firstError(errors: ErrorMap): string | null {
-    const value = errors.visibility;
-
-    if (Array.isArray(value) && typeof value[0] === 'string') {
-        return value[0];
-    }
-
-    return typeof value === 'string' ? value : null;
-}
-
 export function PortfolioEntryVisibilityControl({
-    entry: initialEntry,
+    entry,
     profileId,
     onUpdated,
-    dataTestPrefix = `portfolio-entry-${initialEntry.id}`,
+    dataTestPrefix = `portfolio-entry-${entry.id}`,
+    onAccessRevoked,
 }: Props) {
-    const [entry, setEntry] = useState(initialEntry);
     const [actionMessage, setActionMessage] = useState<string | null>(null);
-    const [actionError, setActionError] = useState<string | null>(null);
+    const commandLock = useRef(false);
+    const recovery = usePortfolioPrivacyRecovery<PortfolioEntry>({
+        resourceId: entry.id,
+        readUrl: showEntry({
+            studentProfile: profileId,
+            portfolioEntry: entry.id,
+        }).url,
+        onRead: onUpdated,
+        onAccessRevoked,
+    });
     const form = useHttp<
         PortfolioEntryVisibilityPayload,
         PortfolioEntryApiResponse
     >({
-        visibility: initialEntry.visibility,
-        expected_updated_at: initialEntry.updated_at,
+        visibility: entry.visibility,
+        expected_updated_at: entry.updated_at,
+        expected_privacy_revision: entry.privacy_revision,
     });
-    const validationError = firstError(form.errors as ErrorMap);
+    const errors = form.errors as PortfolioErrorMap;
+    const validationError = portfolioFieldError(errors, 'visibility');
+    const isStale =
+        form.data.expected_privacy_revision !== entry.privacy_revision;
+    const hasChanges = form.data.visibility !== entry.visibility;
+    const selection = portfolioVisibilityOptions.find(
+        (option) => option.value === form.data.visibility,
+    );
+
+    function applyLatestSettings(): void {
+        form.setData({
+            visibility: entry.visibility,
+            expected_updated_at: entry.updated_at,
+            expected_privacy_revision: entry.privacy_revision,
+        });
+        form.clearErrors();
+        setActionMessage(null);
+    }
 
     function submit(event: React.FormEvent<HTMLFormElement>): void {
         event.preventDefault();
+
+        if (
+            commandLock.current ||
+            form.processing ||
+            isStale ||
+            recovery.blocked
+        ) {
+            return;
+        }
+
         setActionMessage(null);
-        setActionError(null);
-        form.transform((data) => ({
-            ...data,
-            expected_updated_at: entry.updated_at,
-        }));
+        commandLock.current = true;
         form.patch(
             updateEntryVisibility({
                 studentProfile: profileId,
                 portfolioEntry: entry.id,
             }).url,
             {
-                onHttpException: (response: { status: number }) => {
-                    setActionError(
-                        response.status === 409
-                            ? 'Entry berubah di sesi lain. Muat ulang halaman lalu coba lagi.'
-                            : response.status === 403
-                              ? 'Audiens entry ini sudah tidak dapat diubah.'
-                              : 'Audiens entry belum tersimpan. Coba lagi.',
-                    );
-
-                    return false;
-                },
-                onNetworkError: () => {
-                    setActionError(
-                        'Audiens entry belum tersimpan. Periksa koneksi lalu coba lagi.',
-                    );
-
-                    return false;
-                },
+                onHttpException: recovery.onHttpException,
+                onNetworkError: recovery.onNetworkError,
             },
         )
             .then((response) => {
-                setEntry(response.data);
+                form.setData({
+                    visibility: response.data.visibility,
+                    expected_updated_at: response.data.updated_at,
+                    expected_privacy_revision: response.data.privacy_revision,
+                });
                 onUpdated(response.data);
-                setActionMessage('Audiens entry sudah diperbarui.');
+                setActionMessage('Jangkauan karya sudah tersimpan.');
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(() => {
+                commandLock.current = false;
+            });
     }
 
     return (
         <form
-            className="grid gap-3 border-t border-slate-100 pt-4 md:border-t-0 md:border-l md:pt-0 md:pl-5"
+            className="grid min-w-0 gap-4 rounded-2xl border border-primary/15 bg-linear-to-br from-card to-accent/30 p-4 sm:p-5"
+            aria-label={`Jangkauan karya: ${entry.title}`}
             aria-busy={form.processing}
             onSubmit={submit}
-            data-test={`${dataTestPrefix}-visibility-form`}
+            data-test={dataTestPrefix + '-visibility-form'}
         >
-            <div className="grid gap-1">
-                <Label htmlFor={`${dataTestPrefix}-visibility`}>
-                    Jangkauan karya
-                </Label>
-                <p className="text-xs leading-5 text-muted-foreground">
-                    Status verifikasi mengikuti sumber contribution.
-                </p>
+            <div className="flex min-w-0 items-start gap-2">
+                <SlidersHorizontal
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0 text-primary"
+                />
+                <div className="grid min-w-0 gap-1">
+                    <Label htmlFor={dataTestPrefix + '-visibility'}>
+                        Jangkauan karya
+                    </Label>
+                    <p
+                        className="text-xs leading-5 text-muted-foreground"
+                        data-test={dataTestPrefix + '-saved'}
+                    >
+                        Tersimpan:{' '}
+                        <span className="font-semibold text-foreground">
+                            {portfolioVisibilityLabel(entry.visibility)}
+                        </span>
+                    </p>
+                </div>
             </div>
-            <div className="flex flex-col gap-3">
-                <select
-                    id={`${dataTestPrefix}-visibility`}
-                    className="min-h-control-md w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-hidden transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger hover:border-blue-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={form.data.visibility}
-                    onChange={(event) =>
-                        form.setData(
-                            'visibility',
-                            event.target.value as PortfolioVisibility,
-                        )
-                    }
-                    disabled={form.processing}
-                    data-test={`${dataTestPrefix}-visibility`}
-                >
-                    {entryVisibilityOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
-                    ))}
-                </select>
-                <Button
-                    type="submit"
-                    variant="outline"
-                    className="w-fit cursor-pointer border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed"
-                    disabled={form.processing}
-                    data-test={`${dataTestPrefix}-visibility-save`}
-                >
-                    {form.processing ? (
-                        <Spinner aria-hidden="true" />
-                    ) : (
-                        <Save aria-hidden="true" />
-                    )}
-                    Simpan audiens
-                </Button>
-            </div>
-            {(validationError || actionError) && (
-                <p role="alert" className="text-sm leading-6 text-correction">
-                    {actionError ?? validationError}
-                </p>
-            )}
-            {actionMessage && (
+            <select
+                id={dataTestPrefix + '-visibility'}
+                className="h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                value={form.data.visibility}
+                onChange={(event) => {
+                    form.setData(
+                        'visibility',
+                        event.target.value as PortfolioVisibility,
+                    );
+                    form.clearErrors('visibility');
+                    setActionMessage(null);
+                }}
+                disabled={form.processing || recovery.blocked}
+                aria-invalid={Boolean(validationError)}
+                aria-describedby={
+                    dataTestPrefix +
+                    '-hint' +
+                    (validationError ? ' ' + dataTestPrefix + '-error' : '')
+                }
+                data-test={dataTestPrefix + '-visibility'}
+            >
+                {portfolioVisibilityOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                        {option.label}
+                    </option>
+                ))}
+            </select>
+            <p
+                id={dataTestPrefix + '-hint'}
+                className="text-xs leading-5 text-muted-foreground"
+            >
+                {selection?.description} Pengaturan profil dan izin pembaca
+                tetap berlaku.
+            </p>
+            {hasChanges && !isStale && (
                 <p
                     role="status"
-                    className="flex items-center gap-2 text-sm text-verified"
+                    className="text-xs font-semibold text-primary"
+                    data-test={dataTestPrefix + '-unsaved'}
                 >
-                    <Check aria-hidden="true" className="size-4" />
-                    {actionMessage}
+                    Pilihan baru belum disimpan.
                 </p>
             )}
+            <PortfolioPrivacyRecoveryNotice
+                recovery={recovery}
+                prefix={dataTestPrefix}
+            />
+            {isStale && !recovery.blocked && (
+                <div
+                    role="status"
+                    className="grid gap-3 rounded-xl border border-pending/30 bg-pending-subtle p-3 text-sm leading-6 text-pending-subtle-foreground"
+                    data-test={dataTestPrefix + '-stale'}
+                >
+                    <p>
+                        Pengaturan tersimpan berubah. Ambil pengaturan terbaru
+                        sebelum menyimpan kembali.
+                    </p>
+                    <Button
+                        variant="outline"
+                        type="button"
+                        className="h-auto min-h-11 whitespace-normal"
+                        onClick={applyLatestSettings}
+                        disabled={form.processing}
+                    >
+                        Gunakan pengaturan terbaru
+                    </Button>
+                </div>
+            )}
+            <PortfolioFormFeedback
+                errors={errors}
+                actionError={recovery.error}
+                uncertain={recovery.needsCheck}
+                actionMessage={actionMessage}
+                processing={form.processing}
+                processingMessage="Menyimpan jangkauan karya..."
+                prefix={dataTestPrefix}
+            />
+            <Button
+                type="submit"
+                className="h-auto min-h-11 w-full py-3 whitespace-normal"
+                disabled={form.processing || isStale || recovery.blocked}
+                data-test={dataTestPrefix + '-visibility-save'}
+            >
+                {form.processing ? (
+                    <Spinner
+                        aria-hidden="true"
+                        className="motion-reduce:animate-none"
+                    />
+                ) : (
+                    <Save aria-hidden="true" />
+                )}
+                Simpan jangkauan
+            </Button>
         </form>
     );
 }

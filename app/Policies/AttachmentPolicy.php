@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Enums\AttachmentPurpose;
+use App\Enums\ContributionStatus;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\ProjectStatus;
 use App\Enums\TeamMembershipStatus;
 use App\Models\Attachment;
+use App\Models\ContributionEvidence;
 use App\Models\Project;
 use App\Models\TeamMembership;
 use App\Models\User;
@@ -118,7 +120,13 @@ final class AttachmentPolicy
     ): bool {
         if (
             $attachment !== null
-            && $attachment->purpose !== AttachmentPurpose::Evidence
+            && ($attachment->purpose !== AttachmentPurpose::Evidence
+                || ! ContributionEvidence::query()->where('attachment_id', $attachment->getKey())
+                    ->whereHas('contributionVersion.contribution', fn ($query) => $query
+                        ->where('project_id', $project->getKey())
+                        ->where('institution_id', $project->institution_id)
+                        ->where('status', '!=', ContributionStatus::Draft))
+                    ->exists())
         ) {
             return false;
         }

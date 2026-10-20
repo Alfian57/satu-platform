@@ -12,7 +12,7 @@ type ProjectCreateProps = {
 export default function ProjectCreate({ institution }: ProjectCreateProps) {
     return (
         <>
-            <Head title="Buat project" />
+            <Head title="Buat proyek" />
             <ProjectEditor mode="create" institution={institution} />
         </>
     );
@@ -25,7 +25,7 @@ ProjectCreate.layout = {
             href: projectsIndex(),
         },
         {
-            title: 'Buat project',
+            title: 'Buat proyek',
         },
     ],
 };

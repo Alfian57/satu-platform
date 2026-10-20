@@ -13,12 +13,14 @@ use App\Actions\Team\RejectTeamJoinRequest;
 use App\Actions\Team\RemoveTeamMember;
 use App\Actions\Team\RequestToJoinTeam;
 use App\Actions\Team\RevokeTeamInvitation;
+use App\Actions\Team\WithdrawTeamJoinRequest;
 use App\Exceptions\InvalidTeamTransition;
 use App\Http\Requests\Team\InviteTeamMemberRequest;
 use App\Http\Requests\Team\LeaveTeamRequest;
 use App\Http\Requests\Team\RemoveTeamMemberRequest;
 use App\Http\Requests\Team\RequestToJoinTeamRequest;
 use App\Http\Requests\Team\TeamDecisionRequest;
+use App\Http\Requests\Team\WithdrawTeamJoinRequestRequest;
 use App\Models\Project;
 use App\Models\TeamInvitation;
 use App\Models\TeamJoinRequest;
@@ -59,12 +61,16 @@ final class TeamTransitionController extends Controller
         /** @var User $user */
         $user = $request->user();
         $data = $request->validated();
-        $joinRequest = $requestToJoin->handle(
-            requester: $user,
-            project: $project,
-            projectRoleId: $data['project_role_id'] ?? null,
-            message: $data['message'] ?? null,
-        );
+        try {
+            $joinRequest = $requestToJoin->handle(
+                requester: $user,
+                project: $project,
+                projectRoleId: $data['project_role_id'] ?? null,
+                message: 'Minat: '.$data['interest']."\nKemampuan atau kebutuhan belajar: ".$data['skills']."\nKetersediaan: ".$data['availability'],
+            );
+        } catch (InvalidTeamTransition $exception) {
+            $this->throwTransitionValidation($exception);
+        }
 
         return response()->json(['data' => $this->requestPayload($joinRequest)], 201);
     }
@@ -124,7 +130,7 @@ final class TeamTransitionController extends Controller
         $user = $request->user();
 
         try {
-            $joinRequest = $accept->handle($user, $teamJoinRequest);
+            $joinRequest = $accept->handle($user, $teamJoinRequest, $request->validated()['reason'], $request->validated()['expected_revision']);
         } catch (InvalidTeamTransition $exception) {
             $this->throwTransitionValidation($exception);
         }
@@ -141,7 +147,7 @@ final class TeamTransitionController extends Controller
         $user = $request->user();
 
         try {
-            $joinRequest = $reject->handle($user, $teamJoinRequest, $request->validated()['reason'] ?? null);
+            $joinRequest = $reject->handle($user, $teamJoinRequest, $request->validated()['reason'], $request->validated()['expected_revision']);
         } catch (InvalidTeamTransition $exception) {
             $this->throwTransitionValidation($exception);
         }
@@ -199,6 +205,15 @@ final class TeamTransitionController extends Controller
             'responded_at' => $invitation->responded_at?->toIso8601String(),
             'response_reason' => $invitation->response_reason,
         ];
+    }
+
+    public function withdrawJoinRequest(WithdrawTeamJoinRequestRequest $request, TeamJoinRequest $teamJoinRequest, WithdrawTeamJoinRequest $withdraw): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $joinRequest = $withdraw->handle($user, $teamJoinRequest, $request->validated()['expected_revision']);
+
+        return response()->json(['data' => $this->requestPayload($joinRequest)]);
     }
 
     /**

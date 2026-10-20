@@ -38,7 +38,7 @@ final class RecruiterVerificationQueue
      */
     public function query(User $admin, ?string $status = null): Builder
     {
-        if (! $admin->is_platform_admin) {
+        if (! $admin->canAdministerAdvancedModule('recruiter')) {
             throw new AuthorizationException('Only platform administrators can access the recruiter verification queue.');
         }
 

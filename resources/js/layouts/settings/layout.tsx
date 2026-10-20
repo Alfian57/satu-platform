@@ -1,108 +1,181 @@
-import { Link } from '@inertiajs/react';
-import { CircleUserRound, ShieldCheck, Sun } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import {
+    ArrowUpRight,
+    Check,
+    CircleUserRound,
+    Fingerprint,
+    Settings2,
+    ShieldCheck,
+    Sun,
+} from 'lucide-react';
 import type { PropsWithChildren } from 'react';
+import { AppPage } from '@/components/app-page';
+import { CampusOperationHeader } from '@/components/campus-operation-layout';
+import StudentMenuHero from '@/components/student-menu-hero';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import { cn, toUrl } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
-import { edit } from '@/routes/profile';
+import { edit as editDataRights } from '@/routes/data-rights';
+import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
-import type { NavItem } from '@/types';
 
-const sidebarNavItems: NavItem[] = [
+const settingsItems = [
     {
+        key: 'profile',
         title: 'Profil',
-        href: edit(),
+        description: 'Nama dan identitas masuk',
+        href: editProfile(),
         icon: CircleUserRound,
     },
     {
+        key: 'security',
         title: 'Keamanan',
+        description: 'Password dan akses pribadi',
         href: editSecurity(),
         icon: ShieldCheck,
     },
     {
+        key: 'appearance',
         title: 'Tampilan',
+        description: 'Kenali ruang kerjamu',
         href: editAppearance(),
         icon: Sun,
+    },
+    {
+        key: 'data-rights',
+        title: 'Hak Data',
+        description: 'Arsip dan kendali data',
+        href: editDataRights(),
+        icon: Fingerprint,
     },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
-    const { isCurrentOrParentUrl } = useCurrentUrl();
+    const { isCurrentUrl } = useCurrentUrl();
+    const user = usePage().props.auth.user;
+    const isStudent = user?.workspace.role === 'student';
 
     return (
-        <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-6 lg:px-8">
-            <header className="relative isolate overflow-hidden rounded-2xl border border-blue-100 bg-white px-5 py-6 sm:px-7 sm:py-7">
-                <div
-                    aria-hidden="true"
-                    className="absolute -top-28 -right-24 size-72 rounded-full bg-blue-100/70 blur-3xl"
-                />
-                <div className="relative grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,0.46fr)] lg:items-stretch lg:gap-10">
-                    <div className="min-w-0">
-                        <p className="flex items-center gap-2 text-xs font-bold tracking-[0.13em] text-blue-700 uppercase">
-                            <span className="size-1.5 rounded-full bg-blue-600" />
-                            Akun SATU
-                        </p>
-                        <h1 className="mt-4 max-w-[22ch] text-headline font-bold tracking-[-0.035em] text-balance text-slate-950">
-                            Kelola akun dengan lebih tenang dan terkendali.
-                        </h1>
-                        <p className="mt-3 max-w-[66ch] text-sm leading-6 text-slate-600">
-                            Perbarui identitas akun, jaga keamanan password, dan
-                            pahami preferensi tampilan yang digunakan ruang
-                            kerja SATU.
-                        </p>
-                    </div>
+        <AppPage>
+            <div
+                className="settings-workspace grid w-full min-w-0 gap-6"
+                data-test="settings-root"
+            >
+                {!isStudent ? (
+                    <CampusOperationHeader
+                        theme="account"
+                        icon={Settings2}
+                        title="Pengaturan akun"
+                        description="Kelola identitas masuk, password dan hak data akun pribadi. Pengaturan universitas dikelola terpisah."
+                        institution={user?.workspace.institution?.name ?? null}
+                        testId="settings-header"
+                    />
+                ) : (
+                    <StudentMenuHero
+                        icon={Settings2}
+                        eyebrow="Pengaturan akun"
+                        title="Ruang pribadimu, kendalimu."
+                        description="Kelola identitas, jaga akses akun, dan tentukan kendali atas data pribadimu. Satu tempat, tertata untukmu."
+                        pose="account-care"
+                        theme="settings"
+                        testId="settings-header"
+                        note={
+                            isStudent
+                                ? 'Pengaturan ini tidak mengubah afiliasi atau jangkauan portofoliomu.'
+                                : 'Pengaturan akun pribadi terpisah dari Pengaturan universitas.'
+                        }
+                    >
+                        <span className="inline-flex items-center gap-2 rounded-full border border-satu-orange-border bg-satu-orange-soft px-3 py-2 text-xs font-medium text-satu-orange-ink">
+                            <Fingerprint
+                                aria-hidden="true"
+                                className="size-4 shrink-0"
+                            />
+                            Akun pribadi
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                            Pilih bagian yang ingin kamu kelola.
+                        </span>
+                    </StudentMenuHero>
+                )}
+                <nav
+                    aria-label="Kategori pengaturan akun"
+                    className="grid min-w-0 grid-cols-2 gap-3 xl:grid-cols-4"
+                    data-test="settings-navigation"
+                >
+                    {settingsItems.map((item) => {
+                        const active = isCurrentUrl(item.href);
 
-                    <div className="flex flex-col justify-end border-t border-slate-200 pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
-                        <p className="text-xs font-bold tracking-[0.13em] text-slate-500 uppercase">
-                            Ruang pribadi
-                        </p>
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
-                            Perubahan identitas dan password hanya berlaku untuk
-                            akunmu. Pengaturan karya dan afiliasi tetap dikelola
-                            pada ruang masing-masing.
-                        </p>
-                    </div>
-                </div>
-            </header>
-
-            <div className="mt-6 grid gap-6 lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:items-start">
-                <aside className="rounded-2xl border border-slate-200 bg-white p-3">
-                    <nav className="grid gap-1" aria-label="Pengaturan">
-                        {sidebarNavItems.map((item, index) => (
+                        return (
                             <Link
-                                key={`${toUrl(item.href)}-${index}`}
+                                key={item.key}
                                 href={item.href}
                                 prefetch
+                                aria-current={active ? 'page' : undefined}
+                                data-test={'settings-nav-' + item.key}
                                 className={cn(
-                                    'flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors duration-fast ease-ledger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
-                                    isCurrentOrParentUrl(item.href)
-                                        ? 'bg-blue-50 text-blue-700'
-                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950',
+                                    'group flex min-h-28 min-w-0 cursor-pointer flex-col gap-3 rounded-[20px] border p-4 text-left transition-colors duration-standard focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none sm:p-5',
+                                    active
+                                        ? 'border-primary/25 bg-accent/70'
+                                        : 'border-border bg-card hover:border-primary/25 hover:bg-accent/30',
                                 )}
                             >
-                                {item.icon && (
+                                <span className="flex w-full items-center justify-between gap-2">
                                     <span
                                         className={cn(
-                                            'flex size-8 shrink-0 items-center justify-center rounded-lg',
-                                            isCurrentOrParentUrl(item.href)
-                                                ? 'bg-white text-blue-700'
-                                                : 'bg-slate-100 text-slate-500',
+                                            'grid size-10 shrink-0 place-items-center rounded-xl border',
+                                            active
+                                                ? 'border-primary/10 bg-white text-primary'
+                                                : 'border-border bg-background text-muted-foreground',
                                         )}
                                     >
                                         <item.icon
                                             aria-hidden="true"
-                                            className="size-4"
+                                            className="size-5"
+                                            strokeWidth={1.75}
                                         />
                                     </span>
-                                )}
-                                <span>{item.title}</span>
+                                    {active ? (
+                                        <span className="flex items-center gap-1 text-[11px] font-semibold text-primary">
+                                            <Check
+                                                aria-hidden="true"
+                                                className="size-3.5"
+                                            />
+                                            Aktif
+                                        </span>
+                                    ) : (
+                                        <ArrowUpRight
+                                            aria-hidden="true"
+                                            className="size-4 text-muted-foreground"
+                                        />
+                                    )}
+                                </span>
+                                <span className="min-w-0">
+                                    <span
+                                        className={cn(
+                                            'block text-sm font-semibold',
+                                            active
+                                                ? 'text-primary'
+                                                : 'text-foreground',
+                                        )}
+                                    >
+                                        {item.title}
+                                    </span>
+                                    <span className="mt-1 block text-xs leading-5 wrap-anywhere text-muted-foreground">
+                                        {item.description}
+                                    </span>
+                                </span>
                             </Link>
-                        ))}
-                    </nav>
-                </aside>
-
-                <main className="min-w-0 lg:max-w-3xl">{children}</main>
+                        );
+                    })}
+                </nav>
+                <div
+                    id="settings-content"
+                    className="min-w-0"
+                    data-test="settings-content"
+                >
+                    {children}
+                </div>
             </div>
-        </div>
+        </AppPage>
     );
 }

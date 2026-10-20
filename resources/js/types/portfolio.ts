@@ -1,5 +1,4 @@
-export type PortfolioVisibility =
-    'private' | 'institution' | 'recruiter' | 'public';
+export type PortfolioVisibility = 'private' | 'public';
 
 export type PortfolioVerificationLevel =
     'self_reported' | 'team_confirmed' | 'institution_verified';
@@ -9,6 +8,7 @@ export type PortfolioEntryStatus =
 
 export type PortfolioEntry = {
     id: number;
+    privacy_revision: string;
     title: string;
     summary: string;
     verification_level: PortfolioVerificationLevel;
@@ -29,6 +29,7 @@ export type PortfolioEntry = {
 
 export type PortfolioProfile = {
     id: number;
+    privacy_revision: string;
     institution: {
         id: number;
         name: string;
@@ -42,11 +43,13 @@ export type PortfolioProfileVisibilityPayload = {
     portfolio_visibility: PortfolioVisibility;
     recruiter_discoverable: boolean;
     expected_updated_at?: string;
+    expected_privacy_revision: string;
 };
 
 export type PortfolioEntryVisibilityPayload = {
     visibility: PortfolioVisibility;
     expected_updated_at?: string;
+    expected_privacy_revision: string;
 };
 
 export type PortfolioIndexPageProps = {
@@ -73,7 +76,11 @@ export type PortfolioEntryApiResponse = {
 export type PortfolioProfileApiResponse = {
     data: Pick<
         PortfolioProfile,
-        'id' | 'portfolio_visibility' | 'recruiter_discoverable' | 'updated_at'
+        | 'id'
+        | 'portfolio_visibility'
+        | 'recruiter_discoverable'
+        | 'updated_at'
+        | 'privacy_revision'
     >;
 };
 

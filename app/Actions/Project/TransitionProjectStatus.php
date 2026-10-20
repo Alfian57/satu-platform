@@ -6,8 +6,8 @@ namespace App\Actions\Project;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\ProjectStatus;
+use App\Events\MatchingInputsChanged;
 use App\Exceptions\InvalidProjectTransition;
-use App\Jobs\Matching\RefreshProjectRecommendations;
 use App\Models\Institution;
 use App\Models\Project;
 use App\Models\User;
@@ -34,7 +34,7 @@ final class TransitionProjectStatus
     ): Project {
         Gate::forUser($actor)->authorize('transition', $project);
 
-        $result = DB::transaction(function () use (
+        return DB::transaction(function () use (
             $actor,
             $project,
             $targetStatus,
@@ -86,15 +86,10 @@ final class TransitionProjectStatus
                 );
             }
 
+            MatchingInputsChanged::dispatch($lockedProject->institution_id);
+
             return $lockedProject->refresh();
         }, attempts: 3);
-
-        // Seed candidate recommendations as soon as the project opens.
-        if ($targetStatus === ProjectStatus::Open) {
-            RefreshProjectRecommendations::dispatch($project->getKey());
-        }
-
-        return $result;
     }
 
     /**

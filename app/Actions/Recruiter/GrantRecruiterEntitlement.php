@@ -37,7 +37,7 @@ final class GrantRecruiterEntitlement
         ?Carbon $endsAt = null,
         ?string $reason = null,
     ): RecruiterEntitlement {
-        if (! $issuer->is_platform_admin) {
+        if (! $issuer->canAdministerAdvancedModule('recruiter')) {
             throw new AuthorizationException('Only platform administrators can grant recruiter entitlements.');
         }
 

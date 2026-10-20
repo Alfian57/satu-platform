@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Attachment;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Events\WorkspaceAttachmentChanged;
 use App\Events\WorkspaceDiscussionChanged;
 use App\Models\Attachment;
 use App\Models\Institution;
@@ -26,14 +27,13 @@ final class DeleteAttachment
         Gate::forUser($actor)->authorize('delete', $attachment);
 
         DB::transaction(function () use ($actor, $attachment): void {
-            $lockedAttachment = Attachment::query()
-                ->whereKey($attachment->getKey())
-                ->lockForUpdate()
-                ->firstOrFail();
             $lockedProject = Project::query()
                 ->lockForUpdate()
-                ->whereKey($lockedAttachment->project_id)
+                ->whereKey($attachment->project_id)
                 ->firstOrFail();
+            $lockedAttachment = Attachment::query()
+                ->forProject($lockedProject)->whereKey($attachment->getKey())
+                ->lockForUpdate()->firstOrFail();
 
             Gate::forUser($actor)->authorize('delete', $lockedAttachment->load('project'));
 
@@ -59,6 +59,15 @@ final class DeleteAttachment
                     projectId: (int) $lockedProject->getKey(),
                     resourceId: (int) $lockedAttachment->message_id,
                     operation: 'discussion.attachment.deleted',
+                    version: null,
+                    occurredAt: now()->toIso8601String(),
+                );
+            } else {
+                WorkspaceAttachmentChanged::dispatch(
+                    institutionId: (int) $lockedProject->institution_id,
+                    projectId: (int) $lockedProject->getKey(),
+                    resourceId: (int) $lockedAttachment->getKey(),
+                    operation: 'attachment.deleted',
                     version: null,
                     occurredAt: now()->toIso8601String(),
                 );

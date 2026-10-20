@@ -11,6 +11,7 @@ use App\Models\RecruiterSavedCandidate;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 final class UnsaveCandidate
 {
@@ -28,15 +29,15 @@ final class UnsaveCandidate
         RecruiterOrganization $organization,
         int $candidateProjectionId,
     ): bool {
-        if (! $recruiter->is_platform_admin) {
-            $isMember = $organization->memberships()
-                ->where('user_id', $recruiter->id)
-                ->where('status', RecruiterMembershipStatus::Active)
-                ->exists();
+        Gate::forUser($recruiter)->authorize('view', $organization);
 
-            if (! $isMember) {
-                throw new AuthorizationException('Anda bukan anggota aktif dari organization perekrut ini.');
-            }
+        $isMember = $organization->memberships()
+            ->where('user_id', $recruiter->id)
+            ->where('status', RecruiterMembershipStatus::Active)
+            ->exists();
+
+        if (! $isMember) {
+            throw new AuthorizationException('Anda bukan anggota aktif dari organization perekrut ini.');
         }
 
         return DB::transaction(function () use ($recruiter, $organization, $candidateProjectionId) {

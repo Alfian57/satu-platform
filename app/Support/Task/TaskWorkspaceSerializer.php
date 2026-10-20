@@ -88,6 +88,7 @@ final class TaskWorkspaceSerializer
                 ->all(),
             'created_at' => $task->created_at->toIso8601String(),
             'updated_at' => $task->updated_at->toIso8601String(),
+            'revision' => TaskSnapshot::revision($task),
         ];
     }
 }

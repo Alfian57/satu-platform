@@ -35,8 +35,8 @@ final class ContributionPolicy
 
         return $project !== null
             && (
-                $this->canAccessProject($user, $project)
-                || $this->isCampusAdmin($user, $contribution)
+                ($contribution->owner_id === $user->getKey() && $this->canAccessProject($user, $project))
+                || ($contribution->status !== ContributionStatus::Draft && $this->isCampusAdmin($user, $contribution))
             );
     }
 
@@ -64,6 +64,7 @@ final class ContributionPolicy
     public function review(User $user, Contribution $contribution): bool
     {
         return $this->projectFor($contribution) !== null
+            && $contribution->owner_id !== $user->getKey()
             && $contribution->status === ContributionStatus::Pending
             && $this->isCampusAdmin($user, $contribution);
     }

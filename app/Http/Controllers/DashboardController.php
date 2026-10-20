@@ -6,23 +6,33 @@ namespace App\Http\Controllers;
 
 use App\Actions\Auth\ResolveUserWorkspace;
 use App\Actions\Matching\RecommendationQuery;
-use App\Enums\InstitutionMembershipRole;
+use App\Actions\Profile\ResolveStudentMembership;
+use App\Actions\Profile\StudentActivationSummary;
+use App\Enums\ContributionStatus;
 use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionStatus;
 use App\Enums\ProjectStatus;
+use App\Enums\TaskStatus;
+use App\Enums\TeamJoinRequestStatus;
+use App\Enums\TeamMembershipStatus;
 use App\Enums\WorkspaceRole;
+use App\Models\Contribution;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
+use App\Models\MatchingRefreshRequest;
 use App\Models\MatchScoreVersion;
 use App\Models\Project;
 use App\Models\Recommendation;
 use App\Models\StudentProfile;
+use App\Models\Task;
+use App\Models\TeamJoinRequest;
 use App\Models\User;
+use App\Support\Matching\MatchingAvailability;
 use App\Support\Matching\RecommendationSerializer;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,6 +42,9 @@ final class DashboardController extends Controller
         private readonly RecommendationQuery $recommendationQuery,
         private readonly RecommendationSerializer $recommendationSerializer,
         private readonly ResolveUserWorkspace $resolveUserWorkspace,
+        private readonly ResolveStudentMembership $resolveStudentMembership,
+        private readonly MatchingAvailability $matchingAvailability,
+        private readonly StudentActivationSummary $activationSummary,
     ) {}
 
     public function __invoke(Request $request): Response|RedirectResponse
@@ -49,6 +62,7 @@ final class DashboardController extends Controller
         }
 
         $membership = $this->activeMembership($user);
+        $activation = $this->activationSummary->handle($user);
         $institution = $membership?->institution;
         $hasVerifiedMembership = $membership?->status === InstitutionMembershipStatus::Verified;
         $profile = $hasVerifiedMembership && $institution !== null
@@ -70,11 +84,21 @@ final class DashboardController extends Controller
                 'name' => $institution->name,
             ],
             'profileReadiness' => $this->profileReadiness($profile, $hasVerifiedMembership),
-            'nextAction' => $this->nextAction(
+            'nextAction' => $activation['universityState'] !== 'ready' ? $this->action(
+                reference: 'ACTIVATION-LOCKED', category: 'Pemulihan aktivasi', statusLabel: 'Belum tersedia', statusTone: 'correction',
+                title: 'Aktivasi universitas belum tersedia',
+                facts: [
+                    ['label' => 'Keadaan', 'value' => 'Universitas belum tersedia atau belum aktif', 'icon' => 'file'],
+                    ['label' => 'Data', 'value' => 'Akun dan riwayat tersimpan tidak diubah', 'icon' => 'profile'],
+                    ['label' => 'Berikutnya', 'value' => 'Hubungi pengelola SATU, lalu periksa status kembali', 'icon' => 'calendar'],
+                ],
+                primaryAction: ['key' => 'onboarding', 'label' => 'Periksa status aktivasi'],
+            ) : $this->nextAction(
                 $membership,
                 $profile,
                 $previewRecommendation,
                 $firstActiveProject,
+                $user,
             ),
             'reviewQueue' => $this->reviewQueue($membership),
             'dashboardNotice' => $this->dashboardNotice($request, $membership, $previewRecommendation),
@@ -108,25 +132,7 @@ final class DashboardController extends Controller
 
     private function activeMembership(User $user): ?InstitutionMembership
     {
-        return InstitutionMembership::query()
-            ->with('institution:id,name,status')
-            ->whereBelongsTo($user)
-            ->where('role', InstitutionMembershipRole::Student)
-            ->whereIn('status', array_map(
-                static fn (InstitutionMembershipStatus $status): string => $status->value,
-                InstitutionMembershipStatus::cases(),
-            ))
-            ->whereRelation('institution', 'status', InstitutionStatus::Active)
-            ->orderByRaw(
-                'CASE WHEN status = ? THEN 0 WHEN status = ? THEN 1 ELSE 2 END',
-                [
-                    InstitutionMembershipStatus::Verified->value,
-                    InstitutionMembershipStatus::Pending->value,
-                ],
-            )
-            ->latest('requested_at')
-            ->latest('id')
-            ->first();
+        return $this->resolveStudentMembership->handle($user);
     }
 
     private function profileFor(User $user, Institution $institution): ?StudentProfile
@@ -191,6 +197,7 @@ final class DashboardController extends Controller
         ?StudentProfile $profile,
         ?Recommendation $recommendation,
         ?Project $activeProject,
+        User $user,
     ): array {
         if ($membership === null) {
             return $this->action(
@@ -198,7 +205,7 @@ final class DashboardController extends Controller
                 category: 'Afiliasi kampus',
                 statusLabel: 'Belum terhubung',
                 statusTone: 'pending',
-                title: 'Hubungkan afiliasi kampus untuk membuka alur student',
+                title: 'Hubungkan afiliasi kampus untuk mulai berkolaborasi',
                 facts: [
                     [
                         'label' => 'Status',
@@ -222,7 +229,7 @@ final class DashboardController extends Controller
                 category: 'Afiliasi kampus',
                 statusLabel: 'Menunggu tinjauan',
                 statusTone: 'pending',
-                title: 'Lengkapi profil sambil menunggu afiliasi ditinjau',
+                title: 'Periksa afiliasi yang sedang ditinjau kampus',
                 facts: [
                     [
                         'label' => 'Afiliasi',
@@ -232,12 +239,12 @@ final class DashboardController extends Controller
                     ],
                     [
                         'label' => 'Tetap tersedia',
-                        'value' => 'Perbarui data profil dan lihat informasi yang terbuka',
+                        'value' => 'Draft onboarding tetap tersedia, penyimpanan profil menunggu verifikasi',
                         'icon' => 'profile',
                     ],
                     [
                         'label' => 'Menunggu verifikasi',
-                        'value' => 'Recommendation dan aksi yang membutuhkan afiliasi aktif',
+                        'value' => 'Penyimpanan profil dan menu kolaborasi',
                         'icon' => 'file',
                         'tone' => 'muted',
                     ],
@@ -294,6 +301,56 @@ final class DashboardController extends Controller
             );
         }
 
+        $workAction = $this->workAction($user, $membership->institution);
+        if ($workAction !== null) {
+            return $workAction;
+        }
+
+        if ($activeProject !== null && Gate::forUser($user)->allows('viewAny', [Task::class, $activeProject])) {
+            return $this->action(
+                reference: 'PROJ-'.$activeProject->getKey(),
+                category: 'Pekerjaan saya',
+                statusLabel: 'Proyek aktif',
+                statusTone: 'neutral',
+                title: 'Lanjutkan pekerjaan bersama timmu',
+                facts: [
+                    ['label' => 'Proyek', 'value' => $activeProject->title, 'icon' => 'file'],
+                    ['label' => 'Batas waktu proyek', 'value' => $this->formatDate($activeProject->deadline), 'icon' => 'calendar', 'dateTime' => $activeProject->deadline->toIso8601String()],
+                    ['label' => 'Berikutnya', 'value' => 'Buka ruang kerja untuk memeriksa tugas dan bukti pekerjaan', 'icon' => 'user'],
+                ],
+                primaryAction: ['key' => 'workspace', 'label' => 'Buka ruang kerja', 'projectId' => $activeProject->getKey()],
+                secondaryAction: ['key' => 'projects', 'label' => 'Lihat proyek saya', 'view' => 'mine'],
+            );
+        }
+
+        $pendingRequest = TeamJoinRequest::query()
+            ->with('project:id,institution_id,owner_id,title,visibility')
+            ->whereBelongsTo($user, 'requester')
+            ->where('status', TeamJoinRequestStatus::Pending)
+            ->whereHas('project', fn (Builder $projects): Builder => $projects
+                ->where('institution_id', $membership->institution_id)
+                ->whereIn('status', [ProjectStatus::Open, ProjectStatus::Forming, ProjectStatus::Full])
+                ->where('visibility', '!=', 'private'))
+            ->oldest('requested_at')
+            ->oldest('id')
+            ->first();
+        if ($pendingRequest !== null && Gate::forUser($user)->allows('view', $pendingRequest)) {
+            return $this->action(
+                reference: 'JOIN-'.$pendingRequest->getKey(),
+                category: 'Pengajuan bergabung',
+                statusLabel: 'Menunggu keputusan',
+                statusTone: 'pending',
+                title: 'Periksa pengajuan bergabungmu',
+                recordedAt: $pendingRequest->requested_at,
+                facts: [
+                    ['label' => 'Proyek', 'value' => $pendingRequest->project->title, 'icon' => 'file'],
+                    ['label' => 'Status', 'value' => 'Pengajuan terkirim, belum berarti diterima dalam tim', 'icon' => 'user'],
+                ],
+                primaryAction: ['key' => 'project', 'label' => 'Lihat status pengajuan', 'projectId' => $pendingRequest->project_id],
+                secondaryAction: ['key' => 'projects', 'label' => 'Jelajahi peluang'],
+            );
+        }
+
         if (! $this->profileIsReady($profile)) {
             $profileState = $profile === null ? 'Belum dibuat' : 'Belum lengkap';
 
@@ -302,7 +359,7 @@ final class DashboardController extends Controller
                 category: 'Kesiapan profil',
                 statusLabel: 'Perlu dilengkapi',
                 statusTone: 'correction',
-                title: 'Lengkapi profil untuk membuka recommendation yang dapat dijelaskan',
+                title: 'Lengkapi profil kemampuan dan kesiapanmu',
                 facts: [
                     [
                         'label' => 'Profil',
@@ -312,34 +369,34 @@ final class DashboardController extends Controller
                     ],
                     [
                         'label' => 'Yang dibutuhkan',
-                        'value' => 'Skill dan ketersediaan waktu',
+                        'value' => 'Keahlian dan ketersediaan waktu',
                         'icon' => 'file',
                     ],
                     [
                         'label' => 'Setelah selesai',
-                        'value' => 'Alasan kecocokan project dapat ditampilkan',
+                        'value' => 'Profil siap digunakan untuk mencari peluang',
                         'icon' => 'calendar',
                     ],
                 ],
-                primaryAction: ['key' => 'onboarding', 'label' => 'Lengkapi profil'],
-                secondaryAction: ['key' => 'projects', 'label' => 'Jelajahi project'],
+                primaryAction: ['key' => 'profile', 'label' => 'Lengkapi profil kemampuan'],
+                secondaryAction: ['key' => 'projects', 'label' => 'Jelajahi proyek'],
             );
         }
 
         if ($recommendation !== null) {
             $view = $this->recommendationView($recommendation);
-            $firstReason = $view['reasons'][0] ?? 'Alasan kecocokan tersedia pada detail project.';
+            $firstReason = $view['reasons'][0] ?? 'Alasan kecocokan tersedia pada detail proyek.';
 
             return $this->action(
                 reference: 'REC-'.str_pad((string) $recommendation->getKey(), 4, '0', STR_PAD_LEFT),
-                category: 'Recommendation project',
+                category: 'Rekomendasi proyek',
                 statusLabel: 'Peluang baru',
                 statusTone: $view['isStale'] ? 'pending' : 'verified',
                 title: 'Tinjau peluang yang paling relevan sekarang',
                 recordedAt: $recommendation->created_at,
                 facts: [
                     [
-                        'label' => 'Project',
+                        'label' => 'Proyek',
                         'value' => $view['title'],
                         'icon' => 'file',
                     ],
@@ -357,54 +414,19 @@ final class DashboardController extends Controller
                 ],
                 primaryAction: [
                     'key' => 'project',
-                    'label' => 'Tinjau project',
+                    'label' => 'Tinjau proyek',
                     'projectId' => $view['projectId'],
                 ],
-                secondaryAction: ['key' => 'projects', 'label' => 'Jelajahi project lain'],
-            );
-        }
-
-        if ($activeProject !== null) {
-            return $this->action(
-                reference: 'PROJ-'.str_pad((string) $activeProject->getKey(), 4, '0', STR_PAD_LEFT),
-                category: 'Project aktif',
-                statusLabel: 'Bisa dilanjutkan',
-                statusTone: 'verified',
-                title: 'Lanjutkan project yang sedang kamu kelola',
-                facts: [
-                    [
-                        'label' => 'Project',
-                        'value' => $activeProject->title,
-                        'icon' => 'file',
-                    ],
-                    [
-                        'label' => 'Batas waktu',
-                        'value' => $this->formatDate($activeProject->deadline),
-                        'dateTime' => $activeProject->deadline->toIso8601String(),
-                        'icon' => 'calendar',
-                        'tone' => $activeProject->deadline->isPast() ? 'correction' : 'default',
-                    ],
-                    [
-                        'label' => 'Berikutnya',
-                        'value' => 'Periksa detail project dan peran yang tersedia',
-                        'icon' => 'profile',
-                    ],
-                ],
-                primaryAction: [
-                    'key' => 'project',
-                    'label' => 'Buka project',
-                    'projectId' => $activeProject->getKey(),
-                ],
-                secondaryAction: ['key' => 'projects', 'label' => 'Jelajahi project lain'],
+                secondaryAction: ['key' => 'projects', 'label' => 'Jelajahi proyek lain'],
             );
         }
 
         return $this->action(
             reference: 'DISCOVERY-START',
-            category: 'Project discovery',
+            category: 'Peluang kolaborasi',
             statusLabel: 'Profil siap',
             statusTone: 'verified',
-            title: 'Temukan project yang sesuai dengan kesiapanmu',
+            title: 'Temukan proyek yang sesuai dengan kesiapanmu',
             facts: [
                 [
                     'label' => 'Profil',
@@ -413,19 +435,77 @@ final class DashboardController extends Controller
                     'tone' => 'verified',
                 ],
                 [
-                    'label' => 'Recommendation',
+                    'label' => 'Rekomendasi',
                     'value' => 'Belum ada peluang aktif yang dapat ditampilkan',
                     'icon' => 'file',
                 ],
                 [
                     'label' => 'Berikutnya',
-                    'value' => 'Bandingkan project dan kebutuhan perannya',
+                    'value' => 'Bandingkan proyek dan kebutuhan perannya',
                     'icon' => 'calendar',
                 ],
             ],
-            primaryAction: ['key' => 'projects', 'label' => 'Jelajahi project'],
-            secondaryAction: ['key' => 'onboarding', 'label' => 'Periksa profil'],
+            primaryAction: ['key' => 'projects', 'label' => 'Jelajahi proyek'],
+            secondaryAction: ['key' => 'profile', 'label' => 'Periksa profil kemampuan'],
         );
+    }
+
+    /** @return array<string, mixed>|null */
+    private function workAction(User $user, Institution $institution): ?array
+    {
+        $participatingProjects = $this->activeProjectsQuery($user, $institution)
+            ->select('projects.id')->reorder();
+        $revision = Contribution::query()
+            ->select(['id', 'institution_id', 'owner_id', 'project_id', 'status', 'updated_at'])
+            ->with('project:id,institution_id,owner_id,title,status')
+            ->where('institution_id', $institution->getKey())
+            ->whereBelongsTo($user, 'owner')
+            ->where('status', ContributionStatus::Revision)
+            ->whereIn('project_id', clone $participatingProjects)
+            ->oldest('updated_at')->oldest('id')->first();
+        if ($revision !== null && Gate::forUser($user)->allows('update', $revision)) {
+            return $this->action(
+                reference: 'REV-'.$revision->getKey(),
+                category: 'Revisi kontribusi',
+                statusLabel: 'Perlu diperbaiki',
+                statusTone: 'correction',
+                title: 'Tanggapi catatan kampus pada kontribusimu',
+                recordedAt: $revision->updated_at,
+                facts: [
+                    ['label' => 'Proyek', 'value' => $revision->project->title, 'icon' => 'file'],
+                    ['label' => 'Berikutnya', 'value' => 'Baca catatan kampus, perbaiki versi, lalu kirim kembali', 'icon' => 'calendar'],
+                ],
+                primaryAction: ['key' => 'contribution', 'label' => 'Perbaiki kontribusi', 'contributionId' => $revision->getKey()],
+                secondaryAction: ['key' => 'projects', 'label' => 'Lihat proyek saya', 'view' => 'mine'],
+            );
+        }
+
+        $task = Task::query()
+            ->select(['id', 'project_id', 'title', 'status', 'due_at', 'updated_at'])
+            ->with('project:id,institution_id,owner_id,title,status')
+            ->whereIn('project_id', $participatingProjects)
+            ->whereRelation('assignments', 'user_id', $user->getKey())
+            ->where('status', '!=', TaskStatus::Done)
+            ->ordered()->first();
+        if ($task !== null && Gate::forUser($user)->allows('view', $task)) {
+            return $this->action(
+                reference: 'TASK-'.$task->getKey(),
+                category: 'Tugas saya',
+                statusLabel: $task->status === TaskStatus::Blocked ? 'Perlu tindak lanjut' : 'Belum selesai',
+                statusTone: $task->status === TaskStatus::Blocked || $task->isOverdue() ? 'correction' : 'neutral',
+                title: $task->status === TaskStatus::Blocked ? 'Periksa tugas yang masih terhambat' : 'Lanjutkan tugas yang menjadi tanggung jawabmu',
+                recordedAt: $task->updated_at,
+                facts: [
+                    ['label' => 'Tugas', 'value' => $task->title, 'icon' => 'file'],
+                    ['label' => 'Proyek', 'value' => $task->project->title, 'icon' => 'user'],
+                    ['label' => 'Tenggat tugas', 'value' => $task->due_at === null ? 'Belum ditetapkan' : $this->formatDate($task->due_at), 'icon' => 'calendar', 'tone' => $task->isOverdue() ? 'correction' : 'default'],
+                ],
+                primaryAction: ['key' => 'workspace', 'label' => 'Buka tugas di ruang kerja', 'projectId' => $task->project_id, 'taskId' => $task->getKey()],
+                secondaryAction: ['key' => 'projects', 'label' => 'Lihat proyek saya', 'view' => 'mine'],
+            );
+        }
+
+        return null;
     }
 
     /**
@@ -479,7 +559,7 @@ final class DashboardController extends Controller
         return [
             'state' => 'unavailable',
             'title' => 'Validasi kontribusi belum tersedia',
-            'description' => 'Ringkasan ini akan muncul setelah modul validasi kontribusi tersedia pada akunmu.',
+            'description' => 'Buka menu Kontribusi untuk melihat status dan catatan kampus pada tiap pengajuan. Ringkasan validasi belum tersedia di Beranda.',
         ];
     }
 
@@ -496,7 +576,7 @@ final class DashboardController extends Controller
         if ($issue === 'recommendation_stale') {
             return [
                 'tone' => 'stale',
-                'title' => 'Recommendation berubah',
+                'title' => 'Rekomendasi berubah',
                 'description' => 'Versi pencocokan sudah diperbarui. Muat ulang ringkasan sebelum memberi feedback.',
                 'action' => ['key' => 'refresh', 'label' => 'Muat ulang ringkasan'],
             ];
@@ -506,7 +586,7 @@ final class DashboardController extends Controller
             return [
                 'tone' => 'pending',
                 'title' => 'Afiliasi kampus sedang ditinjau',
-                'description' => 'Profil tetap dapat dilengkapi. Aksi yang membutuhkan afiliasi aktif akan tersedia setelah verifikasi.',
+                'description' => 'Draft onboarding tetap tersedia. Penyimpanan profil dan akses menu kolaborasi menunggu afiliasi terverifikasi.',
                 'action' => ['key' => 'onboarding', 'label' => 'Periksa afiliasi'],
             ];
         }
@@ -514,7 +594,7 @@ final class DashboardController extends Controller
         if ($recommendation !== null && $this->recommendationIsStale($recommendation)) {
             return [
                 'tone' => 'stale',
-                'title' => 'Recommendation perlu disegarkan',
+                'title' => 'Rekomendasi perlu disegarkan',
                 'description' => 'Versi pencocokan pada item ini sudah tidak aktif. Muat ulang untuk menyelaraskan alasan kecocokan terbaru.',
                 'timestamp' => 'Dibuat '.$this->formatDate($recommendation->created_at),
                 'timestampIso' => $recommendation->created_at->toIso8601String(),
@@ -534,8 +614,8 @@ final class DashboardController extends Controller
         if (! $hasVerifiedMembership || $institution === null) {
             return [
                 'state' => 'forbidden',
-                'title' => 'Project aktif belum dapat ditampilkan',
-                'description' => 'Verifikasi afiliasi kampus untuk melihat project yang kamu kelola.',
+                'title' => 'Proyek aktif belum dapat ditampilkan',
+                'description' => 'Verifikasi afiliasi kampus untuk melihat proyek yang kamu kelola atau ikuti.',
                 'action' => ['key' => 'onboarding', 'label' => 'Periksa afiliasi'],
             ];
         }
@@ -547,7 +627,7 @@ final class DashboardController extends Controller
                 'id' => $project->getKey(),
                 'index' => str_pad((string) $project->getKey(), 2, '0', STR_PAD_LEFT),
                 'name' => $project->title,
-                'nextTask' => 'Periksa detail project dan peran yang tersedia',
+                'nextTask' => 'Buka ruang kerja untuk memeriksa pekerjaan tim',
                 'deadline' => $this->formatShortDate($project->deadline),
                 'deadlineIso' => $project->deadline->toIso8601String(),
                 'deadlineTone' => $project->deadline->isPast() ? 'correction' : 'neutral',
@@ -557,9 +637,9 @@ final class DashboardController extends Controller
         if ($projects === []) {
             return [
                 'state' => 'empty',
-                'title' => 'Belum ada project aktif',
-                'description' => 'Project aktif yang kamu kelola akan tersusun di sini.',
-                'action' => ['key' => 'projects', 'label' => 'Jelajahi project'],
+                'title' => 'Belum ada proyek aktif',
+                'description' => 'Proyek yang kamu kelola atau ikuti akan tersusun di sini. Mulai dengan menemukan peluang kolaborasi.',
+                'action' => ['key' => 'projects', 'label' => 'Jelajahi proyek'],
             ];
         }
 
@@ -568,7 +648,7 @@ final class DashboardController extends Controller
             'projects' => $projects,
             'totalCount' => $totalCount,
             'remainingActionLabel' => $totalCount > count($projects)
-                ? 'Lihat '.($totalCount - count($projects)).' project lainnya'
+                ? 'Lihat '.($totalCount - count($projects)).' proyek lainnya'
                 : null,
         ];
     }
@@ -586,7 +666,11 @@ final class DashboardController extends Controller
                 'projects.deadline',
             ])
             ->forInstitution($institution)
-            ->whereBelongsTo($user, 'owner')
+            ->where(fn (Builder $projects): Builder => $projects
+                ->where('owner_id', $user->getKey())
+                ->orWhereHas('teamMemberships', fn (Builder $memberships): Builder => $memberships
+                    ->where('user_id', $user->getKey())
+                    ->where('status', TeamMembershipStatus::Active)))
             ->whereIn('status', [
                 ProjectStatus::Open->value,
                 ProjectStatus::Forming->value,
@@ -606,8 +690,8 @@ final class DashboardController extends Controller
         if (! $hasVerifiedMembership || $institution === null) {
             return [
                 'state' => 'forbidden',
-                'title' => 'Recommendation menunggu afiliasi terverifikasi',
-                'description' => 'Periksa afiliasi kampus untuk membuka pencocokan project.',
+                'title' => 'Rekomendasi menunggu afiliasi terverifikasi',
+                'description' => 'Periksa afiliasi kampus untuk membuka pencocokan proyek.',
                 'action' => ['key' => 'onboarding', 'label' => 'Periksa afiliasi'],
             ];
         }
@@ -615,29 +699,46 @@ final class DashboardController extends Controller
         if (! $this->profileIsReady($profile)) {
             return [
                 'state' => 'empty',
-                'title' => 'Recommendation belum tersedia',
-                'description' => 'Lengkapi skill dan ketersediaan agar alasan kecocokan dapat dijelaskan.',
-                'action' => ['key' => 'onboarding', 'label' => 'Lengkapi profil'],
+                'title' => 'Rekomendasi belum tersedia',
+                'description' => 'Lengkapi keahlian dan ketersediaan untuk menyiapkan profil pencocokan.',
+                'action' => ['key' => 'profile', 'label' => 'Lengkapi profil kemampuan'],
             ];
         }
 
-        $recommendation = $this->recommendationQuery
-            ->execute($user, $institution, perPage: 1)
-            ->paginator
-            ->first();
+        $version = MatchScoreVersion::current();
+        if (! $this->matchingAvailability->enabled() || ! $this->matchingAvailability->supported($version)) {
+            return ['state' => 'unavailable', 'title' => 'Pencocokan dinamis belum diaktifkan', 'description' => 'Konfigurasi dan kebijakan versi perlu disiapkan oleh pengelola. Kamu tetap dapat menjelajahi peluang.', 'action' => ['key' => 'projects', 'label' => 'Jelajahi peluang'], 'canRefresh' => false];
+        }
+        $refresh = MatchingRefreshRequest::query()->where('institution_id', $institution->getKey())->where('candidate_id', $user->getKey())->first();
+        if ($refresh?->status === 'queued') {
+            return ['state' => 'processing', 'title' => 'Rekomendasi sedang diperbarui', 'description' => 'Data terbaru sedang diproses. Periksa status atau jelajahi peluang sambil menunggu.', 'action' => ['key' => 'refresh', 'label' => 'Periksa status'], 'canRefresh' => false];
+        }
+        if ($refresh?->status === 'failed') {
+            return ['state' => 'error', 'title' => 'Pembaruan rekomendasi gagal', 'description' => 'Belum ada hasil baru. Minta pembaruan lagi atau tetap jelajahi peluang.', 'action' => ['key' => 'projects', 'label' => 'Jelajahi peluang'], 'canRefresh' => true];
+        }
+        if ($refresh === null || $refresh->status !== 'ready' || $refresh->version_id !== $version?->getKey() || $refresh->completed_at?->lte(now()->subMinutes((int) config('matching.ttl_minutes', 360)))) {
+            return ['state' => 'stale', 'title' => 'Rekomendasi perlu diperbarui', 'description' => 'Belum ada hasil dari data dan versi terbaru. Minta pembaruan untuk membaca peluang aktual.', 'action' => ['key' => 'projects', 'label' => 'Jelajahi peluang'], 'canRefresh' => true];
+        }
+        $result = $this->recommendationQuery->execute($user, $institution, perPage: 1);
+        $recommendation = $result->paginator->first();
+        if ($result->staleCount > 0 && $recommendation === null) {
+            return ['state' => 'stale', 'title' => 'Data peluang atau profil berubah', 'description' => 'Hasil sebelumnya tidak lagi digunakan. Perbarui rekomendasi atau jelajahi peluang.', 'action' => ['key' => 'projects', 'label' => 'Jelajahi peluang'], 'canRefresh' => true];
+        }
 
         if (! $recommendation instanceof Recommendation) {
             return [
                 'state' => 'empty',
-                'title' => 'Belum ada recommendation project',
-                'description' => 'Belum ada project dengan alasan kecocokan yang dapat ditampilkan. Kamu tetap dapat menjelajahi project secara langsung.',
-                'action' => ['key' => 'projects', 'label' => 'Jelajahi project'],
+                'title' => 'Belum ada rekomendasi proyek',
+                'description' => 'Belum ada proyek dengan alasan kecocokan yang dapat ditampilkan. Kamu tetap dapat menjelajahi proyek secara langsung.',
+                'action' => ['key' => 'projects', 'label' => 'Jelajahi proyek'],
+                'canRefresh' => true,
             ];
         }
 
         return [
             'state' => 'ready',
             'recommendation' => $this->recommendationView($recommendation),
+            'canRefresh' => true,
         ];
     }
 
@@ -651,13 +752,14 @@ final class DashboardController extends Controller
             MatchScoreVersion::current()?->getKey(),
         );
         $project = $recommendation->project;
-        $role = $project->roles->first();
 
         return [
             'id' => (int) $recommendation->getKey(),
             'projectId' => (int) $project->getKey(),
             'title' => $project->title,
-            'role' => $role === null ? 'Peran sesuai kebutuhan project' : $role->title,
+            'role' => $summary['role']['title'] ?? 'Peran sesuai kebutuhan proyek',
+            'limitations' => $summary['limitations'],
+            'reasonTypes' => array_column($summary['top_reasons'], 'type'),
             'reasons' => array_values(array_map(
                 static fn (array $reason): string => $reason['reason'],
                 $summary['top_reasons'],

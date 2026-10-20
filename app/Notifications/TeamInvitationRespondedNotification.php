@@ -38,6 +38,7 @@ final class TeamInvitationRespondedNotification extends Notification implements 
         $message = match ($this->response) {
             'accepted' => 'Invitation project kamu diterima.',
             'revoked' => 'Invitation project kamu dibatalkan oleh owner.',
+            'expired' => 'Undangan berakhir karena keanggotaan terbentuk melalui jalur lain. Periksa status tim terbaru.',
             default => 'Invitation project kamu ditolak.',
         };
 

@@ -1,0 +1,47 @@
+{
+    "description": "Maskot konfirmasi password memegang gembok kuningan tanpa klaim hasil keamanan.",
+    "date": "2026-10-20",
+    "method": "Imagegen bawaan dengan referensi identitas SATU.",
+    "generation_id": "exec-272e6e31-0e38-46a8-9e21-85e45367d0d0",
+    "identity_references": [
+        "resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png",
+        "resources/images/mascot/reference/maskot-01-burung-arsip.png"
+    ],
+    "prompt": "Use case: stylized-concept with identity-preserve references. Asset type: ONE transparent premium 3D SATU kingfisher mascot for a password-confirmation page. Input image 1 is the canonical identity turnaround; input image 2 defines materials/expression. Preserve EXACT SATU identity, proportions and original outfit: vivid layered cobalt and azure feathers, fluffy ivory chest and cheeks, warm orange eyebrow and cheek markings, large warm brown eyes, long graphite bird beak and bird feet, ORIGINAL navy crossbody book satchel with brass buckle and visible book detail, unchanged. New distinct pose: full-body standing upright in a calm three-quarter view facing slightly RIGHT toward the form, head gently tilted toward the viewer with an attentive reassuring expression. Both natural feathered wings gently cradle ONE small rounded warm-brass CLOSED PADLOCK at chest height, with a simple keyhole and no symbols or lettering. Bird wings and feather grips, no human hands/fingers or extra limbs. The original crossbody satchel remains visible below and to the side, not replaced by the lock. Modest smile, no celebration or triumphant pose. It illustrates pausing to confirm identity, NOT that verification has succeeded. Full body, tail and both feet completely visible in a square canvas with 6 percent safe margins, crisp high-definition layered feathers matching reference render, soft studio daylight. GENUINELY TRANSPARENT PNG background, clean alpha, NO white backdrop, NO checkerboard, floor, platform, pedestal, baked ground shadow, text, UI cards, checkmarks, shields, logos, numbers, floating icons, particles, confetti, additional props, additional characters or costume. One mascot only, not a UI mockup.",
+    "source": {
+        "file": "resources/images/mascot/mascot-confirm-access.png",
+        "width": 1254,
+        "height": 1254,
+        "bytes": 1162225,
+        "sha256": "9f87ecebe492eed124324907945cc2b8b81e053f5d971128fd18818d5a82d567"
+    },
+    "alt_purpose": "Dekoratif, alt kosong dan aria-hidden, bukan kontrol atau hasil konfirmasi.",
+    "scope": "Halaman konfirmasi password saja. Background menggunakan kembali auth-entry-background dari login/register.",
+    "motion": "Pose statis, tanpa sapaan, hover atau perubahan berdasarkan hasil validasi.",
+    "manual_review": "Burung utuh memegang gembok tertutup, bulu biru/ivory/oranye dan tas cross-body asli mengikuti referensi. Tanpa teks, centang, nomor, atau indikator hasil.",
+    "optimization": "Resize mekanis GD ke 256px, 512px, 1024px; WebP kualitas 88, alpha dipertahankan.",
+    "variants": [
+        {
+            "file": "public/images/mascot-confirm-access-256.webp",
+            "width": 256,
+            "height": 256,
+            "bytes": 13040,
+            "sha256": "61a60cdb38291c6c6afb6e2e46922de72e984bc2eb54addfe54f9a61eb6a6658"
+        },
+        {
+            "file": "public/images/mascot-confirm-access-512.webp",
+            "width": 512,
+            "height": 512,
+            "bytes": 38286,
+            "sha256": "5ce9eb425554ddbe76791c4640047cad911ea9c8404d2ae2ad391f24c7b572f1"
+        },
+        {
+            "file": "public/images/mascot-confirm-access.webp",
+            "width": 1024,
+            "height": 1024,
+            "bytes": 117004,
+            "sha256": "96bbe543811660bee7bb2889b0189d1b656b4189b74a6ecaebe8d319950dd5a1"
+        }
+    ],
+    "transparent_sample_pixels": 44313
+}

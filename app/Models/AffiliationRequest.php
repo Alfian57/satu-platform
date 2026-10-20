@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -88,6 +89,12 @@ class AffiliationRequest extends Model implements InstitutionOwned
     public function reviews(): HasMany
     {
         return $this->hasMany(AffiliationReview::class);
+    }
+
+    /** @return HasOne<AffiliationProfileDraft, $this> */
+    public function profileDraft(): HasOne
+    {
+        return $this->hasOne(AffiliationProfileDraft::class);
     }
 
     public function institutionId(): int

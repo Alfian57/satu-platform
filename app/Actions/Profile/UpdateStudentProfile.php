@@ -6,7 +6,7 @@ namespace App\Actions\Profile;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Actions\Portfolio\RebuildTalentCandidateProjection;
-use App\Jobs\Matching\RefreshStudentRecommendations;
+use App\Events\MatchingInputsChanged;
 use App\Models\Institution;
 use App\Models\ProfileInterest;
 use App\Models\ProfileSkill;
@@ -14,6 +14,7 @@ use App\Models\StudentProfile;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 final class UpdateStudentProfile
 {
@@ -22,6 +23,7 @@ final class UpdateStudentProfile
         private readonly AuditRecorder $audit,
         private readonly EnsureStudentProfileIsFresh $ensureFresh,
         private readonly RebuildTalentCandidateProjection $rebuildProjection,
+        private readonly ReplaceStudentProfileAvailability $replaceAvailability,
     ) {}
 
     /**
@@ -33,16 +35,16 @@ final class UpdateStudentProfile
     {
         Gate::forUser($actor)->authorize('update', $studentProfile);
 
-        $updatedProfile = DB::transaction(function () use ($actor, $studentProfile, $data): StudentProfile {
+        return DB::transaction(function () use ($actor, $studentProfile, $data): StudentProfile {
             $profile = StudentProfile::query()
                 ->lockForUpdate()
                 ->whereKey($studentProfile->getKey())
                 ->firstOrFail();
-            $this->ensureFresh->handle($profile, $data['expected_updated_at'] ?? null);
+            $this->ensureFresh->handle($profile, $data['expected_updated_at'] ?? null, $data['expected_profile_revision'] ?? null);
             $before = $this->summary($profile);
             $changedFields = [];
 
-            foreach (['bio', 'study_program', 'study_year'] as $field) {
+            foreach (['bio', 'study_year'] as $field) {
                 if (! array_key_exists($field, $data)) {
                     continue;
                 }
@@ -52,6 +54,30 @@ final class UpdateStudentProfile
                     ? ($value === '' ? null : trim($value))
                     : $value;
                 $changedFields[] = $field;
+            }
+
+            foreach (['faculty', 'study_program', 'admission_year'] as $field) {
+                if (! array_key_exists($field, $data)) {
+                    continue;
+                }
+
+                $current = $this->normalizeAcademicValue($field, $profile->{$field});
+                $value = $this->normalizeAcademicValue($field, $data[$field]);
+
+                if ($this->isAcademicValueSet($current)) {
+                    if ($value !== $current) {
+                        throw ValidationException::withMessages([
+                            $field => 'Data yang sudah tercatat tidak dapat diubah dari menu mahasiswa.',
+                        ]);
+                    }
+
+                    continue;
+                }
+
+                if ($value !== $current) {
+                    $profile->{$field} = $value;
+                    $changedFields[] = $field;
+                }
             }
 
             if ($profile->isDirty()) {
@@ -74,9 +100,15 @@ final class UpdateStudentProfile
                 $changedFields[] = 'interests';
             }
 
+            if (array_key_exists('availability_windows', $data)) {
+                $this->replaceAvailability->handleFromProfile($actor, $profile, $data);
+                $changedFields[] = 'availability_windows';
+            }
+
             $changedFields = array_values(array_unique($changedFields));
 
             if ($changedFields !== []) {
+                $profile->touch();
                 $after = $this->summary($profile);
                 $institution = Institution::query()->findOrFail($profile->institution_id);
                 $this->audit->record(
@@ -99,14 +131,13 @@ final class UpdateStudentProfile
                 );
 
                 $this->rebuildProjection->handle($actor, $institution);
+                if (array_intersect($changedFields, ['skills', 'interests', 'availability_windows']) !== []) {
+                    MatchingInputsChanged::dispatch($profile->institution_id, $profile->user_id);
+                }
             }
 
             return $profile->refresh();
         }, attempts: 3);
-
-        RefreshStudentRecommendations::dispatch($actor->id, $updatedProfile->institution_id);
-
-        return $updatedProfile;
     }
 
     /**
@@ -122,5 +153,29 @@ final class UpdateStudentProfile
                 ->whereBelongsTo($profile, 'studentProfile')
                 ->count(),
         ];
+    }
+
+    private function normalizeAcademicValue(string $field, mixed $value): mixed
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($field === 'admission_year') {
+            return is_numeric($value) ? (int) $value : $value;
+        }
+
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
+    }
+
+    private function isAcademicValueSet(mixed $value): bool
+    {
+        return $value !== null && $value !== '';
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+use App\Actions\Institution\ResolveConfiguredUniversity;
+use App\Exceptions\InvalidUniversityConfiguration;
 use App\Http\Controllers\AcademicCreditMappingController;
 use App\Http\Controllers\AcademicIntegrationController;
 use App\Http\Controllers\AffiliationReviewController;
@@ -14,11 +16,11 @@ use App\Http\Controllers\DataRightsController;
 use App\Http\Controllers\InstitutionMembershipController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OpportunitySupportController;
 use App\Http\Controllers\PlatformAffiliationController;
 use App\Http\Controllers\PlatformInstitutionController;
 use App\Http\Controllers\PlatformInvitationController;
 use App\Http\Controllers\PlatformOperationsController;
-use App\Http\Controllers\PlatformRecruiterController;
 use App\Http\Controllers\PlatformSkillTaxonomyController;
 use App\Http\Controllers\PortfolioEntryController;
 use App\Http\Controllers\PortfolioPageController;
@@ -27,17 +29,27 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectDiscussionController;
 use App\Http\Controllers\ProjectWorkspaceController;
 use App\Http\Controllers\RecommendationFeedbackController;
-use App\Http\Controllers\RecruiterContactRequestController;
+use App\Http\Controllers\RecommendationRefreshController;
 use App\Http\Controllers\RosterImportController;
-use App\Http\Controllers\SavedCandidatesController;
 use App\Http\Controllers\SkillTaxonomyController;
-use App\Http\Controllers\StudentContactRequestController;
 use App\Http\Controllers\StudentProfileController;
-use App\Http\Controllers\TalentSearchController;
 use App\Http\Controllers\TeamTransitionController;
+use App\Http\Controllers\UniversityAdminController;
+use App\Http\Controllers\UniversitySettingsController;
+use App\Http\Controllers\UniversityStudentController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Inertia\Response;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::get('/', function (ResolveConfiguredUniversity $university): Response {
+    try {
+        $name = $university->handle()->name;
+    } catch (InvalidUniversityConfiguration) {
+        $name = null;
+    }
+
+    return Inertia::render('welcome', ['publicUniversity' => ['name' => $name]]);
+})->name('home');
 
 Route::middleware('guest')->group(function () {
     Route::get('register/verify', [AuthFlowController::class, 'showRegistrationVerification'])
@@ -87,21 +99,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('invitation/accept', [AuthFlowController::class, 'acceptPendingInvitation'])
         ->name('invitation.accept');
 
-    Route::prefix('recruiter/talent')->name('recruiter.talent.')->group(function () {
-        // Index page for saved candidates
-        Route::get('saved', [SavedCandidatesController::class, 'index'])
-            ->name('saved');
-
-        // Save candidate
-        Route::post('candidates/{id}/save', [SavedCandidatesController::class, 'store'])
-            ->name('candidates.save');
-
-        // Unsave candidate
-        Route::delete('candidates/{id}/unsave', [SavedCandidatesController::class, 'destroy'])
-            ->name('candidates.unsave');
-    });
     Route::get('dashboard', DashboardController::class)
         ->name('dashboard');
+
+    Route::scopeBindings()->prefix('institutions/{institution}/opportunity-support')->name('opportunity-support.')->group(function () {
+        Route::get('/', [OpportunitySupportController::class, 'index'])->name('index');
+        Route::post('/', [OpportunitySupportController::class, 'store'])->name('store')->middleware('throttle:10,1');
+        Route::post('{supportRequest}/transition', [OpportunitySupportController::class, 'transition'])->name('transition')->middleware('throttle:20,1');
+    });
 
     Route::prefix('leaderboards')->name('leaderboards.')->group(function () {
         Route::get('/', [LeaderboardController::class, 'index'])
@@ -109,6 +114,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('preferences/individual', [LeaderboardController::class, 'updateIndividualPreference'])
             ->name('preferences.individual');
     });
+
+    Route::post('dashboard/recommendations/refresh', RecommendationRefreshController::class)
+        ->name('dashboard.recommendations.refresh')->middleware('throttle:10,1');
 
     Route::prefix('dashboard/recommendations/{recommendation}')
         ->name('dashboard.recommendations.')
@@ -147,6 +155,8 @@ Route::middleware(['auth'])->group(function () {
                 ->name('workspace.discussions.destroy');
             Route::post('attachments', [ProjectAttachmentController::class, 'store'])
                 ->name('workspace.attachments.store');
+            Route::get('attachments', [ProjectAttachmentController::class, 'index'])
+                ->name('workspace.attachments.index');
             Route::get('attachments/{attachment}', [ProjectAttachmentController::class, 'download'])
                 ->name('workspace.attachments.download');
             Route::get('attachments/{attachment}/preview', [ProjectAttachmentController::class, 'preview'])
@@ -217,6 +227,9 @@ Route::middleware(['auth'])->group(function () {
         ->name('team.join-requests.accept');
     Route::post('team-join-requests/{teamJoinRequest}/reject', [TeamTransitionController::class, 'rejectJoinRequest'])
         ->name('team.join-requests.reject');
+    Route::post('team-join-requests/{teamJoinRequest}/withdraw', [TeamTransitionController::class, 'withdrawJoinRequest'])
+        ->middleware('throttle:10,1')
+        ->name('team.join-requests.withdraw');
     Route::post('team-memberships/{teamMembership}/leave', [TeamTransitionController::class, 'leave'])
         ->name('team.memberships.leave');
     Route::post('team-memberships/{teamMembership}/remove', [TeamTransitionController::class, 'remove'])
@@ -228,15 +241,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('institution-memberships', [InstitutionMembershipController::class, 'store'])
         ->middleware('throttle:institution-membership-request')
         ->name('institution-memberships.store');
-
-    Route::get('recruiter/talent/search', [TalentSearchController::class, 'index'])
-        ->name('recruiter.talent.search');
-
-    Route::get('recruiter/talent/contact-requests', [RecruiterContactRequestController::class, 'index'])
-        ->name('recruiter.talent.contact-requests.index');
-
-    Route::get('recruiter/talent/candidates/{id}', [TalentSearchController::class, 'show'])
-        ->name('recruiter.talent.candidates.show');
 
     Route::get('notifications', [NotificationController::class, 'index'])
         ->name('notifications.index');
@@ -263,19 +267,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('platform.affiliations.index');
 
     Route::post('platform/institutions/{institution}/invitations', [PlatformInvitationController::class, 'store'])
+        ->middleware('password.confirm')
         ->name('platform.invitations.store');
 
     Route::post('platform/invitations/{invitation}/revoke', [PlatformInvitationController::class, 'revoke'])
+        ->middleware('password.confirm')
         ->name('platform.invitations.revoke');
-
-    Route::post('platform/recruiter-organizations/{organization}/review', [PlatformRecruiterController::class, 'review'])
-        ->name('platform.recruiter-organizations.review');
-
-    Route::post('platform/recruiter-organizations/{organization}/entitlements', [PlatformRecruiterController::class, 'grantEntitlement'])
-        ->name('platform.recruiter-organizations.entitlements.store');
-
-    Route::post('platform/recruiter-entitlements/{entitlement}/revoke', [PlatformRecruiterController::class, 'revokeEntitlement'])
-        ->name('platform.recruiter-entitlements.revoke');
 
     Route::prefix('platform/skills')->name('platform.skills.')->group(function () {
         Route::get('/', [PlatformSkillTaxonomyController::class, 'index'])->name('index');
@@ -287,21 +284,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('notification-preferences', [NotificationController::class, 'updatePreference'])
         ->name('notification-preferences.update');
-
-    Route::post('recruiter/talent/candidates/{id}/contact', [RecruiterContactRequestController::class, 'store'])
-        ->name('recruiter.talent.candidates.contact');
-
-    Route::delete('recruiter/talent/contact-requests/{id}', [RecruiterContactRequestController::class, 'cancel'])
-        ->name('recruiter.talent.contact-requests.cancel');
-
-    Route::get('student/contact-requests', [StudentContactRequestController::class, 'index'])
-        ->name('student.contact-requests.index');
-
-    Route::post('student/contact-requests/{id}/accept', [StudentContactRequestController::class, 'accept'])
-        ->name('student.contact-requests.accept');
-
-    Route::post('student/contact-requests/{id}/decline', [StudentContactRequestController::class, 'decline'])
-        ->name('student.contact-requests.decline');
 
     Route::get('campus/{institution}/credit-mappings', [AcademicCreditMappingController::class, 'index'])
         ->name('campus.credit-mappings.index');
@@ -317,6 +299,17 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('campus/{institution}/overview', [CampusOverviewController::class, 'show'])
         ->name('campus.overview.show');
+
+    Route::get('campus/{institution}/admins', [UniversityAdminController::class, 'index'])
+        ->name('university.admins.index');
+    Route::get('campus/{institution}/students', [UniversityStudentController::class, 'index'])
+        ->name('university.students.index');
+    Route::get('campus/{institution}/settings', [UniversitySettingsController::class, 'index'])
+        ->name('university.settings.index');
+    Route::get('campus/{institution}/settings/skills', [PlatformSkillTaxonomyController::class, 'index'])
+        ->name('university.settings.skills');
+    Route::patch('university/admins/{membership}/status', [UniversityAdminController::class, 'update'])
+        ->middleware(['password.confirm', 'throttle:20,1'])->name('university.admins.status');
 
     Route::get('campus/{institution}/contributions', [CampusContributionReviewController::class, 'index'])
         ->name('campus.contributions.index');
@@ -374,6 +367,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('skills.taxonomy.store');
 
     Route::prefix('student-profiles')->name('student-profiles.')->group(function () {
+        Route::get('/edit', [StudentProfileController::class, 'edit'])
+            ->name('edit');
         Route::post('/', [StudentProfileController::class, 'store'])
             ->name('store');
         Route::scopeBindings()->prefix('/{studentProfile}/portfolio')->group(function () {
@@ -396,6 +391,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('account/data-rights')->name('account.data-rights.')->group(function () {
         Route::post('export', [DataRightsController::class, 'export'])->name('export');
+        Route::post('correction', [DataRightsController::class, 'correction'])->name('correction');
+        Route::post('restriction', [DataRightsController::class, 'restriction'])->name('restriction');
+        Route::post('withdrawal', [DataRightsController::class, 'withdrawal'])->name('withdrawal');
         Route::post('delete', [DataRightsController::class, 'delete'])->name('delete');
     });
 });

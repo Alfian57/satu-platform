@@ -3,7 +3,7 @@ import {
     tableFeatures,
     useTable,
 } from '@tanstack/react-table';
-import { CheckCircle2, ShieldAlert } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,11 +21,15 @@ type Props = {
     onExplain: (row: LeaderboardRow) => void;
 };
 
-function formatNumber(value: number): string {
-    return new Intl.NumberFormat('id-ID').format(value);
+function formatNumber(value: number | null): string {
+    return value === null ? '-' : new Intl.NumberFormat('id-ID').format(value);
 }
 
-function formatScore(value: string): string {
+function formatScore(value: string | null): string {
+    if (value === null) {
+        return '-';
+    }
+
     return new Intl.NumberFormat('id-ID', {
         maximumFractionDigits: 4,
         minimumFractionDigits: 2,
@@ -37,7 +41,7 @@ function RankCell({ row }: { row: LeaderboardRow }) {
         return (
             <span
                 aria-label="Peringkat tidak dipublikasikan"
-                className="font-label text-label text-muted-foreground"
+                className="grid size-12 place-items-center rounded-2xl border border-border bg-muted font-label text-sm text-muted-foreground"
             >
                 -
             </span>
@@ -46,8 +50,8 @@ function RankCell({ row }: { row: LeaderboardRow }) {
 
     return (
         <div className="grid gap-1">
-            <span className="font-label text-label font-semibold tabular-nums">
-                {row.rank}
+            <span className="grid size-12 place-items-center rounded-2xl border border-primary/10 bg-accent font-label text-sm font-semibold text-primary tabular-nums">
+                {row.rank ?? '-'}
             </span>
             {row.sharedRankGroup !== null && (
                 <span className="text-xs text-muted-foreground">
@@ -60,9 +64,9 @@ function RankCell({ row }: { row: LeaderboardRow }) {
 
 function EntityCell({ row }: { row: LeaderboardRow }) {
     return (
-        <div className="grid min-w-0 gap-1.5">
+        <div className="grid min-w-0 gap-2 [overflow-wrap:anywhere]">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <span className="font-semibold break-words text-slate-950">
+                <span className="min-w-0 text-base leading-6 font-bold tracking-tight text-foreground">
                     {row.scopeLabel ?? 'Entitas tanpa nama'}
                 </span>
                 {row.suppressed ? (
@@ -71,10 +75,10 @@ function EntityCell({ row }: { row: LeaderboardRow }) {
                         className="gap-1 border-pending/30 bg-pending-subtle text-pending-subtle-foreground"
                     >
                         <ShieldAlert aria-hidden="true" className="size-3" />
-                        Kohort dilindungi
+                        Kelompok dilindungi
                     </Badge>
                 ) : (
-                    <span className="inline-flex items-center gap-1 font-label text-label text-verified-subtle-foreground">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-verified-subtle-foreground">
                         <CheckCircle2 aria-hidden="true" className="size-3.5" />
                         XP terverifikasi
                     </span>
@@ -95,7 +99,7 @@ function ScoreCell({ row }: { row: LeaderboardRow }) {
     }
 
     return (
-        <span className="font-label text-label font-semibold tabular-nums">
+        <span className="font-label text-sm leading-6 font-semibold [overflow-wrap:anywhere] text-primary tabular-nums">
             {formatScore(row.score)} XP
         </span>
     );
@@ -105,13 +109,19 @@ function MemberCell({ row }: { row: LeaderboardRow }) {
     return (
         <span className="font-label text-label tabular-nums">
             {row.suppressed
-                ? `${row.cohortSize} anggota`
-                : `${row.activeMemberDenominator} anggota`}
+                ? `${formatNumber(row.cohortSize)} anggota`
+                : `${formatNumber(row.activeMemberDenominator)} anggota`}
         </span>
     );
 }
 
 export function LeaderboardTable({ rows, onExplain }: Props) {
+    const isIndividual = rows[0]?.scopeType === 'individual';
+    const entityLabel = isIndividual
+        ? 'Mahasiswa'
+        : rows[0]?.scopeType === 'team'
+          ? 'Tim proyek'
+          : 'Program studi';
     const columns = useMemo(
         () =>
             leaderboardColumnHelper.columns([
@@ -122,17 +132,17 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                 }),
                 leaderboardColumnHelper.display({
                     id: 'entity',
-                    header: 'Entitas',
+                    header: entityLabel,
                     cell: ({ row }) => <EntityCell row={row.original} />,
                 }),
                 leaderboardColumnHelper.display({
                     id: 'score',
-                    header: 'Rata-rata XP',
+                    header: isIndividual ? 'Total XP' : 'Rata-rata XP',
                     cell: ({ row }) => <ScoreCell row={row.original} />,
                 }),
                 leaderboardColumnHelper.display({
                     id: 'members',
-                    header: 'Denominator',
+                    header: 'Anggota aktif',
                     cell: ({ row }) => <MemberCell row={row.original} />,
                 }),
                 leaderboardColumnHelper.display({
@@ -142,17 +152,20 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                         <Button
                             type="button"
                             variant="outline"
-                            size="sm"
-                            className="cursor-pointer border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50"
+                            className="min-h-11 cursor-pointer border-border bg-card px-3 text-xs hover:border-primary/25 hover:bg-accent"
                             onClick={() => onExplain(row.original)}
                             data-test="leaderboard-explanation-trigger"
                         >
-                            Lihat penjelasan
+                            Penjelasan
+                            <ArrowUpRight
+                                aria-hidden="true"
+                                className="size-3.5"
+                            />
                         </Button>
                     ),
                 }),
             ]),
-        [onExplain],
+        [onExplain, isIndividual, entityLabel],
     );
     const table = useTable({
         data: rows,
@@ -164,14 +177,17 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
     return (
         <div
             data-test="leaderboard-table"
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            className="@container min-w-0 overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-md"
         >
-            <div className="hidden overflow-x-auto md:block">
-                <table className="w-full min-w-[44rem] border-collapse text-left">
+            <div className="hidden @min-[42rem]:block">
+                <table className="w-full table-fixed border-collapse text-left">
                     <caption className="sr-only">
-                        Peringkat leaderboard dengan rata-rata XP terverifikasi
+                        Peringkat {entityLabel.toLocaleLowerCase('id-ID')}{' '}
+                        berdasarkan {isIndividual ? 'total' : 'rata-rata'} XP
+                        terverifikasi. Anggota aktif adalah pembagi skor. Skor
+                        sama berbagi peringkat yang sama.
                     </caption>
-                    <thead className="bg-slate-50">
+                    <thead className="bg-accent/60">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <tr key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => (
@@ -179,10 +195,10 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                                         key={header.id}
                                         scope="col"
                                         className={cn(
-                                            'border-b border-slate-100 px-4 py-3 font-label text-label font-semibold text-slate-500',
+                                            'border-b border-border px-4 py-4 text-xs leading-5 font-semibold text-muted-foreground',
                                             header.id === 'rank' && 'w-24',
-                                            header.id === 'score' && 'w-32',
-                                            header.id === 'members' && 'w-28',
+                                            header.id === 'score' && 'w-28',
+                                            header.id === 'members' && 'w-24',
                                             header.id === 'action' && 'w-36',
                                         )}
                                     >
@@ -201,7 +217,7 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                                 data-test="leaderboard-desktop-row"
                                 data-scope-key={row.original.scopeKey}
                                 className={cn(
-                                    'border-b border-slate-100 align-top transition-colors duration-fast ease-ledger last:border-b-0 hover:bg-slate-50/70 motion-reduce:transition-none',
+                                    'border-b border-border/70 align-top last:border-b-0',
                                     row.original.suppressed &&
                                         'bg-pending-subtle/20',
                                 )}
@@ -216,7 +232,7 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                                             <th
                                                 key={cell.id}
                                                 scope="row"
-                                                className="px-4 py-5 text-left text-sm leading-6 font-normal"
+                                                className="min-w-0 px-4 py-5 text-left text-sm leading-6 font-normal [overflow-wrap:anywhere]"
                                             >
                                                 {content}
                                             </th>
@@ -226,7 +242,7 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                                     return (
                                         <td
                                             key={cell.id}
-                                            className="px-4 py-5 text-sm leading-6"
+                                            className="px-4 py-5 text-sm leading-6 [overflow-wrap:anywhere]"
                                         >
                                             {content}
                                         </td>
@@ -238,38 +254,50 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                 </table>
             </div>
 
-            <div className="grid md:hidden">
+            <div className="grid min-w-0 @min-[42rem]:hidden">
                 {rows.map((row) => (
                     <article
                         key={row.scopeKey}
                         data-test="leaderboard-mobile-row"
                         data-scope-key={row.scopeKey}
                         className={cn(
-                            'grid gap-4 border-b border-slate-100 px-5 py-5 last:border-b-0',
+                            'grid min-w-0 gap-4 border-b border-border/70 p-5 last:border-b-0 sm:p-6',
                             row.suppressed && 'bg-pending-subtle/20',
                         )}
                     >
                         <div className="flex items-start justify-between gap-4">
                             <div className="flex min-w-0 items-start gap-3">
-                                <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-slate-200 bg-slate-50 font-label text-label font-semibold text-slate-700 tabular-nums">
-                                    {row.suppressed ? '-' : row.rank}
+                                <span
+                                    aria-label={
+                                        row.suppressed
+                                            ? 'Peringkat tidak dipublikasikan'
+                                            : `Peringkat ${row.rank ?? 'belum tersedia'}`
+                                    }
+                                    className={cn(
+                                        'grid size-12 shrink-0 place-items-center rounded-2xl border font-label text-sm font-semibold tabular-nums',
+                                        row.suppressed
+                                            ? 'border-border bg-muted text-muted-foreground'
+                                            : 'border-primary/10 bg-accent text-primary',
+                                    )}
+                                >
+                                    {row.suppressed ? '-' : (row.rank ?? '-')}
                                 </span>
                                 <div className="min-w-0">
-                                    <h3 className="font-semibold break-words text-slate-950">
+                                    <h3 className="text-base leading-6 font-bold tracking-tight [overflow-wrap:anywhere] text-foreground sm:text-lg">
                                         {row.scopeLabel ?? 'Entitas tanpa nama'}
                                     </h3>
-                                    <p className="mt-1 text-xs text-slate-500">
+                                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
                                         {row.suppressed
-                                            ? `${row.cohortSize} anggota aktif, kohort dilindungi`
+                                            ? `${formatNumber(row.cohortSize)} anggota aktif, kelompok dilindungi`
                                             : row.sharedRankGroup !== null
                                               ? 'Peringkat sama'
-                                              : 'Peringkat terpublikasi'}
+                                              : 'XP terverifikasi'}
                                     </p>
                                 </div>
                             </div>
                             {row.suppressed ? (
                                 <ShieldAlert
-                                    aria-label="Kohort dilindungi"
+                                    aria-label="Kelompok dilindungi"
                                     className="size-4 shrink-0 text-pending"
                                 />
                             ) : (
@@ -280,22 +308,29 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                             )}
                         </div>
 
-                        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-slate-100 pt-3 text-sm">
-                            <div>
-                                <dt className="font-label text-label text-muted-foreground">
-                                    Rata-rata XP
+                        <dl className="grid min-w-0 grid-cols-2 gap-4 border-t border-border pt-4 text-sm">
+                            <div className="min-w-0">
+                                <dt className="text-xs leading-5 text-muted-foreground">
+                                    {isIndividual ? 'Total XP' : 'Rata-rata XP'}
                                 </dt>
-                                <dd className="mt-1 font-label text-label font-semibold tabular-nums">
+                                <dd
+                                    className={cn(
+                                        'mt-2 font-label text-sm leading-6 font-semibold [overflow-wrap:anywhere] tabular-nums',
+                                        row.suppressed
+                                            ? 'text-muted-foreground'
+                                            : 'text-primary',
+                                    )}
+                                >
                                     {row.suppressed
                                         ? 'Tidak ditampilkan'
                                         : `${formatScore(row.score)} XP`}
                                 </dd>
                             </div>
-                            <div>
-                                <dt className="font-label text-label text-muted-foreground">
-                                    Denominator
+                            <div className="min-w-0">
+                                <dt className="text-xs leading-5 text-muted-foreground">
+                                    Anggota aktif
                                 </dt>
-                                <dd className="mt-1 font-label text-label font-semibold tabular-nums">
+                                <dd className="mt-2 font-label text-label font-semibold [overflow-wrap:anywhere] tabular-nums">
                                     {formatNumber(
                                         row.suppressed
                                             ? row.cohortSize
@@ -309,7 +344,7 @@ export function LeaderboardTable({ rows, onExplain }: Props) {
                         <Button
                             type="button"
                             variant="outline"
-                            className="w-full cursor-pointer border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50"
+                            className="min-h-11 w-full cursor-pointer border-border bg-card hover:border-primary/25 hover:bg-accent"
                             onClick={() => onExplain(row)}
                             data-test="leaderboard-mobile-explanation-trigger"
                         >

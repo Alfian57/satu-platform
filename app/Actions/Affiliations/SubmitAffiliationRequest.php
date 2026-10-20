@@ -3,6 +3,7 @@
 namespace App\Actions\Affiliations;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Actions\Institution\ResolveConfiguredUniversity;
 use App\Actions\InstitutionMemberships\RequestInstitutionMembership;
 use App\Actions\InstitutionMemberships\TransitionInstitutionMembership;
 use App\Enums\AffiliationMatchResult;
@@ -12,12 +13,15 @@ use App\Enums\InstitutionMembershipVerificationMethod;
 use App\Exceptions\VerifiedPhoneRequired;
 use App\Models\AffiliationRequest;
 use App\Models\Institution;
+use App\Models\InstitutionMembership;
 use App\Models\InstitutionRoster;
 use App\Models\InstitutionRosterRow;
 use App\Models\PhoneNumber;
 use App\Models\User;
 use App\Support\InstitutionalIdentifier;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 final class SubmitAffiliationRequest
 {
@@ -25,10 +29,20 @@ final class SubmitAffiliationRequest
         private readonly RequestInstitutionMembership $requestMembership,
         private readonly TransitionInstitutionMembership $transitionMembership,
         private readonly AuditRecorder $audit,
+        private readonly ResolveConfiguredUniversity $resolveUniversity,
+        private readonly StoreAffiliationProfileDraft $storeProfileDraft,
     ) {}
 
-    public function handle(User $user, Institution $institution, string $nim): AffiliationRequest
-    {
+    /**
+     * @param  array{faculty?: string|null, study_program?: string|null, admission_year?: int|string|null}|null  $academicProfile
+     */
+    public function handle(
+        User $user,
+        Institution $institution,
+        string $nim,
+        ?array $academicProfile = null,
+    ): AffiliationRequest {
+        Gate::forUser($user)->authorize('create', [InstitutionMembership::class, $institution]);
         $normalizedNim = InstitutionalIdentifier::normalize($nim);
         $nimHash = InstitutionalIdentifier::hash($normalizedNim);
 
@@ -37,15 +51,15 @@ final class SubmitAffiliationRequest
             $institution,
             $normalizedNim,
             $nimHash,
+            $academicProfile,
         ): AffiliationRequest {
-            $lockedUser = User::query()
-                ->lockForUpdate()
-                ->whereKey($user->getKey())
-                ->firstOrFail();
             $lockedInstitution = Institution::query()
                 ->lockForUpdate()
                 ->whereKey($institution->getKey())
                 ->firstOrFail();
+            $this->resolveUniversity->handle($lockedInstitution);
+            $lockedUser = User::query()->lockForUpdate()->whereKey($user->getKey())->firstOrFail();
+            Gate::forUser($lockedUser)->authorize('create', [InstitutionMembership::class, $lockedInstitution]);
             $phoneNumber = PhoneNumber::query()
                 ->verified()
                 ->whereBelongsTo($lockedUser)
@@ -76,11 +90,20 @@ final class SubmitAffiliationRequest
                 ->lockForUpdate()
                 ->first();
 
-            if (
-                $membership->status === InstitutionMembershipStatus::Verified
-                && $request?->status === AffiliationRequestStatus::Verified
-            ) {
-                return $request;
+            if ($membership->status === InstitutionMembershipStatus::Verified) {
+                if ($request !== null) {
+                    $this->storeProfileDraft->handle(
+                        $lockedUser,
+                        $lockedInstitution,
+                        $request,
+                        $academicProfile,
+                    );
+
+                    return $request;
+                }
+                throw ValidationException::withMessages([
+                    'nim' => 'Afiliasi sudah terverifikasi. NIM tidak diubah melalui pengajuan ulang. Buka Profil kemampuan atau hubungi Admin Universitas untuk koreksi.',
+                ]);
             }
 
             $membership->forceFill(['institutional_identifier' => $normalizedNim])->save();
@@ -94,6 +117,13 @@ final class SubmitAffiliationRequest
                 && hash_equals($request->nim_hash, $nimHash)
                 && $request->roster_id === $activeRoster?->getKey()
             ) {
+                $this->storeProfileDraft->handle(
+                    $lockedUser,
+                    $lockedInstitution,
+                    $request,
+                    $academicProfile,
+                );
+
                 return $request;
             }
 
@@ -139,6 +169,13 @@ final class SubmitAffiliationRequest
                     'resolved_at' => $requestStatus === AffiliationRequestStatus::Verified ? now() : null,
                 ])->save();
             }
+
+            $this->storeProfileDraft->handle(
+                $lockedUser,
+                $lockedInstitution,
+                $request,
+                $academicProfile,
+            );
 
             if (
                 $matchResult === AffiliationMatchResult::Exact

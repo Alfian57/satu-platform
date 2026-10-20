@@ -37,7 +37,7 @@ final class PlatformInvitationController extends Controller
         if ($request->header('X-Inertia') === 'true' || ! $request->expectsJson()) {
             Inertia::flash('toast', [
                 'type' => 'success',
-                'message' => 'Undangan admin kampus telah dijadwalkan untuk dikirim melalui WhatsApp.',
+                'message' => 'Undangan Admin Universitas telah dijadwalkan untuk dikirim melalui WhatsApp.',
             ]);
 
             return back();
@@ -71,7 +71,7 @@ final class PlatformInvitationController extends Controller
         if ($request->header('X-Inertia') === 'true' || ! $request->expectsJson()) {
             Inertia::flash('toast', [
                 'type' => 'success',
-                'message' => 'Undangan admin kampus telah dicabut dan dicatat pada audit.',
+                'message' => 'Undangan Admin Universitas telah dicabut dan dicatat pada audit.',
             ]);
 
             return back();

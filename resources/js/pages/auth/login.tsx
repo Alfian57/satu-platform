@@ -1,5 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
-import { LogIn } from 'lucide-react';
+import { LockKeyhole, LogIn, UserRound } from 'lucide-react';
+import AuthInputFrame from '@/components/auth/auth-input-frame';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -29,7 +30,7 @@ export default function Login({ status }: Props) {
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid gap-5">
+                        <div className="grid gap-6">
                             <div className="grid gap-2">
                                 <Label
                                     htmlFor="username"
@@ -37,28 +38,30 @@ export default function Login({ status }: Props) {
                                 >
                                     Nama pengguna
                                 </Label>
-                                <Input
-                                    id="username"
-                                    type="text"
-                                    name="username"
-                                    required
-                                    autoFocus
-                                    autoComplete="username"
-                                    placeholder="Masukkan nama pengguna"
-                                    aria-describedby={
-                                        errors.username
-                                            ? 'username-help login-username-error'
-                                            : 'username-help'
-                                    }
-                                    className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                                    aria-invalid={Boolean(errors.username)}
-                                />
+                                <AuthInputFrame icon={UserRound}>
+                                    <Input
+                                        id="username"
+                                        type="text"
+                                        name="username"
+                                        required
+                                        autoFocus
+                                        autoComplete="username"
+                                        placeholder="Masukkan nama pengguna"
+                                        aria-describedby={
+                                            errors.username
+                                                ? 'username-help login-username-error'
+                                                : 'username-help'
+                                        }
+                                        className="h-11 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        aria-invalid={Boolean(errors.username)}
+                                    />
+                                </AuthInputFrame>
                                 <p
                                     id="username-help"
                                     className="text-xs leading-relaxed text-slate-500"
                                 >
-                                    Nama pengguna hanya untuk masuk ke SATU,
-                                    bukan untuk profil publik.
+                                    Hanya untuk masuk, tidak tampil di profil
+                                    publik.
                                 </p>
                                 <InputError
                                     id="login-username-error"
@@ -73,27 +76,29 @@ export default function Login({ status }: Props) {
                                 >
                                     Password
                                 </Label>
-                                <PasswordInput
-                                    id="password"
-                                    name="password"
-                                    required
-                                    autoComplete="current-password"
-                                    placeholder="Masukkan password"
-                                    className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                                    aria-invalid={Boolean(errors.password)}
-                                    aria-describedby={
-                                        errors.password
-                                            ? 'login-password-error'
-                                            : undefined
-                                    }
-                                />
+                                <AuthInputFrame icon={LockKeyhole}>
+                                    <PasswordInput
+                                        id="password"
+                                        name="password"
+                                        required
+                                        autoComplete="current-password"
+                                        placeholder="Masukkan password"
+                                        className="h-11 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        aria-invalid={Boolean(errors.password)}
+                                        aria-describedby={
+                                            errors.password
+                                                ? 'login-password-error'
+                                                : undefined
+                                        }
+                                    />
+                                </AuthInputFrame>
                                 <InputError
                                     id="login-password-error"
                                     message={errors.password}
                                 />
                             </div>
 
-                            <div className="flex items-center justify-between">
+                            <div className="flex min-h-11 flex-wrap items-center justify-between gap-x-3">
                                 <div className="flex items-center space-x-2.5">
                                     <Checkbox
                                         id="remember"
@@ -102,14 +107,14 @@ export default function Login({ status }: Props) {
                                     />
                                     <Label
                                         htmlFor="remember"
-                                        className="cursor-pointer text-sm text-slate-600"
+                                        className="inline-flex min-h-11 cursor-pointer items-center text-sm text-slate-600"
                                     >
                                         Ingat saya
                                     </Label>
                                 </div>
                                 <TextLink
                                     href={recover()}
-                                    className="text-sm font-semibold text-blue-600 no-underline hover:text-blue-700 hover:underline"
+                                    className="inline-flex min-h-11 items-center text-sm font-semibold text-blue-600 no-underline hover:text-blue-700 hover:underline"
                                     data-test="forgot-password-link"
                                 >
                                     Lupa password?
@@ -118,7 +123,7 @@ export default function Login({ status }: Props) {
 
                             <Button
                                 type="submit"
-                                className="mt-2 h-12 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-md motion-reduce:transition-none"
+                                className="auth-submit-static h-11 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-sm font-semibold text-white shadow-md shadow-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                 disabled={processing}
                                 data-test="login-button"
                             >
@@ -134,20 +139,11 @@ export default function Login({ status }: Props) {
                             </Button>
                         </div>
 
-                        <div className="relative flex items-center justify-center">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-slate-200" />
-                            </div>
-                            <span className="relative bg-white px-4 text-xs text-slate-600">
-                                atau
-                            </span>
-                        </div>
-
-                        <div className="text-center text-sm text-slate-500">
+                        <div className="border-t border-slate-100 pt-3 text-center text-sm text-slate-500">
                             Belum punya akun?{' '}
                             <TextLink
                                 href={register()}
-                                className="font-semibold text-blue-600 no-underline hover:text-blue-700 hover:underline"
+                                className="ml-1 inline-flex min-h-11 items-center font-semibold text-blue-600 no-underline hover:text-blue-700 hover:underline"
                             >
                                 Daftar sekarang
                             </TextLink>

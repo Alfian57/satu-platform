@@ -10,12 +10,9 @@ use App\Models\Institution;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
-use Carbon\Carbon;
+use App\Support\Task\TaskSnapshot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
-use Throwable;
 
 final class UpdateTask
 {
@@ -44,7 +41,7 @@ final class UpdateTask
                 ->firstOrFail();
 
             Gate::forUser($actor)->authorize('update', $lockedTask);
-            $this->ensureFresh($lockedTask, $data['expected_updated_at'] ?? null);
+            TaskSnapshot::ensureFresh($lockedTask, $data['expected_revision'] ?? null);
 
             $before = $this->summary($lockedTask);
             $changedFields = [];
@@ -101,36 +98,13 @@ final class UpdateTask
                     projectId: (int) $lockedProject->getKey(),
                     resourceId: (int) $lockedTask->getKey(),
                     operation: 'task.updated',
-                    version: $lockedTask->updated_at->toIso8601String(),
-                    occurredAt: now()->toIso8601String(),
+                    version: TaskSnapshot::revision($lockedTask),
+                    occurredAt: now()->toISOString(),
                 );
             }
 
             return $lockedTask->refresh()->load(['project', 'createdBy', 'assignments.assignee']);
         }, attempts: 3);
-    }
-
-    private function ensureFresh(Task $task, mixed $expectedUpdatedAt): void
-    {
-        if ($expectedUpdatedAt === null || $expectedUpdatedAt === '') {
-            return;
-        }
-
-        try {
-            $expected = Carbon::parse((string) $expectedUpdatedAt);
-        } catch (Throwable) {
-            throw ValidationException::withMessages([
-                'expected_updated_at' => 'Versi task tidak valid.',
-            ]);
-        }
-
-        if ($task->updated_at->equalTo($expected)) {
-            return;
-        }
-
-        throw new ConflictHttpException(
-            'Task ini sudah berubah di sesi lain. Muat data terbaru sebelum menyimpan kembali.',
-        );
     }
 
     /**

@@ -32,7 +32,10 @@ final class ContributionController extends Controller
         Contribution $contribution,
         ContributionSerializer $serializer,
     ): JsonResponse {
-        return response()->json(['data' => $serializer->contribution($contribution)]);
+        return response()->json(['data' => $serializer->contribution($contribution),
+            'permissions' => ['can_update' => $request->user()?->can('update', $contribution) ?? false,
+                'can_submit' => $request->user()?->can('submit', $contribution) ?? false],
+        ]);
     }
 
     public function store(
@@ -66,6 +69,7 @@ final class ContributionController extends Controller
                 actor: $user,
                 contribution: $contribution,
                 evidence: $request->validated('evidence'),
+                expectedRevision: $request->string('expected_revision')->toString(),
             );
         } catch (InvalidContributionTransition $exception) {
             throw ValidationException::withMessages([
@@ -73,7 +77,10 @@ final class ContributionController extends Controller
             ]);
         }
 
-        return response()->json(['data' => $serializer->contribution($contribution)]);
+        return response()->json(['data' => $serializer->contribution($contribution), 'permissions' => [
+            'can_update' => $user->can('update', $contribution),
+            'can_submit' => $user->can('submit', $contribution),
+        ]]);
     }
 
     public function submit(
@@ -86,14 +93,17 @@ final class ContributionController extends Controller
         $user = $request->user();
 
         try {
-            $contribution = $submitContribution->handle($user, $contribution);
+            $contribution = $submitContribution->handle($user, $contribution, $request->string('expected_revision')->toString());
         } catch (InvalidContributionTransition $exception) {
             throw ValidationException::withMessages([
                 'status' => $exception->getMessage(),
             ]);
         }
 
-        return response()->json(['data' => $serializer->contribution($contribution)]);
+        return response()->json(['data' => $serializer->contribution($contribution), 'permissions' => [
+            'can_update' => $user->can('update', $contribution),
+            'can_submit' => $user->can('submit', $contribution),
+        ]]);
     }
 
     public function review(
@@ -111,6 +121,7 @@ final class ContributionController extends Controller
                 reviewer: $user,
                 decision: ContributionReviewDecision::from($request->string('decision')->toString()),
                 expectedVersion: $request->integer('expected_version'),
+                expectedRevision: $request->string('expected_revision')->toString(),
                 reason: $request->string('reason')->toString() ?: null,
                 note: $request->string('note')->toString() ?: null,
             );
@@ -146,6 +157,9 @@ final class ContributionController extends Controller
             ]);
         }
 
-        return response()->json(['data' => $serializer->contribution($contribution)]);
+        return response()->json(['data' => $serializer->contribution($contribution), 'permissions' => [
+            'can_update' => $user->can('update', $contribution),
+            'can_submit' => $user->can('submit', $contribution),
+        ]]);
     }
 }

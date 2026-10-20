@@ -1,0 +1,60 @@
+{
+    "description": "Pose maskot SATU menunggu verifikasi dengan buku dipangku dan duduk langsung pada batu.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan, identity-preserve",
+    "generation_id": "exec-3b60227f-bdf8-4791-b144-091dd234a6a5",
+    "edit_target": {
+        "file": "resources/images/mascot/mascot-waiting-review.png",
+        "purpose": "Mengganti buku sebagai alas duduk dengan batu dan memindahkan buku ke pangkuan, identitas dipertahankan."
+    },
+    "identity_references": [
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png",
+            "role": "Identitas, proporsi, pola bulu dan sudut pandang",
+            "sha256": "3356586B1594DCC874710C91CE71BD294046139FB5E2DC0734CEE851E637ACF1"
+        },
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip.png",
+            "role": "Material, warna, ekspresi dan tas buku",
+            "sha256": "A356C316D00EAD034A961170B77847636DF43008C9F459A562A6531443211AE4"
+        }
+    ],
+    "source": {
+        "file": "resources/images/mascot/mascot-waiting-stone.png",
+        "width": 1536,
+        "height": 1024,
+        "mode": "RGBA",
+        "alpha_range": [0, 254],
+        "bytes": 1933648,
+        "sha256": "08fc99a461ab917137c158460a91197932d7199a82e94a7a438bfc6cb8ddc7e3"
+    },
+    "runtime_variants": [
+        {
+            "file": "public/images/mascot-waiting-stone-256.webp",
+            "width": 256,
+            "height": 171,
+            "bytes": 12510,
+            "sha256": "6cb302cdacffe43f33cc597fe0b419583bc14825d1869370911d3f661e760a96"
+        },
+        {
+            "file": "public/images/mascot-waiting-stone-512.webp",
+            "width": 512,
+            "height": 341,
+            "bytes": 34240,
+            "sha256": "5dece40a8f67bfda4de1171cd5baec75a3447cf64f028248128c26306617ce9e"
+        },
+        {
+            "file": "public/images/mascot-waiting-stone.webp",
+            "width": 1024,
+            "height": 683,
+            "bytes": 107292,
+            "sha256": "4961e44a6180cf87002f06f0db492c1af990c253594e5a78e4c27a143180e37d"
+        }
+    ],
+    "optimization": "Resize mekanis Lanczos ke lebar 256, 512 dan 1024px dengan rasio sumber 3:2, WebP kualitas 90 method 6. Alpha asli dipertahankan tanpa pengeditan kreatif manual.",
+    "alt_purpose": "Dekoratif dengan alt kosong. Pose menunggu bukan durasi, progres atau persetujuan afiliasi. Teks dan tindakan tetap HTML.",
+    "scope": "Varian batu bertekstur tidak dipakai runtime setelah pemilik produk memilih dudukan putih-biru sebelumnya. Dipertahankan sebagai sumber edit untuk mascot-waiting-lap, bukan asset aktif Beranda.",
+    "superseded_by": "resources/images/mascot/waiting-lap-mascot.provenance.json",
+    "manual_review": "Duduk langsung pada batu dengan kedua sayap memegang satu buku tertutup di pangkuan. Tidak ada buku di bawah badan atau kaki. Warna, pola bulu dan tas cross-body dipertahankan.",
+    "prompt": "Use case: identity-preserve.\nAsset type: transparent SATU student-dashboard mascot cutout, landscape 3:2 composition, approximately 1536 by 1024.\nInput image 1 is the edit target: the current waiting bird. Input image 2 is the canonical turnaround and locks identity, bird anatomy, proportions and feather markings. Input image 3 locks material, expression, colors and the navy cross-body satchel.\nPrimary request: correct ONLY the waiting pose and its seat. The same blue, ivory and orange kingfisher is SITTING DIRECTLY ON ONE LOW ROUNDED STONE, gently cradling ONE CLOSED NAVY BOOK HORIZONTALLY IN ITS LAP with both feathered wings. The book is clearly ABOVE its thighs/lap and BELOW its chest. No book whatsoever underneath its body, rump, feet, or the stone. The bird's soft ivory seated body must visibly rest on the stone, with natural contact shading, not float. Both graphite bird feet relax on the front/top of the stone. Keep a patient, calm, friendly waiting expression with a gentle upward glance, not reading, sleeping, sad, anxious or impatient.\nKeep exactly the recognizable SATU identity: detailed cobalt/azure layered feathers and crest, ivory chest and cheeks, orange eyebrow and cheek marking, large warm brown eyes, graphite beak and feet, tail, navy cross-body satchel with brass hardware and cream paper. Keep the satchel strap across the torso and satchel visible at the side; the separate closed lap book must NOT replace the satchel. One plain ivory-page book with a tiny orange ribbon, no writing.\nStone: one low, wide, smooth organic pale blue-gray boulder with a slightly convex ivory-lit top and subtle natural stone texture. Matte, softly rounded, not shiny, not a chair, not a book, not a geometric pedestal or floating disk. Approximately twice the visible bird body width, low enough not to dominate. It is part of the same cutout so seating and contact are physically coherent.\nComposition: whole seated bird, lap book, both feet, tail and complete stone visible. Center the bird chest and stone on the same horizontal center. Bird roughly middle 45 percent of canvas width and 80 percent of canvas height; the low wide stone spans roughly 85 to 90 percent of canvas width near the bottom. Keep crest and tail unclipped. Small clean transparent margins; the stone's base near 98 percent of canvas height. Premium polished 3D feather rendering, soft diffuse studio lighting matching the references, subtle contact shadow at stone base only.\nGenuine transparent background, alpha cutout. No background scene, campus, floor, grass, halo, rings, sparkles, UI, text, letters, numbers, logos, watermark, clock, hourglass, progress indicator, approval checkmark, badges, extra books, additional characters, human hands, fingers, clothes or accessories other than the original satchel. Most important: respectfully holding the book in its lap, NEVER sitting or standing on a book."
+}

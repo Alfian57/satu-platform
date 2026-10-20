@@ -1,0 +1,27 @@
+{
+    "description": "Plate latar biru-putih khusus login dan register, mengikuti referensi pengguna tanpa UI tertanam.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan, precise-object-edit",
+    "generation_id": "exec-1a16c661-2319-47f2-8a7c-72453ace823a",
+    "reference": {
+        "file": "public/referensi/login.png",
+        "sha256": "3301EF86F9E3DADF957E275D97AD0F41157AB1665454F5856496774F04C48D0D"
+    },
+    "source": {
+        "file": "resources/images/mascot/auth-entry-background.png",
+        "width": 1672,
+        "height": 941,
+        "sha256": "312E2DDA4885A207EF52398F94B54F59D19C45C0D73A16C804AF43921CAADD65"
+    },
+    "runtime": {
+        "file": "public/images/auth-entry-background.webp",
+        "width": 1672,
+        "height": 941,
+        "bytes": 769240,
+        "sha256": "607590791E3137D4BC75CBC65DA64A3980E2A7CAED366E49A46CAD2D7863B7CD"
+    },
+    "optimization": "Konversi mekanis PNG RGB ke WebP lossless, dimensi asli dipertahankan tanpa perubahan komposisi.",
+    "alt_purpose": "Latar dekoratif dengan alt kosong dan aria-hidden. Teks, kontrol, status, balon sapaan dan maskot tetap elemen terpisah.",
+    "scope": "Login dan register termasuk tahap OTP. Halaman autentikasi lain mempertahankan latar existing.",
+    "prompt": "Use case: precise-object-edit. Edit target: the supplied SATU login design reference. Produce ONLY a clean full-frame background plate from this exact image. Preserve the original pale blue and white sky palette, soft gradients and broad curved background geometry as faithfully as possible: the very large translucent white circle cropped at the top-left; the pale blue curved band entering from the left around y240 and fading toward the middle-left; luminous near-white center; soft sky-blue light behind the future right-hand form; large pale blue and translucent white arcs sweeping from the right edge toward the lower-right and lower-center; subtle original edge lighting. Keep the small background dot clusters at far upper-right and lower-left, in their original locations and scale. Remove ALL foreground content: logo and SATU text, back link and arrow, university-style pill and orange dot, every headline and paragraph, the entire white form card, every label/input/checkbox/button/link/footer, the bird, its book bag, the speech bubble, small archive paper, star, floating diamond pieces, orbit loops, feather, and the bird's ground ellipse. Seamlessly reconstruct the areas those foreground objects obscure. No new objects or text, no bird, no form card, no UI, no watermark, no strong saturation. Match the 1672:941 landscape aspect and the reference's background composition. This is a faithful background extraction, not a webpage screenshot and not a newly styled background. Output an opaque high-resolution background image."
+}

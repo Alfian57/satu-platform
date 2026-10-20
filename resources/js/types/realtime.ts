@@ -1,5 +1,5 @@
 export type WorkspaceRealtimeDelta = {
-    resource: 'task' | 'discussion';
+    resource: 'task' | 'discussion' | 'attachment';
     operation: string;
     resource_id: number;
     project_id: number;

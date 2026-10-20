@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Profile\CreateStudentProfile;
+use App\Actions\Profile\ListSkillTaxonomies;
 use App\Actions\Profile\ReplaceStudentProfileAvailability;
+use App\Actions\Profile\StudentProfileWorkspaceQuery;
 use App\Actions\Profile\UpdateStudentProfile;
 use App\Actions\Profile\UpdateStudentProfileVisibility;
+use App\Enums\InstitutionMembershipStatus;
+use App\Http\Requests\Profile\EditStudentProfileRequest;
 use App\Http\Requests\Profile\ReplaceStudentProfileAvailabilityRequest;
 use App\Http\Requests\Profile\StoreStudentProfileRequest;
 use App\Http\Requests\Profile\UpdateStudentProfileRequest;
@@ -16,11 +20,33 @@ use App\Models\ProfileInterest;
 use App\Models\ProfileSkill;
 use App\Models\StudentProfile;
 use App\Models\User;
+use App\Support\Portfolio\PortfolioPrivacyRevision;
+use App\Support\Profile\ProfileRevision;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class StudentProfileController extends Controller
 {
+    public function edit(EditStudentProfileRequest $request, StudentProfileWorkspaceQuery $workspace, ListSkillTaxonomies $taxonomies): Response
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+        $context = $workspace->execute($user, $request->filled('institution_id') ? $request->integer('institution_id') : null);
+        $membership = $context['membership'];
+
+        return Inertia::render('student/profile', [
+            'institution' => $membership === null ? null : ['id' => $membership->institution_id, 'name' => $membership->institution->name, 'timezone' => $membership->institution->timezone],
+            'access' => $membership?->status->value ?? 'unverified',
+            'profile' => $context['profile'] === null ? null : $this->payload($context['profile']),
+            'taxonomies' => $membership?->status === InstitutionMembershipStatus::Verified
+                ? $taxonomies->execute()->map(fn ($taxonomy): array => $taxonomy->only(['id', 'name', 'category']))->values()->all() : [],
+            'approvedSources' => $context['approvedSources'],
+            'academicOptions' => config('university.faculties', []),
+        ]);
+    }
+
     public function show(StudentProfile $studentProfile): JsonResponse
     {
         Gate::authorize('view', $studentProfile);
@@ -90,10 +116,14 @@ class StudentProfileController extends Controller
         return [
             'id' => $profile->getKey(),
             'updated_at' => $profile->updated_at->toIso8601String(),
+            'revision' => ProfileRevision::for($profile),
             'bio' => $profile->bio,
             'study_program' => $profile->study_program,
             'study_year' => $profile->study_year,
-            'portfolio_visibility' => $profile->portfolio_visibility->value,
+            'faculty' => $profile->faculty,
+            'admission_year' => $profile->admission_year,
+            'portfolio_visibility' => $profile->portfolio_visibility->effective()->value,
+            'privacy_revision' => PortfolioPrivacyRevision::for($profile),
             'recruiter_discoverable' => $profile->recruiter_discoverable,
             'skills' => $profile->skills->map(static fn (ProfileSkill $skill): array => [
                 'id' => $skill->getKey(),

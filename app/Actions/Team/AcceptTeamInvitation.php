@@ -19,6 +19,7 @@ final class AcceptTeamInvitation
     public function __construct(
         private readonly TeamMembershipTransition $transition,
         private readonly AuditRecorder $audit,
+        private readonly ResolvePendingTeamOffers $pendingOffers,
     ) {}
 
     public function handle(User $actor, TeamInvitation $invitation): TeamInvitation
@@ -74,6 +75,7 @@ final class AcceptTeamInvitation
                     ? 'team.membership.joined'
                     : 'team.membership.rejoined',
                 sourceId: $lockedInvitation->getKey(),
+                sourceType: 'invitation',
             );
 
             $before = $this->summary($lockedInvitation);
@@ -83,6 +85,7 @@ final class AcceptTeamInvitation
                 'responded_at' => now(),
                 'response_reason' => null,
             ])->save();
+            $this->pendingOffers->handle($project, $actor, $actor);
 
             $this->audit->record(
                 operation: 'team.invitation.accepted',

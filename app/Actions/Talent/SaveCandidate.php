@@ -33,15 +33,13 @@ final class SaveCandidate
         RecruiterOrganization $organization,
         int $candidateProjectionId,
     ): RecruiterSavedCandidate {
-        if (! $recruiter->is_platform_admin) {
-            $isMember = $organization->memberships()
-                ->where('user_id', $recruiter->id)
-                ->where('status', RecruiterMembershipStatus::Active)
-                ->exists();
+        $isMember = $organization->memberships()
+            ->where('user_id', $recruiter->id)
+            ->where('status', RecruiterMembershipStatus::Active)
+            ->exists();
 
-            if (! $isMember) {
-                throw new AuthorizationException('Anda bukan anggota aktif dari organization perekrut ini.');
-            }
+        if (! $isMember) {
+            throw new AuthorizationException('Anda bukan anggota aktif dari organization perekrut ini.');
         }
 
         $hasEntitlement = $this->verifyEntitlement->check(

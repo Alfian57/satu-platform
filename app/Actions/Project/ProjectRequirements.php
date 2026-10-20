@@ -6,12 +6,18 @@ namespace App\Actions\Project;
 
 use App\Enums\ProjectVisibility;
 use App\Enums\SkillProficiency;
+use App\Enums\TeamMembershipStatus;
+use App\Models\OpportunitySupportEvent;
 use App\Models\Project;
 use App\Models\ProjectRole;
 use App\Models\ProjectRoleSkill;
 use App\Models\SkillTaxonomy;
+use App\Models\TeamInvitation;
+use App\Models\TeamJoinRequest;
+use App\Models\TeamMembership;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -20,6 +26,9 @@ final class ProjectRequirements
     /**
      * @return list<array{
      *     title: string,
+     *     id?: int,
+     *     accepts_beginners?: bool|null,
+     *     selection_criteria?: string|null,
      *     description: string|null,
      *     capacity: int,
      *     skills: list<array{taxonomy_id: int, proficiency: SkillProficiency}>
@@ -37,21 +46,70 @@ final class ProjectRequirements
      * @param  list<array{
      *     title: string,
      *     description: string|null,
+     *     id?: int,
+     *     accepts_beginners?: bool|null,
+     *     selection_criteria?: string|null,
      *     capacity: int,
      *     skills: list<array{taxonomy_id: int, proficiency: SkillProficiency}>
      * }>  $roles
      */
     public function persist(Project $project, array $roles): void
     {
-        $project->roles()->delete();
+        $existing = $project->roles()->get();
+        $retained = [];
+        $resolved = [];
+        foreach ($roles as $index => $roleData) {
+            $role = isset($roleData['id'])
+                ? $existing->firstWhere('id', $roleData['id'])
+                : $existing->first(fn (ProjectRole $candidate): bool => mb_strtolower($candidate->title) === mb_strtolower($roleData['title']));
+            if (isset($roleData['id']) && $role === null) {
+                throw ValidationException::withMessages(["roles.{$index}.id" => 'Peran bukan milik proyek ini. Muat ulang data peran.']);
+            }
+            if ($role !== null && in_array($role->getKey(), $retained, true)) {
+                throw ValidationException::withMessages(["roles.{$index}.id" => 'Peran yang sama tidak boleh dikirim dua kali.']);
+            }
+            if ($role !== null) {
+                $occupied = TeamMembership::query()->whereBelongsTo($project)->where('project_role_id', $role->getKey())->where('status', TeamMembershipStatus::Active)->count();
+                if ($roleData['capacity'] < $occupied) {
+                    throw ValidationException::withMessages(["roles.{$index}.capacity" => 'Kapasitas peran tidak boleh lebih kecil dari anggota aktifnya.']);
+                }
+                $retained[] = $role->getKey();
+            }
+            $resolved[] = $role;
+        }
+        foreach ($existing as $role) {
+            if (in_array($role->getKey(), $retained, true)) {
+                continue;
+            }
+            $referenced = TeamMembership::query()->where('project_role_id', $role->getKey())->exists()
+                || TeamInvitation::query()->where('project_role_id', $role->getKey())->exists()
+                || TeamJoinRequest::query()->where('project_role_id', $role->getKey())->exists()
+                || (Schema::hasTable((new OpportunitySupportEvent)->getTable())
+                    && OpportunitySupportEvent::query()->where('project_role_id', $role->getKey())->exists());
+            if ($referenced) {
+                throw ValidationException::withMessages(['roles' => 'Peran yang sudah dirujuk tim, undangan, pengajuan atau riwayat bantuan tidak dapat dihapus. Ubah informasi peran tersebut.']);
+            }
+            $role->delete();
+        }
 
-        foreach ($roles as $roleData) {
-            $role = ProjectRole::query()->forceCreate([
+        /** Pergantian nama sementara hanya dalam transaksi untuk mendukung pertukaran nama peran unik. */
+        foreach ($resolved as $role) {
+            if ($role !== null) {
+                $role->forceFill(['title' => '__t04_'.bin2hex(random_bytes(12))])->save();
+            }
+        }
+
+        foreach ($roles as $index => $roleData) {
+            $role = $resolved[$index] ?? new ProjectRole;
+            $role->forceFill([
                 'project_id' => $project->getKey(),
                 'title' => $roleData['title'],
                 'description' => $roleData['description'],
                 'capacity' => $roleData['capacity'],
-            ]);
+                ...(array_key_exists('accepts_beginners', $roleData) ? ['accepts_beginners' => $roleData['accepts_beginners']] : []),
+                ...(array_key_exists('selection_criteria', $roleData) ? ['selection_criteria' => $roleData['selection_criteria']] : []),
+            ])->save();
+            $role->skills()->delete();
 
             foreach ($roleData['skills'] as $skillData) {
                 ProjectRoleSkill::query()->forceCreate([
@@ -177,6 +235,9 @@ final class ProjectRequirements
      * @return list<array{
      *     title: string,
      *     description: string|null,
+     *     id?: int,
+     *     accepts_beginners?: bool|null,
+     *     selection_criteria?: string|null,
      *     capacity: int,
      *     skills: list<array{taxonomy_id: int, proficiency: SkillProficiency}>
      * }>
@@ -230,7 +291,7 @@ final class ProjectRequirements
                 ]);
             }
 
-            $roles[] = [
+            $normalized = [
                 'title' => $title,
                 'description' => $this->nullableText(
                     $role['description'] ?? null,
@@ -240,6 +301,16 @@ final class ProjectRequirements
                 'capacity' => $capacity,
                 'skills' => $this->normalizeSkills($role['skills'] ?? [], $index),
             ];
+            if (isset($role['id'])) {
+                $normalized['id'] = $this->boundedInteger($role['id'], "roles.{$index}.id", 1, PHP_INT_MAX);
+            }
+            if (array_key_exists('accepts_beginners', $role)) {
+                $normalized['accepts_beginners'] = $this->beginnerAcceptance($role['accepts_beginners'], "roles.{$index}.accepts_beginners");
+            }
+            if (array_key_exists('selection_criteria', $role)) {
+                $normalized['selection_criteria'] = $this->nullableText($role['selection_criteria'], "roles.{$index}.selection_criteria", 2000);
+            }
+            $roles[] = $normalized;
         }
 
         return $roles;
@@ -296,6 +367,9 @@ final class ProjectRequirements
      * @param  list<array{
      *     title: string,
      *     description: string|null,
+     *     id?: int,
+     *     accepts_beginners?: bool|null,
+     *     selection_criteria?: string|null,
      *     capacity: int,
      *     skills: list<array{taxonomy_id: int, proficiency: SkillProficiency}>
      * }>  $roles
@@ -311,6 +385,7 @@ final class ProjectRequirements
         $taxonomies = SkillTaxonomy::query()
             ->whereIn('id', $taxonomyIds)
             ->where('is_verified', true)
+            ->where('category', '!=', 'interest')
             ->get()
             ->keyBy(fn (SkillTaxonomy $taxonomy): int => $taxonomy->getKey());
 
@@ -340,5 +415,17 @@ final class ProjectRequirements
         }
 
         return $proficiency;
+    }
+
+    private function beginnerAcceptance(mixed $value, string $field): ?bool
+    {
+        if ($value === null) {
+            return null;
+        }
+        if (! in_array($value, [true, false, 0, 1, '0', '1'], true)) {
+            throw ValidationException::withMessages([$field => 'Pilih menerima pemula, membutuhkan pengalaman, atau belum dinyatakan.']);
+        }
+
+        return (bool) $value;
     }
 }

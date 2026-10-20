@@ -21,7 +21,7 @@ use LogicException;
  * @property string $version
  * @property array<string, float> $weights
  * @property list<string> $dimensions
- * @property array{availability_target_minutes: int, connectivity_cap: int} $parameters
+ * @property array{availability_target_minutes: int, connectivity_cap: int, policy?: string} $parameters
  * @property Carbon|null $activated_at
  * @property int|null $author_id
  * @property string|null $notes

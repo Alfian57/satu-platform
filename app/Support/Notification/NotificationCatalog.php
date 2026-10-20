@@ -13,8 +13,8 @@ final class NotificationCatalog
      */
     private const CATEGORY_LABELS = [
         'all' => 'Semua',
-        'project' => 'Project',
-        'contribution' => 'Contribution',
+        'project' => 'Proyek',
+        'contribution' => 'Kontribusi',
         'invitation' => 'Undangan dan kontak',
         'security' => 'Keamanan',
     ];
@@ -90,9 +90,9 @@ final class NotificationCatalog
     public static function whatsappPreferences(array $savedPreferences): array
     {
         $labels = [
-            MessagePurpose::Invitation->value => 'Undangan dan akses project',
-            MessagePurpose::Deadline->value => 'Deadline atau revision penting',
-            MessagePurpose::Revision->value => 'Perubahan pada contribution',
+            MessagePurpose::Invitation->value => 'Undangan admin dan proyek',
+            MessagePurpose::Deadline->value => 'Tenggat atau revisi penting',
+            MessagePurpose::Revision->value => 'Perubahan pada kontribusi',
             MessagePurpose::Contact->value => 'Permintaan kontak',
             MessagePurpose::Security->value => 'Keamanan akun',
         ];

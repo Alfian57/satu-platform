@@ -4,26 +4,32 @@ declare(strict_types=1);
 
 namespace App\Actions\Project;
 
-use App\Enums\InstitutionMembershipRole;
-use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionStatus;
+use App\Actions\Institution\ResolveConfiguredUniversity;
+use App\Enums\ProjectStatus;
 use App\Enums\ProjectVisibility;
+use App\Enums\TeamMembershipStatus;
+use App\Exceptions\InvalidUniversityConfiguration;
 use App\Models\Institution;
-use App\Models\InstitutionMembership;
 use App\Models\Project;
+use App\Models\ProjectRole;
+use App\Models\TeamMembership;
 use App\Models\User;
 use App\Support\Project\ProjectDiscoveryFilters;
 use App\Support\Project\ProjectDiscoveryResult;
+use App\Support\Project\ProjectOpportunityCapacity;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Gate;
 
 final class ProjectDiscoveryQuery
 {
+    public function __construct(private readonly ResolveConfiguredUniversity $resolveUniversity) {}
+
     public function execute(User $user, ProjectDiscoveryFilters $filters): ProjectDiscoveryResult
     {
-        $institution = $this->resolveInstitution($user, $filters->institutionId);
+        $institution = $this->resolveInstitution($filters->institutionId);
         Gate::forUser($user)->authorize('viewAny', [Project::class, $institution]);
 
         $effectiveFilters = $filters->forInstitution($institution->getKey());
@@ -43,16 +49,26 @@ final class ProjectDiscoveryQuery
             ])
             ->forInstitution($institution)
             ->whereIn('projects.status', $this->enumValues($effectiveFilters->statuses))
+            ->withCount(['teamMemberships as occupied_count' => ProjectOpportunityCapacity::activeMembers(...)])
             ->with([
                 'institution:id,name',
                 'owner:id,name',
-                'roles:id,project_id,title,description,capacity',
+                'roles' => fn ($roles) => $roles->select(['id', 'project_id', 'title', 'description', 'capacity', 'accepts_beginners', 'selection_criteria'])
+                    ->withCount(['teamMemberships as occupied_count' => ProjectOpportunityCapacity::activeRoleMembers(...)]),
                 'roles.skills:id,project_role_id,skill_taxonomy_id,proficiency',
                 'roles.skills.taxonomy:id,name',
             ]);
 
         $this->applyVisibility($query, $user, $effectiveFilters);
+        if ($effectiveFilters->view === 'mine') {
+            $query->where(fn (Builder $projects): Builder => $projects
+                ->where('projects.owner_id', $user->getKey())
+                ->orWhereHas('teamMemberships', fn (Builder $memberships): Builder => $memberships
+                    ->where('user_id', $user->getKey())
+                    ->where('status', TeamMembershipStatus::Active)));
+        }
         $this->applySearch($query, $effectiveFilters->search);
+        $this->applyOpportunityFilters($query, $effectiveFilters);
         $this->applyOrdering($query, $effectiveFilters);
 
         /** @var LengthAwarePaginator<int, Project> $paginator */
@@ -68,30 +84,18 @@ final class ProjectDiscoveryQuery
         return new ProjectDiscoveryResult($institution, $effectiveFilters, $paginator);
     }
 
-    private function resolveInstitution(User $user, ?int $institutionId): Institution
+    private function resolveInstitution(?int $institutionId): Institution
     {
-        $membership = InstitutionMembership::query()
-            ->with('institution:id,name,status')
-            ->whereBelongsTo($user)
-            ->where('status', InstitutionMembershipStatus::Verified)
-            ->whereIn('role', [
-                InstitutionMembershipRole::Student,
-                InstitutionMembershipRole::CampusAdmin,
-            ])
-            ->whereRelation('institution', 'status', InstitutionStatus::Active)
-            ->when(
-                $institutionId !== null,
-                fn (Builder $query): Builder => $query->where('institution_id', $institutionId),
-            )
-            ->latest('requested_at')
-            ->latest('id')
-            ->first();
-
-        if ($membership?->institution === null) {
-            throw new AuthorizationException('Tidak ada konteks institution yang terverifikasi.');
+        try {
+            $university = $this->resolveUniversity->handle();
+        } catch (InvalidUniversityConfiguration) {
+            throw new AuthorizationException('Konteks universitas belum tersedia.');
+        }
+        if ($institutionId !== null && $institutionId !== $university->getKey()) {
+            throw new AuthorizationException('Konteks universitas tidak sesuai.');
         }
 
-        return $membership->institution;
+        return $university;
     }
 
     /** @param  Builder<Project>  $query */
@@ -111,6 +115,7 @@ final class ProjectDiscoveryQuery
             $sharedVisibilities,
             $privateRequested,
             $user,
+            $filters,
         ): void {
             if ($sharedVisibilities !== []) {
                 $query->whereIn('projects.visibility', $sharedVisibilities);
@@ -119,7 +124,14 @@ final class ProjectDiscoveryQuery
             if ($privateRequested) {
                 $privateQuery = static fn (Builder $query): Builder => $query
                     ->where('projects.visibility', ProjectVisibility::Private->value)
-                    ->where('projects.owner_id', $user->getKey());
+                    ->where(function (Builder $participants) use ($user, $filters): void {
+                        $participants->where('projects.owner_id', $user->getKey());
+                        if ($filters->view === 'mine') {
+                            $participants->orWhereHas('teamMemberships', fn (Builder $memberships): Builder => $memberships
+                                ->where('user_id', $user->getKey())
+                                ->where('status', TeamMembershipStatus::Active));
+                        }
+                    });
 
                 $sharedVisibilities === []
                     ? $query->where($privateQuery)
@@ -148,12 +160,42 @@ final class ProjectDiscoveryQuery
                 ->orWhereHas('roles', function (Builder $roles) use ($like): void {
                     $roles
                         ->where('title', 'like', $like)
+                        ->orWhere('description', 'like', $like)
+                        ->orWhere('selection_criteria', 'like', $like)
                         ->orWhereHas(
                             'skills.taxonomy',
                             static fn (Builder $taxonomy): Builder => $taxonomy->where('name', 'like', $like),
                         );
                 });
         });
+    }
+
+    /** @param Builder<Project> $query */
+    private function applyOpportunityFilters(Builder $query, ProjectDiscoveryFilters $filters): void
+    {
+        $available = $filters->availability === 'available';
+        if ($available) {
+            $query->whereIn('projects.status', [ProjectStatus::Open, ProjectStatus::Forming])
+                ->where('projects.deadline', '>', now());
+            $query->where(fn ($count) => $count->selectRaw('count(*)')
+                ->from((new TeamMembership)->getTable())
+                ->whereColumn((new TeamMembership)->qualifyColumn('project_id'), (new Project)->qualifyColumn('id'))
+                ->where('status', TeamMembershipStatus::Active->value), '<', new Expression('projects.capacity'));
+        }
+        if ($filters->beginner === 'accepting' || $available) {
+            $query->whereHas('roles', function (Builder $roles) use ($filters, $available): void {
+                if ($filters->beginner === 'accepting') {
+                    $roles->where('accepts_beginners', true);
+                }
+                if ($available) {
+                    $roles->where(fn ($count) => $count->selectRaw('count(*)')
+                        ->from((new TeamMembership)->getTable())
+                        ->whereColumn((new TeamMembership)->qualifyColumn('project_role_id'), (new ProjectRole)->qualifyColumn('id'))
+                        ->whereColumn((new TeamMembership)->qualifyColumn('project_id'), (new ProjectRole)->qualifyColumn('project_id'))
+                        ->where('status', TeamMembershipStatus::Active->value), '<', new Expression('project_roles.capacity'));
+                }
+            });
+        }
     }
 
     /** @param  Builder<Project>  $query */

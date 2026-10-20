@@ -29,10 +29,12 @@ class UpdateStudentProfileVisibilityRequest extends FormRequest
         return [
             'portfolio_visibility' => [
                 'sometimes',
-                Rule::enum(PortfolioVisibility::class),
+                Rule::enum(PortfolioVisibility::class)->only([PortfolioVisibility::Private, PortfolioVisibility::Public]),
             ],
-            'recruiter_discoverable' => ['sometimes', 'boolean'],
+            'recruiter_discoverable' => ['sometimes', 'boolean', 'declined'],
             'expected_updated_at' => ['sometimes', 'nullable', 'date'],
+            'expected_privacy_revision' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/'],
+            'expected_profile_revision' => ['sometimes', 'nullable', 'string', 'regex:/^[a-f0-9]{64}$/'],
         ];
     }
 

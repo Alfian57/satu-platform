@@ -32,7 +32,7 @@ final class RequestToJoinTeam
     ): TeamJoinRequest {
         Gate::forUser($requester)->authorize('requestJoin', $project);
 
-        $message = $message === null ? null : (string) Str::of($message)->squish();
+        $message = $message === null ? null : (string) Str::of($message)->trim()->replaceMatches('/[ \t]+/u', ' ');
 
         if ($message !== null && Str::length($message) > 1000) {
             throw ValidationException::withMessages([
@@ -53,6 +53,7 @@ final class RequestToJoinTeam
 
             $role = $this->transition->resolveRole($lockedProject, $projectRoleId);
             $membership = $this->transition->lockMembership($lockedProject, $requester);
+            $this->transition->ensureAvailableCapacity($lockedProject, $role, $membership);
 
             if ($membership?->status === TeamMembershipStatus::Active) {
                 throw new InvalidTeamTransition('User sudah menjadi anggota aktif pada project ini.');
@@ -66,9 +67,7 @@ final class RequestToJoinTeam
                 ->first();
 
             if ($pending !== null) {
-                throw ValidationException::withMessages([
-                    'project_id' => 'Masih ada join request yang pending untuk project ini.',
-                ]);
+                abort(409, 'Pengajuanmu masih menunggu keputusan. Periksa status terbaru, jangan mengirim pengajuan ganda.');
             }
 
             $joinRequest = TeamJoinRequest::query()->forceCreate([

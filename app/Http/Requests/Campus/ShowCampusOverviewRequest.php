@@ -2,11 +2,8 @@
 
 namespace App\Http\Requests\Campus;
 
-use App\Enums\InstitutionMembershipRole;
-use App\Enums\InstitutionMembershipStatus;
 use App\Enums\InstitutionStatus;
 use App\Models\Institution;
-use App\Models\InstitutionMembership;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -32,12 +29,7 @@ class ShowCampusOverviewRequest extends FormRequest
             return false;
         }
 
-        return InstitutionMembership::query()
-            ->where('institution_id', $institution->getKey())
-            ->where('user_id', $user->getKey())
-            ->where('status', InstitutionMembershipStatus::Verified)
-            ->where('role', InstitutionMembershipRole::CampusAdmin)
-            ->exists();
+        return $user->isUniversityAdmin($institution);
     }
 
     /**

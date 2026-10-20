@@ -90,6 +90,7 @@ export type ContributionReview = {
 };
 
 export type ContributionDetail = {
+    revision: string;
     id: number;
     project: {
         id: number;
@@ -155,6 +156,7 @@ export type ContributionReviewQueueVersion = Omit<
 };
 
 export type ContributionReviewQueueItem = {
+    revision: string;
     id: number;
     reference: string;
     project: {
@@ -167,6 +169,7 @@ export type ContributionReviewQueueItem = {
     };
     status: ContributionStatus;
     updated_at: string;
+    submitted_at?: string | null;
     current_version: ContributionReviewQueueVersion | null;
     reviews: ContributionReview[];
 };
@@ -187,4 +190,5 @@ export type ContributionPayload = Omit<
 
 export type ContributionApiResponse = {
     data: ContributionDetail;
+    permissions?: { can_update: boolean; can_submit: boolean };
 };

@@ -20,6 +20,9 @@ use Illuminate\Support\Carbon;
  * @property string $title
  * @property string|null $description
  * @property int $capacity
+ * @property bool|null $accepts_beginners
+ * @property string|null $selection_criteria
+ * @property int $occupied_count
  * @property Carbon $created_at
  * @property Carbon $updated_at
  */
@@ -45,6 +48,12 @@ class ProjectRole extends Model
         return $this->hasMany(ProjectRoleSkill::class);
     }
 
+    /** @return HasMany<TeamMembership, $this> */
+    public function teamMemberships(): HasMany
+    {
+        return $this->hasMany(TeamMembership::class);
+    }
+
     /**
      * @return array<string, string>
      */
@@ -52,6 +61,7 @@ class ProjectRole extends Model
     {
         return [
             'capacity' => 'integer',
+            'accepts_beginners' => 'boolean',
         ];
     }
 }

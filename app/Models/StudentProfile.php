@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -24,6 +25,8 @@ use Illuminate\Support\Str;
  * @property string $public_identifier
  * @property string|null $bio
  * @property string|null $study_program
+ * @property string|null $faculty
+ * @property int|null $admission_year
  * @property int|null $study_year
  * @property PortfolioVisibility $portfolio_visibility
  * @property bool $recruiter_discoverable
@@ -33,6 +36,12 @@ use Illuminate\Support\Str;
 #[Guarded(['id', 'user_id', 'institution_id', 'public_identifier', 'created_at', 'updated_at'])]
 class StudentProfile extends Model implements InstitutionOwned
 {
+    /** @return MorphMany<AuditLog, $this> */
+    public function privacyChanges(): MorphMany
+    {
+        return $this->morphMany(AuditLog::class, 'auditable')->where('operation', 'profile.visibility_updated');
+    }
+
     /** @use HasFactory<StudentProfileFactory> */
     use HasFactory;
 
@@ -128,6 +137,7 @@ class StudentProfile extends Model implements InstitutionOwned
             'portfolio_visibility' => PortfolioVisibility::class,
             'recruiter_discoverable' => 'boolean',
             'study_year' => 'integer',
+            'admission_year' => 'integer',
         ];
     }
 }

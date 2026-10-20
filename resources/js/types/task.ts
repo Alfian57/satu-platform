@@ -28,6 +28,7 @@ export type WorkspaceTask = {
     assignments: TaskAssignment[];
     created_at: string;
     updated_at: string;
+    revision: string;
 };
 
 export type WorkspaceProject = {
@@ -90,11 +91,18 @@ export type TaskPage = {
 };
 
 export type TaskWorkspaceFilters = {
+    scope: 'all' | 'mine' | 'unassigned';
+    task: number | null;
     q: string;
     status: TaskStatus | null;
     priority: TaskPriority | null;
     per_page: number;
     page: number;
+};
+
+export type WorkspaceEvidencePage = {
+    data: WorkspaceAttachment[];
+    meta: { current_page: number; last_page: number; total: number };
 };
 
 export type TaskWorkspacePermissions = {

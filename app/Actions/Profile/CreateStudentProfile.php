@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Actions\Profile;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Events\MatchingInputsChanged;
+use App\Models\AffiliationProfileDraft;
 use App\Models\Institution;
 use App\Models\StudentProfile;
 use App\Models\User;
+use App\Support\Portfolio\PortfolioPrivacyRevision;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -29,23 +32,66 @@ final class CreateStudentProfile
         Gate::forUser($actor)->authorize('create', [StudentProfile::class, $institution]);
 
         return DB::transaction(function () use ($actor, $institution, $data): StudentProfile {
+            $institution = Institution::query()->whereKey($institution->getKey())->lockForUpdate()->firstOrFail();
+            Gate::forUser($actor)->authorize('create', [StudentProfile::class, $institution]);
             if (StudentProfile::query()
                 ->whereBelongsTo($actor, 'user')
                 ->whereBelongsTo($institution, 'institution')
                 ->lockForUpdate()
-                ->exists()) {
+                ->first(['id']) !== null) {
                 throw ValidationException::withMessages([
                     'institution_id' => 'Profil untuk institusi ini sudah tersedia.',
                 ]);
             }
 
+            $affiliationDraft = AffiliationProfileDraft::query()
+                ->whereBelongsTo($actor, 'user')
+                ->whereBelongsTo($institution, 'institution')
+                ->lockForUpdate()
+                ->first();
+            $academicDraft = $affiliationDraft === null
+                ? []
+                : $affiliationDraft->academic_profile;
+            $profileData = $data;
+
+            foreach (['faculty', 'study_program', 'admission_year'] as $field) {
+                if (! array_key_exists($field, $academicDraft)) {
+                    continue;
+                }
+
+                $recordedValue = $this->normalizeAcademicValue($field, $academicDraft[$field]);
+
+                if (! $this->isAcademicValueSet($recordedValue)) {
+                    if (! array_key_exists($field, $profileData)) {
+                        $profileData[$field] = $academicDraft[$field];
+                    }
+
+                    continue;
+                }
+
+                if (
+                    array_key_exists($field, $profileData)
+                    && $this->normalizeAcademicValue($field, $profileData[$field]) !== $recordedValue
+                ) {
+                    throw ValidationException::withMessages([
+                        $field => 'Data yang sudah tercatat saat pengajuan afiliasi tidak dapat diubah.',
+                    ]);
+                }
+
+                $profileData[$field] = $recordedValue;
+            }
+
             $profile = StudentProfile::query()->forceCreate([
                 'user_id' => $actor->getKey(),
                 'institution_id' => $institution->getKey(),
-                'bio' => $this->nullableString($data['bio'] ?? null),
-                'study_program' => $this->nullableString($data['study_program'] ?? null),
-                'study_year' => $data['study_year'] ?? null,
+                'bio' => $this->nullableString($profileData['bio'] ?? null),
+                'study_program' => $this->nullableString($profileData['study_program'] ?? null),
+                'study_year' => $profileData['study_year'] ?? null,
+                'faculty' => $this->nullableString($profileData['faculty'] ?? null),
+                'admission_year' => $profileData['admission_year'] ?? null,
             ]);
+
+            $affiliationDraft?->delete();
 
             $this->syncTaxonomies->handle(
                 $profile,
@@ -64,22 +110,14 @@ final class CreateStudentProfile
                     $profile,
                     array_filter([
                         'portfolio_visibility' => $data['portfolio_visibility'] ?? null,
+                        'expected_privacy_revision' => PortfolioPrivacyRevision::for($profile),
                         'recruiter_discoverable' => $data['recruiter_discoverable'] ?? null,
                     ], static fn (mixed $value): bool => $value !== null),
                 );
             }
 
             if (array_key_exists('availability_windows', $data)) {
-                $this->replaceAvailability->handle(
-                    $actor,
-                    $profile,
-                    [
-                        'windows' => is_array($data['availability_windows'])
-                            ? $data['availability_windows']
-                            : [],
-                        'timezone' => $data['timezone'] ?? $institution->timezone,
-                    ],
-                );
+                $this->replaceAvailability->handleFromProfile($actor, $profile, $data);
             }
 
             $this->audit->record(
@@ -95,6 +133,8 @@ final class CreateStudentProfile
                 ],
             );
 
+            MatchingInputsChanged::dispatch($profile->institution_id, $profile->user_id);
+
             return $profile->refresh();
         }, attempts: 3);
     }
@@ -108,5 +148,29 @@ final class CreateStudentProfile
         $value = trim((string) $value);
 
         return $value === '' ? null : $value;
+    }
+
+    private function normalizeAcademicValue(string $field, mixed $value): mixed
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($field === 'admission_year') {
+            return is_numeric($value) ? (int) $value : $value;
+        }
+
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
+    }
+
+    private function isAcademicValueSet(mixed $value): bool
+    {
+        return $value !== null && $value !== '';
     }
 }

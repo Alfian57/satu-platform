@@ -18,10 +18,11 @@ final class LinkContributionEvidence
      *
      * @param  list<int|string>  $evidence
      */
-    public function handle(User $actor, Contribution $contribution, array $evidence): Contribution
+    public function handle(User $actor, Contribution $contribution, array $evidence, string $expectedRevision): Contribution
     {
         return $this->reviseContribution->handle($actor, $contribution, [
-            'evidence' => $evidence,
+            'evidence' => array_values(array_unique([...($contribution->currentVersion?->evidence->pluck('attachment_id')->all() ?? []), ...$evidence])),
+            'expected_revision' => $expectedRevision,
         ]);
     }
 }

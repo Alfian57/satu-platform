@@ -9,7 +9,9 @@ use App\Enums\ContributionStatus;
 use App\Exceptions\InvalidContributionTransition;
 use App\Models\Contribution;
 use App\Models\Institution;
+use App\Models\Project;
 use App\Models\User;
+use App\Support\Contribution\ContributionSnapshot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -19,13 +21,16 @@ final class SubmitContribution
     public function __construct(
         private readonly AuditRecorder $audit,
         private readonly NotifyContributionReviewers $notifyReviewers,
+        private readonly ContributionRequirements $requirements,
+        private readonly EnsureUniqueContributionWork $uniqueWork,
     ) {}
 
-    public function handle(User $actor, Contribution $contribution): Contribution
+    public function handle(User $actor, Contribution $contribution, string $expectedRevision): Contribution
     {
         Gate::forUser($actor)->authorize('submit', $contribution);
 
-        return DB::transaction(function () use ($actor, $contribution): Contribution {
+        return DB::transaction(function () use ($actor, $contribution, $expectedRevision): Contribution {
+            Project::query()->whereKey($contribution->project_id)->lockForUpdate()->firstOrFail();
             $lockedContribution = Contribution::query()
                 ->lockForUpdate()
                 ->whereKey($contribution->getKey())
@@ -36,6 +41,7 @@ final class SubmitContribution
                 'project',
             ]);
             Gate::forUser($actor)->authorize('submit', $lockedContribution);
+            ContributionSnapshot::ensureFresh($lockedContribution, $expectedRevision);
 
             if (! $lockedContribution->status->canTransitionTo(ContributionStatus::Pending)) {
                 throw new InvalidContributionTransition(
@@ -51,16 +57,16 @@ final class SubmitContribution
                 ]);
             }
 
-            $evidenceCount = $version->evidence
-                ->filter(static fn ($evidence): bool => $evidence->attachment !== null
-                    && ! $evidence->attachment->trashed())
-                ->count();
-
-            if ($evidenceCount === 0) {
-                throw ValidationException::withMessages([
-                    'evidence' => 'Minimal satu evidence aktif wajib dilampirkan.',
-                ]);
-            }
+            $this->requirements->ensureAvailableEvidence($version, $lockedContribution->project);
+            $this->uniqueWork->handle(
+                project: $lockedContribution->project,
+                ownerId: $actor->getKey(),
+                taskId: $version->task_id,
+                claim: $version->claim,
+                summary: $version->summary,
+                exceptId: $lockedContribution->getKey(),
+            );
+            $evidenceCount = $version->evidence->count();
 
             $institution = Institution::query()
                 ->whereKey($lockedContribution->institution_id)

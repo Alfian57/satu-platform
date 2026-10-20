@@ -1,0 +1,58 @@
+{
+    "description": "Maskot SATU menyusun catatan kontribusi pada jurnal dengan pensil oranye.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan, stylized-concept dengan referensi identitas",
+    "generation_id": "exec-f21ef635-38a5-485f-945c-b9e69ec36e54",
+    "identity_references": [
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png",
+            "purpose": "Identitas, proporsi dan empat sudut pandang",
+            "sha256": "3356586B1594DCC874710C91CE71BD294046139FB5E2DC0734CEE851E637ACF1"
+        },
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip.png",
+            "purpose": "Material, warna, ekspresi dan tas asli",
+            "sha256": "A356C316D00EAD034A961170B77847636DF43008C9F459A562A6531443211AE4"
+        }
+    ],
+    "source": {
+        "file": "resources/images/mascot/mascot-contribution-notes.png",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "bytes": 1261497,
+        "sha256": "dd0dedde46c8978af31f9c5181ada828eda4726d47811dcee4953c639bd8fdaf",
+        "alpha_range": [0, 255]
+    },
+    "runtime_variants": [
+        {
+            "file": "public/images/mascot-contribution-notes-256.webp",
+            "width": 256,
+            "height": 256,
+            "mode": "RGBA",
+            "bytes": 19448,
+            "sha256": "91db63654aac9b792c2f8b378384efea708adce67feab7a7ffcb17b09530e5e4"
+        },
+        {
+            "file": "public/images/mascot-contribution-notes-512.webp",
+            "width": 512,
+            "height": 512,
+            "mode": "RGBA",
+            "bytes": 54446,
+            "sha256": "00ce6e5604e612faa21829b918b57436cf1afb8c1401d12094bc51c7f8bb8c97"
+        },
+        {
+            "file": "public/images/mascot-contribution-notes.webp",
+            "width": 1024,
+            "height": 1024,
+            "mode": "RGBA",
+            "bytes": 171716,
+            "sha256": "254bac3039787d5e72dc3d5d49bc057e00104491c443b46e5a63796c8f93de3a"
+        }
+    ],
+    "optimization": "Resize mekanis Lanczos ke 256, 512 dan 1024px, WebP kualitas 90 method 6. Alpha dipertahankan, tanpa edit kreatif manual.",
+    "alt_purpose": "Dekoratif dengan alt kosong. Tidak menjadi status validasi, kemajuan atau kontrol. Copy, status dan tindakan tetap HTML.",
+    "scope": "Pose contribution-notes pada hero daftar Kontribusi mahasiswa. Tidak mengganti detail, composer atau pose lain. Animasi masuk satu kali 420ms mengikuti Proyek/Beranda, tanpa hover dan statis pada reduced motion.",
+    "manual_review": "Siluet burung utuh, menulis pada satu jurnal terbuka dengan pensil oranye; tas navy asli tetap terpisah. Tidak ada cap persetujuan, centang atau medali. Tidak berdiri atau duduk di atas buku. Identitas, bulu, warna dan material dipertahankan.",
+    "prompt": "Use case: stylized-concept. Asset type: transparent 3D mascot cutout for the SATU student Contribution menu hero. Generate ONE full-body kingfisher bird in a new gentle note-writing pose. Image 1 is the canonical identity turnaround; image 2 is the canonical material and expression reference. Preserve exactly this bird identity: saturated cobalt/azure layered feathers, ivory soft fluffy chest and cheeks, orange eyebrow and cheek markings, large warm brown eyes, graphite long beak and bird feet, same original NAVY cross-body book satchel with brass hardware. No clothing changes. Pose: standing with both feet comfortably planted, three-quarter facing slightly toward the LEFT, one feathered wing cradles one modest open ivory journal in front of its chest while the other feathered wing uses a short warm-orange pencil to write in the journal. The journal has only subtle pale-blue blank ruled lines and an orange ribbon; NO readable writing, NO checkmarks, NO stamps, NO approval seals or medals. Friendly focused expression, head gently tilted toward the journal but eyes lifted slightly toward the viewer. This is a student documenting their own work, not an authority validating someone else's work. Keep wings anatomically feathered, no human hands or fingers, no extra limbs. Keep original satchel visibly separate from the journal. Detailed premium soft 3D feathers matching the references, not a plastic toy; clean high-definition edges and soft studio light. Single centered complete silhouette with all crest, tail, wing tips and feet visible, occupying about 88-92 percent of a square canvas. Keep clear transparent margins. No chair, no pedestal, no books under the feet, no floor, no shadows outside silhouette, no background scenery, no floating objects, no glow, no UI, no text or watermark. Genuine transparent background, one standalone PNG."
+}

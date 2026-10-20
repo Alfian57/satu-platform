@@ -6,6 +6,7 @@ namespace App\Actions\Contribution;
 
 use App\Enums\ContributionStatus;
 use App\Enums\InstitutionMembershipRole;
+use App\Models\AuditLog;
 use App\Models\Contribution;
 use App\Models\Institution;
 use App\Models\User;
@@ -34,6 +35,7 @@ final class ContributionReviewQueue
         string $sort = 'oldest',
         int $perPage = 25,
         ?int $page = null,
+        string $search = '',
     ): LengthAwarePaginator {
         if ($perPage < 1 || $perPage > 100) {
             throw new InvalidArgumentException('Contribution review page size must be between 1 and 100.');
@@ -43,7 +45,15 @@ final class ContributionReviewQueue
             throw new InvalidArgumentException('Contribution review sort must be oldest or newest.');
         }
 
+        $search = trim($search);
+        if (mb_strlen($search) > 100) {
+            throw new InvalidArgumentException('Pencarian kontribusi maksimal 100 karakter.');
+        }
+
         $query = $this->query($reviewer, $institution)
+            ->select('contributions.*')
+            ->addSelect(['submitted_at' => $this->submissionTime()])
+            ->withCasts(['submitted_at' => 'datetime'])
             ->when(
                 $status !== null,
                 fn (Builder $query): Builder => $query->where('status', $status),
@@ -60,6 +70,9 @@ final class ContributionReviewQueue
                         'id',
                         'project_id',
                         'purpose',
+                        'disk',
+                        'path',
+                        'sha256',
                         'original_name',
                         'mime_type',
                         'size_bytes',
@@ -69,12 +82,40 @@ final class ContributionReviewQueue
                 'reviews.reviewer:id,name',
             ]);
 
+        if ($search !== '') {
+            $term = '%'.$search.'%';
+            $query->where(fn (Builder $query): Builder => $query
+                ->whereHas('owner', fn (Builder $owner): Builder => $owner->where('name', 'like', $term))
+                ->orWhereHas('project', fn (Builder $project): Builder => $project->where('title', 'like', $term))
+                ->orWhereHas('currentVersion', fn (Builder $version): Builder => $version
+                    ->where('claim', 'like', $term)->orWhere('summary', 'like', $term)));
+        }
+
         $direction = $sort === 'oldest' ? 'asc' : 'desc';
 
         return $query
-            ->orderBy('updated_at', $direction)
+            ->orderByRaw('submitted_at IS NULL')
+            ->orderBy('submitted_at', $direction)
             ->orderBy('id', $direction)
             ->paginate($perPage, ['*'], 'page', $page);
+    }
+
+    /** @return Builder<AuditLog> */
+    private function submissionTime(): Builder
+    {
+        return AuditLog::query()->select('audit_logs.created_at')
+            ->join('contribution_versions as submitted_versions', 'submitted_versions.contribution_id', '=', 'audit_logs.auditable_id')
+            ->whereColumn('submitted_versions.id', 'contributions.current_version_id')
+            ->whereColumn('submitted_versions.contribution_id', 'contributions.id')
+            ->whereColumn('submitted_versions.created_by_id', 'contributions.owner_id')
+            ->whereColumn('audit_logs.auditable_id', 'contributions.id')
+            ->whereColumn('audit_logs.institution_id', 'contributions.institution_id')
+            ->whereColumn('audit_logs.actor_id', 'contributions.owner_id')
+            ->where('audit_logs.auditable_type', (new Contribution)->getMorphClass())
+            ->where('audit_logs.operation', 'contribution.submitted')
+            ->where('audit_logs.after_summary->status', ContributionStatus::Pending->value)
+            ->whereColumn('audit_logs.after_summary->version_number', 'submitted_versions.version_number')
+            ->latest('audit_logs.created_at')->latest('audit_logs.id')->limit(1);
     }
 
     /**
@@ -122,6 +163,6 @@ final class ContributionReviewQueue
             throw new AuthorizationException('You are not authorized to review contributions for this institution.');
         }
 
-        return Contribution::query()->forInstitution($institution);
+        return Contribution::query()->forInstitution($institution)->where('status', '!=', ContributionStatus::Draft)->where('owner_id', '!=', $reviewer->getKey());
     }
 }

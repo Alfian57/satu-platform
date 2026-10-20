@@ -17,9 +17,11 @@ use App\Models\Institution;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Support\Contribution\ContributionSnapshot;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class ReviseContribution
@@ -27,6 +29,7 @@ final class ReviseContribution
     public function __construct(
         private readonly AuditRecorder $audit,
         private readonly ContributionRequirements $requirements,
+        private readonly EnsureUniqueContributionWork $uniqueWork,
         private readonly RebuildTalentCandidateProjection $rebuildProjection,
     ) {}
 
@@ -40,6 +43,7 @@ final class ReviseContribution
         Gate::forUser($actor)->authorize('update', $contribution);
 
         return DB::transaction(function () use ($actor, $contribution, $data): Contribution {
+            $lockedProject = Project::query()->whereKey($contribution->project_id)->lockForUpdate()->firstOrFail();
             $lockedContribution = Contribution::query()
                 ->lockForUpdate()
                 ->whereKey($contribution->getKey())
@@ -51,6 +55,7 @@ final class ReviseContribution
                 'project',
             ]);
             Gate::forUser($actor)->authorize('update', $lockedContribution);
+            ContributionSnapshot::ensureFresh($lockedContribution, $data['expected_revision'] ?? null);
 
             if (! $lockedContribution->canCreateVersion()) {
                 throw new InvalidContributionTransition(
@@ -66,10 +71,6 @@ final class ReviseContribution
                 );
             }
 
-            $lockedProject = Project::query()
-                ->lockForUpdate()
-                ->whereKey($lockedContribution->project_id)
-                ->firstOrFail();
             $institution = Institution::query()
                 ->whereKey($lockedContribution->institution_id)
                 ->firstOrFail();
@@ -88,7 +89,7 @@ final class ReviseContribution
                 : $previousVersion->declaration;
             $newEvidenceIds = array_key_exists('evidence', $data)
                 ? $this->requirements->evidenceIds($data['evidence'], $lockedProject)
-                : [];
+                : array_values($previousVersion->evidence->filter(fn (ContributionEvidence $item): bool => $item->attachment !== null && ! $item->attachment->trashed())->map(fn (ContributionEvidence $item): int => $item->attachment_id)->all());
 
             $task = Task::query()
                 ->lockForUpdate()
@@ -110,20 +111,22 @@ final class ReviseContribution
                 ]);
             }
 
-            $previousAttachments = $previousVersion->evidence
-                ->map(fn (ContributionEvidence $evidence): ?Attachment => $evidence->attachment)
-                ->filter()
-                ->keyBy(fn (Attachment $attachment): int => $attachment->getKey());
-            $attachments = $previousAttachments
-                ->merge($newAttachments)
-                ->unique(fn (Attachment $attachment): int => $attachment->getKey())
-                ->values();
+            $attachments = $newAttachments->values();
 
             if ($attachments->count() > 20) {
                 throw ValidationException::withMessages([
                     'evidence' => 'Maksimal 20 evidence dapat dilampirkan pada satu versi.',
                 ]);
             }
+
+            $this->uniqueWork->handle(
+                project: $lockedProject,
+                ownerId: $actor->getKey(),
+                taskId: $task->getKey(),
+                claim: $claim,
+                summary: $summary,
+                exceptId: $lockedContribution->getKey(),
+            );
 
             $versionNumber = ((int) ContributionVersion::query()
                 ->where('contribution_id', $lockedContribution->getKey())
@@ -205,7 +208,7 @@ final class ReviseContribution
             ContributionEvidence::query()->forceCreate([
                 'contribution_version_id' => $version->getKey(),
                 'attachment_id' => $attachment->getKey(),
-                'source_label' => $attachment->original_name,
+                'source_label' => Str::limit($attachment->original_name, 160, ''),
                 'notes' => null,
             ]);
         }

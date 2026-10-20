@@ -6,13 +6,14 @@ namespace App\Jobs;
 
 use App\Actions\Gamification\RebuildLeaderboardProjections as RebuildLeaderboardProjectionsAction;
 use App\Models\Institution;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-final class RebuildLeaderboardProjections implements ShouldBeUnique, ShouldQueue
+final class RebuildLeaderboardProjections implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Queueable;
 
@@ -35,6 +36,12 @@ final class RebuildLeaderboardProjections implements ShouldBeUnique, ShouldQueue
     public function uniqueId(): string
     {
         return $this->institutionId.':'.$this->semester;
+    }
+
+    /** @return list<WithoutOverlapping> */
+    public function middleware(): array
+    {
+        return [(new WithoutOverlapping($this->uniqueId()))->releaseAfter(30)->expireAfter(180)];
     }
 
     public function handle(RebuildLeaderboardProjectionsAction $rebuild): void

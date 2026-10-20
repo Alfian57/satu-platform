@@ -57,11 +57,9 @@ final class ContributionReviewedNotification extends Notification implements Sho
             'review_id' => $this->review->getKey(),
             'decision' => $this->review->decision->value,
             'policy_version' => $this->review->policy_version,
-            'reason' => $this->review->reason,
-            'note' => $this->review->note,
             'message' => $message,
             'action_url' => route('contributions.show', $contribution),
-            'action_label' => 'Lihat hasil review',
+            'action_label' => 'Baca keputusan',
             'purpose' => 'contribution_reviewed',
             'category' => 'contribution',
         ];

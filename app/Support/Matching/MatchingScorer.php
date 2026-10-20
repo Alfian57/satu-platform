@@ -34,10 +34,12 @@ final class MatchingScorer
             MatchingDimension::Availability->value => $this->availability(
                 $input,
                 $normalizedParameters['availability_target_minutes'],
+                $normalizedParameters['policy'] ?? null,
             ),
             MatchingDimension::ConnectivityOpportunity->value => $this->connectivityOpportunity(
                 $input,
                 $normalizedParameters['connectivity_cap'],
+                $normalizedParameters['policy'] ?? null,
             ),
         ];
 
@@ -123,28 +125,33 @@ final class MatchingScorer
 
     /**
      * @param  array<string, mixed>  $parameters
-     * @return array{availability_target_minutes: int, connectivity_cap: int}
+     * @return array{availability_target_minutes: int, connectivity_cap: int, policy?: string}
      */
     private function normalizeParameters(array $parameters): array
     {
         $allowed = ['availability_target_minutes', 'connectivity_cap'];
 
-        if (array_diff(array_keys($parameters), $allowed) !== [] || count($parameters) !== count($allowed)) {
+        if (array_diff(array_keys($parameters), [...$allowed, 'policy']) !== [] || array_diff($allowed, array_keys($parameters)) !== []) {
             throw new InvalidArgumentException(
                 'Parameter matching harus memuat availability_target_minutes dan connectivity_cap saja.',
             );
         }
 
-        foreach ($allowed as $parameter) {
-            if (! is_int($parameters[$parameter]) || $parameters[$parameter] < 1) {
-                throw new InvalidArgumentException("Parameter {$parameter} harus berupa bilangan positif.");
-            }
+        if (array_key_exists('policy', $parameters) && $parameters['policy'] !== MatchingAvailability::POLICY) {
+            throw new InvalidArgumentException('Kebijakan pencocokan tidak didukung.');
         }
 
-        return [
-            'availability_target_minutes' => $parameters['availability_target_minutes'],
-            'connectivity_cap' => $parameters['connectivity_cap'],
-        ];
+        $availabilityTarget = $parameters['availability_target_minutes'];
+        $connectivityCap = $parameters['connectivity_cap'];
+        if (! is_int($availabilityTarget) || $availabilityTarget < 1 || ! is_int($connectivityCap) || $connectivityCap < 1) {
+            throw new InvalidArgumentException('Parameter pencocokan harus berupa bilangan positif.');
+        }
+        $normalized = ['availability_target_minutes' => $availabilityTarget, 'connectivity_cap' => $connectivityCap];
+        if (isset($parameters['policy'])) {
+            $normalized['policy'] = MatchingAvailability::POLICY;
+        }
+
+        return $normalized;
     }
 
     /**
@@ -242,8 +249,11 @@ final class MatchingScorer
     /**
      * @return array{score: float, reason: string}
      */
-    private function availability(MatchingInput $input, int $targetMinutes): array
+    private function availability(MatchingInput $input, int $targetMinutes, ?string $policy = null): array
     {
+        if ($policy === MatchingAvailability::POLICY && $input->requiredAvailabilityWindows === []) {
+            return ['score' => 0.5, 'reason' => 'Kebutuhan waktu proyek belum tersedia. Kecocokan jadwal bersifat netral dan perlu disepakati dengan tim.'];
+        }
         if ($input->availabilityWindows === []) {
             return [
                 'score' => 0.0,
@@ -285,8 +295,11 @@ final class MatchingScorer
     /**
      * @return array{score: float, reason: string}
      */
-    private function connectivityOpportunity(MatchingInput $input, int $connectionCap): array
+    private function connectivityOpportunity(MatchingInput $input, int $connectionCap, ?string $policy = null): array
     {
+        if ($policy === MatchingAvailability::POLICY) {
+            return ['score' => 0.5, 'reason' => 'Dimensi kesempatan hubungan netral. Kebijakan ini tidak memproses metadata jaringan.'];
+        }
         if ($input->collaborationEventCount === 0) {
             return [
                 'score' => 0.5,

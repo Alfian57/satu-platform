@@ -36,6 +36,7 @@ final class ReviseContributionRequest extends FormRequest
         $projectId = $contribution instanceof Contribution ? $contribution->project_id : 0;
 
         return [
+            'expected_revision' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/D'],
             'task_id' => [
                 'sometimes',
                 'integer',
@@ -67,7 +68,7 @@ final class ReviseContributionRequest extends FormRequest
             $hasChange = collect($fields)->contains(
                 fn (string $field): bool => $this->exists($field)
                     && $this->input($field) !== null
-                    && $this->input($field) !== [],
+                    && ($field === 'evidence' || $this->input($field) !== []),
             );
 
             if (! $hasChange) {

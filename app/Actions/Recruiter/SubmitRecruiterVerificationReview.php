@@ -33,7 +33,7 @@ final class SubmitRecruiterVerificationReview
         RecruiterVerificationConclusion|string $conclusion,
         ?string $reason = null,
     ): RecruiterVerificationReview {
-        if (! $admin->is_platform_admin) {
+        if (! $admin->canAdministerAdvancedModule('recruiter')) {
             throw new AuthorizationException('Only platform administrators can review recruiter organizations.');
         }
 

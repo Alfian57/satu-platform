@@ -49,21 +49,27 @@ final class ReadLeaderboardProjections
         $periodId = $period->getKey();
         $snapshotDigest = $period->latest_snapshot_digest;
 
-        /** @var Collection<int, LeaderboardProjection> $projections */
-        $projections = Cache::remember(
-            $cacheKey,
+        $attributes = Cache::remember(
+            $cacheKey.':attributes-v1:'.$snapshotDigest,
             now()->addMinutes(5),
-            fn (): Collection => LeaderboardProjection::query()
+            fn (): array => LeaderboardProjection::query()
                 ->forPeriod($periodId)
                 ->whereBelongsTo($institution)
                 ->where('snapshot_digest', $snapshotDigest)
-                ->with('period')
                 ->orderByRaw('CASE WHEN `rank` IS NULL THEN 1 ELSE 0 END')
                 ->orderBy('rank')
                 ->orderBy('scope_type')
                 ->orderBy('scope_key')
-                ->get(),
+                ->get()
+                ->map(static fn (LeaderboardProjection $projection): array => $projection->getRawOriginal())
+                ->all(),
         );
+
+        $projections = LeaderboardProjection::hydrate($attributes);
+
+        foreach ($projections as $projection) {
+            $projection->setRelation('period', $period);
+        }
 
         return $projections;
     }

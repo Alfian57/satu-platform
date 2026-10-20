@@ -1,7 +1,16 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { RefreshCw, Send, UserPlus } from 'lucide-react';
+import {
+    LockKeyhole,
+    RefreshCw,
+    Send,
+    ShieldCheck,
+    Smartphone,
+    UserPlus,
+    UserRound,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import AlertError from '@/components/alert-error';
+import AuthInputFrame from '@/components/auth/auth-input-frame';
 import OtpInput from '@/components/auth/otp-input';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
@@ -26,6 +35,14 @@ type Props = {
     passwordRules: string;
     registration?: RegistrationState;
 };
+
+function RequiredMark() {
+    return (
+        <span aria-hidden="true" className="auth-required-marker">
+            *
+        </span>
+    );
+}
 
 function ErrorSummary({ errors }: { errors: Record<string, string> }) {
     const summaryRef = useRef<HTMLDivElement>(null);
@@ -108,7 +125,7 @@ function RegistrationOtpStep({
     }, []);
 
     return (
-        <div className="grid gap-6" data-test="register-otp-step">
+        <div className="grid gap-4" data-test="register-otp-step">
             {/* Receipt section */}
             <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
                 <p className="font-label text-[0.65rem] font-semibold tracking-wider text-blue-600">
@@ -128,15 +145,16 @@ function RegistrationOtpStep({
 
             <Form action={verify.url()} method="post" resetOnSuccess={['otp']}>
                 {({ processing, errors }) => (
-                    <div className="grid gap-5">
+                    <div className="grid gap-4">
                         <ErrorSummary errors={errors} />
 
-                        <div className="grid gap-2">
+                        <div className="grid gap-1.5">
                             <Label
                                 htmlFor="registration-otp"
                                 className="text-sm font-semibold text-slate-700"
                             >
                                 Kode verifikasi
+                                <RequiredMark />
                             </Label>
                             <OtpInput
                                 id="registration-otp"
@@ -166,7 +184,7 @@ function RegistrationOtpStep({
                         <Button
                             type="submit"
                             size="lg"
-                            className="h-12 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-md motion-reduce:transition-none"
+                            className="h-11 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-md motion-reduce:transition-none"
                             disabled={processing || otp.length !== 6}
                             data-test="register-verify-button"
                         >
@@ -184,7 +202,7 @@ function RegistrationOtpStep({
                 )}
             </Form>
 
-            <div className="grid gap-4 border-t border-slate-100 pt-5">
+            <div className="grid gap-3 border-t border-slate-100 pt-4">
                 <Form action={resend.url()} method="post">
                     {({ processing }) => (
                         <div className="grid gap-3">
@@ -228,7 +246,7 @@ function RegistrationOtpStep({
 
                 <Link
                     href={register({ query: { restart: 1 } })}
-                    className="cursor-pointer text-center text-sm font-semibold text-blue-600 underline-offset-4 transition-colors hover:text-blue-700 hover:underline"
+                    className="inline-flex min-h-11 cursor-pointer items-center justify-center text-center text-sm font-semibold text-blue-600 underline-offset-4 transition-colors hover:text-blue-700 hover:underline"
                     data-test="register-change-phone"
                 >
                     Ganti nomor WhatsApp
@@ -245,6 +263,10 @@ export default function Register({ passwordRules, registration }: Props) {
         <>
             <Head title="Daftar" />
 
+            <p className="mb-4 text-xs text-slate-600">
+                Isian bertanda bintang wajib diisi.
+            </p>
+
             {state.step === 'otp' ? (
                 <RegistrationOtpStep registration={state} />
             ) : (
@@ -253,107 +275,110 @@ export default function Register({ passwordRules, registration }: Props) {
                     method="post"
                     resetOnSuccess={['password', 'password_confirmation']}
                     disableWhileProcessing
-                    className="flex flex-col gap-6"
+                    className="flex flex-col gap-4"
                 >
                     {({ processing, errors }) => (
                         <>
                             <ErrorSummary errors={errors} />
 
-                            <div className="grid gap-5">
-                                <div className="grid gap-2">
+                            <div className="auth-register-fields grid gap-4">
+                                <div className="grid gap-1.5">
                                     <Label
                                         htmlFor="name"
                                         className="text-sm font-semibold text-slate-700"
                                     >
                                         Nama
+                                        <RequiredMark />
                                     </Label>
-                                    <Input
-                                        id="name"
-                                        type="text"
-                                        required
-                                        autoFocus
-                                        autoComplete="name"
-                                        name="name"
-                                        placeholder="Masukkan nama lengkap"
-                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                                        aria-invalid={Boolean(errors.name)}
-                                        aria-describedby={
-                                            errors.name
-                                                ? 'register-name-error'
-                                                : undefined
-                                        }
-                                    />
+                                    <AuthInputFrame icon={UserRound}>
+                                        <Input
+                                            id="name"
+                                            type="text"
+                                            required
+                                            autoFocus
+                                            autoComplete="name"
+                                            name="name"
+                                            placeholder="Masukkan nama lengkap"
+                                            className="h-11 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                            aria-invalid={Boolean(errors.name)}
+                                            aria-describedby={
+                                                errors.name
+                                                    ? 'register-name-error'
+                                                    : undefined
+                                            }
+                                        />
+                                    </AuthInputFrame>
                                     <InputError
                                         id="register-name-error"
                                         message={errors.name}
                                     />
                                 </div>
 
-                                <div className="grid gap-2">
+                                <div className="grid gap-1.5">
                                     <Label
                                         htmlFor="username"
                                         className="text-sm font-semibold text-slate-700"
                                     >
                                         Nama pengguna
+                                        <RequiredMark />
                                     </Label>
-                                    <Input
-                                        id="username"
-                                        type="text"
-                                        required
-                                        autoComplete="username"
-                                        name="username"
-                                        placeholder="Masukkan nama pengguna"
-                                        aria-describedby={
-                                            errors.username
-                                                ? 'register-username-help register-username-error'
-                                                : 'register-username-help'
-                                        }
-                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                                        aria-invalid={Boolean(errors.username)}
-                                    />
-                                    <p
-                                        id="register-username-help"
-                                        className="text-xs leading-relaxed text-slate-500"
-                                    >
-                                        Nama pengguna hanya untuk masuk ke SATU,
-                                        bukan untuk profil publik.
-                                    </p>
+                                    <AuthInputFrame icon={UserRound}>
+                                        <Input
+                                            id="username"
+                                            type="text"
+                                            required
+                                            autoComplete="username"
+                                            name="username"
+                                            placeholder="Masukkan nama pengguna"
+                                            aria-describedby={
+                                                errors.username
+                                                    ? 'register-username-error'
+                                                    : undefined
+                                            }
+                                            className="h-11 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                            aria-invalid={Boolean(
+                                                errors.username,
+                                            )}
+                                        />
+                                    </AuthInputFrame>
                                     <InputError
                                         id="register-username-error"
                                         message={errors.username}
                                     />
                                 </div>
 
-                                <div className="grid gap-2">
+                                <div className="grid gap-1.5">
                                     <Label
                                         htmlFor="phone"
                                         className="text-sm font-semibold text-slate-700"
                                     >
                                         Nomor WhatsApp
+                                        <RequiredMark />
                                     </Label>
-                                    <Input
-                                        id="phone"
-                                        type="tel"
-                                        required
-                                        autoComplete="tel"
-                                        inputMode="numeric"
-                                        name="phone"
-                                        placeholder="08xxxxxxxxxx"
-                                        aria-describedby={
-                                            errors.phone
-                                                ? 'register-phone-help register-phone-error'
-                                                : 'register-phone-help'
-                                        }
-                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                                        aria-invalid={Boolean(errors.phone)}
-                                    />
+                                    <AuthInputFrame icon={Smartphone}>
+                                        <Input
+                                            id="phone"
+                                            type="tel"
+                                            required
+                                            autoComplete="tel"
+                                            inputMode="numeric"
+                                            name="phone"
+                                            placeholder="08xxxxxxxxxx"
+                                            aria-describedby={
+                                                errors.phone
+                                                    ? 'register-phone-help register-phone-error'
+                                                    : 'register-phone-help'
+                                            }
+                                            className="h-11 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                            aria-invalid={Boolean(errors.phone)}
+                                        />
+                                    </AuthInputFrame>
                                     <p
                                         id="register-phone-help"
                                         className="text-xs leading-relaxed text-slate-500"
                                     >
-                                        Dipakai untuk verifikasi. Setelah
-                                        dikirim, nomor akan ditampilkan secara
-                                        tersamar.
+                                        Untuk verifikasi. Nomor disamarkan
+                                        setelah dikirim.
                                     </p>
                                     <InputError
                                         id="register-phone-error"
@@ -361,58 +386,66 @@ export default function Register({ passwordRules, registration }: Props) {
                                     />
                                 </div>
 
-                                <div className="grid gap-2">
+                                <div className="grid gap-1.5">
                                     <Label
                                         htmlFor="password"
                                         className="text-sm font-semibold text-slate-700"
                                     >
                                         Password
+                                        <RequiredMark />
                                     </Label>
-                                    <PasswordInput
-                                        id="password"
-                                        required
-                                        autoComplete="new-password"
-                                        name="password"
-                                        placeholder="Masukkan password"
-                                        passwordrules={passwordRules}
-                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                                        aria-invalid={Boolean(errors.password)}
-                                        aria-describedby={
-                                            errors.password
-                                                ? 'register-password-error'
-                                                : undefined
-                                        }
-                                    />
+                                    <AuthInputFrame icon={LockKeyhole}>
+                                        <PasswordInput
+                                            id="password"
+                                            required
+                                            autoComplete="new-password"
+                                            name="password"
+                                            placeholder="Masukkan password"
+                                            passwordrules={passwordRules}
+                                            className="h-11 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                            aria-invalid={Boolean(
+                                                errors.password,
+                                            )}
+                                            aria-describedby={
+                                                errors.password
+                                                    ? 'register-password-error'
+                                                    : undefined
+                                            }
+                                        />
+                                    </AuthInputFrame>
                                     <InputError
                                         id="register-password-error"
                                         message={errors.password}
                                     />
                                 </div>
 
-                                <div className="grid gap-2">
+                                <div className="grid gap-1.5">
                                     <Label
                                         htmlFor="password_confirmation"
                                         className="text-sm font-semibold text-slate-700"
                                     >
                                         Konfirmasi password
+                                        <RequiredMark />
                                     </Label>
-                                    <PasswordInput
-                                        id="password_confirmation"
-                                        required
-                                        autoComplete="new-password"
-                                        name="password_confirmation"
-                                        placeholder="Ulangi password"
-                                        passwordrules={passwordRules}
-                                        className="h-12 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                                        aria-invalid={Boolean(
-                                            errors.password_confirmation,
-                                        )}
-                                        aria-describedby={
-                                            errors.password_confirmation
-                                                ? 'register-password_confirmation-error'
-                                                : undefined
-                                        }
-                                    />
+                                    <AuthInputFrame icon={ShieldCheck}>
+                                        <PasswordInput
+                                            id="password_confirmation"
+                                            required
+                                            autoComplete="new-password"
+                                            name="password_confirmation"
+                                            placeholder="Ulangi password"
+                                            passwordrules={passwordRules}
+                                            className="h-11 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                            aria-invalid={Boolean(
+                                                errors.password_confirmation,
+                                            )}
+                                            aria-describedby={
+                                                errors.password_confirmation
+                                                    ? 'register-password_confirmation-error'
+                                                    : undefined
+                                            }
+                                        />
+                                    </AuthInputFrame>
                                     <InputError
                                         id="register-password_confirmation-error"
                                         message={errors.password_confirmation}
@@ -442,6 +475,7 @@ export default function Register({ passwordRules, registration }: Props) {
                                         >
                                             Saya menyetujui Ketentuan Layanan
                                             dan Kebijakan Privasi SATU v1.0.
+                                            <RequiredMark />
                                         </Label>
                                     </div>
                                     <InputError
@@ -453,7 +487,7 @@ export default function Register({ passwordRules, registration }: Props) {
                                 <Button
                                     type="submit"
                                     size="lg"
-                                    className="mt-2 h-12 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-md motion-reduce:transition-none"
+                                    className="auth-submit-static h-11 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-sm font-semibold text-white shadow-md shadow-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                     disabled={processing}
                                     data-test="register-user-button"
                                 >
@@ -480,20 +514,11 @@ export default function Register({ passwordRules, registration }: Props) {
                                 </p>
                             )}
 
-                            <div className="relative flex items-center justify-center">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-slate-200" />
-                                </div>
-                                <span className="relative bg-white px-4 text-xs text-slate-600">
-                                    atau
-                                </span>
-                            </div>
-
-                            <div className="text-center text-sm text-slate-500">
+                            <div className="border-t border-slate-100 pt-2 text-center text-sm text-slate-500">
                                 Sudah punya akun?{' '}
                                 <TextLink
                                     href={login()}
-                                    className="font-semibold text-blue-600 no-underline hover:text-blue-700 hover:underline"
+                                    className="ml-1 inline-flex min-h-11 items-center font-semibold text-blue-600 no-underline hover:text-blue-700 hover:underline"
                                 >
                                     Masuk
                                 </TextLink>
@@ -509,5 +534,5 @@ export default function Register({ passwordRules, registration }: Props) {
 Register.layout = {
     title: 'Buat akun',
     description:
-        'Buat akun mahasiswa dengan username login-only dan nomor WhatsApp terverifikasi.',
+        'Daftar sebagai mahasiswa. Verifikasi nomor WhatsApp untuk mulai.',
 };

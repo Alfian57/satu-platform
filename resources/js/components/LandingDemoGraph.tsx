@@ -1,580 +1,506 @@
-import cytoscape from 'cytoscape';
-import { Check, RotateCcw } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+    ArrowRight,
+    BookOpen,
+    Check,
+    FileText,
+    Layers3,
+    Link2,
+    List,
+    Map,
+    RotateCcw,
+} from 'lucide-react';
+import { useState } from 'react';
+import type { KeyboardEvent } from 'react';
+import LandingCollaborationMap, {
+    DEMO_ICONS,
+} from '@/components/landing-collaboration-map';
+import {
+    DEMO_KIND_LABELS,
+    DEMO_NODES,
+    getDemoNode,
+    getDemoRelations,
+} from '@/lib/landing-demo';
+import type { DemoKind, DemoNode } from '@/lib/landing-demo';
 import { cn } from '@/lib/utils';
 
-type SyntheticNodeType =
-    'opportunity' | 'student' | 'team' | 'work' | 'validation' | 'portfolio';
+type DemoView = 'map' | 'list';
+const views = [
+    { key: 'map', label: 'Peta kolaborasi', icon: Map },
+    { key: 'list', label: 'Daftar hubungan', icon: List },
+] as const;
 
-type FilterType = 'all' | SyntheticNodeType;
-
-type SyntheticNode = {
-    data: {
-        id: string;
-        label: string;
-        type: SyntheticNodeType;
-    };
+const reverseRelations: Record<string, string> = {
+    'project-team': 'Proyek yang dikerjakan',
+    'team-contribution': 'Konteks pekerjaan',
+    'contribution-validation': 'Kontribusi yang ditinjau',
+    'validation-portfolio': 'Dasar karya',
+    'siti-team': 'Anggota tim',
+    'budi-team': 'Anggota tim',
+    'budi-contribution': 'Dikerjakan oleh',
 };
 
-const SYNTHETIC_DATA: {
-    nodes: SyntheticNode[];
-    edges: { data: { source: string; target: string; label: string } }[];
-} = {
-    nodes: [
-        {
-            data: {
-                id: 'opp1',
-                label: 'Hackathon kampus',
-                type: 'opportunity',
-            },
-        },
-        { data: { id: 'user1', label: 'Budi', type: 'student' } },
-        { data: { id: 'user2', label: 'Siti', type: 'student' } },
-        { data: { id: 'team1', label: 'Tim Alpha', type: 'team' } },
-        { data: { id: 'work1', label: 'Frontend UI', type: 'work' } },
-        { data: { id: 'work2', label: 'Backend API', type: 'work' } },
-        {
-            data: {
-                id: 'val1',
-                label: 'Kontribusi disetujui',
-                type: 'validation',
-            },
-        },
-        {
-            data: {
-                id: 'port1',
-                label: 'Portofolio Budi',
-                type: 'portfolio',
-            },
-        },
-    ],
-    edges: [
-        { data: { source: 'opp1', target: 'team1', label: 'dibuka untuk' } },
-        { data: { source: 'user1', target: 'team1', label: 'bergabung' } },
-        { data: { source: 'user2', target: 'team1', label: 'bergabung' } },
-        { data: { source: 'team1', target: 'work1', label: 'menghasilkan' } },
-        { data: { source: 'team1', target: 'work2', label: 'menghasilkan' } },
-        { data: { source: 'user1', target: 'work1', label: 'mengerjakan' } },
-        { data: { source: 'user2', target: 'work2', label: 'mengerjakan' } },
-        { data: { source: 'work1', target: 'val1', label: 'ditinjau' } },
-        { data: { source: 'work2', target: 'val1', label: 'ditinjau' } },
-        { data: { source: 'val1', target: 'port1', label: 'diproyeksikan' } },
-    ],
-};
+function RelationText({ id }: { id: string }) {
+    return (
+        <ul className="space-y-2">
+            {getDemoRelations(id).map((edge) => (
+                <li key={edge.id} className="text-sm leading-6 text-[#526B85]">
+                    <span className="font-semibold text-[#17345A]">
+                        {getDemoNode(edge.source)?.label}
+                    </span>{' '}
+                    {edge.label}{' '}
+                    <span className="font-semibold text-[#17345A]">
+                        {getDemoNode(edge.target)?.label}
+                    </span>
+                    .
+                </li>
+            ))}
+        </ul>
+    );
+}
 
-const TYPE_LABELS: Record<FilterType, string> = {
-    all: 'Semua tahap',
-    opportunity: 'Peluang',
-    student: 'Mahasiswa',
-    team: 'Tim',
-    work: 'Pekerjaan',
-    validation: 'Validasi',
-    portfolio: 'Portofolio',
-};
+function DemoDetails({
+    node,
+    onSelect,
+}: {
+    node: DemoNode | undefined;
+    onSelect: (id: string) => void;
+}) {
+    const Icon = node ? DEMO_ICONS[node.kind] : BookOpen;
+    const relations = node ? getDemoRelations(node.id) : [];
 
-const TYPE_COLORS: Record<SyntheticNodeType, string> = {
-    opportunity: '--landing-blue',
-    student: '--landing-lilac',
-    team: '--landing-mint',
-    work: '--landing-coral',
-    validation: '--landing-yellow',
-    portfolio: '--landing-blue',
-};
+    return (
+        <section
+            id="demo-node-detail"
+            tabIndex={-1}
+            aria-labelledby="demo-detail-heading"
+            className="collaboration-detail"
+            data-testid="landing-demo-detail"
+        >
+            <div className="collaboration-detail-heading">
+                <span className="collaboration-detail-icon" aria-hidden="true">
+                    <Icon className="size-6" />
+                </span>
+                <div>
+                    <p className="text-xs font-semibold text-[#1454C4]">
+                        {node
+                            ? `Rincian arsip / ${DEMO_KIND_LABELS[node.kind]}`
+                            : 'Mulai dari satu arsip'}
+                    </p>
+                    <h3
+                        id="demo-detail-heading"
+                        className="mt-1 text-2xl leading-tight font-bold tracking-[-0.025em]"
+                    >
+                        {node
+                            ? node.label
+                            : 'Kenali hubungan di balik sebuah karya.'}
+                    </h3>
+                </div>
+                <span className="collaboration-synthetic-label">
+                    Data synthetic
+                </span>
+            </div>
+            {node ? (
+                <div
+                    key={node.id}
+                    className="landing-panel-enter grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:gap-10"
+                >
+                    <div className="min-w-0">
+                        <p className="text-base leading-7 text-[#526B85]">
+                            {node.description}
+                        </p>
+                        <dl className="mt-5 grid gap-4 border-t border-[#D9E8F5] pt-5 sm:grid-cols-2">
+                            {node.facts.map(([label, value]) => (
+                                <div key={label}>
+                                    <dt className="text-xs text-[#526B85]">
+                                        {label}
+                                    </dt>
+                                    <dd className="mt-1 text-sm leading-6 font-semibold text-[#17345A]">
+                                        {value}
+                                    </dd>
+                                </div>
+                            ))}
+                        </dl>
+                        <div className="mt-5 rounded-2xl border border-[#D9E8F5] bg-white p-4">
+                            <p className="flex items-center gap-2 text-sm font-semibold text-[#1454C4]">
+                                <ArrowRight
+                                    aria-hidden="true"
+                                    className="size-4"
+                                />
+                                Langkah berikutnya
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-[#526B85]">
+                                {node.next}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="min-w-0">
+                        <h4 className="flex items-center gap-2 text-sm font-bold">
+                            <Link2
+                                aria-hidden="true"
+                                className="size-4 text-[#1764E8]"
+                            />
+                            Hubungan terdekat
+                        </h4>
+                        <ul className="mt-3 divide-y divide-[#D9E8F5]">
+                            {relations.map((edge) => {
+                                const related = getDemoNode(
+                                    edge.source === node.id
+                                        ? edge.target
+                                        : edge.source,
+                                )!;
+                                const RelatedIcon = DEMO_ICONS[related.kind];
 
-const TYPE_BADGE_CLASSES: Record<SyntheticNodeType, string> = {
-    opportunity: 'bg-[var(--landing-blue-soft)] text-[#1454C4]',
-    student: 'bg-[var(--landing-lilac-soft)] text-[#4C4BB3]',
-    team: 'bg-[var(--landing-mint-soft)] text-[#176B4C]',
-    work: 'bg-[var(--landing-coral-soft)] text-[#9E4934]',
-    validation: 'bg-[var(--landing-yellow-soft)] text-[#805000]',
-    portfolio: 'bg-[var(--landing-blue-soft)] text-[#1454C4]',
-};
-
-function getComputedToken(name: string, scope?: Element | null): string {
-    if (typeof document === 'undefined') {
-        return '';
-    }
-
-    const source =
-        scope?.closest<HTMLElement>('[data-landing-surface]') ??
-        document.documentElement;
-
-    return getComputedStyle(source).getPropertyValue(name).trim();
+                                return (
+                                    <li key={edge.id} className="py-3">
+                                        <p className="mb-2 text-xs leading-5 text-[#526B85]">
+                                            {edge.source === node.id
+                                                ? edge.label
+                                                : reverseRelations[edge.id]}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            className="collaboration-relation-button"
+                                            onClick={() => onSelect(related.id)}
+                                        >
+                                            <RelatedIcon
+                                                aria-hidden="true"
+                                                className="size-4 shrink-0"
+                                            />
+                                            <span>{related.label}</span>
+                                            <ArrowRight
+                                                aria-hidden="true"
+                                                className="ml-auto size-4 shrink-0"
+                                            />
+                                        </button>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                </div>
+            ) : (
+                <div className="grid items-center gap-5 lg:grid-cols-[minmax(0,1fr)_auto]">
+                    <p className="max-w-2xl text-base leading-7 text-[#526B85]">
+                        Pilih lembar proyek, anggota tim, atau kontribusi untuk
+                        membaca konteksnya. Garis menampilkan hubungan, bukan
+                        peringkat atau ukuran nilai seseorang.
+                    </p>
+                    <button
+                        type="button"
+                        className="landing-control"
+                        onClick={() => onSelect('project')}
+                    >
+                        Mulai dari proyek
+                        <ArrowRight aria-hidden="true" className="size-4" />
+                    </button>
+                </div>
+            )}
+        </section>
+    );
 }
 
 export default function LandingDemoGraph() {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const cyRef = useRef<cytoscape.Core | null>(null);
-    const [selectedType, setSelectedType] = useState<FilterType>('all');
-    const [activeNode, setActiveNode] = useState<string | null>(null);
-    const [hasError, setHasError] = useState(false);
-    const prefersReducedMotion = useMemo(() => {
-        if (typeof window === 'undefined') {
-            return false;
-        }
-
-        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    }, []);
-
-    const focusNode = useCallback((id: string) => {
-        const cy = cyRef.current;
-        const node = cy?.getElementById(id);
-
-        if (!cy || !node || node.empty()) {
-            return;
-        }
-
-        setActiveNode(id);
-        cy.elements().removeClass('highlighted');
-        node.addClass('highlighted');
-        node.connectedEdges().addClass('highlighted');
-        node.neighborhood('node').addClass('highlighted');
-    }, []);
-
-    const clearFocus = useCallback(() => {
-        setActiveNode(null);
-        cyRef.current?.elements().removeClass('highlighted');
-    }, []);
-
-    const initGraph = useCallback(() => {
-        if (!containerRef.current) {
-            return;
-        }
-
-        const themeRoot = containerRef.current.closest<HTMLElement>(
-            '[data-landing-surface]',
-        );
-        const primaryColor =
-            getComputedToken('--landing-blue', themeRoot) || '#155EEF';
-        const foreground =
-            getComputedToken('--landing-ink', themeRoot) || '#11346F';
-        const mutedForeground =
-            getComputedToken('--landing-muted', themeRoot) || '#3D5F91';
-        const borderColor =
-            getComputedToken('--landing-border', themeRoot) || '#C8DCFA';
-        const surfaceColor =
-            getComputedToken('--landing-surface', themeRoot) || '#FFFFFF';
-        const canvasColor =
-            getComputedToken('--landing-canvas', themeRoot) || '#F5FAFF';
-
-        cyRef.current = cytoscape({
-            container: containerRef.current,
-            elements: SYNTHETIC_DATA,
-            style: [
-                {
-                    selector: 'node',
-                    style: {
-                        'background-color': primaryColor,
-                        color: foreground,
-                        'font-family':
-                            'Familjen Grotesk, system-ui, sans-serif',
-                        'font-size': '11px',
-                        label: 'data(label)',
-                        'text-background-color': surfaceColor,
-                        'text-background-opacity': 0.96,
-                        'text-background-padding': '4px',
-                        'text-halign': 'center',
-                        'text-max-width': '130px',
-                        'text-overflow-wrap': 'anywhere',
-                        'text-valign': 'bottom',
-                        'text-margin-y': 8,
-                        'border-width': 2,
-                        'border-color': surfaceColor,
-                        width: 26,
-                        height: 26,
-                    },
-                },
-                ...Object.entries(TYPE_COLORS).map(([type, token]) => ({
-                    selector: `node[type="${type}"]`,
-                    style: {
-                        'background-color':
-                            getComputedToken(token, themeRoot) || primaryColor,
-                    },
-                })),
-                {
-                    selector: 'node[type="team"], node[type="validation"]',
-                    style: { shape: 'roundrectangle' },
-                },
-                {
-                    selector: 'node[type="work"]',
-                    style: { shape: 'rectangle' },
-                },
-                {
-                    selector: 'node[type="portfolio"]',
-                    style: { shape: 'roundrectangle', width: 32, height: 32 },
-                },
-                {
-                    selector: 'edge',
-                    style: {
-                        color: mutedForeground,
-                        'curve-style': 'bezier',
-                        'font-size': '9px',
-                        label: 'data(label)',
-                        'line-color': borderColor,
-                        'target-arrow-color': borderColor,
-                        'target-arrow-shape': 'triangle',
-                        'text-background-color': canvasColor,
-                        'text-background-opacity': 0.9,
-                        'text-background-padding': '3px',
-                        'text-rotation': 'autorotate',
-                        'text-margin-y': -8,
-                        width: 1.5,
-                    },
-                },
-                {
-                    selector: '.hidden',
-                    style: { display: 'none' },
-                },
-                {
-                    selector: '.highlighted',
-                    style: {
-                        'background-color': primaryColor,
-                        'border-color': surfaceColor,
-                        'border-width': 3,
-                    },
-                },
-                {
-                    selector: 'edge.highlighted',
-                    style: {
-                        'line-color': primaryColor,
-                        'target-arrow-color': primaryColor,
-                        width: 3,
-                    },
-                },
-            ],
-            layout: {
-                name: 'breadthfirst',
-                directed: true,
-                padding: 34,
-                animate: !prefersReducedMotion,
-                animationDuration: prefersReducedMotion ? 0 : 480,
-            },
-            boxSelectionEnabled: false,
-            userPanningEnabled: false,
-            userZoomingEnabled: false,
-        });
-
-        const cy = cyRef.current;
-
-        cy.on('tap', 'node', (event) => {
-            focusNode(event.target.data('id'));
-        });
-        cy.on('tap', (event) => {
-            if (event.target === cy) {
-                clearFocus();
-            }
-        });
-    }, [clearFocus, focusNode, prefersReducedMotion]);
-
-    useEffect(() => {
-        if (!containerRef.current) {
-            return;
-        }
-
-        try {
-            initGraph();
-        } catch {
-            window.setTimeout(() => setHasError(true), 0);
-        }
-
-        return () => {
-            cyRef.current?.destroy();
-            cyRef.current = null;
-        };
-    }, [initGraph]);
-
-    const displayNodes = SYNTHETIC_DATA.nodes.filter(
-        (node) => selectedType === 'all' || node.data.type === selectedType,
+    const [view, setView] = useState<DemoView>('map');
+    const [focusedKind, setFocusedKind] = useState<DemoKind | 'all'>('all');
+    const [selectedId, setSelectedId] = useState<string | null>('contribution');
+    const [resetCount, setResetCount] = useState(0);
+    const selectedNode = selectedId ? getDemoNode(selectedId) : undefined;
+    const displayedNodes = DEMO_NODES.filter(
+        (node) => focusedKind === 'all' || node.kind === focusedKind,
     );
 
-    useEffect(() => {
-        const cy = cyRef.current;
+    function selectNode(id: string) {
+        const node = getDemoNode(id);
 
-        if (!cy) {
+        if (!node) {
             return;
         }
 
-        cy.elements().removeClass('hidden');
+        setSelectedId(id);
 
-        if (selectedType !== 'all') {
-            cy.nodes().forEach((node) => {
-                if (node.data('type') !== selectedType) {
-                    node.addClass('hidden');
-                    node.connectedEdges().addClass('hidden');
-                }
-            });
+        if (focusedKind !== 'all' && node.kind !== focusedKind) {
+            setFocusedKind(node.kind);
         }
+    }
 
-        cy.layout({
-            name: 'breadthfirst',
-            directed: true,
-            padding: 34,
-            animate: !prefersReducedMotion,
-            animationDuration: prefersReducedMotion ? 0 : 360,
-        }).run();
-    }, [prefersReducedMotion, selectedType]);
+    function changeFocus(kind: DemoKind | 'all') {
+        setFocusedKind(kind);
 
-    const handleTypeChange = (nextType: FilterType) => {
-        setSelectedType(nextType);
+        if (kind !== 'all') {
+            setSelectedId(
+                DEMO_NODES.find((node) => node.kind === kind)?.id ?? null,
+            );
+        }
+    }
+
+    function moveView(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+        let next: number;
 
         if (
-            activeNode &&
-            nextType !== 'all' &&
-            !SYNTHETIC_DATA.nodes.some(
-                (node) =>
-                    node.data.id === activeNode && node.data.type === nextType,
+            ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(
+                event.key,
             )
         ) {
-            clearFocus();
+            next = (index + 1) % views.length;
+        } else if (event.key === 'Home') {
+            next = 0;
+        } else if (event.key === 'End') {
+            next = views.length - 1;
+        } else {
+            return;
         }
-    };
 
-    const handleRetry = () => {
-        setHasError(false);
-        cyRef.current?.destroy();
-        cyRef.current = null;
-
-        window.setTimeout(() => {
-            try {
-                initGraph();
-            } catch {
-                setHasError(true);
-            }
-        }, 0);
-    };
-
-    if (hasError) {
-        return (
-            <div
-                className="flex min-h-[320px] flex-col items-center justify-center gap-4 rounded-2xl border border-[var(--landing-border)] bg-[var(--landing-coral-soft)] p-8 text-center sm:p-12"
-                data-testid="landing-demo-error"
-                role="alert"
-            >
-                <p className="text-sm font-semibold text-[var(--landing-ink)]">
-                    Demo kolaborasi belum dapat dimuat.
-                </p>
-                <p className="max-w-sm text-sm leading-6 text-[var(--landing-muted)]">
-                    Data Anda tetap aman. Coba muat ulang demo untuk melihat
-                    alurnya kembali.
-                </p>
-                <button
-                    type="button"
-                    onClick={handleRetry}
-                    className="inline-flex h-control-md cursor-pointer items-center gap-2 rounded-xl bg-[var(--landing-blue)] px-4 text-sm font-semibold text-white transition-[background-color,transform] duration-fast hover:-translate-y-0.5 hover:bg-[var(--landing-blue-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0] motion-reduce:transition-none"
-                >
-                    <RotateCcw aria-hidden="true" className="size-4" />
-                    Coba lagi
-                </button>
-            </div>
-        );
+        event.preventDefault();
+        setView(views[next].key);
+        event.currentTarget
+            .closest('[role="tablist"]')
+            ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+            .item(next)
+            ?.focus();
     }
 
     return (
-        <div
-            className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_21rem] lg:gap-5"
+        <section
+            className="collaboration-demo"
             data-testid="landing-demo-graph"
+            aria-labelledby="graph-heading"
         >
-            <section
-                className="min-w-0 overflow-hidden rounded-2xl border border-[var(--landing-border)] bg-[var(--landing-surface)]"
-                aria-labelledby="graph-heading"
-            >
-                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--landing-border)] p-4 sm:p-5">
+            <div className="collaboration-toolbar">
+                <div className="flex items-start gap-3">
+                    <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-[#BFD7EC] bg-white text-[#1764E8] shadow-sm">
+                        <Layers3 aria-hidden="true" className="size-6" />
+                    </span>
                     <div>
-                        <div className="flex items-center gap-2.5">
-                            <span className="flex size-8 items-center justify-center rounded-xl bg-[var(--landing-mint-soft)] text-[#18559C]">
-                                <Check aria-hidden="true" className="size-4" />
-                            </span>
-                            <h3
-                                id="graph-heading"
-                                className="text-sm font-semibold text-[var(--landing-ink)]"
-                            >
-                                Graf kolaborasi
-                            </h3>
-                        </div>
-                        <p className="mt-2 flex items-center gap-2 font-label text-[0.62rem] tracking-[0.03em] text-[var(--landing-muted)]">
-                            <span
-                                aria-hidden="true"
-                                className="size-1.5 rounded-full bg-[var(--landing-coral)]"
-                            />
-                            Data synthetic / dapat direset
+                        <p className="font-label text-xs text-[#526B85]">
+                            ARSIP DEMO / 001
+                        </p>
+                        <h3
+                            id="graph-heading"
+                            className="mt-1 text-xl font-bold tracking-tight sm:text-2xl"
+                        >
+                            Peta kolaborasi
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-[#526B85]">
+                            Perjalanan kontribusi Budi.
                         </p>
                     </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                        <label
-                            htmlFor="landing-graph-filter"
-                            className="sr-only"
-                        >
-                            Filter tahap kolaborasi
-                        </label>
-                        <select
-                            id="landing-graph-filter"
-                            value={selectedType}
-                            onChange={(event) =>
-                                handleTypeChange(
-                                    event.target.value as FilterType,
-                                )
-                            }
-                            className="h-control-sm rounded-xl border border-[#7892AE] bg-[var(--landing-canvas)] px-3 text-xs text-[var(--landing-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0]"
-                        >
-                            {Object.entries(TYPE_LABELS).map(
-                                ([value, label]) => (
-                                    <option key={value} value={value}>
-                                        {label}
-                                    </option>
-                                ),
-                            )}
-                        </select>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setSelectedType('all');
-                                clearFocus();
-                            }}
-                            className="inline-flex h-control-sm cursor-pointer items-center gap-2 rounded-xl border border-[var(--landing-border)] bg-[var(--landing-blue-soft)] px-3 text-xs font-semibold text-[#1454C4] transition-[background-color,transform] duration-fast hover:-translate-y-0.5 hover:bg-[#D9EBFF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1746B0] motion-reduce:transition-none"
-                        >
-                            <RotateCcw
-                                aria-hidden="true"
-                                className="size-3.5"
-                            />
-                            Reset
-                        </button>
-                    </div>
                 </div>
-
-                <p id="graph-description" className="sr-only">
-                    Graf dekoratif ini melacak alur dari peluang ke tim,
-                    pekerjaan, validasi, dan portofolio. Gunakan tabel di
-                    samping untuk membaca data dan memilih node secara keyboard.
-                </p>
+                <span className="collaboration-synthetic-label">
+                    Data synthetic
+                </span>
+            </div>
+            <div className="collaboration-controls">
                 <div
-                    ref={containerRef}
-                    aria-describedby="graph-description"
-                    aria-hidden="true"
-                    className="h-[320px] w-full bg-[var(--landing-canvas)] sm:h-[380px] lg:h-[440px]"
-                    data-testid="landing-graph-canvas"
-                />
-                <div className="flex items-start gap-3 border-t border-[var(--landing-border)] bg-[var(--landing-blue-soft)] px-4 py-3 text-xs leading-5 text-[var(--landing-muted)] sm:px-5">
-                    <span className="mt-1 size-1.5 shrink-0 rounded-full bg-[var(--landing-blue)]" />
-                    <p>
-                        Klik node untuk menyorot hubungan terdekat. Warna hanya
-                        membantu orientasi, bukan satu-satunya penanda tahap.
-                    </p>
-                </div>
-            </section>
+                    role="tablist"
+                    aria-label="Tampilan demo kolaborasi"
+                    className="collaboration-view-tabs"
+                >
+                    {views.map((item, index) => {
+                        const Icon = item.icon;
+                        const active = view === item.key;
 
-            <section
-                className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[var(--landing-border)] bg-[var(--landing-surface)]"
-                aria-labelledby="ledger-heading"
-            >
-                <div className="border-b border-[var(--landing-border)] p-4 sm:p-5">
-                    <p className="font-label text-[0.62rem] tracking-[0.04em] text-[var(--landing-blue)]">
-                        TABLE EQUIVALENT
-                    </p>
-                    <h3
-                        id="ledger-heading"
-                        className="mt-2 text-title font-semibold tracking-[-0.025em] text-[var(--landing-ink)]"
+                        return (
+                            <button
+                                key={item.key}
+                                id={`demo-view-tab-${item.key}`}
+                                role="tab"
+                                type="button"
+                                aria-selected={active}
+                                aria-controls="demo-view-panel"
+                                tabIndex={active ? 0 : -1}
+                                className={cn(
+                                    'collaboration-view-tab',
+                                    active && 'collaboration-view-tab--active',
+                                )}
+                                onClick={() => setView(item.key)}
+                                onKeyDown={(event) => moveView(event, index)}
+                            >
+                                <Icon aria-hidden="true" className="size-4" />
+                                {item.label}
+                            </button>
+                        );
+                    })}
+                </div>
+                <div className="collaboration-filter-controls">
+                    <label
+                        htmlFor="landing-graph-filter"
+                        className="text-xs font-semibold text-[#526B85]"
                     >
-                        Ledger hubungan
-                    </h3>
-                    <p className="mt-2 text-xs leading-5 text-[var(--landing-muted)]">
-                        {displayNodes.length} record synthetic pada filter ini.
-                    </p>
+                        Fokus tahap
+                    </label>
+                    <select
+                        id="landing-graph-filter"
+                        className="collaboration-filter"
+                        value={focusedKind}
+                        onChange={(event) =>
+                            changeFocus(event.target.value as DemoKind | 'all')
+                        }
+                    >
+                        <option value="all">Semua tahap</option>
+                        {Object.entries(DEMO_KIND_LABELS).map(
+                            ([value, label]) => (
+                                <option key={value} value={value}>
+                                    {label}
+                                </option>
+                            ),
+                        )}
+                    </select>
+                    <button
+                        type="button"
+                        className="landing-control"
+                        onClick={() => {
+                            setView('map');
+                            setFocusedKind('all');
+                            setSelectedId(null);
+                            setResetCount((count) => count + 1);
+                        }}
+                    >
+                        <RotateCcw aria-hidden="true" className="size-4" />
+                        Reset
+                    </button>
                 </div>
-                <div className="max-h-[440px] flex-1 overflow-y-auto">
-                    <table className="w-full text-left text-xs">
-                        <caption className="sr-only">
-                            Record graph kolaborasi synthetic SATU
-                        </caption>
-                        <thead className="sticky top-0 z-10 bg-[var(--landing-blue-soft)] text-[var(--landing-ink)]">
-                            <tr>
-                                <th
-                                    scope="col"
-                                    className="px-4 py-3 font-semibold"
+            </div>
+            <p
+                id="demo-map-description"
+                className="collaboration-map-description"
+            >
+                Pilih arsip untuk membaca rincian. Gulir peta untuk mengikuti
+                alur.
+                <span className="sr-only">
+                    Gunakan Tab lalu Enter, atau buka Daftar hubungan. Fokus
+                    tahap tidak menghilangkan konteks peta.
+                </span>
+            </p>
+            <p
+                className="sr-only"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+            >
+                {selectedNode
+                    ? `Arsip ${selectedNode.label} dipilih. Rincian dan hubungan terdekat diperbarui.`
+                    : 'Tidak ada arsip dipilih. Semua tahap ditampilkan.'}
+            </p>
+            <div
+                id="demo-view-panel"
+                role="tabpanel"
+                aria-labelledby={`demo-view-tab-${view}`}
+                tabIndex={0}
+                className="collaboration-view-panel"
+            >
+                {view === 'map' ? (
+                    <LandingCollaborationMap
+                        key={resetCount}
+                        selectedId={selectedId}
+                        focusedKind={focusedKind}
+                        onSelect={selectNode}
+                    />
+                ) : (
+                    <div
+                        className="collaboration-ledger"
+                        aria-labelledby="ledger-heading"
+                    >
+                        <div className="collaboration-ledger-heading">
+                            <div>
+                                <h3
+                                    id="ledger-heading"
+                                    className="text-lg font-bold"
                                 >
-                                    Node
-                                </th>
-                                <th
-                                    scope="col"
-                                    className="px-4 py-3 font-semibold"
-                                >
-                                    Tahap
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[var(--landing-border)]">
-                            {displayNodes.map((node) => {
-                                const isActive = activeNode === node.data.id;
-
-                                return (
-                                    <tr
-                                        key={node.data.id}
-                                        className={cn(
-                                            'transition-colors duration-fast motion-reduce:transition-none',
-                                            isActive
-                                                ? 'bg-[var(--landing-yellow-soft)]'
-                                                : 'hover:bg-[var(--landing-canvas)]',
-                                        )}
-                                    >
-                                        <td className="p-0">
-                                            <button
-                                                type="button"
-                                                aria-pressed={isActive}
-                                                onClick={() =>
-                                                    focusNode(node.data.id)
-                                                }
-                                                className="flex min-h-12 w-full cursor-pointer items-center gap-2 px-4 py-3 text-left font-semibold text-[var(--landing-ink)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#1746B0]"
-                                            >
-                                                {isActive ? (
-                                                    <Check
-                                                        aria-hidden="true"
-                                                        className="size-3.5 shrink-0 text-[var(--landing-blue)]"
-                                                    />
-                                                ) : (
-                                                    <span
-                                                        aria-hidden="true"
-                                                        className={cn(
-                                                            'size-2 shrink-0 rounded-full',
-                                                            TYPE_BADGE_CLASSES[
-                                                                node.data.type
-                                                            ].split(' ')[0],
-                                                        )}
-                                                    />
-                                                )}
-                                                <span className="truncate">
-                                                    {node.data.label}
-                                                </span>
-                                            </button>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span
-                                                className={cn(
-                                                    'inline-flex rounded-full px-2 py-1 text-[0.65rem] font-semibold',
-                                                    TYPE_BADGE_CLASSES[
-                                                        node.data.type
-                                                    ],
-                                                )}
-                                            >
-                                                {TYPE_LABELS[node.data.type]}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                            {displayNodes.length === 0 && (
+                                    Daftar hubungan
+                                </h3>
+                                <p className="mt-1 text-sm text-[#526B85]">
+                                    {displayedNodes.length} arsip synthetic.
+                                    Hubungan sama dengan peta.
+                                </p>
+                            </div>
+                            <FileText
+                                aria-hidden="true"
+                                className="size-6 text-[#1764E8]"
+                            />
+                        </div>
+                        <table className="collaboration-table">
+                            <caption className="sr-only">
+                                Arsip dan hubungan graf kolaborasi synthetic
+                                SATU
+                            </caption>
+                            <thead>
                                 <tr>
-                                    <td
-                                        colSpan={2}
-                                        className="px-4 py-10 text-center text-[var(--landing-muted)]"
-                                    >
-                                        Tidak ada record pada filter ini.
-                                    </td>
+                                    <th scope="col">Arsip</th>
+                                    <th scope="col">Hubungan</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
+                            </thead>
+                            <tbody>
+                                {displayedNodes.map((node) => {
+                                    const Icon = DEMO_ICONS[node.kind];
+
+                                    return (
+                                        <tr
+                                            key={node.id}
+                                            data-selected={
+                                                selectedId === node.id ||
+                                                undefined
+                                            }
+                                        >
+                                            <th scope="row">
+                                                <button
+                                                    type="button"
+                                                    aria-pressed={
+                                                        selectedId === node.id
+                                                    }
+                                                    aria-controls="demo-node-detail"
+                                                    className="collaboration-table-button"
+                                                    onClick={() =>
+                                                        selectNode(node.id)
+                                                    }
+                                                >
+                                                    <span className="flex items-center gap-2 text-xs font-semibold text-[#1454C4]">
+                                                        <Icon
+                                                            aria-hidden="true"
+                                                            className="size-4 shrink-0"
+                                                        />
+                                                        {
+                                                            DEMO_KIND_LABELS[
+                                                                node.kind
+                                                            ]
+                                                        }
+                                                    </span>
+                                                    <span className="mt-2 text-sm leading-6 font-bold">
+                                                        {node.label}
+                                                    </span>
+                                                    <span className="mt-2 inline-flex items-center gap-1.5 text-xs text-[#526B85]">
+                                                        {selectedId ===
+                                                            node.id && (
+                                                            <Check
+                                                                aria-hidden="true"
+                                                                className="size-3.5"
+                                                            />
+                                                        )}
+                                                        {selectedId === node.id
+                                                            ? 'Dipilih'
+                                                            : 'Pilih arsip'}
+                                                    </span>
+                                                </button>
+                                            </th>
+                                            <td>
+                                                <RelationText id={node.id} />
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+            <DemoDetails node={selectedNode} onSelect={selectNode} />
+            <p className="collaboration-demo-note">
+                <BookOpen
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-[#1764E8]"
+                />
+                Contoh alur, bukan progres akun. Validasi tidak otomatis
+                memublikasikan portofolio.
+            </p>
+        </section>
     );
 }

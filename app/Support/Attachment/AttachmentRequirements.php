@@ -44,6 +44,7 @@ final class AttachmentRequirements
         return [
             'required',
             'file',
+            'extensions:'.implode(',', self::allowedExtensions()),
             File::types(self::allowedExtensions())->max(self::MAX_SIZE_KB),
         ];
     }

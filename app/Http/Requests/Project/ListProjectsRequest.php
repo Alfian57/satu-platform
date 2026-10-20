@@ -24,6 +24,9 @@ class ListProjectsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'view' => ['sometimes', Rule::in(['opportunities', 'mine'])],
+            'beginner' => ['sometimes', Rule::in(['all', 'accepting'])],
+            'availability' => ['sometimes', Rule::in(['all', 'available'])],
             'q' => ['sometimes', 'nullable', 'string', 'max:160'],
             'status' => ['sometimes', 'nullable', 'string', 'max:160'],
             'visibility' => ['sometimes', 'nullable', 'string', 'max:80'],
@@ -45,7 +48,7 @@ class ListProjectsRequest extends FormRequest
                 $this->validateEnumList(
                     $validator,
                     'status',
-                    ProjectDiscoveryFilters::discoverableStatuses(),
+                    ProjectDiscoveryFilters::discoverableStatuses($this->input('view') === 'mine' ? 'mine' : 'opportunities'),
                 );
                 $this->validateEnumList(
                     $validator,

@@ -10,6 +10,7 @@ use App\Models\Institution;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Support\Task\TaskSnapshot;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -19,11 +20,11 @@ final class DeleteTask
         private readonly AuditRecorder $audit,
     ) {}
 
-    public function handle(User $actor, Task $task): void
+    public function handle(User $actor, Task $task, string $expectedRevision): void
     {
         Gate::forUser($actor)->authorize('delete', $task);
 
-        DB::transaction(function () use ($actor, $task): void {
+        DB::transaction(function () use ($actor, $task, $expectedRevision): void {
             $lockedProject = Project::query()
                 ->lockForUpdate()
                 ->whereKey($task->project_id)
@@ -34,6 +35,7 @@ final class DeleteTask
                 ->firstOrFail();
 
             Gate::forUser($actor)->authorize('delete', $lockedTask);
+            TaskSnapshot::ensureFresh($lockedTask, $expectedRevision);
 
             $this->audit->record(
                 operation: 'task.deleted',

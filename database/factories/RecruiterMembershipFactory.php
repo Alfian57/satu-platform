@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\RecruiterMembershipRole;
 use App\Enums\RecruiterMembershipStatus;
 use App\Models\RecruiterMembership;
 use App\Models\RecruiterOrganization;
@@ -19,7 +18,7 @@ class RecruiterMembershipFactory extends Factory
         return [
             'recruiter_organization_id' => RecruiterOrganization::factory(),
             'user_id' => User::factory(),
-            'role' => RecruiterMembershipRole::Recruiter,
+            'role' => 'recruiter',
             'status' => RecruiterMembershipStatus::Active,
         ];
     }
@@ -27,14 +26,14 @@ class RecruiterMembershipFactory extends Factory
     public function owner(): static
     {
         return $this->state(fn (array $attributes): array => [
-            'role' => RecruiterMembershipRole::Owner,
+            'role' => 'owner',
         ]);
     }
 
     public function admin(): static
     {
         return $this->state(fn (array $attributes): array => [
-            'role' => RecruiterMembershipRole::Admin,
+            'role' => 'admin',
         ]);
     }
 

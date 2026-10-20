@@ -10,6 +10,7 @@ import {
     Compass,
     FileText,
     Sparkles,
+    Sparkle,
     UserRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -27,6 +28,7 @@ type ActionHref = NonNullable<InertiaLinkProps['href']>;
 
 type Props = {
     action: DashboardNextAction;
+    referenceLayout?: boolean;
     getActionHref: (action: DashboardAction) => ActionHref | null;
     onAction: (action: DashboardAction) => void;
 };
@@ -73,8 +75,8 @@ function FactRow({ fact }: { fact: DashboardDocketFact }) {
     const Icon = fact.icon ? factIcons[fact.icon] : FileText;
 
     return (
-        <div className="flex min-w-0 items-start gap-3 rounded-2xl bg-background/80 p-3.5">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-white text-primary">
+        <div className="dashboard-docket__fact flex min-w-0 items-start gap-3 border-t border-border/70 pt-4">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-accent/65 text-primary">
                 <Icon aria-hidden="true" className="size-4" />
             </span>
             <div className="min-w-0">
@@ -117,16 +119,16 @@ function ActionControl({
     const href = getActionHref(action);
     const content = (
         <>
-            {action.label}
+            <span className="min-w-0 wrap-anywhere">{action.label}</span>
             <ArrowRight
                 aria-hidden="true"
-                className="size-4 shrink-0 transition-transform group-hover:translate-x-1 motion-reduce:transform-none"
+                className="size-4 shrink-0 motion-safe:transition-transform motion-safe:duration-standard motion-safe:group-hover:translate-x-1"
             />
         </>
     );
     const className = cn(
-        'group min-h-11 w-full cursor-pointer rounded-full px-5 text-sm font-semibold sm:w-auto',
-        primary ? 'shadow-sm' : 'text-primary',
+        'group h-auto min-h-11 w-full cursor-pointer rounded-xl px-5 py-3 text-sm font-semibold whitespace-normal motion-safe:transition-[background-color,box-shadow,transform] motion-safe:duration-standard motion-safe:active:translate-y-0.5 sm:w-auto',
+        primary ? 'shadow-sm hover:shadow-md' : 'text-primary',
     );
 
     if (href !== null) {
@@ -158,6 +160,7 @@ function ActionControl({
 
 export function DashboardNextAction({
     action,
+    referenceLayout = false,
     getActionHref,
     onAction,
 }: Props) {
@@ -167,12 +170,29 @@ export function DashboardNextAction({
     return (
         <section
             aria-labelledby="dashboard-next-action"
-            className="scroll-mt-24 rounded-3xl border border-white bg-card p-5 shadow-sm sm:p-6"
+            className="dashboard-docket scroll-mt-24 overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-md"
             data-test="dashboard-docket"
         >
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            {referenceLayout && (
+                <div className="dashboard-docket__art" aria-hidden="true">
+                    <img
+                        src="/images/dashboard-review-document.webp"
+                        srcSet="/images/dashboard-review-document-256.webp 256w, /images/dashboard-review-document.webp 512w"
+                        sizes="192px"
+                        width={512}
+                        height={512}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                    />
+                    <Sparkle />
+                </div>
+            )}
+            <div className="dashboard-docket__header flex flex-wrap items-center justify-between gap-3 bg-linear-to-r from-accent/65 to-card px-5 pt-5 pb-4 sm:px-7 sm:pt-6">
                 <p className="flex items-center gap-2 text-sm font-semibold text-primary">
-                    <Compass aria-hidden="true" className="size-4" />
+                    <span className="flex size-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+                        <Compass aria-hidden="true" className="size-5" />
+                    </span>
                     Langkah utama
                 </p>
                 <span
@@ -186,33 +206,37 @@ export function DashboardNextAction({
                 </span>
             </div>
 
-            <h2
-                id="dashboard-next-action"
-                className="mt-4 scroll-mt-24 text-xl leading-snug font-bold tracking-tight text-foreground sm:text-2xl"
-                tabIndex={-1}
-            >
-                {action.title}
-            </h2>
+            <div className="dashboard-docket__body px-5 pt-2 pb-6 sm:px-7 sm:pb-7">
+                <h2
+                    id="dashboard-next-action"
+                    className="max-w-[28ch] scroll-mt-24 text-2xl leading-tight font-bold tracking-tight wrap-anywhere text-foreground sm:text-[1.75rem]"
+                    tabIndex={-1}
+                >
+                    {action.title}
+                </h2>
 
-            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                <span>{action.category}</span>
-                <span aria-hidden="true">·</span>
-                <span>
-                    Dicatat{' '}
-                    <time dateTime={action.recordedAtIso}>
-                        {action.recordedAt}
-                    </time>
-                </span>
-            </p>
+                <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                    <span>{action.category}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                        Dicatat{' '}
+                        <time dateTime={action.recordedAtIso}>
+                            {action.recordedAt}
+                        </time>
+                    </span>
+                </p>
 
-            <dl className="mt-5 grid gap-2.5 2xl:grid-cols-2">
-                {action.facts.map((fact) => (
-                    <FactRow key={fact.label} fact={fact} />
-                ))}
-            </dl>
+                {action.facts.length > 0 && (
+                    <dl className="mt-6 grid gap-x-6 gap-y-4 sm:grid-cols-2">
+                        {action.facts.map((fact) => (
+                            <FactRow key={fact.label} fact={fact} />
+                        ))}
+                    </dl>
+                )}
+            </div>
 
             {(action.primaryAction || action.secondaryAction) && (
-                <div className="mt-5 flex flex-col gap-2 border-t border-border/50 pt-5 sm:flex-row sm:flex-wrap sm:items-center">
+                <div className="dashboard-docket__footer flex flex-col gap-2 border-t border-border/60 bg-background/50 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:px-7">
                     {action.primaryAction && (
                         <ActionControl
                             action={action.primaryAction}

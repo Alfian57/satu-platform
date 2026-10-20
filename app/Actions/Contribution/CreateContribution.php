@@ -18,6 +18,7 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class CreateContribution
@@ -25,6 +26,7 @@ final class CreateContribution
     public function __construct(
         private readonly AuditRecorder $audit,
         private readonly ContributionRequirements $requirements,
+        private readonly EnsureUniqueContributionWork $uniqueWork,
     ) {}
 
     /**
@@ -66,6 +68,14 @@ final class CreateContribution
             $institution = Institution::query()
                 ->whereKey($lockedProject->institution_id)
                 ->firstOrFail();
+
+            $this->uniqueWork->handle(
+                project: $lockedProject,
+                ownerId: $actor->getKey(),
+                taskId: $task->getKey(),
+                claim: $claim,
+                summary: $summary,
+            );
 
             $contribution = Contribution::query()->forceCreate([
                 'institution_id' => $institution->getKey(),
@@ -143,7 +153,7 @@ final class CreateContribution
             ContributionEvidence::query()->forceCreate([
                 'contribution_version_id' => $version->getKey(),
                 'attachment_id' => $attachment->getKey(),
-                'source_label' => $attachment->original_name,
+                'source_label' => Str::limit($attachment->original_name, 160, ''),
                 'notes' => null,
             ]);
         }

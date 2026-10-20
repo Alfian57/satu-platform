@@ -3,13 +3,10 @@
 namespace App\Http\Middleware;
 
 use App\Actions\Auth\ResolveUserWorkspace;
-use App\Enums\InstitutionMembershipRole;
-use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionStatus;
+use App\Actions\Profile\ResolveStudentMembership;
+use App\Actions\Profile\StudentActivationSummary;
 use App\Enums\WorkspaceRole;
 use App\Models\Institution;
-use App\Models\InstitutionMembership;
-use App\Models\StudentProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -18,6 +15,8 @@ class HandleInertiaRequests extends Middleware
 {
     public function __construct(
         private readonly ResolveUserWorkspace $resolveUserWorkspace,
+        private readonly ResolveStudentMembership $resolveStudentMembership,
+        private readonly StudentActivationSummary $activationSummary,
     ) {}
 
     /**
@@ -71,7 +70,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{id: int, name: string, is_platform_admin: bool, workspace: array<string, mixed>, created_at: mixed, updated_at: mixed}|null
+     * @return array{id: int, name: string, workspace: array<string, mixed>, created_at: mixed, updated_at: mixed}|null
      */
     private function authenticatedUserSummary(Request $request): ?array
     {
@@ -88,12 +87,10 @@ class HandleInertiaRequests extends Middleware
                 'created_at',
                 'updated_at',
             ]),
-            'is_platform_admin' => (bool) $user->is_platform_admin,
             'workspace' => $this->resolveUserWorkspace
                 ->handle(
                     $user,
                     $this->routeInstitution($request),
-                    $this->routeWorkspaceRole($request),
                 )
                 ->toArray(),
         ];
@@ -104,19 +101,6 @@ class HandleInertiaRequests extends Middleware
         $institution = $request->route('institution');
 
         return $institution instanceof Institution ? $institution : null;
-    }
-
-    private function routeWorkspaceRole(Request $request): ?WorkspaceRole
-    {
-        if ($request->routeIs('recruiter.*')) {
-            return WorkspaceRole::Recruiter;
-        }
-
-        if ($request->routeIs('campus.*')) {
-            return WorkspaceRole::CampusAdmin;
-        }
-
-        return null;
     }
 
     /**
@@ -130,17 +114,9 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        $memberships = $user->institutionMemberships()
-            ->with('institution:id,name,status')
-            ->whereRelation('institution', 'status', InstitutionStatus::Active)
-            ->where('role', InstitutionMembershipRole::Student)
-            ->latest('requested_at')
-            ->latest('id')
-            ->get();
-
-        $membership = $memberships->first(
-            fn (InstitutionMembership $membership): bool => $membership->status === InstitutionMembershipStatus::Verified,
-        ) ?? $memberships->first();
+        $membership = $this->resolveStudentMembership->handle($user,
+            $request->routeIs('student-profiles.edit') && $request->filled('institution_id') ? $request->integer('institution_id') : null,
+        );
 
         if ($membership === null) {
             return null;
@@ -153,7 +129,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{required: bool, institutionId: int|null, institutionName: string|null, membershipStatus: string, profileId: int|null, studyProgram: string, studyYear: int, bio: string, skillsCount: int, availabilityCount: int, institutions: array<int, array{id: int, name: string}>, nim: string}|null
+     * @return array<string, mixed>|null
      */
     private function studentOnboardingSummary(Request $request): ?array
     {
@@ -169,62 +145,11 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        $membership = $user->institutionMemberships()
-            ->with(['institution:id,name,status', 'affiliationRequest'])
-            ->whereRelation('institution', 'status', InstitutionStatus::Active)
-            ->where('role', InstitutionMembershipRole::Student)
-            ->latest('requested_at')
-            ->latest('id')
-            ->first();
-
-        $institutionId = $membership?->institution_id;
-        $institutionName = $membership?->institution?->name;
-
-        if ($institutionId === null) {
-            $defaultInstitution = Institution::query()
-                ->where('status', InstitutionStatus::Active)
-                ->first(['id', 'name']);
-            $institutionId = $defaultInstitution?->getKey();
-            $institutionName = $defaultInstitution?->name;
+        $summary = $this->activationSummary->handle($user);
+        if ($request->routeIs('student-profiles.edit') && $summary['membershipStatus'] === 'verified') {
+            $summary['required'] = false;
         }
 
-        $institutions = Institution::query()
-            ->where('status', InstitutionStatus::Active)
-            ->orderBy('name')
-            ->get(['id', 'name'])
-            ->map(fn (Institution $inst): array => [
-                'id' => (int) $inst->getKey(),
-                'name' => (string) $inst->name,
-            ])
-            ->values()
-            ->all();
-
-        $profile = $institutionId !== null
-            ? StudentProfile::query()
-                ->withCount(['skills', 'availabilityWindows'])
-                ->whereBelongsTo($user)
-                ->where('institution_id', $institutionId)
-                ->first()
-            : null;
-
-        $isReady = $profile !== null
-            && ! empty($profile->study_program)
-            && (int) $profile->skills_count > 0
-            && (int) $profile->availability_windows_count > 0;
-
-        return [
-            'required' => ! $isReady,
-            'institutionId' => $institutionId,
-            'institutionName' => $institutionName,
-            'membershipStatus' => $membership?->status->value ?? 'unverified',
-            'profileId' => $profile?->getKey(),
-            'studyProgram' => $profile !== null ? (string) $profile->study_program : '',
-            'studyYear' => $profile !== null ? (int) $profile->study_year : 1,
-            'bio' => $profile !== null ? (string) $profile->bio : '',
-            'skillsCount' => $profile === null ? 0 : (int) $profile->skills_count,
-            'availabilityCount' => $profile === null ? 0 : (int) $profile->availability_windows_count,
-            'institutions' => $institutions,
-            'nim' => (string) ($membership?->affiliationRequest->nim ?? ''),
-        ];
+        return $summary;
     }
 }

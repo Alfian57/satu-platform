@@ -30,6 +30,7 @@ final class UpdateTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'expected_revision' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/D'],
             'title' => ['sometimes', 'string', 'max:160'],
             'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'priority' => ['sometimes', Rule::enum(TaskPriority::class)],

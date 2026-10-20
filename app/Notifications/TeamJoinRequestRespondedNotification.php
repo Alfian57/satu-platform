@@ -35,9 +35,11 @@ final class TeamJoinRequestRespondedNotification extends Notification implements
      */
     public function toArray(object $notifiable): array
     {
-        $message = $this->response === 'accepted'
-            ? 'Join request kamu diterima.'
-            : 'Join request kamu ditolak.';
+        $message = match ($this->response) {
+            'accepted' => 'Pengajuanmu diterima. Periksa peran dan buka ruang kerja jika akses masih tersedia.',
+            'expired' => 'Pengajuan berakhir karena keanggotaan terbentuk melalui jalur lain. Periksa status tim terbaru.',
+            default => 'Pengajuanmu belum diterima. Baca alasan dan temukan peran lain yang sesuai.',
+        };
 
         return [
             'team_join_request_id' => $this->request->getKey(),
@@ -46,7 +48,7 @@ final class TeamJoinRequestRespondedNotification extends Notification implements
             'response' => $this->response,
             'message' => $message,
             'action_url' => route('projects.show', $this->request->project_id),
-            'action_label' => 'Lihat project',
+            'action_label' => 'Baca keputusan',
             'purpose' => 'team_join_request',
         ];
     }

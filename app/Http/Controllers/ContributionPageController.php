@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Profile\ResolveStudentMembership;
 use App\Enums\AttachmentPurpose;
-use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
 use App\Enums\ProjectStatus;
 use App\Enums\TeamMembershipStatus;
 use App\Http\Requests\Contribution\ShowContributionRequest;
 use App\Models\Attachment;
 use App\Models\Contribution;
-use App\Models\InstitutionMembership;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
@@ -27,6 +26,8 @@ use Inertia\Response;
 
 final class ContributionPageController extends Controller
 {
+    public function __construct(private readonly ResolveStudentMembership $resolveStudentMembership) {}
+
     public function index(Request $request): Response
     {
         $user = $this->user($request);
@@ -84,7 +85,10 @@ final class ContributionPageController extends Controller
         ContributionSerializer $serializer,
     ): JsonResponse|Response {
         if ($request->expectsJson()) {
-            return response()->json(['data' => $serializer->contribution($contribution)]);
+            return response()->json(['data' => $serializer->contribution($contribution), 'permissions' => [
+                'can_update' => $request->user()?->can('update', $contribution) ?? false,
+                'can_submit' => $request->user()?->can('submit', $contribution) ?? false,
+            ]]);
         }
 
         $user = $this->user($request);
@@ -194,13 +198,9 @@ final class ContributionPageController extends Controller
      */
     private function verifiedStudentInstitutionIds(User $user): array
     {
-        return array_values(InstitutionMembership::query()
-            ->whereBelongsTo($user)
-            ->where('role', InstitutionMembershipRole::Student)
-            ->where('status', InstitutionMembershipStatus::Verified)
-            ->pluck('institution_id')
-            ->map(static fn (mixed $id): int => (int) $id)
-            ->all());
+        $membership = $this->resolveStudentMembership->handle($user);
+
+        return $membership?->status === InstitutionMembershipStatus::Verified ? [$membership->institution_id] : [];
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Profile;
 
+use App\Concerns\ProfileAvailabilityValidationRules;
 use App\Models\StudentProfile;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -9,6 +10,8 @@ use Illuminate\Support\Facades\Gate;
 
 class ReplaceStudentProfileAvailabilityRequest extends FormRequest
 {
+    use ProfileAvailabilityValidationRules;
+
     public function authorize(): bool
     {
         $profile = $this->route('studentProfile');
@@ -24,13 +27,9 @@ class ReplaceStudentProfileAvailabilityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'windows' => ['present', 'array', 'max:14'],
-            'windows.*.day_of_week' => ['required', 'integer', 'between:0,6'],
-            'windows.*.starts_at' => ['required', 'date_format:H:i,H:i:s'],
-            'windows.*.ends_at' => ['required', 'date_format:H:i,H:i:s'],
-            'windows.*.timezone' => ['sometimes', 'timezone'],
-            'timezone' => ['sometimes', 'timezone'],
+            ...$this->profileAvailabilityRules('windows', required: true),
             'expected_updated_at' => ['sometimes', 'nullable', 'date'],
+            'expected_profile_revision' => ['sometimes', 'nullable', 'string', 'regex:/^[a-f0-9]{64}$/'],
         ];
     }
 }

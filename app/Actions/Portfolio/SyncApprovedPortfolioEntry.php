@@ -42,7 +42,7 @@ final class SyncApprovedPortfolioEntry
 
             $contribution->load([
                 'project:id,title',
-                'currentVersion:id,contribution_id,version_number,summary',
+                'currentVersion:id,contribution_id,version_number,claim,summary',
             ]);
             $version = $contribution->currentVersion;
 
@@ -53,6 +53,8 @@ final class SyncApprovedPortfolioEntry
             $approvedReviewExists = ContributionReview::query()
                 ->whereKey($event->reviewId)
                 ->where('contribution_version_id', $version->getKey())
+                ->where('reviewer_id', $event->reviewerId)
+                ->where('policy_version', $event->policyVersion)
                 ->where('decision', ContributionReviewDecision::Approved->value)
                 ->exists();
 
@@ -83,7 +85,7 @@ final class SyncApprovedPortfolioEntry
                 'user_id' => $contribution->owner_id,
                 'contribution_id' => $contribution->getKey(),
                 'contribution_version_id' => $version->getKey(),
-                'title' => $contribution->project->title,
+                'title' => $version->claim,
                 'summary' => $version->summary,
                 'verification_level' => PortfolioVerificationLevel::InstitutionVerified,
             ];

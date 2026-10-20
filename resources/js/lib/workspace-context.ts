@@ -1,9 +1,4 @@
-import {
-    BriefcaseBusiness,
-    Building2,
-    GraduationCap,
-    ShieldCheck,
-} from 'lucide-react';
+import { Building2, GraduationCap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { WorkspaceRole } from '@/types';
 
@@ -15,20 +10,10 @@ type WorkspaceContext = {
 
 export function getWorkspaceContext(role: WorkspaceRole): WorkspaceContext {
     const workspaces: Record<WorkspaceRole, WorkspaceContext> = {
-        platform_admin: {
-            accountLabel: 'Admin platform',
-            mobileTitle: 'Ruang admin platform',
-            icon: ShieldCheck,
-        },
         campus_admin: {
-            accountLabel: 'Admin kampus',
-            mobileTitle: 'Operasi kampus',
+            accountLabel: 'Admin Universitas',
+            mobileTitle: 'Ruang pengelola',
             icon: Building2,
-        },
-        recruiter: {
-            accountLabel: 'Perekrut',
-            mobileTitle: 'Ruang perekrut',
-            icon: BriefcaseBusiness,
         },
         student: {
             accountLabel: 'Mahasiswa',
@@ -37,5 +22,5 @@ export function getWorkspaceContext(role: WorkspaceRole): WorkspaceContext {
         },
     };
 
-    return workspaces[role];
+    return workspaces[role] ?? workspaces.student;
 }

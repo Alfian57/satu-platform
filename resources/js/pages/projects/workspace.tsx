@@ -24,6 +24,7 @@ import ProjectWorkspaceController from '@/actions/App/Http/Controllers/ProjectWo
 import { AppPage } from '@/components/app-page';
 import InputError from '@/components/input-error';
 import { WorkspaceDiscussion } from '@/components/projects/workspace-discussion';
+import { WorkspaceEvidence } from '@/components/projects/workspace-evidence';
 import { WorkspaceRealtimeStatus } from '@/components/projects/workspace-realtime-status';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,6 +52,7 @@ import type {
     WorkspacePerson,
     WorkspaceProject,
     WorkspaceTask,
+    WorkspaceEvidencePage,
 } from '@/types';
 
 type CreateTaskData = {
@@ -61,19 +63,20 @@ type CreateTaskData = {
 };
 
 type UpdateTaskData = CreateTaskData & {
-    expected_updated_at: string;
+    expected_revision: string;
 };
 
 type TransitionTaskData = {
     status: TaskStatus;
-    expected_updated_at: string;
+    expected_revision: string;
 };
 
 type AssignmentData = {
     assignee_id: number | '';
+    expected_revision: string;
 };
 
-type DeleteTaskData = Record<string, never>;
+type DeleteTaskData = { expected_revision: string };
 
 type TaskResponse = {
     data: WorkspaceTask;
@@ -98,17 +101,19 @@ type WorkspaceProps = {
     project: WorkspaceProject;
     tasks: TaskPage;
     discussion: DiscussionPage;
+    evidence: WorkspaceEvidencePage;
     members: WorkspaceMember[];
     filters: TaskWorkspaceFilters;
     permissions: TaskWorkspacePermissions;
 };
 
-type RealtimeReconciliationScope = 'workspace' | 'tasks' | 'discussion';
+type RealtimeReconciliationScope =
+    'workspace' | 'tasks' | 'discussion' | 'evidence';
 
 type ReconciliationReason =
     'delta' | 'reconnect' | 'manual' | 'stale' | 'command';
 
-type WorkspaceRecoveryAction = 'retry' | 'reload' | 'stale';
+type WorkspaceRecoveryAction = 'reload' | 'stale';
 
 type ErrorMap = Record<string, unknown>;
 
@@ -153,7 +158,7 @@ const priorityClasses: Record<TaskPriority, string> = {
 };
 
 const selectClassName =
-    'h-control-md w-full cursor-pointer rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger hover:border-ring focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50';
+    'h-control-md w-full cursor-pointer rounded-md border border-input bg-background px-3 text-base text-foreground outline-none transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger hover:border-ring focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm';
 
 const textAreaClassName =
     'min-h-28 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-base text-foreground outline-none transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger placeholder:text-muted-foreground hover:border-ring focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm';
@@ -190,8 +195,17 @@ function formatDateTime(value: string | null): string {
     return new Intl.DateTimeFormat('id-ID', {
         dateStyle: 'medium',
         timeStyle: 'short',
-        timeZone: 'UTC',
     }).format(date);
+}
+
+function submittedDueAt(value: string): string {
+    if (!value) {
+        return '';
+    }
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime()) ? value : date.toISOString();
 }
 
 function firstError(errors: ErrorMap, field: string): string | undefined {
@@ -206,18 +220,18 @@ function firstError(errors: ErrorMap, field: string): string | undefined {
 
 function requestFailureMessage(status: number): string {
     if (status === 403) {
-        return 'Akses perubahan task sudah tidak tersedia. Muat ulang workspace untuk menyegarkan izin.';
+        return 'Akses perubahan tugas sudah tidak tersedia. Muat ulang workspace untuk menyegarkan izin.';
     }
 
     if (status === 404) {
-        return 'Task sudah tidak tersedia. Muat ulang workspace untuk mendapatkan daftar terbaru.';
+        return 'Tugas sudah tidak tersedia. Muat ulang workspace untuk mendapatkan daftar terbaru.';
     }
 
     if (status === 409) {
-        return 'Task berubah di sesi lain. Muat ulang data terbaru sebelum menyimpan kembali.';
+        return 'Tugas berubah di sesi lain. Muat ulang data terbaru sebelum menyimpan kembali.';
     }
 
-    return 'Perubahan belum tersimpan. Periksa field yang ditandai lalu coba lagi.';
+    return 'Hasil perubahan belum dapat dipastikan. Periksa data terbaru sebelum mengirim lagi.';
 }
 
 function StatusMark({
@@ -369,14 +383,14 @@ function WorkspaceContextRail({
         <div className="grid gap-6">
             <section className="grid gap-3 border-b border-border pb-5">
                 <p className="font-label text-label text-muted-foreground">
-                    KONTEKS PROJECT
+                    KONTEKS PROYEK
                 </p>
                 <h2 className="text-lg font-semibold break-words">
                     {project.title}
                 </h2>
                 <p className="text-sm leading-6 text-muted-foreground">
-                    Workspace adalah catatan kerja bersama. Muat ulang mengambil
-                    snapshot terbaru dari database.
+                    Ruang kerja adalah catatan kerja bersama. Muat ulang
+                    mengambil snapshot terbaru dari database.
                 </p>
             </section>
 
@@ -391,7 +405,7 @@ function WorkspaceContextRail({
                 </div>
                 <div className="grid gap-1">
                     <dt className="font-label text-label text-muted-foreground">
-                        DEADLINE PROJECT
+                        TENGGAT PROYEK
                     </dt>
                     <dd className="font-semibold">
                         {formatDateTime(project.deadline)}
@@ -399,16 +413,15 @@ function WorkspaceContextRail({
                 </div>
                 <div className="grid gap-1">
                     <dt className="font-label text-label text-muted-foreground">
-                        TASK DALAM DAFTAR
+                        TUGAS DALAM DAFTAR
                     </dt>
                     <dd className="font-semibold">{tasks.meta.total} task</dd>
                 </div>
             </dl>
 
             <p className="border-t border-border pt-4 text-xs leading-5 text-muted-foreground">
-                Hanya anggota aktif project yang dapat melihat dan mengubah
-                task. Data private, diskusi, dan evidence tidak dirender pada
-                surface ini.
+                Pemilik dan anggota aktif berizin bekerja di sini. Bukti dan
+                diskusi privat tidak otomatis dibagikan ke publik.
             </p>
         </div>
     );
@@ -439,7 +452,7 @@ function TaskFormFields({
                     htmlFor={`${idPrefix}-title`}
                     className="text-sm font-semibold"
                 >
-                    Judul task
+                    Judul tugas
                 </label>
                 <Input
                     id={`${idPrefix}-title`}
@@ -449,9 +462,13 @@ function TaskFormFields({
                     maxLength={160}
                     disabled={processing}
                     aria-invalid={Boolean(titleError)}
+                    aria-describedby={`${idPrefix}-title-error`}
                     placeholder="Contoh: Susun alur onboarding"
                 />
-                <InputError message={titleError} />
+                <InputError
+                    id={`${idPrefix}-title-error`}
+                    message={titleError}
+                />
             </div>
 
             <div className="grid gap-2">
@@ -472,9 +489,71 @@ function TaskFormFields({
                     maxLength={5000}
                     disabled={processing}
                     aria-invalid={Boolean(descriptionError)}
+                    aria-describedby={`${idPrefix}-description-help ${idPrefix}-description-error`}
                     placeholder="Konteks singkat, hasil yang diharapkan, atau catatan handoff"
                 />
-                <InputError message={descriptionError} />
+                <InputError
+                    id={`${idPrefix}-description-error`}
+                    message={descriptionError}
+                />
+                <p
+                    id={`${idPrefix}-description-help`}
+                    className="text-sm leading-6 text-muted-foreground"
+                >
+                    Jelaskan hasil, bagian pekerjaanmu dan koordinasi dengan
+                    rekan. Bukti serta pengakuan individual tetap diajukan
+                    melalui Kontribusi.
+                </p>
+                <details
+                    className="rounded-2xl border border-primary/15 bg-accent/40 p-3"
+                    data-test={`${idPrefix}-collaboration-guidance`}
+                >
+                    <summary className="min-h-11 cursor-pointer rounded-xl px-2 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+                        Contoh pembagian pekerjaan
+                    </summary>
+                    <p className="px-2 text-sm leading-6 text-muted-foreground">
+                        Satu anggota menyusun hasil, anggota lain memeriksanya
+                        melalui tugas terpisah. Tentukan penanggung jawab
+                        setelah tugas tersimpan. Contoh hanya mengisi catatan
+                        yang kosong dan tidak membuat tugas lain otomatis.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2 px-2 pb-1">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="min-h-11 max-w-full bg-white whitespace-normal"
+                            disabled={
+                                processing || Boolean(data.description.trim())
+                            }
+                            onClick={() =>
+                                onChange(
+                                    'description',
+                                    'Hasil yang diharapkan: rancangan satu halaman panduan.\nBagian saya: menyusun alur dan isi awal.\nKoordinasi dengan rekan: sepakati anggota yang memeriksa kejelasan melalui tugas pemeriksaan terpisah.\nBukti hasil: unggah rancangan dan jelaskan bagian individual pada Kontribusi.',
+                                )
+                            }
+                            data-test={`${idPrefix}-example-create`}
+                        >
+                            Contoh penyusunan hasil
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="min-h-11 max-w-full bg-white whitespace-normal"
+                            disabled={
+                                processing || Boolean(data.description.trim())
+                            }
+                            onClick={() =>
+                                onChange(
+                                    'description',
+                                    'Hasil yang diharapkan: catatan pemeriksaan panduan.\nBagian saya: memeriksa kejelasan informasi dan menuliskan usulan perbaikan.\nKoordinasi dengan rekan: baca hasil penyusun dan sepakati perbaikan yang diperlukan.\nBukti hasil: unggah catatan pemeriksaan dan jelaskan bagian individual pada Kontribusi.',
+                                )
+                            }
+                            data-test={`${idPrefix}-example-review`}
+                        >
+                            Contoh pemeriksaan rekan
+                        </Button>
+                    </div>
+                </details>
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
@@ -498,6 +577,7 @@ function TaskFormFields({
                         }
                         disabled={processing}
                         aria-invalid={Boolean(priorityError)}
+                        aria-describedby={`${idPrefix}-priority-error`}
                     >
                         {priorityOptions.map((priority) => (
                             <option key={priority} value={priority}>
@@ -505,7 +585,10 @@ function TaskFormFields({
                             </option>
                         ))}
                     </select>
-                    <InputError message={priorityError} />
+                    <InputError
+                        id={`${idPrefix}-priority-error`}
+                        message={priorityError}
+                    />
                 </div>
 
                 <div className="grid gap-2">
@@ -525,8 +608,12 @@ function TaskFormFields({
                         }
                         disabled={processing}
                         aria-invalid={Boolean(dueAtError)}
+                        aria-describedby={`${idPrefix}-due-at-error`}
                     />
-                    <InputError message={dueAtError} />
+                    <InputError
+                        id={`${idPrefix}-due-at-error`}
+                        message={dueAtError}
+                    />
                 </div>
             </div>
         </div>
@@ -539,7 +626,7 @@ function TaskLoadingState() {
             data-test="workspace-refresh-skeleton"
             role="region"
             aria-busy="true"
-            aria-label="Daftar task sedang dimuat"
+            aria-label="Daftar tugas sedang dimuat"
             className="grid gap-3 border-y border-border py-4"
         >
             <div aria-hidden="true" className="grid gap-3">
@@ -555,10 +642,12 @@ function WorkspaceEmptyState({
     filtered,
     onCreate,
     onResetFilters,
+    canCreate,
 }: {
     filtered: boolean;
     onCreate: () => void;
     onResetFilters: () => void;
+    canCreate: boolean;
 }) {
     return (
         <div
@@ -572,12 +661,12 @@ function WorkspaceEmptyState({
             <div className="grid gap-2">
                 <h3 className="text-lg font-semibold">
                     {filtered
-                        ? 'Tidak ada task yang cocok dengan filter'
-                        : 'Belum ada task di workspace'}
+                        ? 'Tidak ada tugas yang cocok dengan filter'
+                        : 'Belum ada tugas di workspace'}
                 </h3>
                 <p className="mx-auto max-w-[52ch] text-sm leading-6 text-muted-foreground">
                     {filtered
-                        ? 'Coba ubah kata kunci atau bersihkan filter untuk melihat seluruh ledger kerja project.'
+                        ? 'Coba ubah kata kunci atau bersihkan filter untuk melihat seluruh catatan kerja proyek.'
                         : 'Mulai dari satu pekerjaan yang jelas. Tim dapat memperbarui status, penanggung jawab, prioritas, dan due date tanpa bergantung pada koneksi realtime.'}
                 </p>
             </div>
@@ -596,10 +685,11 @@ function WorkspaceEmptyState({
                     type="button"
                     className="mx-auto w-fit cursor-pointer"
                     onClick={onCreate}
+                    disabled={!canCreate}
                     data-test="workspace-empty-create"
                 >
                     <Plus aria-hidden="true" />
-                    Buat task pertama
+                    Buat tugas pertama
                 </Button>
             )}
         </div>
@@ -610,6 +700,7 @@ export default function ProjectWorkspace({
     project,
     tasks,
     discussion,
+    evidence,
     members,
     filters,
     permissions,
@@ -621,6 +712,15 @@ export default function ProjectWorkspace({
         tasks.data.length === 0 ? 'create' : 'edit',
     );
     const [filterDraft, setFilterDraft] = useState(filters);
+    const [accessDenied, setAccessDenied] = useState(false);
+    const [needsCheck, setNeedsCheck] = useState(false);
+    const [commandBusy, setCommandBusy] = useState(false);
+    const [hasDraft, setHasDraft] = useState(false);
+    const draftDirty = useRef(false);
+    const commandLock = useRef(false);
+    const checkRequired = useRef(false);
+    const detailHeading = useRef<HTMLHeadingElement>(null);
+    const focusValidation = useRef(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [actionMessage, setActionMessage] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
@@ -636,7 +736,6 @@ export default function ProjectWorkspace({
     const reconciliationReasons = useRef<Set<ReconciliationReason>>(new Set());
     const reconciliationInFlight = useRef(false);
     const reconciliationSuccessNotice = useRef<string | null>(null);
-    const retryAction = useRef<(() => void) | null>(null);
     const isWorkspaceMounted = useRef(true);
 
     const createForm = useHttp<CreateTaskData, TaskResponse>({
@@ -650,31 +749,51 @@ export default function ProjectWorkspace({
         description: '',
         priority: 'medium',
         due_at: '',
-        expected_updated_at: '',
+        expected_revision: '',
     });
     const transitionForm = useHttp<TransitionTaskData, TaskResponse>({
         status: 'todo',
-        expected_updated_at: '',
+        expected_revision: '',
     });
     const assignForm = useHttp<AssignmentData, AssignmentResponse>({
         assignee_id: '',
+        expected_revision: '',
     });
     const unassignForm = useHttp<AssignmentData, AssignmentResponse>({
         assignee_id: '',
+        expected_revision: '',
     });
-    const deleteForm = useHttp<DeleteTaskData, DeleteResponse>({});
+    const deleteForm = useHttp<DeleteTaskData, DeleteResponse>({
+        expected_revision: '',
+    });
 
     const selectedTask = useMemo(
-        () =>
-            tasks.data.find((task) => task.id === selectedTaskId) ??
-            tasks.data[0] ??
-            null,
+        () => tasks.data.find((task) => task.id === selectedTaskId) ?? null,
         [selectedTaskId, tasks.data],
     );
     const createErrors = createForm.errors as ErrorMap;
     const editErrors = editForm.errors as ErrorMap;
     const transitionErrors = transitionForm.errors as ErrorMap;
     const assignErrors = assignForm.errors as ErrorMap;
+
+    useEffect(() => {
+        if (!commandBusy && focusValidation.current) {
+            focusValidation.current = false;
+            document
+                .querySelector<HTMLElement>(
+                    '[data-test="workspace-root"] [aria-invalid="true"]',
+                )
+                ?.focus();
+        }
+    }, [
+        commandBusy,
+        createForm.errors,
+        editForm.errors,
+        assignForm.errors,
+        transitionForm.errors,
+        unassignForm.errors,
+        deleteForm.errors,
+    ]);
 
     function reconciliationProps(
         scopes: Set<RealtimeReconciliationScope>,
@@ -684,6 +803,7 @@ export default function ProjectWorkspace({
                 'project',
                 'tasks',
                 'discussion',
+                'evidence',
                 'members',
                 'filters',
                 'permissions',
@@ -701,6 +821,13 @@ export default function ProjectWorkspace({
             props.add('discussion');
         }
 
+        if (scopes.has('evidence')) {
+            props.add('evidence');
+        }
+
+        props.add('project');
+        props.add('permissions');
+
         return Array.from(props);
     }
 
@@ -709,7 +836,7 @@ export default function ProjectWorkspace({
         reasons: Set<ReconciliationReason>,
     ): string {
         if (reasons.has('reconnect')) {
-            return 'Koneksi kembali. Menyinkronkan snapshot workspace dari database...';
+            return 'Koneksi kembali. Menyinkronkan data ruang kerja dari database...';
         }
 
         if (reasons.has('stale')) {
@@ -717,12 +844,12 @@ export default function ProjectWorkspace({
         }
 
         if (reasons.has('manual')) {
-            return 'Memuat snapshot workspace terbaru dari database...';
+            return 'Memuat data ruang kerja terbaru dari database...';
         }
 
         return scopes.has('discussion') && !scopes.has('tasks')
             ? 'Perubahan diskusi diterima. Menyinkronkan snapshot terbaru dari database...'
-            : 'Perubahan task diterima. Menyinkronkan snapshot terbaru dari database...';
+            : 'Perubahan tugas diterima. Menyinkronkan snapshot terbaru dari database...';
     }
 
     function reconciliationSuccessMessage(
@@ -730,7 +857,7 @@ export default function ProjectWorkspace({
         reasons: Set<ReconciliationReason>,
     ): string {
         if (reasons.has('reconnect')) {
-            return 'Koneksi kembali. Snapshot workspace terbaru sudah disinkronkan dari database.';
+            return 'Koneksi kembali. Data ruang kerja terbaru sudah disinkronkan dari database.';
         }
 
         if (reasons.has('stale')) {
@@ -738,12 +865,12 @@ export default function ProjectWorkspace({
         }
 
         if (reasons.has('manual')) {
-            return 'Snapshot workspace terbaru sudah dimuat dari database.';
+            return 'Data ruang kerja terbaru sudah dimuat dari database.';
         }
 
         return scopes.has('discussion') && !scopes.has('tasks')
             ? 'Snapshot diskusi terbaru sudah disinkronkan dari database.'
-            : 'Snapshot task terbaru sudah disinkronkan dari database.';
+            : 'Data tugas terbaru sudah disinkronkan dari database.';
     }
 
     function flushReconciliation(): void {
@@ -767,6 +894,16 @@ export default function ProjectWorkspace({
 
         router.reload({
             only: reconciliationProps(scopes),
+            onHttpException: (response) => {
+                reconciliationFailed(response.status);
+
+                return false;
+            },
+            onNetworkError: () => {
+                reconciliationFailed();
+
+                return false;
+            },
             onSuccess: () => {
                 if (!isWorkspaceMounted.current) {
                     return;
@@ -775,6 +912,8 @@ export default function ProjectWorkspace({
                 setRealtimeNotice(
                     reconciliationSuccessMessage(scopes, reasons),
                 );
+                checkRequired.current = false;
+                setNeedsCheck(false);
 
                 if (
                     reasons.has('reconnect') ||
@@ -784,7 +923,6 @@ export default function ProjectWorkspace({
                 ) {
                     setActionError(null);
                     setActionRecovery(null);
-                    retryAction.current = null;
                 }
 
                 if (successMessage !== null) {
@@ -796,18 +934,27 @@ export default function ProjectWorkspace({
                     return;
                 }
 
-                setActionError(
-                    'Snapshot terbaru belum dapat dimuat. Data yang terlihat dipertahankan, silakan coba lagi.',
-                );
-                setActionRecovery('reload');
-                retryAction.current = () =>
-                    requestWorkspaceReconciliation('manual');
+                reconciliationFailed();
             },
             onFinish: () => {
                 reconciliationInFlight.current = false;
                 flushReconciliation();
             },
         });
+    }
+
+    function reconciliationFailed(status?: number): void {
+        checkRequired.current = true;
+        setNeedsCheck(true);
+
+        if (status === 403 || status === 404) {
+            setAccessDenied(true);
+        }
+
+        setActionError(
+            'Data terbaru belum dapat diperiksa. Perubahan ditahan sampai pemeriksaan berhasil.',
+        );
+        setActionRecovery('reload');
     }
 
     function requestRealtimeReconciliation(
@@ -838,10 +985,12 @@ export default function ProjectWorkspace({
     }
 
     const realtime = useWorkspaceRealtime({
+        enabled: !accessDenied,
         institutionId: project.institution_id,
         projectId: project.id,
         onTaskDelta: () => requestRealtimeReconciliation('tasks'),
         onDiscussionDelta: () => requestRealtimeReconciliation('discussion'),
+        onAttachmentDelta: () => requestRealtimeReconciliation('evidence'),
         onReconnect: () => requestWorkspaceReconciliation('reconnect'),
     });
 
@@ -865,15 +1014,44 @@ export default function ProjectWorkspace({
         const removeFinishListener = router.on('finish', () =>
             setIsRefreshing(false),
         );
+        const removeBeforeListener = router.on('before', (event) => {
+            if (
+                event.detail.visit.async ||
+                event.detail.visit.url.pathname === window.location.pathname
+            ) {
+                return;
+            }
+
+            if (commandLock.current) {
+                return false;
+            }
+
+            if (
+                draftDirty.current &&
+                !window.confirm(
+                    'Catatan tugas belum disimpan. Tinggalkan ruang kerja dan buang perubahan ini?',
+                )
+            ) {
+                return false;
+            }
+
+            draftDirty.current = false;
+            setHasDraft(false);
+        });
 
         return () => {
             removeStartListener();
             removeFinishListener();
+            removeBeforeListener();
         };
     }, []);
 
     useEffect(() => {
-        if (editorMode !== 'edit' || selectedTask === null) {
+        if (
+            editorMode !== 'edit' ||
+            selectedTask === null ||
+            draftDirty.current
+        ) {
             return;
         }
 
@@ -882,13 +1060,29 @@ export default function ProjectWorkspace({
             description: selectedTask.description ?? '',
             priority: selectedTask.priority,
             due_at: dateTimeLocalValue(selectedTask.due_at),
-            expected_updated_at: selectedTask.updated_at,
+            expected_revision: selectedTask.revision,
         });
         // useHttp owns the editor state, so it needs a sync point after a refresh.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [editorMode, selectedTask?.id, selectedTask?.updated_at]);
+    }, [editorMode, selectedTask?.id, selectedTask?.revision]);
+
+    useEffect(() => {
+        const warn = (event: BeforeUnloadEvent) => {
+            if (draftDirty.current || commandLock.current) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', warn);
+
+        return () => window.removeEventListener('beforeunload', warn);
+    }, []);
 
     function selectTask(task: WorkspaceTask) {
+        if (!confirmDiscard()) {
+            return;
+        }
+
         setSelectedTaskId(task.id);
         setEditorMode('edit');
         clearActionFeedback();
@@ -898,11 +1092,20 @@ export default function ProjectWorkspace({
             description: task.description ?? '',
             priority: task.priority,
             due_at: dateTimeLocalValue(task.due_at),
-            expected_updated_at: task.updated_at,
+            expected_revision: task.revision,
         });
+        requestAnimationFrame(() => detailHeading.current?.focus());
     }
 
     function startCreate() {
+        if (!canWrite) {
+            return;
+        }
+
+        if (!confirmDiscard()) {
+            return;
+        }
+
         setSelectedTaskId(null);
         setEditorMode('create');
         clearActionFeedback();
@@ -919,22 +1122,64 @@ export default function ProjectWorkspace({
         setActionMessage(null);
         setActionError(null);
         setActionRecovery(null);
-        retryAction.current = null;
     }
 
-    function commandOptions(fallback: string, retry: () => void) {
+    function confirmDiscard(): boolean {
+        if (commandLock.current || isRefreshing) {
+            return false;
+        }
+
+        if (
+            draftDirty.current &&
+            !window.confirm(
+                'Catatan belum disimpan. Tinggalkan perubahan dan buka konteks lain?',
+            )
+        ) {
+            return false;
+        }
+
+        draftDirty.current = false;
+        setHasDraft(false);
+
+        return true;
+    }
+
+    function markDraft(): void {
+        draftDirty.current = true;
+        setHasDraft(true);
+    }
+    function unlockCommand(): void {
+        commandLock.current = false;
+        setCommandBusy(false);
+    }
+
+    function commandOptions(fallback: string) {
         return {
+            onError: () => {
+                focusValidation.current = true;
+                setPendingDelete(null);
+            },
             onHttpException: (response: { status: number }) => {
+                setPendingDelete(null);
                 setActionError(requestFailureMessage(response.status));
                 setActionRecovery(response.status === 409 ? 'stale' : 'reload');
-                retryAction.current = retry;
+                checkRequired.current = true;
+                setNeedsCheck(true);
+
+                if (response.status === 403 || response.status === 404) {
+                    setAccessDenied(true);
+                }
 
                 return false;
             },
             onNetworkError: () => {
-                setActionError(`${fallback} Periksa koneksi lalu coba lagi.`);
-                setActionRecovery('retry');
-                retryAction.current = retry;
+                setPendingDelete(null);
+                setActionError(
+                    `${fallback} Hasil belum pasti. Periksa status terbaru sebelum mengirim lagi.`,
+                );
+                setActionRecovery('reload');
+                checkRequired.current = true;
+                setNeedsCheck(true);
 
                 return false;
             },
@@ -946,21 +1191,65 @@ export default function ProjectWorkspace({
     }
 
     function runCreate(): void {
-        if (createForm.processing) {
+        if (
+            !canManage ||
+            commandLock.current ||
+            checkRequired.current ||
+            createForm.processing
+        ) {
             return;
         }
 
+        commandLock.current = true;
+        setCommandBusy(true);
         clearActionFeedback();
+        createForm.transform((data) => ({
+            ...data,
+            due_at: submittedDueAt(data.due_at),
+        }));
         createForm
             .post(ProjectWorkspaceController.store(project.id).url, {
-                ...commandOptions('Task belum tersimpan.', runCreate),
+                ...commandOptions('Tugas belum tersimpan.'),
             })
             .then((response) => {
+                if (!response?.data) {
+                    return;
+                }
+
+                draftDirty.current = false;
+                setHasDraft(false);
                 setSelectedTaskId(response.data.id);
                 setEditorMode('edit');
-                reloadWorkspace('Task baru berhasil ditambahkan ke workspace.');
+                router.visit(
+                    ProjectWorkspaceController.show(project.id, {
+                        query: { task: response.data.id },
+                    }).url,
+                    {
+                        preserveState: true,
+                        preserveScroll: true,
+                        onSuccess: (page) => {
+                            setFilterDraft(
+                                page.props.filters as TaskWorkspaceFilters,
+                            );
+                            setActionMessage(
+                                'Tugas baru tersimpan. Tetapkan penanggung jawab agar hasil individual jelas.',
+                            );
+                        },
+                        onHttpException: (failure) => {
+                            reconciliationFailed(failure.status);
+
+                            return false;
+                        },
+                        onNetworkError: () => {
+                            reconciliationFailed();
+
+                            return false;
+                        },
+                    },
+                );
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(unlockCommand);
     }
 
     function submitCreate(event: React.FormEvent<HTMLFormElement>): void {
@@ -969,14 +1258,22 @@ export default function ProjectWorkspace({
     }
 
     function runEdit(): void {
-        if (selectedTask === null || editForm.processing) {
+        if (
+            !canManage ||
+            commandLock.current ||
+            checkRequired.current ||
+            selectedTask === null ||
+            editForm.processing
+        ) {
             return;
         }
 
+        commandLock.current = true;
+        setCommandBusy(true);
         clearActionFeedback();
         editForm.transform((data) => ({
             ...data,
-            expected_updated_at: selectedTask.updated_at,
+            due_at: submittedDueAt(data.due_at),
         }));
         editForm
             .patch(
@@ -985,16 +1282,24 @@ export default function ProjectWorkspace({
                     task: selectedTask.id,
                 }).url,
                 {
-                    ...commandOptions(
-                        'Perubahan task belum tersimpan.',
-                        runEdit,
-                    ),
+                    ...commandOptions('Perubahan tugas belum tersimpan.'),
                 },
             )
-            .then(() => {
-                reloadWorkspace('Detail task berhasil diperbarui.');
+            .then((response) => {
+                if (!response?.data) {
+                    return;
+                }
+
+                draftDirty.current = false;
+                setHasDraft(false);
+                editForm.setData({
+                    ...editForm.data,
+                    expected_revision: response.data.revision,
+                });
+                reloadWorkspace('Detail tugas berhasil diperbarui.');
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(unlockCommand);
     }
 
     function submitEdit(event: React.FormEvent<HTMLFormElement>): void {
@@ -1003,15 +1308,23 @@ export default function ProjectWorkspace({
     }
 
     function runTransition(status: TaskStatus): void {
-        if (selectedTask === null || transitionForm.processing) {
+        if (
+            !canManage ||
+            commandLock.current ||
+            checkRequired.current ||
+            selectedTask === null ||
+            transitionForm.processing
+        ) {
             return;
         }
 
+        commandLock.current = true;
+        setCommandBusy(true);
         clearActionFeedback();
         transitionForm.transform((data) => ({
             ...data,
             status,
-            expected_updated_at: selectedTask.updated_at,
+            expected_revision: selectedTask.revision,
         }));
         transitionForm
             .post(
@@ -1020,15 +1333,20 @@ export default function ProjectWorkspace({
                     task: selectedTask.id,
                 }).url,
                 {
-                    ...commandOptions('Status task belum berubah.', () =>
-                        runTransition(status),
-                    ),
+                    ...commandOptions('Status tugas belum berubah.'),
                 },
             )
-            .then(() => {
-                reloadWorkspace(`Status task menjadi ${statusLabels[status]}.`);
+            .then((response) => {
+                if (!response?.data) {
+                    return;
+                }
+
+                reloadWorkspace(
+                    `Status tugas menjadi ${statusLabels[status]}.`,
+                );
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(unlockCommand);
     }
 
     function transitionTask(status: TaskStatus): void {
@@ -1037,6 +1355,9 @@ export default function ProjectWorkspace({
 
     function runAssignTask(): void {
         if (
+            !canManage ||
+            commandLock.current ||
+            checkRequired.current ||
             selectedTask === null ||
             assignForm.processing ||
             assignForm.data.assignee_id === ''
@@ -1044,7 +1365,13 @@ export default function ProjectWorkspace({
             return;
         }
 
+        commandLock.current = true;
+        setCommandBusy(true);
         clearActionFeedback();
+        assignForm.transform((data) => ({
+            ...data,
+            expected_revision: selectedTask.revision,
+        }));
         assignForm
             .post(
                 ProjectWorkspaceController.assign({
@@ -1052,17 +1379,19 @@ export default function ProjectWorkspace({
                     task: selectedTask.id,
                 }).url,
                 {
-                    ...commandOptions(
-                        'Penanggung jawab belum ditambahkan.',
-                        runAssignTask,
-                    ),
+                    ...commandOptions('Penanggung jawab belum ditambahkan.'),
                 },
             )
-            .then(() => {
+            .then((response) => {
+                if (!response?.data) {
+                    return;
+                }
+
                 assignForm.setData('assignee_id', '');
-                reloadWorkspace('Penanggung jawab task berhasil diperbarui.');
+                reloadWorkspace('Penanggung jawab tugas berhasil diperbarui.');
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(unlockCommand);
     }
 
     function assignTask(event: React.FormEvent<HTMLFormElement>): void {
@@ -1071,14 +1400,23 @@ export default function ProjectWorkspace({
     }
 
     function runUnassignTask(userId: number): void {
-        if (selectedTask === null || unassignForm.processing) {
+        if (
+            !canManage ||
+            commandLock.current ||
+            checkRequired.current ||
+            selectedTask === null ||
+            unassignForm.processing
+        ) {
             return;
         }
 
+        commandLock.current = true;
+        setCommandBusy(true);
         clearActionFeedback();
         unassignForm.transform((data) => ({
             ...data,
             assignee_id: userId,
+            expected_revision: selectedTask.revision,
         }));
         unassignForm
             .delete(
@@ -1087,16 +1425,19 @@ export default function ProjectWorkspace({
                     task: selectedTask.id,
                 }).url,
                 {
-                    ...commandOptions('Penanggung jawab belum dilepas.', () =>
-                        runUnassignTask(userId),
-                    ),
+                    ...commandOptions('Penanggung jawab belum dilepas.'),
                 },
             )
-            .then(() => {
+            .then((response) => {
+                if (!response?.data) {
+                    return;
+                }
+
                 unassignForm.setData('assignee_id', '');
-                reloadWorkspace('Penanggung jawab task berhasil dilepas.');
+                reloadWorkspace('Penanggung jawab tugas berhasil dilepas.');
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(unlockCommand);
     }
 
     function unassignTask(userId: number): void {
@@ -1104,12 +1445,21 @@ export default function ProjectWorkspace({
     }
 
     function runDeleteTask(): void {
-        if (pendingDelete === null || deleteForm.processing) {
+        if (
+            !canManage ||
+            commandLock.current ||
+            checkRequired.current ||
+            pendingDelete === null ||
+            deleteForm.processing
+        ) {
             return;
         }
 
         const task = pendingDelete;
+        commandLock.current = true;
+        setCommandBusy(true);
         clearActionFeedback();
+        deleteForm.transform(() => ({ expected_revision: task.revision }));
         deleteForm
             .delete(
                 ProjectWorkspaceController.destroy({
@@ -1117,19 +1467,21 @@ export default function ProjectWorkspace({
                     task: task.id,
                 }).url,
                 {
-                    ...commandOptions(
-                        'Task belum dapat dihapus.',
-                        runDeleteTask,
-                    ),
+                    ...commandOptions('Tugas belum dapat dihapus.'),
                 },
             )
-            .then(() => {
+            .then((response) => {
+                if (!response?.data) {
+                    return;
+                }
+
                 setPendingDelete(null);
                 setSelectedTaskId(null);
                 setEditorMode('create');
-                reloadWorkspace('Task berhasil dihapus dari workspace.');
+                reloadWorkspace('Tugas berhasil dihapus dari workspace.');
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(unlockCommand);
     }
 
     function deleteTask(): void {
@@ -1138,7 +1490,13 @@ export default function ProjectWorkspace({
 
     function applyFilters(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
+
+        if (!confirmDiscard()) {
+            return;
+        }
+
         clearActionFeedback();
+        setEditorMode('edit');
         router.visit(
             ProjectWorkspaceController.show(project.id, {
                 query: {
@@ -1146,16 +1504,39 @@ export default function ProjectWorkspace({
                     status: filterDraft.status,
                     priority: filterDraft.priority,
                     per_page: filterDraft.per_page,
+                    scope: filterDraft.scope,
+                    task: null,
                 },
             }).url,
             {
                 preserveScroll: true,
                 preserveState: true,
+                onSuccess: (page) => {
+                    const next = page.props.tasks as TaskPage;
+                    setSelectedTaskId(next.data[0]?.id ?? null);
+                    setFilterDraft(page.props.filters as TaskWorkspaceFilters);
+                },
+                onHttpException: (response) => {
+                    reconciliationFailed(response.status);
+
+                    return false;
+                },
+                onNetworkError: () => {
+                    reconciliationFailed();
+
+                    return false;
+                },
             },
         );
     }
 
     function changePage(page: number) {
+        if (!confirmDiscard()) {
+            return;
+        }
+
+        setEditorMode('edit');
+
         router.visit(
             ProjectWorkspaceController.show(project.id, {
                 query: {
@@ -1163,17 +1544,38 @@ export default function ProjectWorkspace({
                     status: filters.status,
                     priority: filters.priority,
                     per_page: filters.per_page,
+                    scope: filters.scope,
+                    task: filters.task,
                     page,
                 },
             }).url,
             {
                 preserveScroll: true,
                 preserveState: true,
+                onSuccess: (page) => {
+                    const next = page.props.tasks as TaskPage;
+                    setSelectedTaskId(next.data[0]?.id ?? null);
+                    setFilterDraft(page.props.filters as TaskWorkspaceFilters);
+                },
+                onHttpException: (response) => {
+                    reconciliationFailed(response.status);
+
+                    return false;
+                },
+                onNetworkError: () => {
+                    reconciliationFailed();
+
+                    return false;
+                },
             },
         );
     }
 
     function resetFilters() {
+        if (!confirmDiscard()) {
+            return;
+        }
+
         clearActionFeedback();
         setFilterDraft((current) => ({
             ...current,
@@ -1189,60 +1591,102 @@ export default function ProjectWorkspace({
             {
                 preserveScroll: true,
                 preserveState: false,
+                onHttpException: (response) => {
+                    reconciliationFailed(response.status);
+
+                    return false;
+                },
+                onNetworkError: () => {
+                    reconciliationFailed();
+
+                    return false;
+                },
             },
         );
     }
 
     function recoverAction(): void {
         const recovery = actionRecovery;
-        const retry = retryAction.current;
 
         setActionError(null);
         setActionRecovery(null);
-        retryAction.current = null;
-
-        if (recovery === 'retry') {
-            retry?.();
-
-            return;
-        }
 
         requestWorkspaceReconciliation(
             recovery === 'stale' ? 'stale' : 'manual',
         );
     }
 
-    const canManage = permissions.can_manage_tasks;
+    const draftConflict =
+        editorMode === 'edit' &&
+        selectedTask !== null &&
+        editForm.data.expected_revision !== '' &&
+        editForm.data.expected_revision !== selectedTask.revision;
+    const canWrite =
+        permissions.can_manage_tasks &&
+        !needsCheck &&
+        !commandBusy &&
+        !isRefreshing &&
+        realtime.connectionState !== 'offline';
+    const canManage = canWrite && !draftConflict;
     const detailErrors = editErrors;
     const selectedTransitionErrors = transitionErrors;
     const activeSelectedTaskId = selectedTask?.id ?? null;
     const hasActiveFilter = Boolean(
-        filters.q || filters.status !== null || filters.priority !== null,
+        filters.q ||
+        filters.status !== null ||
+        filters.priority !== null ||
+        filters.scope !== 'all' ||
+        filters.task !== null,
     );
+
+    if (accessDenied) {
+        return (
+            <AppPage>
+                <Head title="Ruang kerja" />
+                <section
+                    className="rounded-3xl border border-border bg-card p-6"
+                    data-test="workspace-access-denied"
+                >
+                    <h1 className="text-title font-semibold">
+                        Akses ruang kerja tidak tersedia
+                    </h1>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        Data privat sebelumnya disembunyikan. Periksa
+                        keanggotaan dan konteks kampus melalui Proyek.
+                    </p>
+                    <Button asChild className="mt-4">
+                        <Link href={projectsIndex({ query: { view: 'mine' } })}>
+                            Kembali ke proyek saya
+                        </Link>
+                    </Button>
+                </section>
+            </AppPage>
+        );
+    }
 
     return (
         <>
-            <Head title={`Workspace · ${project.title}`} />
+            <Head title={`Ruang kerja · ${project.title}`} />
             <AppPage
                 contextRail={
                     <WorkspaceContextRail project={project} tasks={tasks} />
                 }
-                contextRailLabel="Konteks workspace project"
+                contextRailLabel="Konteks ruang kerja proyek"
             >
                 <div
                     data-test="workspace-root"
                     aria-busy={isRefreshing}
-                    className="mx-auto grid max-w-6xl min-w-0 gap-7"
+                    className="grid min-w-0 gap-6 motion-reduce:[&_*]:transition-none motion-reduce:[&_svg]:animate-none"
                 >
-                    <header className="grid gap-5 border-b border-border pb-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-8">
+                    <header className="grid gap-5 rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-8">
                         <div className="min-w-0 space-y-3">
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                                 <span className="font-label text-label text-muted-foreground">
-                                    WORKSPACE PROJECT{' '}
+                                    RUANG KERJA PROYEK{' '}
                                     {String(project.id).padStart(4, '0')}
                                 </span>
                                 <span className="border border-primary/30 bg-primary/5 px-2 py-1 text-xs font-semibold text-primary">
-                                    Sumber data: database
+                                    Ruang kerja tim
                                 </span>
                                 <WorkspaceRealtimeStatus
                                     status={realtime.connectionState}
@@ -1254,8 +1698,9 @@ export default function ProjectWorkspace({
                                 {project.title}
                             </h1>
                             <p className="max-w-[70ch] text-body leading-7 text-muted-foreground">
-                                Satu ledger kerja untuk menyusun, menugaskan,
-                                dan menyelesaikan task bersama tim.
+                                Temukan tanggung jawabmu, kerjakan hasil yang
+                                jelas, lalu simpan bukti privat. Diskusi
+                                tersedia bila dibutuhkan.
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 lg:justify-end">
@@ -1265,14 +1710,14 @@ export default function ProjectWorkspace({
                                 className="cursor-pointer"
                             >
                                 <Link href={projectShow(project.id)}>
-                                    Kembali ke detail project
+                                    Kembali ke detail proyek
                                 </Link>
                             </Button>
                             <Button
                                 type="button"
                                 variant="outline"
                                 className="cursor-pointer"
-                                disabled={isRefreshing}
+                                disabled={isRefreshing || commandBusy}
                                 onClick={() => {
                                     clearActionFeedback();
                                     requestWorkspaceReconciliation('manual');
@@ -1295,7 +1740,7 @@ export default function ProjectWorkspace({
                                     data-test="workspace-new-task"
                                 >
                                     <Plus aria-hidden="true" />
-                                    Task baru
+                                    Tugas baru
                                 </Button>
                             )}
                         </div>
@@ -1310,7 +1755,7 @@ export default function ProjectWorkspace({
                         {isRefreshing && (
                             <span className="inline-flex items-center gap-2">
                                 <Spinner aria-hidden="true" />
-                                Memuat snapshot workspace terbaru...
+                                Memuat data ruang kerja terbaru...
                             </span>
                         )}
                     </div>
@@ -1345,7 +1790,7 @@ export default function ProjectWorkspace({
                         <div
                             role="alert"
                             data-test="workspace-action-error"
-                            className="flex items-start justify-between gap-3 border border-correction/40 bg-correction-subtle px-4 py-3 text-sm text-correction-subtle-foreground"
+                            className="flex flex-wrap items-start justify-between gap-3 border border-correction/40 bg-correction-subtle px-4 py-3 text-sm text-correction-subtle-foreground"
                         >
                             <span className="flex items-start gap-2">
                                 <AlertCircle
@@ -1357,24 +1802,20 @@ export default function ProjectWorkspace({
                             <span className="flex shrink-0 items-center gap-1">
                                 <button
                                     type="button"
-                                    className="cursor-pointer px-2 py-1 text-xs font-semibold underline underline-offset-2 hover:no-underline"
+                                    className="min-h-11 cursor-pointer px-2 py-1 text-xs font-semibold underline underline-offset-2 hover:no-underline"
+                                    disabled={isRefreshing || commandBusy}
                                     onClick={recoverAction}
                                     data-test="workspace-action-recovery"
                                 >
-                                    {actionRecovery === 'retry'
-                                        ? 'Coba lagi'
-                                        : actionRecovery === 'stale'
-                                          ? 'Muat data terbaru'
-                                          : 'Muat ulang'}
+                                    Periksa status terbaru
                                 </button>
                                 <button
                                     type="button"
-                                    className="cursor-pointer p-1 text-current hover:opacity-70"
+                                    className="min-h-11 min-w-11 cursor-pointer p-1 text-current hover:opacity-70"
                                     aria-label="Tutup pesan error"
                                     onClick={() => {
                                         setActionError(null);
                                         setActionRecovery(null);
-                                        retryAction.current = null;
                                     }}
                                 >
                                     <X aria-hidden="true" className="size-4" />
@@ -1383,7 +1824,7 @@ export default function ProjectWorkspace({
                         </div>
                     )}
 
-                    {!canManage && (
+                    {!permissions.can_manage_tasks && (
                         <div
                             data-test="workspace-read-only"
                             className="flex items-start gap-2 border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground"
@@ -1393,12 +1834,61 @@ export default function ProjectWorkspace({
                                 className="mt-0.5 size-4 shrink-0"
                             />
                             <p>
-                                Mode baca. Izin perubahan task tidak tersedia
+                                Mode baca. Izin perubahan tugas tidak tersedia
                                 untuk akun ini.
                             </p>
                         </div>
                     )}
 
+                    <section
+                        className="grid gap-2 rounded-2xl bg-accent/60 p-4"
+                        aria-label="Arahan pekerjaan"
+                    >
+                        <h2 className="text-base font-semibold">
+                            Mulai dari pekerjaan, bukan percakapan
+                        </h2>
+                        <p className="text-sm leading-6 text-muted-foreground">
+                            Pilih Tugas saya untuk melanjutkan tanggung jawabmu.
+                            Belum ditugaskan membantu tim membagi pekerjaan.
+                            Setelah bekerja, unggah bukti privat di bawah ini.
+                        </p>
+                        {hasDraft && (
+                            <p role="status" className="text-sm text-primary">
+                                Ada catatan tugas yang belum disimpan. Refresh
+                                tidak menghapusnya.
+                            </p>
+                        )}
+                    </section>
+                    {editorMode === 'edit' &&
+                        selectedTask === null &&
+                        hasDraft && (
+                            <section
+                                className="grid gap-3 rounded-2xl border border-pending/40 bg-pending-subtle p-4"
+                                data-test="task-missing-draft"
+                            >
+                                <h2 className="text-base font-semibold">
+                                    Tugas tidak ada dalam daftar terbaru
+                                </h2>
+                                <p className="text-sm">
+                                    Catatan belum disimpan tetap tersedia di
+                                    bawah. Salin bila dibutuhkan sebelum memilih
+                                    tugas lain. Data yang hilang tidak dikirim
+                                    ulang.
+                                </p>
+                                <label
+                                    htmlFor="missing-task-draft"
+                                    className="text-sm font-semibold"
+                                >
+                                    Draft catatan: {editForm.data.title}
+                                </label>
+                                <textarea
+                                    id="missing-task-draft"
+                                    readOnly
+                                    value={editForm.data.description}
+                                    className={textAreaClassName}
+                                />
+                            </section>
+                        )}
                     <section
                         aria-labelledby="workspace-filters-title"
                         className="grid gap-4 border-y border-border py-5"
@@ -1413,7 +1903,7 @@ export default function ProjectWorkspace({
                                     id="workspace-filters-title"
                                     className="font-label text-label text-muted-foreground"
                                 >
-                                    FILTER TASK
+                                    FILTER TUGAS
                                 </h2>
                                 <p className="text-sm text-muted-foreground">
                                     Gunakan filter untuk menemukan pekerjaan
@@ -1421,6 +1911,90 @@ export default function ProjectWorkspace({
                                 </p>
                             </div>
                         </div>
+                        <div
+                            className="flex flex-wrap gap-2"
+                            aria-label="Cakupan tugas"
+                        >
+                            {(
+                                [
+                                    ['all', 'Semua tugas'],
+                                    ['mine', 'Tugas saya'],
+                                    ['unassigned', 'Belum ditugaskan'],
+                                ] as const
+                            ).map(([scope, label]) => (
+                                <Button
+                                    key={scope}
+                                    type="button"
+                                    variant={
+                                        filters.scope === scope
+                                            ? 'default'
+                                            : 'outline'
+                                    }
+                                    aria-pressed={filters.scope === scope}
+                                    disabled={isRefreshing || commandBusy}
+                                    data-test={`workspace-scope-${scope}`}
+                                    onClick={() => {
+                                        if (!confirmDiscard()) {
+                                            return;
+                                        }
+
+                                        setSelectedTaskId(null);
+                                        setEditorMode('edit');
+                                        setFilterDraft({
+                                            ...filterDraft,
+                                            scope,
+                                            page: 1,
+                                            task: null,
+                                        });
+                                        router.visit(
+                                            ProjectWorkspaceController.show(
+                                                project.id,
+                                                {
+                                                    query: {
+                                                        ...filters,
+                                                        scope,
+                                                        page: 1,
+                                                        task: null,
+                                                    },
+                                                },
+                                            ).url,
+                                            {
+                                                preserveScroll: true,
+                                                preserveState: true,
+                                                onSuccess: (page) => {
+                                                    const next = page.props
+                                                        .tasks as TaskPage;
+                                                    setSelectedTaskId(
+                                                        next.data[0]?.id ??
+                                                            null,
+                                                    );
+                                                },
+                                                onHttpException: (response) => {
+                                                    reconciliationFailed(
+                                                        response.status,
+                                                    );
+
+                                                    return false;
+                                                },
+                                                onNetworkError: () => {
+                                                    reconciliationFailed();
+
+                                                    return false;
+                                                },
+                                            },
+                                        );
+                                    }}
+                                >
+                                    {label}
+                                </Button>
+                            ))}
+                        </div>
+                        {filters.task !== null && (
+                            <p className="text-sm text-primary">
+                                Sedang melihat satu tugas. Bersihkan filter
+                                untuk melihat tugas lainnya.
+                            </p>
+                        )}
                         <form
                             className="grid gap-4 md:grid-cols-[minmax(0,1.5fr)_minmax(10rem,0.7fr)_minmax(10rem,0.7fr)_auto] md:items-end"
                             onSubmit={applyFilters}
@@ -1431,7 +2005,7 @@ export default function ProjectWorkspace({
                                     htmlFor="workspace-search"
                                     className="text-sm font-semibold"
                                 >
-                                    Cari task
+                                    Cari tugas
                                 </label>
                                 <Input
                                     id="workspace-search"
@@ -1519,7 +2093,7 @@ export default function ProjectWorkspace({
 
                     {isRefreshing && <TaskLoadingState />}
 
-                    <main
+                    <section
                         aria-labelledby="workspace-tasks-title"
                         className="grid min-w-0 gap-5"
                     >
@@ -1527,14 +2101,23 @@ export default function ProjectWorkspace({
                             <div className="min-w-0 space-y-1">
                                 <h2
                                     id="workspace-tasks-title"
+                                    tabIndex={-1}
                                     className="text-title font-semibold"
                                 >
-                                    Daftar task
+                                    Daftar tugas
                                 </h2>
                                 <p className="text-sm text-muted-foreground">
                                     {tasks.meta.total === 0
                                         ? 'Belum ada hasil pada filter ini.'
-                                        : `${tasks.meta.total} task dalam konteks workspace ini.`}
+                                        : `${tasks.meta.total} tugas dalam konteks workspace ini.`}
+                                </p>
+                                <p
+                                    className="max-w-prose text-sm leading-6 text-muted-foreground"
+                                    data-test="workspace-collaboration-guidance"
+                                >
+                                    Sepakati hasil bersama, bagi bagian
+                                    pekerjaan dan tentukan siapa yang memeriksa
+                                    hasil rekan. Percakapan bersifat opsional.
                                 </p>
                             </div>
                             <span className="font-label text-label text-muted-foreground">
@@ -1549,6 +2132,7 @@ export default function ProjectWorkspace({
                                     filtered={hasActiveFilter}
                                     onCreate={startCreate}
                                     onResetFilters={resetFilters}
+                                    canCreate={canWrite}
                                 />
                                 {canManage &&
                                     !hasActiveFilter &&
@@ -1560,7 +2144,7 @@ export default function ProjectWorkspace({
                                         >
                                             <div className="grid gap-1">
                                                 <p className="font-label text-label text-muted-foreground">
-                                                    TASK BARU
+                                                    TUGAS BARU
                                                 </p>
                                                 <h3 className="text-lg font-semibold">
                                                     Susun pekerjaan yang dapat
@@ -1573,25 +2157,27 @@ export default function ProjectWorkspace({
                                                 processing={
                                                     createForm.processing
                                                 }
-                                                onChange={(field, value) =>
+                                                onChange={(field, value) => (
+                                                    markDraft(),
                                                     createForm.setData(
                                                         field,
                                                         field === 'priority'
                                                             ? (value as TaskPriority)
                                                             : value,
                                                     )
-                                                }
+                                                )}
                                                 idPrefix="task-create"
                                             />
                                             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
                                                 <p className="text-xs leading-5 text-muted-foreground">
-                                                    Due date tidak boleh
-                                                    melewati deadline project.
+                                                    Tenggat tugas tidak boleh
+                                                    melewati tenggat proyek.
                                                 </p>
                                                 <Button
                                                     type="submit"
                                                     className="cursor-pointer"
                                                     disabled={
+                                                        !canWrite ||
                                                         createForm.processing
                                                     }
                                                     data-test="task-create-submit"
@@ -1600,7 +2186,7 @@ export default function ProjectWorkspace({
                                                         <Spinner aria-hidden="true" />
                                                     )}
                                                     <Plus aria-hidden="true" />
-                                                    Tambahkan task
+                                                    Tambahkan tugas
                                                 </Button>
                                             </div>
                                         </form>
@@ -1613,14 +2199,14 @@ export default function ProjectWorkspace({
                             >
                                 <section
                                     aria-labelledby="workspace-list-title"
-                                    className="min-w-0 border border-border bg-card/20"
+                                    className="min-w-0 overflow-hidden rounded-3xl border border-border bg-card shadow-sm"
                                 >
                                     <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
                                         <h3
                                             id="workspace-list-title"
                                             className="font-label text-label text-muted-foreground"
                                         >
-                                            LEDGER TASK
+                                            DAFTAR TUGAS
                                         </h3>
                                         <span className="text-xs text-muted-foreground">
                                             {tasks.meta.from}-{tasks.meta.to}
@@ -1647,19 +2233,21 @@ export default function ProjectWorkspace({
                                 <section
                                     aria-labelledby="workspace-detail-title"
                                     data-test="workspace-task-detail"
-                                    className="min-w-0 border border-border bg-background"
+                                    className="min-w-0 rounded-3xl border border-border bg-background shadow-sm"
                                 >
                                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6">
                                         <div className="min-w-0">
                                             <p className="font-label text-label text-muted-foreground">
                                                 {editorMode === 'create'
-                                                    ? 'TASK BARU'
+                                                    ? 'TUGAS BARU'
                                                     : selectedTask
                                                       ? `TASK ${String(selectedTask.id).padStart(4, '0')}`
-                                                      : 'DETAIL TASK'}
+                                                      : 'DETAIL TUGAS'}
                                             </p>
                                             <h3
                                                 id="workspace-detail-title"
+                                                ref={detailHeading}
+                                                tabIndex={-1}
                                                 className="mt-1 text-lg font-semibold break-words"
                                             >
                                                 {editorMode === 'create'
@@ -1676,6 +2264,41 @@ export default function ProjectWorkspace({
                                             )}
                                     </div>
 
+                                    {draftConflict && (
+                                        <div
+                                            role="alert"
+                                            className="m-4 grid gap-3 rounded-2xl border border-pending/40 bg-pending-subtle p-4 text-sm"
+                                            data-test="task-draft-conflict"
+                                        >
+                                            <p>
+                                                Tugas berubah sejak kamu membuka
+                                                editor. Draft tetap
+                                                dipertahankan. Periksa judul,
+                                                catatan, status, dan penanggung
+                                                jawab terbaru sebelum
+                                                melanjutkan.
+                                            </p>
+                                            <p className="wrap-anywhere whitespace-pre-wrap">
+                                                Catatan tersimpan:{' '}
+                                                {selectedTask?.description ||
+                                                    'Belum ada catatan.'}
+                                            </p>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    if (selectedTask) {
+                                                        selectTask(
+                                                            selectedTask,
+                                                        );
+                                                    }
+                                                }}
+                                                data-test="task-use-latest"
+                                            >
+                                                Gunakan data terbaru
+                                            </Button>
+                                        </div>
+                                    )}
                                     {editorMode === 'create' ? (
                                         <form
                                             className="grid gap-6 p-4 sm:p-6"
@@ -1688,20 +2311,21 @@ export default function ProjectWorkspace({
                                                 processing={
                                                     createForm.processing
                                                 }
-                                                onChange={(field, value) =>
+                                                onChange={(field, value) => (
+                                                    markDraft(),
                                                     createForm.setData(
                                                         field,
                                                         field === 'priority'
                                                             ? (value as TaskPriority)
                                                             : value,
                                                     )
-                                                }
+                                                )}
                                                 idPrefix="task-create"
                                             />
                                             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
                                                 <p className="text-xs leading-5 text-muted-foreground">
-                                                    Due date tidak boleh
-                                                    melewati deadline project.
+                                                    Tenggat tugas tidak boleh
+                                                    melewati tenggat proyek.
                                                 </p>
                                                 <Button
                                                     type="submit"
@@ -1716,7 +2340,7 @@ export default function ProjectWorkspace({
                                                         <Spinner aria-hidden="true" />
                                                     )}
                                                     <Plus aria-hidden="true" />
-                                                    Tambahkan task
+                                                    Tambahkan tugas
                                                 </Button>
                                             </div>
                                         </form>
@@ -1733,14 +2357,18 @@ export default function ProjectWorkspace({
                                                     processing={
                                                         editForm.processing
                                                     }
-                                                    onChange={(field, value) =>
+                                                    onChange={(
+                                                        field,
+                                                        value,
+                                                    ) => (
+                                                        markDraft(),
                                                         editForm.setData(
                                                             field,
                                                             field === 'priority'
                                                                 ? (value as TaskPriority)
                                                                 : value,
                                                         )
-                                                    }
+                                                    )}
                                                     idPrefix="task-edit"
                                                 />
                                                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
@@ -1777,7 +2405,7 @@ export default function ProjectWorkspace({
                                                         id="task-status-title"
                                                         className="font-label text-label text-muted-foreground"
                                                     >
-                                                        STATUS WORKFLOW
+                                                        STATUS PEKERJAAN
                                                     </h4>
                                                     <p className="text-sm text-muted-foreground">
                                                         Gunakan tombol ini
@@ -1863,9 +2491,9 @@ export default function ProjectWorkspace({
                                                         PENANGGUNG JAWAB
                                                     </h4>
                                                     <p className="text-sm text-muted-foreground">
-                                                        Pilih anggota aktif team
-                                                        untuk memperjelas
-                                                        handoff.
+                                                        Pilih anggota aktif tim
+                                                        untuk memperjelas serah
+                                                        terima.
                                                     </p>
                                                 </div>
                                                 {selectedTask.assignments
@@ -2037,8 +2665,9 @@ export default function ProjectWorkspace({
                                                         aria-hidden="true"
                                                         className="mt-0.5 size-4 shrink-0"
                                                     />
-                                                    Penghapusan task tidak dapat
-                                                    dibatalkan dari halaman ini.
+                                                    Penghapusan tugas tidak
+                                                    dapat dibatalkan dari
+                                                    halaman ini.
                                                 </p>
                                                 <Button
                                                     type="button"
@@ -2056,7 +2685,7 @@ export default function ProjectWorkspace({
                                                     data-test="task-delete"
                                                 >
                                                     <Trash2 aria-hidden="true" />
-                                                    Hapus task
+                                                    Hapus tugas
                                                 </Button>
                                             </section>
                                         </div>
@@ -2074,7 +2703,7 @@ export default function ProjectWorkspace({
                                                     onClick={startCreate}
                                                 >
                                                     <Plus aria-hidden="true" />
-                                                    Buat task baru
+                                                    Buat tugas baru
                                                 </Button>
                                             )}
                                         </div>
@@ -2133,8 +2762,16 @@ export default function ProjectWorkspace({
                                 </div>
                             </nav>
                         )}
-                    </main>
+                    </section>
+                    <WorkspaceEvidence
+                        projectId={project.id}
+                        initialPage={evidence}
+                        disabled={!canWrite}
+                        onForbidden={() => setAccessDenied(true)}
+                    />
                     <WorkspaceDiscussion
+                        disabled={!canWrite}
+                        onForbidden={() => setAccessDenied(true)}
                         projectId={project.id}
                         initialPage={discussion}
                     />
@@ -2149,10 +2786,27 @@ export default function ProjectWorkspace({
                     }
                 }}
             >
-                <DialogContent>
-                    <DialogTitle>Hapus task ini?</DialogTitle>
+                <DialogContent
+                    onCloseAutoFocus={(event) => {
+                        event.preventDefault();
+                        const trigger =
+                            document.querySelector<HTMLButtonElement>(
+                                '[data-test="task-delete"]',
+                            );
+
+                        if (trigger && !trigger.disabled) {
+                            trigger.focus();
+                        } else {
+                            document
+                                .getElementById('workspace-tasks-title')
+                                ?.focus();
+                        }
+                    }}
+                    closeButtonDisabled={commandBusy || isRefreshing}
+                >
+                    <DialogTitle>Hapus tugas ini?</DialogTitle>
                     <DialogDescription>
-                        Task “{pendingDelete?.title}” dan penanggung jawabnya
+                        Tugas “{pendingDelete?.title}” dan penanggung jawabnya
                         akan dihapus dari workspace. Riwayat audit tetap
                         dipertahankan.
                     </DialogDescription>
@@ -2162,7 +2816,11 @@ export default function ProjectWorkspace({
                                 type="button"
                                 variant="outline"
                                 className="cursor-pointer"
-                                disabled={deleteForm.processing}
+                                disabled={
+                                    commandBusy ||
+                                    isRefreshing ||
+                                    deleteForm.processing
+                                }
                             >
                                 Kembali
                             </Button>
@@ -2190,11 +2848,11 @@ export default function ProjectWorkspace({
 ProjectWorkspace.layout = {
     breadcrumbs: [
         {
-            title: 'Project discovery',
+            title: 'Proyek',
             href: projectsIndex(),
         },
         {
-            title: 'Workspace project',
+            title: 'Ruang kerja proyek',
         },
     ],
 };

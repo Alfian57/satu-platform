@@ -3,6 +3,7 @@
 namespace App\Actions\InstitutionMemberships;
 
 use App\Enums\InstitutionMembershipReviewOutcome;
+use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
 use App\Enums\InstitutionMembershipVerificationMethod;
 use App\Exceptions\InvalidInstitutionMembershipTransition;
@@ -28,6 +29,10 @@ class TransitionInstitutionMembership
                 ->lockForUpdate()
                 ->whereKey($membership->getKey())
                 ->firstOrFail();
+
+            if ($lockedMembership->role === InstitutionMembershipRole::CampusAdmin) {
+                throw new InvalidInstitutionMembershipTransition('Gunakan pengelolaan Admin Universitas berotorisasi, bukan transisi afiliasi mahasiswa.');
+            }
 
             if (! $this->isAllowed($lockedMembership->status, $targetStatus)) {
                 throw new InvalidInstitutionMembershipTransition(

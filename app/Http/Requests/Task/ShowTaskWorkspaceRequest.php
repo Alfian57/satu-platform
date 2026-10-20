@@ -38,6 +38,9 @@ final class ShowTaskWorkspaceRequest extends FormRequest
             'priority' => ['sometimes', 'nullable', Rule::enum(TaskPriority::class)],
             'per_page' => ['sometimes', 'integer', 'between:1,50'],
             'page' => ['sometimes', 'integer', 'min:1'],
+            'scope' => ['sometimes', 'string', Rule::in(['all', 'mine', 'unassigned'])],
+            'task' => ['sometimes', 'nullable', 'integer', 'min:1'],
+            'evidence_page' => ['sometimes', 'integer', 'min:1'],
         ];
     }
 

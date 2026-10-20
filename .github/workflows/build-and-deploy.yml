@@ -8,11 +8,21 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
+  ci:
+    uses: ./.github/workflows/tests.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
   build-push:
+    needs: ci
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout code
@@ -49,9 +59,10 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    needs: build-push
+    needs: [ci, build-push]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions: {}
 
     steps:
       - name: Deploy to VPS via SSH

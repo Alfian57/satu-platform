@@ -1,0 +1,54 @@
+{
+    "description": "Pose maskot SATU khusus pengajuan afiliasi mahasiswa: memeriksa lembar identitas kosong pada clipboard.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan",
+    "generation_id": "exec-84c8e7bc-75ad-4205-913a-23726e90b4c1",
+    "identity_references": [
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png",
+            "role": "Identitas, proporsi, pola bulu dan sudut pandang",
+            "sha256": "3356586B1594DCC874710C91CE71BD294046139FB5E2DC0734CEE851E637ACF1"
+        },
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip.png",
+            "role": "Material, warna, ekspresi dan tas buku",
+            "sha256": "A356C316D00EAD034A961170B77847636DF43008C9F459A562A6531443211AE4"
+        }
+    ],
+    "source": {
+        "file": "resources/images/mascot/mascot-affiliation-check.png",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_range": [0, 255],
+        "bytes": 1399878,
+        "sha256": "085F020B51028EDD5401DDB9DBC65FB2FA254827BFC04B43B8F15C2A55E4F36B"
+    },
+    "runtime_variants": [
+        {
+            "file": "public/images/mascot-affiliation-check-256.webp",
+            "width": 256,
+            "height": 256,
+            "bytes": 21274,
+            "sha256": "92A5AE7C955C8A55B391D6FAEAD839FC011912D2BDF59B20BCB11EF9FB46D2B2"
+        },
+        {
+            "file": "public/images/mascot-affiliation-check-512.webp",
+            "width": 512,
+            "height": 512,
+            "bytes": 59218,
+            "sha256": "44E12128EFAF02478516DCD780EC47F47D9A0D78807BC42E1439B317E317629A"
+        },
+        {
+            "file": "public/images/mascot-affiliation-check.webp",
+            "width": 1024,
+            "height": 1024,
+            "bytes": 180736,
+            "sha256": "6523BD687C671CBF526A4E47CE00B33B5AF04D4EE2C52167A6E03CA0FDC18A30"
+        }
+    ],
+    "optimization": "Resize mekanis Lanczos ke 256, 512 dan 1024px, WebP kualitas 90 method 6. Alpha asli dipertahankan tanpa penghapusan latar atau perubahan kreatif manual.",
+    "alt_purpose": "Ilustrasi dekoratif dengan alt kosong. Clipboard tanpa data bukan kartu mahasiswa nyata, validasi atau persetujuan afiliasi. Bubble dan status tetap HTML.",
+    "scope": "Pop-up afiliasi sebelum verifikasi, termasuk panel status/pemulihan. Pose login, register, kemampuan dan halaman lain dipertahankan.",
+    "prompt": "Use case: identity-preserve. Asset type: transparent character cutout for SATU's first student university-affiliation submission dialog. Reference image 1 is the canonical SATU bird turnaround and defines exact identity, silhouette, proportions, feather marking placement, feet and book satchel. Reference image 2 defines the polished fluffy feather material, warm expression, colors, graphite beak and original navy leather cross-body book bag with brass hardware. Create ONE new full-body pose of this exact friendly kingfisher, not a redesign and not a waving/login or open-journal/registration pose. Affiliation pose: standing balanced with both graphite bird feet fully visible, gently holding a small navy clipboard with a blank ivory identity sheet against the lower chest in one feathered wing, the other feathered wing pointing attentively at the empty sheet, head slightly tilted with kind curious brown eyes looking toward the viewer's right where the form will appear. The sheet has only two faint horizontal blue lines and one small empty photo-shaped rectangle, no actual face, no text, no numbers, no check marks, no stamps or approval badge. Keep the clipboard modest so the original cross-body navy book satchel remains clearly visible and unchanged. Preserve cobalt and azure feather layers, ivory cheeks and belly, orange eyebrow and cheek accents, crest, tail, graphite beak and bird anatomy exactly as in the references. Warm welcoming guide helping the student check their own details, never an official inspector. Premium polished 3D character render, fine feather texture, soft diffuse studio light and crisp antialiased edges matching reference 2. Square high-resolution canvas, full bird and every wingtip, crest and foot visible with clean transparent margin, centered character occupying about 86 percent of canvas height. Genuine transparent background. No UI, speech bubbles, background scene, floor, platform, stars, confetti, large shadow, logos, lettering, watermark, extra character, extra limb, human hands or fingers, clothes, glasses, cap or graduation gown."
+}

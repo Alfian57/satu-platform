@@ -23,7 +23,7 @@ export default function ProjectEdit({ project }: ProjectEditProps) {
 ProjectEdit.layout = {
     breadcrumbs: [
         {
-            title: 'Project discovery',
+            title: 'Penemuan proyek',
             href: projectsIndex(),
         },
         {

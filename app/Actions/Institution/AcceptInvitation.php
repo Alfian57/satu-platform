@@ -7,7 +7,6 @@ namespace App\Actions\Institution;
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionStatus;
 use App\Enums\InvitationStatus;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
@@ -25,12 +24,18 @@ final class AcceptInvitation
 {
     public function __construct(
         private readonly AuditRecorder $audit,
+        private readonly ResolveConfiguredUniversity $resolveUniversity,
     ) {}
 
     public function handle(User $user, string $plainToken): void
     {
+        if (! $user->exists || $user->isDirty($user->getKeyName())) {
+            throw new AuthorizationException('Identitas akun tidak valid.');
+        }
+        $university = $this->resolveUniversity->handle();
         $invitationId = null;
         $invitations = PrivilegedInvitation::query()
+            ->where('institution_id', $university->id)
             ->issued()
             ->notExpired()
             ->get(['id', 'token_hash']);
@@ -46,7 +51,9 @@ final class AcceptInvitation
             throw new RuntimeException('Invalid or expired invitation.');
         }
 
-        DB::transaction(function () use ($invitationId, $user): void {
+        DB::transaction(function () use ($invitationId, $user, $university): void {
+            $institution = Institution::query()->whereKey($university->id)->lockForUpdate()->firstOrFail();
+            $this->resolveUniversity->handle($institution);
             $invitation = PrivilegedInvitation::query()
                 ->lockForUpdate()
                 ->with('institution')
@@ -57,6 +64,7 @@ final class AcceptInvitation
                 $invitation === null
                 || ! $invitation->isIssued()
                 || $invitation->isExpired()
+                || $invitation->institution_id !== $institution->id
             ) {
                 throw new RuntimeException('Invalid or expired invitation.');
             }
@@ -65,17 +73,19 @@ final class AcceptInvitation
                 throw new RuntimeException('Invitation role is not supported.');
             }
 
-            $institution = Institution::query()
-                ->lockForUpdate()
-                ->find($invitation->institution_id);
-
-            if ($institution === null || $institution->status !== InstitutionStatus::Active) {
-                throw new RuntimeException('Institution is not active.');
+            $issuer = User::query()->find($invitation->issued_by);
+            if ($issuer === null || ! $issuer->isUniversityAdmin($institution)) {
+                throw new AuthorizationException('Pengundang tidak lagi memiliki akses admin. Minta undangan baru.');
+            }
+            $user = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+            if ($user->institutionMemberships()->where('institution_id', '!=', $institution->id)->exists()) {
+                throw new AuthorizationException('Akun institusi lain memerlukan pemetaan berotorisasi terlebih dahulu.');
             }
 
             $phoneNumber = PhoneNumber::query()
                 ->verified()
                 ->where('user_id', $user->getKey())
+                ->lockForUpdate()
                 ->first();
 
             if (
@@ -98,11 +108,11 @@ final class AcceptInvitation
                 ->first();
 
             if ($membership?->status === InstitutionMembershipStatus::Verified) {
-                throw new RuntimeException('User already has campus admin access.');
+                throw new RuntimeException('Akun sudah mempunyai akses Admin Universitas.');
             }
 
             if ($membership?->status === InstitutionMembershipStatus::Suspended) {
-                throw new AuthorizationException('Akses admin kampus sedang ditangguhkan.');
+                throw new AuthorizationException('Akses Admin Universitas sedang ditangguhkan.');
             }
 
             $membership ??= new InstitutionMembership;

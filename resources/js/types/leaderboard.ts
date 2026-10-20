@@ -42,6 +42,7 @@ export type LeaderboardBadge = {
 };
 
 export type LeaderboardPageData = {
+    pendingXpCount?: number | null;
     state: 'ready' | 'forbidden';
     institution: LeaderboardInstitution | null;
     semester: string;
@@ -52,6 +53,7 @@ export type LeaderboardPageData = {
     preference: LeaderboardPreference;
     badges: LeaderboardBadge[];
     isCampusOperator: boolean;
+    personalXp?: number | null;
 };
 
 export type LeaderboardRow = {
@@ -60,8 +62,8 @@ export type LeaderboardRow = {
     scopeLabel: string | null;
     rank: number | null;
     sharedRankGroup: number | null;
-    score: string;
-    verifiedXpTotal: number;
+    score: string | null;
+    verifiedXpTotal: number | null;
     activeMemberDenominator: number;
     cohortSize: number;
     suppressed: boolean;

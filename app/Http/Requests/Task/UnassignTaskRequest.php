@@ -28,6 +28,7 @@ final class UnassignTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'expected_revision' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/D'],
             'assignee_id' => ['required', 'integer', 'exists:users,id'],
         ];
     }

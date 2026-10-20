@@ -15,6 +15,7 @@ use App\Models\TaskAssignment;
 use App\Models\TeamMembership;
 use App\Models\User;
 use App\Policies\InstitutionContextResolver;
+use App\Support\Task\TaskSnapshot;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -26,11 +27,11 @@ final class AssignTask
         private readonly InstitutionContextResolver $institutionContextResolver,
     ) {}
 
-    public function handle(User $actor, Task $task, User $assignee): TaskAssignment
+    public function handle(User $actor, Task $task, User $assignee, string $expectedRevision): TaskAssignment
     {
         Gate::forUser($actor)->authorize('assign', $task);
 
-        return DB::transaction(function () use ($actor, $task, $assignee): TaskAssignment {
+        return DB::transaction(function () use ($actor, $task, $assignee, $expectedRevision): TaskAssignment {
             $lockedProject = Project::query()
                 ->lockForUpdate()
                 ->whereKey($task->project_id)
@@ -41,6 +42,7 @@ final class AssignTask
                 ->firstOrFail();
 
             Gate::forUser($actor)->authorize('assign', $lockedTask);
+            TaskSnapshot::ensureFresh($lockedTask, $expectedRevision);
             $this->ensureAssignee($assignee, $lockedProject);
 
             $assignment = TaskAssignment::query()
@@ -71,13 +73,14 @@ final class AssignTask
                 ],
             );
 
+            $lockedTask->unsetRelation('assignments');
             WorkspaceTaskChanged::dispatch(
                 institutionId: (int) $lockedProject->institution_id,
                 projectId: (int) $lockedProject->getKey(),
                 resourceId: (int) $lockedTask->getKey(),
                 operation: 'task.assigned',
-                version: $lockedTask->updated_at->toIso8601String(),
-                occurredAt: now()->toIso8601String(),
+                version: TaskSnapshot::revision($lockedTask),
+                occurredAt: now()->toISOString(),
             );
 
             return $assignment->load('assignee');

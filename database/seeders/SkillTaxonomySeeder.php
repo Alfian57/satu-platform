@@ -528,7 +528,7 @@ class SkillTaxonomySeeder extends Seeder
         ];
 
         foreach ($skills as $skill) {
-            SkillTaxonomy::updateOrCreate(
+            SkillTaxonomy::firstOrCreate(
                 ['name' => $skill['name']],
                 [
                     'category' => $skill['category'],

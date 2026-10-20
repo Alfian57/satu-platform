@@ -50,7 +50,7 @@ final class GenerateRecommendationsCommand extends Command
         });
 
         $this->newLine();
-        $this->info("Rekomendasi dihasilkan: {$total} untuk {$projects->count()} project.");
+        $this->info("Pembaruan kandidat dalam antrean: {$total} dari {$projects->count()} proyek (kandidat dapat terkait beberapa proyek).");
 
         return self::SUCCESS;
     }

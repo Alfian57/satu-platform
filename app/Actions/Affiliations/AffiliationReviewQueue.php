@@ -50,10 +50,9 @@ final class AffiliationReviewQueue
 
         return $query
             ->with([
-                'user:id,username',
-                'user.phoneNumber:id,user_id,masked,status,verified_at',
+                'user:id',
+                'user.phoneNumber:id,user_id,number',
                 'roster:id,institution_id,semester,status,activated_at',
-                'lockOwner:id,username',
             ])
             ->orderBy('submitted_at', $sort === 'oldest' ? 'asc' : 'desc')
             ->orderBy('id', $sort === 'oldest' ? 'asc' : 'desc')

@@ -53,9 +53,8 @@ final class UpdateTalentCandidateProjection
             : [InstitutionMembershipRole::CampusAdmin];
 
         if (
-            ! $actor->is_platform_admin
-            && ($profile === null
-                || $this->institutionContextResolver->resolve($actor, $profile, $allowedRoles) === null)
+            $profile === null
+            || $this->institutionContextResolver->resolve($actor, $profile, $allowedRoles) === null
         ) {
             throw new AuthorizationException('You are not authorized to rebuild this candidate projection.');
         }

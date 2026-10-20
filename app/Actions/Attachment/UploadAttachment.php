@@ -6,6 +6,7 @@ namespace App\Actions\Attachment;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\AttachmentPurpose;
+use App\Events\WorkspaceAttachmentChanged;
 use App\Events\WorkspaceDiscussionChanged;
 use App\Models\Attachment;
 use App\Models\Institution;
@@ -45,7 +46,7 @@ final class UploadAttachment
         $storedPath = $this->storage->store($project, $file);
 
         try {
-            return DB::transaction(function () use (
+            $attachment = DB::transaction(function () use (
                 $actor,
                 $project,
                 $message,
@@ -132,10 +133,25 @@ final class UploadAttachment
                         version: null,
                         occurredAt: now()->toIso8601String(),
                     );
+                } else {
+                    WorkspaceAttachmentChanged::dispatch(
+                        institutionId: (int) $lockedProject->institution_id,
+                        projectId: (int) $lockedProject->getKey(),
+                        resourceId: (int) $attachment->getKey(),
+                        operation: 'attachment.created',
+                        version: null,
+                        occurredAt: now()->toIso8601String(),
+                    );
                 }
 
                 return $attachment->refresh()->load(['project', 'uploadedBy']);
             }, attempts: 3);
+
+            if (DB::transactionLevel() > 0) {
+                DB::afterRollBack(fn () => $this->storage->deletePath($storedPath));
+            }
+
+            return $attachment;
         } catch (Throwable $exception) {
             $this->storage->deletePath($storedPath);
 

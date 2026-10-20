@@ -28,6 +28,7 @@ final class ListContributionReviewsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'q' => ['nullable', 'string', 'max:100'],
             'status' => [
                 'nullable',
                 Rule::in(array_merge(
@@ -57,5 +58,10 @@ final class ListContributionReviewsRequest extends FormRequest
     public function sort(): string
     {
         return (string) $this->validated('sort', 'oldest');
+    }
+
+    public function search(): string
+    {
+        return trim((string) $this->validated('q', ''));
     }
 }

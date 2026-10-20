@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -112,6 +113,21 @@ class Contribution extends Model implements InstitutionOwned
     public function portfolioEntry(): HasOne
     {
         return $this->hasOne(PortfolioEntry::class);
+    }
+
+    /** @return MorphMany<XpLedgerEntry, $this> */
+    public function xpEntries(): MorphMany
+    {
+        return $this->morphMany(XpLedgerEntry::class, 'source');
+    }
+
+    /** @param Builder<Contribution> $query */
+    #[Scope]
+    protected function awaitingXp(Builder $query): void
+    {
+        $query->where('status', ContributionStatus::Approved)
+            ->whereHas('currentVersion.reviews', fn (Builder $reviews) => $reviews->where('decision', 'approved'))
+            ->whereDoesntHave('xpEntries', fn (Builder $entries) => $entries->whereNull('reversal_reference_id'));
     }
 
     public function institutionId(): int

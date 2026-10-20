@@ -5,16 +5,16 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "ease-ledger inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-[color,background-color,border-color,box-shadow] duration-fast disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 aria-invalid:border-destructive aria-invalid:outline-destructive",
+  "ease-ledger inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-[color,background-color,border-color,box-shadow] duration-fast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 aria-invalid:border-destructive aria-invalid:outline-destructive",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-satu-blue-hover",
+          "bg-primary text-primary-foreground shadow-xs hover:bg-satu-blue-hover dark:hover:bg-primary/90",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-card text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
@@ -22,7 +22,7 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-control-md px-4 has-[>svg]:px-3",
-        sm: "h-control-sm rounded-sm px-3 has-[>svg]:px-2.5",
+        sm: "h-control-sm rounded-md px-3 has-[>svg]:px-2.5",
         lg: "h-control-lg px-6 has-[>svg]:px-4",
         icon: "size-control-md",
       },

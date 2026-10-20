@@ -25,6 +25,11 @@ final class TeamJoinRequestPolicy
             );
     }
 
+    public function viewHistory(User $user, Project $project): bool
+    {
+        return $this->sameTenantStudent($user, $project);
+    }
+
     public function accept(User $user, TeamJoinRequest $request): bool
     {
         return $request->status === TeamJoinRequestStatus::Pending
@@ -36,10 +41,14 @@ final class TeamJoinRequestPolicy
         return $this->accept($user, $request);
     }
 
+    public function decide(User $user, TeamJoinRequest $request): bool
+    {
+        return $this->isProjectOwner($user, $request->project);
+    }
+
     public function withdraw(User $user, TeamJoinRequest $request): bool
     {
-        return $request->status === TeamJoinRequestStatus::Pending
-            && $request->requester_id === $user->getKey()
+        return $request->requester_id === $user->getKey()
             && $this->sameTenantStudent($user, $request->project);
     }
 

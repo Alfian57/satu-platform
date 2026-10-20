@@ -31,6 +31,7 @@ final class ReviewContributionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'expected_revision' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/D'],
             'decision' => ['required', Rule::enum(ContributionReviewDecision::class)],
             'expected_version' => ['required', 'integer', 'min:1'],
             'reason' => [

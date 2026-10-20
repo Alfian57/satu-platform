@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Institution;
 
+use App\Models\Institution;
+use App\Models\PrivilegedInvitation;
 use App\Models\User;
 use App\Support\PhoneIdentity;
 use Illuminate\Foundation\Http\FormRequest;
@@ -13,7 +15,10 @@ final class IssueInvitationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() instanceof User && $this->user()->is_platform_admin;
+        $institution = $this->route('institution');
+
+        return $institution instanceof Institution && $this->user() instanceof User
+            && $this->user()->can('create', [PrivilegedInvitation::class, $institution]);
     }
 
     /**

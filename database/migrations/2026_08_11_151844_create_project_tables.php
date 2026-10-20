@@ -61,6 +61,8 @@ return new class extends Migration
             $table->string('title', 120);
             $table->text('description')->nullable();
             $table->unsignedTinyInteger('capacity')->default(1);
+            $table->boolean('accepts_beginners')->nullable();
+            $table->text('selection_criteria')->nullable();
             $table->timestamps();
 
             $table->foreign('project_id', 'project_roles_project_fk')

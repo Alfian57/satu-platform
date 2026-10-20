@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Profile;
 
+use App\Concerns\ProfileAvailabilityValidationRules;
 use App\Concerns\StudentProfileValidationRules;
 use App\Enums\InstitutionStatus;
 use App\Enums\PortfolioVisibility;
@@ -15,6 +16,7 @@ use Illuminate\Validation\Rule;
 
 class StoreStudentProfileRequest extends FormRequest
 {
+    use ProfileAvailabilityValidationRules;
     use StudentProfileValidationRules;
 
     public function authorize(): bool
@@ -49,15 +51,9 @@ class StoreStudentProfileRequest extends FormRequest
             ],
             'portfolio_visibility' => [
                 'sometimes',
-                Rule::enum(PortfolioVisibility::class),
+                Rule::enum(PortfolioVisibility::class)->only([PortfolioVisibility::Private, PortfolioVisibility::Public]),
             ],
-            'recruiter_discoverable' => ['sometimes', 'boolean'],
-            'availability_windows' => ['sometimes', 'array', 'max:14'],
-            'availability_windows.*.day_of_week' => ['required', 'integer', 'between:0,6'],
-            'availability_windows.*.starts_at' => ['required', 'date_format:H:i,H:i:s'],
-            'availability_windows.*.ends_at' => ['required', 'date_format:H:i,H:i:s'],
-            'availability_windows.*.timezone' => ['sometimes', 'timezone'],
-            'timezone' => ['sometimes', 'nullable', 'timezone'],
-        ], $this->studentProfileRules());
+            'recruiter_discoverable' => ['sometimes', 'boolean', 'declined'],
+        ], $this->studentProfileRules(), $this->profileAvailabilityRules());
     }
 }

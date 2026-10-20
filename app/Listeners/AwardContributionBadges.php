@@ -63,11 +63,12 @@ final class AwardContributionBadges implements ShouldQueueAfterCommit
         $this->evaluate->handle($contribution, $reviewer);
     }
 
-    public function failed(?Throwable $exception = null): void
+    public function failed(ContributionApproved $event, Throwable $exception): void
     {
         Log::error('gamification.badge_award_failed', [
-            'error_class' => $exception === null ? null : $exception::class,
-            'error' => $exception?->getMessage(),
+            'contribution_id' => $event->contributionId,
+            'institution_id' => $event->institutionId,
+            'error_class' => $exception::class,
         ]);
     }
 }

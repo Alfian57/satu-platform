@@ -1,0 +1,35 @@
+{
+    "description": "Revisi hero SATU sesuai referensi terbaru: dua kartu konsep, orbit tipis dan latar gelombang terpisah.",
+    "method": "imagegen bawaan",
+    "date": "2026-10-18",
+    "reference": {
+        "file": "satu-hero.png",
+        "sha256": "0EA0E776D9E00B0EDEFD5BE16CCA36ADA40BBDDB200EE507790F31FB29779EF1"
+    },
+    "assets": [
+        {
+            "role": "Ilustrasi dekoratif transparan",
+            "source": "resources/images/mascot/landing-hero-calm.png",
+            "runtime": "public/images/landing-hero-calm.webp",
+            "dimensions": {
+                "width": 1448,
+                "height": 1086
+            },
+            "responsive_widths": [768, 1280, 1448],
+            "optimization": "WebP kualitas 92, alpha dipertahankan.",
+            "prompt": "Use case: compositing. Input 1: exact desired SATU hero layout, use ONLY its right-side illustration as the edit target. Inputs 2 and 3: mascot identity and material references. Isolate and faithfully recreate the RIGHT-SIDE scene from input 1 as one transparent-alpha illustration. Keep the scene composition very close to the target: large blue kingfisher bird waving its left wing, facing right in three-quarter view, ivory chest, orange markings, graphite beak and feet, leather blue cross-body book bag. Only TWO floating white cards: upper-left 'Proyek Kampus' with blue 3D folder and small secondary text 'Kolaborasi nyata untuk dampak lebih besar'; right-middle 'Bangun portofolio' with teal ascending portfolio bars and small blue circular arrow detail. A SINGLE thin delicate elliptical blue-white orbit line loops behind the bird with exactly two small blue glass beads, and a simple luminous translucent elliptical platform sits beneath its feet. Match the positions, scale, lighting and uncluttered negative space from input 1. No graduation cap, no heart, no purple tile, no airplane, no people or avatars, no lightbulb, no sparkles, no golden stars, no other cards, no thick looping ribbons. Keep all parts of the scene within the canvas with a small transparent margin. Use a landscape aspect around 4:3. High resolution with crisp feather details and sharp Indonesian card text. Transparent outside the scene, no blue/white page background, no navbar or logo, no headline, no buttons, no footer. Bird identity and book bag must remain exactly the SATU character. Produce only the uncluttered two-card illustration from the new reference, not the full page."
+        },
+        {
+            "role": "Latar pembuka tanpa teks atau kontrol",
+            "source": "resources/images/mascot/landing-hero-background.png",
+            "runtime": "public/images/landing-hero-background.webp",
+            "dimensions": {
+                "width": 1672,
+                "height": 941
+            },
+            "optimization": "WebP lossless agar warna dan gradasi master latar tidak berubah saat konversi.",
+            "prompt": "Use case: precise-object-edit. Edit target: supplied SATU hero webpage reference. Extract a CLEAN BACKGROUND PLATE from this exact image. Remove ALL foreground elements: navbar and logo, all text, university label, headline and underline, buttons, icons, reassurance, bottom feature navigation and scroll cue, the bird, both white cards, orbit, blue beads, and platform. Keep ONLY the original softly lit pale blue and white background with its sweeping curved shapes. Preserve the background geometry, colors, texture and lighting of the supplied image as exactly as possible: bright near-white upper-left and central-left, gentle blue glow at upper-right, the sweeping upper white curve starting near y60 at left and curving down toward center, small left-edge circular segment around midheight, the pale blue rising background shape at the right edge near y120, the multiple large translucent white/sky-blue ribbon-shaped waves sweeping across the lower-left toward the bottom center and rising toward the right side, including the thin white contour across the lower-right. Restore the obscured areas seamlessly while retaining every existing visible background edge in its original location. Same 1672:941 landscape aspect ratio and full-frame crop as source. This must look like the IDENTICAL reference background with its foreground removed, not a redesigned or simplified background. No new shapes, no dots, no sparkles, no objects, no symbols, absolutely no text. Soft clean gradients, no heavy saturation. Output only the full opaque background plate."
+        }
+    ],
+    "alt_purpose": "Latar dan ilustrasi dekoratif. Teks, label, penjelasan dan kontrol berupa HTML aksesibel."
+}
