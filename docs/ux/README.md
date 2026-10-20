@@ -83,7 +83,7 @@ Asset waiting-review lama dan varian batu bertekstur dipertahankan sebagai
 sumber edit, tidak dipakai runtime.
 
 Hero Beranda pending memakai panorama `dashboard-affiliation-campus` yang
-disiapkan mengikuti banner pada `beranda-verif.png`. Master PNG terpisah
+disiapkan mengikuti banner pada referensi `resources/images/mascot/reference/beranda-verif.png`. Master PNG terpisah
 berada di `resources/images/mascot/`, WebP 768px/1280px/2560px di `public/images/`.
 Ilustrasi tidak memuat teks, kontrol atau maskot, dan bukan foto dokumentasi
 kampus. Prompt, sumber serta hash dicatat pada

@@ -557,7 +557,7 @@ jarak hero mobile tetap sama.
 
 Beranda saat afiliasi pending_review memakai varian tersendiri hanya jika
 universitas siap, WhatsApp terverifikasi dan roster tidak meminta pengajuan
-ulang. Hero mengikuti referensi pemilik produk `beranda-verif.png`: banner
+ulang. Hero mengikuti referensi pemilik produk `resources/images/mascot/reference/beranda-verif.png`: banner
 panorama kampus biru/putih dengan border putih, radius 18px dan tinggi desktop
 sekitar 190px sampai 200px pada ruang desktop yang cukup. Sapaan berikon tangan jingga, judul navy dengan
 kata tercatat berwarna biru, dua baris penjelasan dan CTA biru berada di kiri.
@@ -585,7 +585,7 @@ dan tindakan tetap utuh sementara kampus serta maskot memakai ruang tersendiri
 tanpa menutupi kontrol. Artwork statis dan tidak keluar ke navbar. Tautan
 Lihat status afiliasi menuju heading kartu status, bukan POST.
 
-Kartu di bawah banner mengikuti detail `beranda-verif.png`, bukan lembar polos.
+Kartu di bawah banner mengikuti detail referensi `resources/images/mascot/reference/beranda-verif.png`, bukan lembar polos.
 Kartu Afiliasi kampus sedang ditinjau memakai ikon dokumen jingga, lengkung
 ivory pada sudut kiri bawah, kilau kecil, header Pengajuan tercatat dan badge
 pending semantic di kanan. Periksa afiliasi berupa tombol outline biru.

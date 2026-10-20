@@ -1,9 +1,9 @@
 {
-    "description": "Dua ilustrasi kartu Beranda pending dan terverifikasi dengan bahasa visual beranda-verif.png.",
+    "description": "Dua ilustrasi kartu Beranda pending dan terverifikasi dengan bahasa visual referensi resources/images/mascot/reference/beranda-verif.png.",
     "date": "2026-10-19",
     "method": "imagegen bawaan, satu panggilan per asset",
     "reference": {
-        "file": "beranda-verif.png",
+        "file": "resources/images/mascot/reference/beranda-verif.png",
         "sha256": "254D3B51B4388669C97794B3D3DA172A21EED9DBFDD849FAF02DE1B369781A1F"
     },
     "assets": [

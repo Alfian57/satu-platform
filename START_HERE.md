@@ -5,7 +5,8 @@ Ikuti instruksi eksplisit pengguna dan batas pekerjaan yang diminta.
 1. Jika pengguna memberikan GitHub issue, baca issue itu, acceptance criteria, blocker, dan dokumen yang dirujuk. Jika tidak, jangan memilih issue sendiri.
 2. Baca dokumen pemilik yang relevan dengan perubahan. Periksa implementasi yang ada dan bedakan kemampuan yang sudah berjalan dari rencana.
 3. Kerjakan perubahan sesuai permintaan dan perbarui dokumentasi pemilik bila kontraknya berubah.
-4. Jalankan pemeriksaan yang relevan dengan perubahan dan laporkan hasil serta blocker yang tersisa.
+4. Bersihkan workspace: hapus semua file sementara, skrip scratch/debugging, dump log, dan artefak pengujian yang dibuat selama pengerjaan.
+5. Jalankan pemeriksaan yang relevan dengan perubahan dan laporkan hasil serta blocker yang tersisa.
 
 Dokumen Markdown menjelaskan product, UX, engineering, security, dan kontrak repository. GitHub issue menjadi konteks tambahan saat pengguna menunjuk issue tertentu.
 
@@ -25,4 +26,4 @@ Jika terjadi konflik, sumber yang lebih tinggi menang. Perbarui owning document,
 
 ## Laporan Akhir
 
-Ringkas perubahan, pemeriksaan yang dijalankan, dan blocker yang tersisa. Jangan menyalin raw log kecuali diperlukan untuk menjelaskan kegagalan.
+Pastikan `git status` bersih dari file yang tidak diinginkan dan hanya memuat perubahan yang sah. Ringkas perubahan, pemeriksaan yang dijalankan, dan blocker yang tersisa. Jangan menyalin raw log kecuali diperlukan untuk menjelaskan kegagalan.

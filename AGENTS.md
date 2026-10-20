@@ -92,6 +92,15 @@ Do not close an `open` decision in `docs/governance/DECISIONS.md` by assumption.
 - Documentation changes must pass Prettier, internal-link and UX-reference checks, and `git diff --check`.
 - An issue is not complete until every acceptance criterion in its body passes.
 
+## Workspace Hygiene and Cleanup
+
+- Setiap AI agent bertanggung jawab menjaga kebersihan workspace dan pohon repository.
+- Dilarang meninggalkan file sementara, skrip scratch debugging (misalnya skrip bash, python, php, atau node sementara), atau file dump di dalam repository.
+- Jika membuat skrip atau file bantu sementara untuk analisis atau debugging lokal, simpan file tersebut di direktori scratch yang diabaikan git atau WAJIB DIHAPUS sebelum menyelesaikan tugas.
+- Dilarang membuat file dummy uji (seperti `.push-test`, file tes trigger commit, atau dump log) ke dalam direktori root repository.
+- Hasil runner pengujian (seperti folder `test-results/`, snapshot kegagalan, atau file cache sementara) tidak boleh di-commit ke repository; pastikan dibersihkan atau tercantum di `.gitignore`.
+- Sebelum menyelesaikan tugas dan melaporkan hasil akhir kepada pengguna, jalankan `git status` dan pastikan working tree bersih hanya berisi perubahan yang diminta dan relevan dengan tugas.
+
 </satu-project-context>
 
 <laravel-boost-guidelines>
