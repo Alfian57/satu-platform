@@ -25,6 +25,7 @@ const suites = [
         'node',
         [
             '--test',
+            '.github/scripts/check-ci-workflows.cjs',
             '.github/scripts/check-brand-assets.cjs',
             '.github/scripts/check-feature-guide.cjs',
             '.github/scripts/check-landing-demo.cjs',

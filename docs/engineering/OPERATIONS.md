@@ -188,6 +188,31 @@ cache pada pembacaan pertama dan berikutnya agar serialisasi benar-benar diuji.
 4. Konfirmasi worker, scheduler, dan Reverb aktif.
 5. Pantau log aplikasi (tanpa sensitive payload) dan queue length.
 
+### 11.1 Gate CI/CD GitHub
+
+Workflow `Build and Deploy` memanggil ulang workflow `tests.yml` pada commit
+yang sama melalui `workflow_call`. Job `ci` menjalankan setup aplikasi serta
+`composer ci:check`, termasuk static checks dan seluruh suite inti. Build dan
+publikasi image memerlukan job tersebut berhasil; job deploy memerlukan CI
+serta build berhasil. Kegagalan atau pembatalan CI tidak boleh dilewati dengan
+`always()`, `continue-on-error`, atau menjalankan deploy secara terpisah.
+
+Push ke `main` maupun pemanggilan manual pada `main` mengikuti gate yang sama.
+Pemanggilan manual pada branch lain dapat memeriksa CI, tetapi tidak
+memublikasikan image atau menjalankan SSH deploy. Token publikasi package
+hanya diberikan pada job build; CI tidak menerima secret VPS. Target SSH,
+secret existing, serta pemanggilan `update.sh` pada server tidak diubah.
+
+Penguncian fakultas, program studi dan angkatan yang sudah tersimpan tetap
+berlaku pada Form Request serta Action. Pengujian profil menjalankan callback
+validasi `after()` dan memeriksa penolakan perubahan, bukan melonggarkan
+runtime agar fixture lama dapat mengubah identitas akademik. Profil lama yang
+belum memiliki nilai masih dapat melengkapi isian kosong satu kali.
+
+Perubahan workflow baru berlaku setelah masuk ke branch yang dipakai
+deployment. Lulusnya CI atau workflow deploy bukan bukti kesehatan server,
+ketepatan isi `update.sh` di VPS, UAT, atau keberhasilan recovery production.
+
 ## 12. Verification Checklist
 
 - [ ] `php artisan config:cache` sukses.

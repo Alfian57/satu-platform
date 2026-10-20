@@ -207,7 +207,14 @@ $validateAcademics = function (array $data, ?StudentProfile $existing = null) us
         $request->setRouteResolver(fn (): Route => $route);
     }
 
-    return Validator::make($data, $request->rules(), $request->messages())->passes();
+    $validator = Validator::make($data, $request->rules(), $request->messages());
+    if ($request instanceof UpdateStudentProfileRequest) {
+        foreach ($request->after() as $after) {
+            $validator->after($after);
+        }
+    }
+
+    return $validator->passes();
 };
 $science = 'Fakultas Sains & Teknologi';
 $business = 'Fakultas Bisnis & Humaniora';
@@ -231,11 +238,39 @@ expectCapability($validateAcademics(['study_program' => 'Program lama', 'faculty
 expectCapability(! $validateAcademics(['study_program' => 'Program rekaan', 'faculty' => null], $profile), 'Pengecualian legacy tidak membolehkan nilai baru di luar katalog.');
 $legacyRevision = ProfileRevision::for($profile->fresh());
 $academic = ['faculty' => $business, 'study_program' => 'Akuntansi (D3)', 'admission_year' => 2023];
-expectCapability($validateAcademics($academic, $profile), 'Perubahan legacy ke fakultas/program sah diterima.');
-$updatedAcademic = $updater->handle($user, $profile->fresh(), $academic);
-expectCapability($updatedAcademic->faculty === $business && $updatedAcademic->study_program === 'Akuntansi (D3)' && $updatedAcademic->admission_year === 2023 && $updatedAcademic->study_year === 2, 'Penyimpanan angkatan/fakultas/program dapat dibaca kembali tanpa mengubah tingkat studi lama.');
-expectCapability(ProfileRevision::for($updatedAcademic) !== $legacyRevision, 'Snapshot berubah ketika informasi akademik berubah.');
+$legacyAuditCount = AuditLog::query()->count();
+expectCapability(! $validateAcademics($academic, $profile), 'Form Request menolak penggantian program legacy meskipun pilihan baru ada dalam katalog.');
+expectCapabilityFailure(fn () => $updater->handle($user, $profile->fresh(), [...$academic, 'bio' => 'Tidak boleh tersimpan']), ValidationException::class, 'Action juga menolak perubahan data akademik legacy.');
+expectCapability($profile->fresh()->study_program === 'Program lama' && $profile->faculty === null && $profile->admission_year === null && $profile->study_year === 2, 'Penolakan menjaga program legacy dan membatalkan pengisian akademik parsial.');
+expectCapability(ProfileRevision::for($profile->fresh()) === $legacyRevision && AuditLog::query()->count() === $legacyAuditCount, 'Penolakan akademik tidak mengubah revisi atau menambah audit.');
+$legacyUpdated = $updater->handle($user, $profile->fresh(), ['bio' => 'Bio baru tanpa mengubah akademik', 'study_program' => 'Program lama']);
+expectCapability($legacyUpdated->bio === 'Bio baru tanpa mengubah akademik' && $legacyUpdated->study_program === 'Program lama', 'Profil legacy tetap dapat menyimpan bio tanpa mengganti data akademik.');
+
+$emptyAcademicStudent = User::factory()->create();
+InstitutionMembership::factory()->student()->verifiedByRosterExactMatch()->create(['institution_id' => $campus->id, 'user_id' => $emptyAcademicStudent->id]);
+$emptyAcademicProfile = $app->make(CreateStudentProfile::class)->handle($emptyAcademicStudent, $campus, []);
+$emptyAcademicRevision = ProfileRevision::for($emptyAcademicProfile);
+expectCapability($validateAcademics($academic, $emptyAcademicProfile), 'Profil lama yang belum memiliki data akademik dapat melengkapi isian yang kosong.');
+$updatedAcademic = $updater->handle($emptyAcademicStudent, $emptyAcademicProfile, [...$academic, 'expected_profile_revision' => $emptyAcademicRevision]);
+expectCapability($updatedAcademic->faculty === $business && $updatedAcademic->study_program === 'Akuntansi (D3)' && $updatedAcademic->admission_year === 2023 && $updatedAcademic->study_year === null, 'Isian akademik kosong tersimpan satu kali tanpa mengarang tingkat studi.');
+expectCapability(ProfileRevision::for($updatedAcademic) !== $emptyAcademicRevision, 'Pengisian akademik pertama memperbarui revisi profil.');
 expectCapability($validateAcademics(['bio' => 'Perubahan saja'], $updatedAcademic), 'PATCH bagian profil lain tidak mewajibkan pengiriman ulang pasangan akademik.');
+expectCapability($validateAcademics($academic, $updatedAcademic), 'Pengiriman ulang data akademik yang sama tetap diterima.');
+$sameAcademic = $updater->handle($emptyAcademicStudent, $updatedAcademic, [...$academic, 'bio' => 'Bio boleh diperbarui']);
+expectCapability($sameAcademic->only(array_keys($academic)) === $academic && $sameAcademic->bio === 'Bio boleh diperbarui', 'Simpan bio bersama akademik yang sama tidak mengubah identitas akademik.');
+$lockedRevision = ProfileRevision::for($sameAcademic);
+$lockedAuditCount = AuditLog::query()->count();
+foreach ([
+    ['faculty' => $science, 'study_program' => 'Informatika (S1)'],
+    ['study_program' => 'Manajemen (S1)'],
+    ['admission_year' => 2022],
+    ['faculty' => null, 'study_program' => null],
+    ['admission_year' => null],
+] as $changedAcademic) {
+    expectCapability(! $validateAcademics($changedAcademic, $sameAcademic), 'Form Request menolak perubahan atau pengosongan akademik tersimpan: '.implode(', ', array_keys($changedAcademic)).'.');
+    expectCapabilityFailure(fn () => $updater->handle($emptyAcademicStudent, $sameAcademic->fresh(), [...$changedAcademic, 'bio' => 'Jangan tersimpan']), ValidationException::class, 'Pemanggilan Action langsung tidak melewati penguncian akademik.');
+    expectCapability($sameAcademic->fresh()->only(array_keys($academic)) === $academic && $sameAcademic->bio === 'Bio boleh diperbarui' && ProfileRevision::for($sameAcademic) === $lockedRevision && AuditLog::query()->count() === $lockedAuditCount, 'Penolakan tidak mengubah akademik, bio, revisi atau audit.');
+}
 $newStudent = User::factory()->create();
 InstitutionMembership::factory()->student()->verifiedByRosterExactMatch()->create(['institution_id' => $campus->id, 'user_id' => $newStudent->id]);
 $createdAcademic = $app->make(CreateStudentProfile::class)->handle($newStudent, $campus, $academic)->fresh();
