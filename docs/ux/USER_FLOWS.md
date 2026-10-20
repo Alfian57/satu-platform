@@ -262,7 +262,7 @@ tindakan Periksa afiliasi membuka panel status existing. Nama universitas,
 status server serta batas penyimpanan profil dibaca bersama tanpa membuat
 pengajuan baru. Roster yang berubah, revisi, penolakan atau keadaan terkunci
 tetap mengikuti pemulihan masing-masing, bukan disamarkan sebagai menunggu.
-Komposisi mengikuti banner panorama pada `beranda-verif.png`, dengan maskot
+Komposisi mengikuti banner panorama pada referensi `resources/images/mascot/reference/beranda-verif.png`, dengan maskot
 menunggu sambil memangku buku dengan kedua sayap dan duduk langsung pada batu,
 selaras dengan lengkung satu pita putih/jingga di sekitar 83%
 lebar desktop lapang, serta teks/tindakan HTML di kiri. Ilustrasi bukan foto kampus
@@ -439,7 +439,7 @@ Masukan rekomendasi yang sedang dikirim memiliki label processing yang terlihat;
 hasilnya tetap mengikuti server. Reduced motion mempertahankan semua kontrol
 dan informasi tanpa gerak tambahan.
 
-Pada afiliasi terverifikasi, kartu mengikuti bahasa visual beranda-verif.png:
+Pada afiliasi terverifikasi, kartu mengikuti bahasa visual referensi `resources/images/mascot/reference/beranda-verif.png`:
 Langkah utama berilustrasi dokumen, lembar proyek ringkas, rekomendasi biru
 beraksen jingga, serta Bekal kolaborasi dan Validasi dalam satu panel. Alasan,
 batas kecocokan, versi serta masukan rekomendasi tidak disembunyikan. Hero

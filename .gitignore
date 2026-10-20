@@ -29,6 +29,10 @@ yarn-error.log
 /.vscode
 /.zed
 
+# Test runner artifacts & temp files
+/test-results
+/.push-test
+
 # Presentation & Video Scripts
 /naskah_presentasi_video_satu.md
 /naskah_presentasi_video_satu.txt
