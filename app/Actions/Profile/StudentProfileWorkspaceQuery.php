@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Actions\Profile;
 
+use App\Actions\Institution\ResolveConfiguredUniversity;
 use App\Enums\ContributionReviewDecision;
 use App\Enums\ContributionStatus;
 use App\Enums\InstitutionMembershipStatus;
+use App\Exceptions\InvalidUniversityConfiguration;
 use App\Models\Contribution;
 use App\Models\InstitutionMembership;
 use App\Models\StudentProfile;
@@ -16,15 +18,25 @@ use Illuminate\Support\Facades\Gate;
 
 final class StudentProfileWorkspaceQuery
 {
-    public function __construct(private readonly ResolveStudentMembership $resolveMembership) {}
+    public function __construct(
+        private readonly ResolveStudentMembership $resolveMembership,
+        private readonly ResolveConfiguredUniversity $resolveUniversity,
+    ) {}
 
     /** @return array{membership: InstitutionMembership|null, profile: StudentProfile|null, approvedSources: list<array<string, mixed>>} */
     public function execute(User $user, ?int $institutionId = null): array
     {
-        $membership = $this->resolveMembership->handle($user, $institutionId);
-        if ($institutionId !== null && $membership === null) {
-            throw new AuthorizationException;
+        if ($institutionId !== null) {
+            try {
+                $university = $this->resolveUniversity->handle();
+            } catch (InvalidUniversityConfiguration) {
+                throw new AuthorizationException;
+            }
+            if ($institutionId !== $university->getKey()) {
+                throw new AuthorizationException;
+            }
         }
+        $membership = $this->resolveMembership->handle($user, $institutionId);
         if ($membership?->status !== InstitutionMembershipStatus::Verified) {
             return ['membership' => $membership, 'profile' => null, 'approvedSources' => []];
         }

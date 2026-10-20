@@ -37,10 +37,6 @@ final class RecommendationPolicy
             return false;
         }
 
-        if ($user->is_platform_admin) {
-            return true;
-        }
-
         $projectOwnerId = $recommendation->relationLoaded('project')
             ? $recommendation->project?->owner_id
             : Project::query()->whereKey($recommendation->project_id)->value('owner_id');

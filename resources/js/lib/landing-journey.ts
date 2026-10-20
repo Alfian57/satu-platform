@@ -166,7 +166,7 @@ export const JOURNEY_STAGES: readonly JourneyStage[] = [
             ['Bukti privat', 'Tidak menjadi berkas publik'],
         ],
         boundary:
-            'Ini demonstrasi mekanisme, bukan hasil pilot atau bukti peningkatan kesempatan. Perekrut dan analitik jaringan merupakan pengembangan lanjutan.',
+            'Ini demonstrasi mekanisme, bukan hasil pilot atau bukti peningkatan kesempatan. Akses mahasiswa dan Admin Universitas tetap mengikuti izin.',
         next: 'Mulai sebagai mahasiswa atau reset untuk mencoba keadaan lain.',
     },
 ];

@@ -24,7 +24,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { edit } from '@/routes/profile';
 
 export default function Profile() {
-    const { account } = usePage<{
+    const { account, auth } = usePage<{
         account: { name: string; username: string };
     }>().props;
     const form = useForm({
@@ -33,6 +33,7 @@ export default function Profile() {
     });
     const { errors, processing, recentlySuccessful, isDirty } = form;
     const [actionError, setActionError] = useState<string | null>(null);
+    const isStudent = auth.user?.workspace.role === 'student';
 
     return (
         <>
@@ -83,6 +84,7 @@ export default function Profile() {
                                 });
                             }}
                             className="grid min-w-0 gap-6 border-t border-border pt-6"
+                            aria-busy={processing}
                         >
                             <SettingsFormFeedback
                                 errors={errors}
@@ -183,7 +185,7 @@ export default function Profile() {
                                     className="text-correction-subtle-foreground"
                                 />
                             </div>
-                            <div className="flex min-w-0 flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
+                            <div className="flex min-w-0 flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-background/60 p-4">
                                 <p className="text-xs leading-6 text-muted-foreground">
                                     {processing
                                         ? 'Menyimpan perubahan identitas...'
@@ -236,8 +238,8 @@ export default function Profile() {
                                     Afiliasi kampus terpisah
                                 </h3>
                                 <p className="mt-1">
-                                    Mengubah nama akun tidak memverifikasi atau
-                                    memindahkan afiliasi kampus.
+                                    Mengubah nama akun tidak mengubah data
+                                    akademik atau status verifikasi afiliasi.
                                 </p>
                             </div>
                         </div>
@@ -248,12 +250,14 @@ export default function Profile() {
                             />
                             <div>
                                 <h3 className="font-semibold text-foreground">
-                                    Jangkauan karya tetap pilihanmu
+                                    {isStudent
+                                        ? 'Jangkauan karya tetap pilihanmu'
+                                        : 'Pengaturan universitas terpisah'}
                                 </h3>
                                 <p className="mt-1">
-                                    Pengaturan ini tidak mengubah siapa yang
-                                    boleh melihat karya atau profil
-                                    profesionalmu.
+                                    {isStudent
+                                        ? 'Pengaturan ini tidak mengubah siapa yang boleh melihat karya atau profil kemampuanmu.'
+                                        : 'Identitas akun pribadi tidak mengubah profil universitas atau kewenangan admin.'}
                                 </p>
                             </div>
                         </div>

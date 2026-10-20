@@ -14,11 +14,12 @@ import {
     History,
     LockKeyhole,
     RefreshCw,
+    Search,
     ShieldCheck,
     UserRoundCheck,
     XCircle,
 } from 'lucide-react';
-import type { FormEvent } from 'react';
+import type { FormEvent, RefObject } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import ContributionController from '@/actions/App/Http/Controllers/ContributionController';
 import { AppPage } from '@/components/app-page';
@@ -29,6 +30,7 @@ import {
 } from '@/components/campus-operation-layout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
@@ -47,6 +49,7 @@ import type {
 type ReviewDecision = 'approved' | 'revision' | 'rejected';
 
 type ReviewFilters = {
+    q?: string;
     status: ContributionStatus | 'all';
     sort: 'oldest' | 'newest';
 };
@@ -110,7 +113,7 @@ const statusMeta: Record<
     },
     approved: {
         label: 'Tervalidasi',
-        description: 'Keputusan validasi tersimpan di ledger.',
+        description: 'Disetujui untuk versi kontribusi yang ditinjau.',
         className:
             'border-verified/30 bg-verified-subtle text-verified-subtle-foreground',
     },
@@ -394,12 +397,14 @@ function ReviewWorkspace({
     reviewQueue,
     isFilterLoading,
     onAccessUnavailable,
+    filterChangeGuardRef,
 }: {
     institution: Props['institution'];
     filters: ReviewFilters;
     reviewQueue: ReviewQueue;
     isFilterLoading: boolean;
     onAccessUnavailable: () => void;
+    filterChangeGuardRef: RefObject<(() => boolean) | null>;
 }) {
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [isQueueLoading, setQueueLoading] = useState(false);
@@ -429,6 +434,39 @@ function ReviewWorkspace({
     const noteError = firstError(formErrors, 'note');
     const selectedDecision = reviewForm.data.decision;
     const isLoading = isQueueLoading || isFilterLoading;
+    useEffect(() => {
+        const guard = (): boolean => {
+            if (
+                commandLock.current ||
+                isLoading ||
+                needsCheck ||
+                accessUnavailable
+            ) {
+                return false;
+            }
+
+            return (
+                !(reviewForm.data.reason || reviewForm.data.note) ||
+                window.confirm(
+                    'Ganti antrean dan buang catatan keputusan belum disimpan?',
+                )
+            );
+        };
+        filterChangeGuardRef.current = guard;
+
+        return () => {
+            if (filterChangeGuardRef.current === guard) {
+                filterChangeGuardRef.current = null;
+            }
+        };
+    }, [
+        filterChangeGuardRef,
+        isLoading,
+        needsCheck,
+        accessUnavailable,
+        reviewForm.data.reason,
+        reviewForm.data.note,
+    ]);
     const stale =
         selected !== null &&
         selected.revision !== reviewForm.data.expected_revision;
@@ -543,7 +581,8 @@ function ReviewWorkspace({
         router.get(
             campusContributionsIndex({ institution: institution.id }),
             {
-                status: merged.status === 'all' ? undefined : merged.status,
+                status: merged.status,
+                q: merged.q?.trim() || undefined,
                 sort: merged.sort,
                 page: next.page ?? 1,
             },
@@ -861,7 +900,9 @@ function ReviewWorkspace({
                                         tabIndex={-1}
                                         className="text-base font-bold text-foreground"
                                     >
-                                        Antrean Validasi
+                                        {filters.status === 'approved'
+                                            ? 'Hasil disetujui'
+                                            : 'Antrean validasi'}
                                     </h2>
                                 </div>
                                 <p className="mt-1 text-xs text-muted-foreground">
@@ -899,12 +940,16 @@ function ReviewWorkspace({
                                         />
                                     </div>
                                     <h3 className="text-base font-bold text-foreground">
-                                        Antrean kosong
+                                        {filters.q
+                                            ? 'Belum ada hasil yang cocok'
+                                            : filters.status === 'approved'
+                                              ? 'Belum ada hasil disetujui'
+                                              : 'Antrean kosong'}
                                     </h3>
                                     <p className="mx-auto max-w-[50ch] text-xs leading-relaxed text-muted-foreground">
                                         Tidak ada kontribusi pada filter ini.
-                                        Ubah status atau urutan untuk menelusuri
-                                        berkas lain.
+                                        Coba kata kunci lain atau ubah status
+                                        untuk menelusuri berkas.
                                     </p>
                                 </div>
                             ) : (
@@ -947,10 +992,14 @@ function ReviewWorkspace({
                                                                 {item.reference}
                                                             </span>
                                                             <h3 className="mt-0.5 text-lg font-bold wrap-anywhere text-foreground">
-                                                                {
+                                                                {(item.status ===
+                                                                'approved'
+                                                                    ? item
+                                                                          .current_version
+                                                                          ?.claim
+                                                                    : null) ||
                                                                     item.project
-                                                                        .title
-                                                                }
+                                                                        .title}
                                                             </h3>
                                                             <p className="mt-1 text-xs text-muted-foreground">
                                                                 Oleh:{' '}
@@ -962,6 +1011,27 @@ function ReviewWorkspace({
                                                                     }
                                                                 </strong>
                                                             </p>
+                                                            {item.status ===
+                                                                'approved' && (
+                                                                <div
+                                                                    className="mt-2 space-y-1"
+                                                                    data-test={`campus-contribution-result-${item.id}`}
+                                                                >
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        {
+                                                                            item
+                                                                                .project
+                                                                                .title
+                                                                        }
+                                                                    </p>
+                                                                    <p className="line-clamp-3 text-sm leading-6 wrap-anywhere text-foreground">
+                                                                        {item
+                                                                            .current_version
+                                                                            ?.summary ||
+                                                                            'Ringkasan versi belum tersedia.'}
+                                                                    </p>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
 
@@ -977,9 +1047,9 @@ function ReviewWorkspace({
                                                                 ? `Versi ${item.current_version.version_number}`
                                                                 : 'Versi belum tersedia'}{' '}
                                                             •{' '}
-                                                            {formatDate(
-                                                                item.updated_at,
-                                                            )}
+                                                            {item.submitted_at
+                                                                ? `Dikirim ${formatDate(item.submitted_at)}`
+                                                                : 'Waktu kirim belum tercatat'}
                                                         </p>
                                                         <p className="mt-1.5 text-muted-foreground">
                                                             {
@@ -1693,16 +1763,33 @@ export default function CampusContributions({
     const [isFilterLoading, setFilterLoading] = useState(false);
     const [filterError, setFilterError] = useState<string | null>(null);
     const [accessUnavailable, setAccessUnavailable] = useState(false);
+    const [searchDraft, setSearchDraft] = useState(filters.q ?? '');
+    const filterChangeGuardRef = useRef<(() => boolean) | null>(null);
+    const lastFilterQuery = useRef<ReviewFilters>(filters);
+
+    useEffect(() => {
+        const frame = requestAnimationFrame(() =>
+            setSearchDraft(filters.q ?? ''),
+        );
+
+        return () => cancelAnimationFrame(frame);
+    }, [filters.q]);
 
     function updateFilters(next: Partial<ReviewFilters>): void {
+        if (isFilterLoading || filterChangeGuardRef.current?.() === false) {
+            return;
+        }
+
         const merged = { ...filters, ...next };
+        lastFilterQuery.current = merged;
 
         setFilterLoading(true);
         setFilterError(null);
         router.get(
             campusContributionsIndex({ institution: institution.id }),
             {
-                status: merged.status === 'all' ? undefined : merged.status,
+                status: merged.status,
+                q: merged.q?.trim() || undefined,
                 sort: merged.sort,
             },
             {
@@ -1754,6 +1841,7 @@ export default function CampusContributions({
                     data-test="campus-contribution-review-root"
                 >
                     <CampusOperationHeader
+                        theme="validation"
                         title="Validasi kontribusi"
                         description="Periksa versi pekerjaan dan bukti privat, lalu berikan keputusan yang membantu mahasiswa memahami langkah berikutnya."
                         institution={institution.name}
@@ -1796,7 +1884,9 @@ export default function CampusContributions({
                                 variant="outline"
                                 className="min-h-11 cursor-pointer rounded-xl bg-white text-xs disabled:cursor-not-allowed"
                                 disabled={isFilterLoading}
-                                onClick={() => updateFilters({})}
+                                onClick={() =>
+                                    updateFilters(lastFilterQuery.current)
+                                }
                                 data-test="campus-contribution-filter-error-retry"
                             >
                                 {isFilterLoading ? (
@@ -1809,12 +1899,109 @@ export default function CampusContributions({
                         </div>
                     )}
 
+                    <nav
+                        aria-label="Pilihan validasi kontribusi"
+                        className="flex flex-wrap gap-2"
+                        data-test="campus-contribution-views"
+                    >
+                        <Button
+                            type="button"
+                            variant={
+                                filters.status === 'pending'
+                                    ? 'default'
+                                    : 'outline'
+                            }
+                            className="min-h-11"
+                            disabled={isFilterLoading}
+                            aria-pressed={filters.status === 'pending'}
+                            onClick={() =>
+                                updateFilters({
+                                    status: 'pending',
+                                    sort: 'oldest',
+                                })
+                            }
+                        >
+                            Pengajuan menunggu
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={
+                                filters.status === 'approved'
+                                    ? 'default'
+                                    : 'outline'
+                            }
+                            className="min-h-11"
+                            disabled={isFilterLoading}
+                            aria-pressed={filters.status === 'approved'}
+                            onClick={() =>
+                                updateFilters({
+                                    status: 'approved',
+                                    sort: 'newest',
+                                })
+                            }
+                        >
+                            Hasil disetujui
+                        </Button>
+                        <p className="basis-full text-sm leading-6 text-muted-foreground">
+                            {filters.status === 'approved'
+                                ? 'Temukan pekerjaan individual yang telah disetujui pada versi yang ditinjau. Ringkasan di atas mencakup seluruh berkas yang dapat ditinjau; hasil di bawah mengikuti pencarian.'
+                                : 'Mulai dari pengajuan terlama. Ringkasan di atas mencakup seluruh berkas yang dapat ditinjau; hasil di bawah mengikuti filter.'}
+                        </p>
+                    </nav>
+
                     {/* Filter Card */}
                     <section
                         aria-label="Filter antrean validasi kontribusi"
                         aria-busy={isFilterLoading}
                         className="grid gap-4 rounded-3xl border border-border bg-white p-4 shadow-sm sm:grid-cols-2 sm:p-5"
                     >
+                        <form
+                            className="grid gap-2 sm:col-span-2"
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                updateFilters({ q: searchDraft.trim() });
+                            }}
+                            data-test="campus-contribution-search-form"
+                        >
+                            <label
+                                htmlFor="contribution-review-search"
+                                className="text-sm font-semibold"
+                            >
+                                Cari pengaju atau pekerjaan
+                            </label>
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                                <Input
+                                    id="contribution-review-search"
+                                    value={searchDraft}
+                                    onChange={(event) =>
+                                        setSearchDraft(event.target.value)
+                                    }
+                                    maxLength={100}
+                                    disabled={isFilterLoading}
+                                    className="min-h-11 min-w-0 flex-1 text-base"
+                                    aria-describedby="contribution-review-search-help"
+                                    placeholder="Nama tampilan, proyek, judul atau ringkasan karya"
+                                    data-test="campus-contribution-search"
+                                />
+                                <Button
+                                    type="submit"
+                                    variant="outline"
+                                    className="min-h-11"
+                                    disabled={isFilterLoading}
+                                >
+                                    <Search aria-hidden="true" />
+                                    Cari kontribusi
+                                </Button>
+                            </div>
+                            <p
+                                id="contribution-review-search-help"
+                                className="text-xs leading-5 text-muted-foreground"
+                            >
+                                Mencari versi yang sudah diajukan dalam
+                                universitas ini. Kosongkan pencarian untuk
+                                melihat semua hasil sesuai status.
+                            </p>
+                        </form>
                         <div className="space-y-1.5">
                             <label
                                 htmlFor="filter-status"
@@ -1873,8 +2060,12 @@ export default function CampusContributions({
                                 )}
                                 data-test="campus-contribution-sort-filter"
                             >
-                                <option value="oldest">Paling lama</option>
-                                <option value="newest">Paling baru</option>
+                                <option value="oldest">
+                                    Pengajuan terlama
+                                </option>
+                                <option value="newest">
+                                    Pengajuan terbaru
+                                </option>
                             </select>
                         </div>
                     </section>
@@ -1885,6 +2076,14 @@ export default function CampusContributions({
                             memutuskan. Perbaikan atau penolakan memerlukan
                             alasan faktual. Bukti tetap privat dan keputusan
                             tersimpan bersama versi serta riwayat peninjauan.
+                        </p>
+                        <p className="mt-3">
+                            Sepakati peninjau utama, cadangan dan jadwal
+                            pemeriksaan bersama tim kampus. Gunakan notifikasi
+                            aplikasi untuk pengajuan baru. Waktu kirim berasal
+                            dari pengajuan versi ini; riwayat yang belum
+                            tercatat tidak diberi tanggal perkiraan. Halaman ini
+                            tidak menetapkan SLA atau jadwal kampus.
                         </p>
                     </CampusTechnicalDetails>
                     {/* Review Workspace with Deferred queue */}
@@ -1898,6 +2097,7 @@ export default function CampusContributions({
                                 onAccessUnavailable={() =>
                                     setAccessUnavailable(true)
                                 }
+                                filterChangeGuardRef={filterChangeGuardRef}
                             />
                         ) : (
                             <section className="rounded-3xl border border-border bg-white p-5">

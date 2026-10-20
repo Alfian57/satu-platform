@@ -2,21 +2,15 @@
 
 declare(strict_types=1);
 
-use App\Actions\Consent\ConsentRecorder;
 use App\Actions\Integration\CreateIntegrationConnection;
 use App\Actions\Recruiter\GrantRecruiterEntitlement;
 use App\Actions\User\ExportUserData;
-use App\Enums\ContactRequestStatus;
 use App\Enums\RecruiterEntitlementScope;
-use App\Enums\RecruiterEntitlementStatus;
 use App\Http\Controllers\DataRightsController;
-use App\Http\Controllers\RecruiterContactRequestController;
-use App\Http\Controllers\TalentSearchController;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\PhoneNumber;
-use App\Models\RecruiterContactRequest;
 use App\Models\RecruiterMembership;
 use App\Models\RecruiterOrganization;
 use App\Models\TalentCandidateProjection;
@@ -69,41 +63,66 @@ expectIntegration(Model::preventsLazyLoading(), 'Proteksi lazy loading dari back
 expectIntegration(Schema::hasColumn('users', 'remember_token') && Schema::hasColumn('inclusion_signals', 'is_synthetic'), 'Migration asli menyediakan kolom backend terbaru.');
 $candidate = User::factory()->create();
 $recruiter = User::factory()->create();
-$admin = User::factory()->create(['is_platform_admin' => true]);
+$admin = User::factory()->create(['is_platform_admin' => false]);
 $campus = Institution::factory()->active()->create();
+config()->set('university.slug', $campus->slug);
+config()->set('university.advanced_administration.recruiter', true);
+InstitutionMembership::factory()->campusAdmin()->verifiedByCampusAdmin()->create(['user_id' => $admin->id, 'institution_id' => $campus->id]);
 $organization = RecruiterOrganization::factory()->verified()->create();
 RecruiterMembership::factory()->create(['user_id' => $recruiter->id, 'recruiter_organization_id' => $organization->id]);
-$entitlement = $app->make(GrantRecruiterEntitlement::class)->execute($admin, $organization, RecruiterEntitlementScope::CandidateSearch, Illuminate\Support\Carbon::now()->subMinute());
+try {
+    $app->make(GrantRecruiterEntitlement::class)->execute($admin, $organization, RecruiterEntitlementScope::CandidateSearch, Illuminate\Support\Carbon::now()->subMinute());
+    throw new RuntimeException('Role perekrut yang sudah dihapus mendapat hak baru.');
+} catch (AuthorizationException) {
+    expectIntegration(true, 'Konfigurasi perekrut lama tidak dapat menerbitkan hak akses baru.');
+}
 $phone = PhoneNumber::factory()->forNumber('+6281200000099')->create(['user_id' => $candidate->id]);
 $projection = TalentCandidateProjection::factory()->create(['user_id' => $candidate->id, 'institution_id' => $campus->id]);
-$contact = RecruiterContactRequest::factory()->create([
-    'recruiter_organization_id' => $organization->id, 'recruiter_user_id' => $recruiter->id,
-    'candidate_user_id' => $candidate->id, 'talent_candidate_projection_id' => $projection->id,
-]);
-$consent = $app->make(ConsentRecorder::class);
-$request = Request::create('/recruiter/talent/contact-requests');
-$request->setUserResolver(fn () => $recruiter);
-$contacts = $app->make(RecruiterContactRequestController::class);
-$talent = $app->make(TalentSearchController::class);
-expectIntegration(integrationProps($contacts->index($request))['requests']->first()['candidate_phone'] === null, 'Permintaan pending tidak membuka nomor kontak.');
-$contact->update(['status' => ContactRequestStatus::Accepted, 'responded_at' => now()]);
-expectIntegration(integrationProps($contacts->index($request))['requests']->first()['candidate_phone'] === null, 'Status accepted tanpa consent aktual tidak membuka kontak.');
-$consent->grant($candidate, 'contact.handoff', 'v1', 'student.contact_response');
-DB::enableQueryLog();
-expectIntegration(integrationProps($contacts->index($request))['requests']->first()['candidate_phone'] === $phone->number, 'Riwayat menampilkan handoff yang disetujui dan berhak akses.');
-expectIntegration(integrationProps($talent->show($request, $projection->id))['candidate']['phone'] === $phone->number, 'Detail menggunakan handoff yang sama tanpa menghapus desain lokal.');
-foreach (DB::getQueryLog() as $query) {
-    expectIntegration(str_starts_with(strtolower(trim($query['query'])), 'select'), 'GET handoff tetap baca-saja.');
+App\Models\RecruiterEntitlement::query()->create(['recruiter_organization_id' => $organization->id, 'scope' => RecruiterEntitlementScope::FullSuite, 'status' => 'active', 'starts_at' => now()->subDay(), 'ends_at' => null, 'issuer_id' => $admin->id, 'reason' => 'Riwayat synthetic untuk uji penutupan role.']);
+expectIntegration(! $app->make(App\Actions\Recruiter\VerifyRecruiterEntitlement::class)->check($organization, RecruiterEntitlementScope::CandidateSearch), 'Entitlement perekrut selalu ditolak pada sistem dua role.');
+expectIntegration($app->make(App\Actions\Auth\ResolveUserWorkspace::class)->handle($recruiter)->role === App\Enums\WorkspaceRole::Student, 'Membership perekrut historis tidak menjadi role aktif.');
+foreach (['recruiter.talent.search', 'recruiter.talent.candidates.show', 'recruiter.talent.contact-requests.index', 'student.contact-requests.index'] as $name) {
+    expectIntegration(! Illuminate\Support\Facades\Route::has($name), 'Rute historis '.$name.' tidak lagi terdaftar.');
 }
-DB::disableQueryLog();
-$consent->withdraw($candidate, 'contact.handoff', 'v1', 'test.integration');
-expectIntegration(! isset(integrationProps($talent->show($request, $projection->id))['candidate']['phone']), 'Pencabutan consent menyembunyikan nomor pada pembacaan berikutnya.');
-$consent->grant($candidate, 'contact.handoff', 'v1', 'student.contact_response');
-$projection->update(['is_visible' => false]);
-expectIntegration(integrationProps($contacts->index($request))['requests']->first()['candidate_phone'] === null, 'Visibility ditarik menghentikan exposure kontak pada riwayat.');
-$projection->update(['is_visible' => true]);
-$entitlement->update(['status' => RecruiterEntitlementStatus::Revoked]);
-expectIntegration(integrationProps($contacts->index($request))['requests']->first()['candidate_phone'] === null, 'Hak akses dicabut tetap mempertahankan riwayat tanpa nomor privat.');
+$roles = array_map(fn (App\Enums\WorkspaceRole $role): string => $role->value, App\Enums\WorkspaceRole::cases());
+sort($roles);
+expectIntegration($roles === ['campus_admin', 'student'], 'Enum workspace tepat dua role, tanpa perekrut atau admin platform.');
+$legacy = User::factory()->create(['is_platform_admin' => true]);
+$workspaceResolver = $app->make(App\Actions\Auth\ResolveUserWorkspace::class);
+expectIntegration($workspaceResolver->handle($legacy)->role === App\Enums\WorkspaceRole::Student, 'Flag historis platform tidak membuat role atau hak akses.');
+expectIntegration($workspaceResolver->handle($admin)->role === App\Enums\WorkspaceRole::CampusAdmin, 'Admin Universitas tetap berasal dari membership UTY aktual.');
+foreach ([$admin, $recruiter, $candidate] as $actor) {
+    $gate = Illuminate\Support\Facades\Gate::forUser($actor);
+    $membership = $organization->memberships()->firstOrFail();
+    expectIntegration(! $gate->allows('view', $organization) && ! $gate->allows('update', $organization) && ! $gate->allows('review', $organization), 'Policy organisasi lama tidak memberi akses kepada role mana pun.');
+    expectIntegration(! $gate->allows('create', [RecruiterMembership::class, $organization->id]) && ! $gate->allows('view', $membership) && ! $gate->allows('update', $membership) && ! $gate->allows('delete', $membership), 'Membership arsip tidak dapat dipakai untuk membaca atau menerbitkan role tambahan.');
+}
+expectIntegration(array_keys($workspaceResolver->handle($recruiter)->toArray()) === ['role', 'institution'], 'Payload workspace tidak menyertakan organisasi perekrut.');
+config()->set('session.driver', 'array');
+foreach ([$admin, $candidate, $recruiter, $legacy] as $actor) {
+    foreach ([
+        ['GET', '/recruiter/talent/search'], ['GET', '/recruiter/talent/saved'],
+        ['GET', '/recruiter/talent/candidates/1'], ['GET', '/recruiter/talent/contact-requests'],
+        ['POST', '/recruiter/talent/candidates/1/save'], ['DELETE', '/recruiter/talent/candidates/1/unsave'],
+        ['POST', '/recruiter/talent/candidates/1/contact'], ['DELETE', '/recruiter/talent/contact-requests/1'],
+        ['GET', '/student/contact-requests'], ['POST', '/student/contact-requests/1/accept'],
+        ['POST', '/student/contact-requests/1/decline'],
+        ['POST', '/platform/recruiter-organizations/1/review'],
+        ['POST', '/platform/recruiter-organizations/1/entitlements'],
+        ['POST', '/platform/recruiter-entitlements/1/revoke'],
+    ] as [$method, $uri]) {
+        Illuminate\Support\Facades\Auth::forgetGuards();
+        Illuminate\Support\Facades\Auth::guard('web')->setUser($actor);
+        $retiredRequest = Request::create($uri, $method);
+        $retiredRequest->headers->set('Accept', 'application/json');
+        $retiredResponse = $app->make(Illuminate\Contracts\Http\Kernel::class)->handle($retiredRequest);
+        expectIntegration($retiredResponse->getStatusCode() === 404, 'Endpoint role yang dihapus tidak dapat dipakai: '.$method.' '.$uri);
+    }
+}
+$visibilityRules = (new App\Http\Requests\Profile\UpdateStudentProfileVisibilityRequest)->rules();
+expectIntegration(Illuminate\Support\Facades\Validator::make(['portfolio_visibility' => 'recruiter'], $visibilityRules)->fails(), 'Permintaan berbagi ke role perekrut ditolak server.');
+expectIntegration(Illuminate\Support\Facades\Validator::make(['recruiter_discoverable' => true], $visibilityRules)->fails(), 'Pencarian perekrut tidak dapat diaktifkan melalui payload tersembunyi.');
+expectIntegration(Illuminate\Support\Facades\Validator::make(['portfolio_visibility' => 'private', 'recruiter_discoverable' => false, 'expected_privacy_revision' => str_repeat('a', 64)], $visibilityRules)->passes(), 'Berbagi privat tetap valid tanpa role tambahan.');
 $personal = Request::create('/account/data-rights/export', 'POST');
 $personal->setUserResolver(fn () => $candidate);
 $accountPage = $app->make(App\Http\Controllers\Settings\ProfileController::class);

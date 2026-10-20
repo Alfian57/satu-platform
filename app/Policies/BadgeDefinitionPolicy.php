@@ -21,7 +21,7 @@ final class BadgeDefinitionPolicy
 
     public function create(User $user): bool
     {
-        return $user->exists && $user->is_platform_admin;
+        return $user->exists && $user->canAdministerAdvancedModule('gamification');
     }
 
     public function update(User $user, BadgeDefinition $definition): bool

@@ -29,7 +29,8 @@ final class PortfolioEntrySerializer
             'summary' => $entry->summary,
             'verification_level' => $entry->verification_level->value,
             'verification_label' => $entry->verification_level->label(),
-            'visibility' => $entry->visibility->value,
+            'visibility' => $entry->visibility->effective()->value,
+            'privacy_revision' => PortfolioPrivacyRevision::for($entry),
             'status' => $this->status($entry),
             'source' => [
                 'type' => 'approved_contribution',
@@ -92,6 +93,6 @@ final class PortfolioEntrySerializer
             return 'source_unavailable';
         }
 
-        return $entry->visibility->value === 'private' ? 'private' : 'published';
+        return $entry->visibility->effective()->value === 'private' ? 'private' : 'published';
     }
 }

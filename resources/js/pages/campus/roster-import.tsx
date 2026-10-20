@@ -459,6 +459,7 @@ export default function RosterImport({
             <AppPage>
                 <div className="space-y-6" data-test="campus-roster-root">
                     <CampusOperationHeader
+                        theme="roster"
                         title="Roster mahasiswa"
                         description="Siapkan data mahasiswa untuk pencocokan afiliasi. Periksa pratinjau sebelum mengaktifkan roster baru."
                         institution={institution.name}
@@ -493,8 +494,8 @@ export default function RosterImport({
                                 Akses roster tidak tersedia
                             </h2>
                             <p className="mt-2 text-sm text-muted-foreground">
-                                Data sebelumnya disembunyikan. Periksa izin
-                                institusi sebelum memuat ulang.
+                                Data sebelumnya disembunyikan. Periksa akses
+                                Admin Universitas sebelum memuat ulang.
                             </p>
                         </section>
                     ) : (

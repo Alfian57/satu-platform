@@ -38,7 +38,8 @@ const profile = {
     updated_at: '2026-10-10T00:00:00Z',
     bio: null,
     study_program: null,
-    study_year: null,
+    faculty: null,
+    admission_year: null,
     skills: [
         {
             taxonomy_id: 5,

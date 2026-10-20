@@ -169,6 +169,7 @@ export type ContributionReviewQueueItem = {
     };
     status: ContributionStatus;
     updated_at: string;
+    submitted_at?: string | null;
     current_version: ContributionReviewQueueVersion | null;
     reviews: ContributionReview[];
 };

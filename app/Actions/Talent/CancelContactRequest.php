@@ -12,6 +12,7 @@ use App\Models\RecruiterOrganization;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use InvalidArgumentException;
 
 final class CancelContactRequest
@@ -30,15 +31,15 @@ final class CancelContactRequest
         RecruiterOrganization $organization,
         int $contactRequestId,
     ): RecruiterContactRequest {
-        if (! $recruiter->is_platform_admin) {
-            $isMember = $organization->memberships()
-                ->where('user_id', $recruiter->id)
-                ->where('status', RecruiterMembershipStatus::Active)
-                ->exists();
+        Gate::forUser($recruiter)->authorize('view', $organization);
 
-            if (! $isMember) {
-                throw new AuthorizationException('Anda bukan anggota aktif dari organization perekrut ini.');
-            }
+        $isMember = $organization->memberships()
+            ->where('user_id', $recruiter->id)
+            ->where('status', RecruiterMembershipStatus::Active)
+            ->exists();
+
+        if (! $isMember) {
+            throw new AuthorizationException('Anda bukan anggota aktif dari organization perekrut ini.');
         }
 
         $contactRequest = RecruiterContactRequest::query()

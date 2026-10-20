@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\Contribution;
+use App\Models\User;
 use App\Notifications\Concerns\HasDatabaseNotificationIntent;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Gate;
 
 final class ContributionSubmittedNotification extends Notification implements ShouldQueue
 {
@@ -26,6 +28,12 @@ final class ContributionSubmittedNotification extends Notification implements Sh
     public function via(object $notifiable): array
     {
         return ['database'];
+    }
+
+    public function shouldSend(object $notifiable, string $channel): bool
+    {
+        return $notifiable instanceof User && $notifiable->isUniversityAdmin()
+            && Gate::forUser($notifiable)->allows('view', $this->contribution);
     }
 
     public function notificationIntentKey(): string

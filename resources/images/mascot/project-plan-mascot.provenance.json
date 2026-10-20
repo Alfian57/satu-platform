@@ -1,0 +1,57 @@
+{
+    "description": "Maskot SATU membawa rancangan proyek untuk menu Proyek mahasiswa.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan, reference-based character illustration",
+    "generation_id": "exec-0901ea41-d3ed-4ca5-b87c-314520919b24",
+    "identity_references": [
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png",
+            "purpose": "Identitas dan proporsi",
+            "sha256": "3356586B1594DCC874710C91CE71BD294046139FB5E2DC0734CEE851E637ACF1"
+        },
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip.png",
+            "purpose": "Material, warna, ekspresi dan tas asli",
+            "sha256": "A356C316D00EAD034A961170B77847636DF43008C9F459A562A6531443211AE4"
+        }
+    ],
+    "source": {
+        "file": "resources/images/mascot/mascot-project-plan.png",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "bytes": 1460894,
+        "sha256": "f4b6b3a5cbe21708e01517aa7b6a435393250d878ae880e6ea42c6a0366602af"
+    },
+    "runtime_variants": [
+        {
+            "file": "public/images/mascot-project-plan-256.webp",
+            "width": 256,
+            "height": 256,
+            "mode": "RGBA",
+            "bytes": 23136,
+            "sha256": "4ea6674e63b3ccb39ed49fd6c27ec1403ba4df4d41e752e9c7ed8e5f51abd617"
+        },
+        {
+            "file": "public/images/mascot-project-plan-512.webp",
+            "width": 512,
+            "height": 512,
+            "mode": "RGBA",
+            "bytes": 63848,
+            "sha256": "209394c9e6e262c68891593a0eb864d4b8da6e6d451f4645655507422b3b89a5"
+        },
+        {
+            "file": "public/images/mascot-project-plan.webp",
+            "width": 1024,
+            "height": 1024,
+            "mode": "RGBA",
+            "bytes": 195338,
+            "sha256": "f89460f5d5bcca5497a17fda04969e92aaf94246924edc2c6b4321c7cc400fbc"
+        }
+    ],
+    "optimization": "Resize mekanis Lanczos ke 256, 512 dan 1024px, WebP kualitas 90 method 6. Alpha dipertahankan, tanpa edit kreatif manual.",
+    "alt_purpose": "Dekoratif dengan alt kosong. Tidak menjadi status, jaminan bergabung atau kontrol. Copy dan tindakan tetap HTML.",
+    "scope": "Pose project-plan pada hero Peluang dan Proyek saya, bukan detail, editor atau ruang kerja. Animasi masuk sekali 420ms mengikuti Beranda, tanpa reaksi hover. Reduced motion tetap statis.",
+    "manual_review": "Identitas biru, ivory dan oranye serta tas navy asli dipertahankan. Burung berdiri memegang rancangan proyek, bukan berdiri di atas buku. Siluet, ujung sayap dan kaki utuh, latar transparan.",
+    "prompt": "Create one premium 3D illustrated mascot asset for SATU university student project collaboration. Use the first reference turnaround strictly for character identity and the second reference strictly for materials and expression. ONE full-body kingfisher bird, same cobalt and azure layered feathers, ivory fluffy chest and cheek stripes, warm orange eyebrow and cheek markings, glossy warm brown eyes, graphite long beak and bird feet. Preserve the original small NAVY leather book satchel crossbody with brass buckle, no backpack, no outfit changes. New specific pose: standing comfortably, facing slightly LEFT toward the page text, smiling gently with beak slightly open, one feathered wing cradles a pale blue rolled project plan with a partly unrolled ivory sheet and just a few thin pale-blue non-legible plan lines; other feathered wing opens a little in a calm welcoming gesture. It is a bird with feathered wings, NOT human fingers or arms. Feet fully visible, naturally standing. The project plan is a single modest prop, not a large board or another book. No hardhat, no glasses, no extra accessories. No standing or sitting on books. Designed as a refined friendly companion in a compact hero on a blue-white university web dashboard. Rich detailed soft feathers and accurate consistent original proportions. Soft studio lighting, clean crisp high definition edges, restrained professional Pixar-quality dimensional material, not plastic toy. Isolated transparent background, centered complete silhouette filling 86 percent of square canvas with clear padding, both wing tips and feet uncut. No background scenery, no floating icons, no platform, no drop shadow background, no text, no logos, no UI. Deliver a single transparent PNG."
+}

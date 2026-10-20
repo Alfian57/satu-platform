@@ -79,6 +79,7 @@ function opportunityFailure(callable $operation, string $exception, string $mess
     throw new RuntimeException($message.' tidak ditolak.');
 }
 $campus = Institution::factory()->active()->create(['name' => 'Kampus A. Data sintetis']);
+config()->set('university.slug', $campus->slug);
 $otherCampus = Institution::factory()->active()->create(['name' => 'Kampus B. Data sintetis']);
 $owner = User::factory()->create();
 $newStudent = User::factory()->create();

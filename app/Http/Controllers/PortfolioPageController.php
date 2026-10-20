@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\Portfolio\BuildPublicPortfolioProjection;
-use App\Enums\InstitutionMembershipRole;
+use App\Actions\Profile\ResolveStudentMembership;
 use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionStatus;
-use App\Models\InstitutionMembership;
 use App\Models\PortfolioEntry;
 use App\Models\StudentProfile;
 use App\Models\User;
 use App\Support\Portfolio\PortfolioEntrySerializer;
+use App\Support\Portfolio\PortfolioPrivacyRevision;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -21,6 +21,8 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 final class PortfolioPageController extends Controller
 {
+    public function __construct(private readonly ResolveStudentMembership $resolveStudentMembership) {}
+
     public function share(
         Request $request,
         string $publicIdentifier,
@@ -42,6 +44,7 @@ final class PortfolioPageController extends Controller
 
         $response->setStatusCode($isPublished ? 200 : 410);
         $response->headers->set('X-Robots-Tag', $robots);
+        $response->headers->set('Cache-Control', 'private, no-store, max-age=0');
 
         return $response;
     }
@@ -104,6 +107,7 @@ final class PortfolioPageController extends Controller
 
         return array_values(
             PortfolioEntry::query()
+                ->withMax(['privacyChanges' => fn (Builder $changes): Builder => $changes->where('institution_id', $profile->institution_id)], 'id')
                 ->where('user_id', $profile->user_id)
                 ->where('institution_id', $profile->institution_id)
                 ->with([
@@ -135,7 +139,8 @@ final class PortfolioPageController extends Controller
                 'id' => $profile->institution->getKey(),
                 'name' => $profile->institution->name,
             ],
-            'portfolio_visibility' => $profile->portfolio_visibility->value,
+            'portfolio_visibility' => $profile->portfolio_visibility->effective()->value,
+            'privacy_revision' => PortfolioPrivacyRevision::for($profile),
             'recruiter_discoverable' => $profile->recruiter_discoverable,
             'updated_at' => $profile->updated_at->toIso8601String(),
         ];
@@ -143,21 +148,13 @@ final class PortfolioPageController extends Controller
 
     private function activeProfile(User $user): ?StudentProfile
     {
-        $membership = InstitutionMembership::query()
-            ->with('institution:id,name,status')
-            ->whereBelongsTo($user)
-            ->where('role', InstitutionMembershipRole::Student)
-            ->where('status', InstitutionMembershipStatus::Verified)
-            ->whereRelation('institution', 'status', InstitutionStatus::Active)
-            ->latest('verified_at')
-            ->latest('id')
-            ->first();
-
-        if ($membership === null) {
+        $membership = $this->resolveStudentMembership->handle($user);
+        if ($membership?->status !== InstitutionMembershipStatus::Verified) {
             return null;
         }
 
         return StudentProfile::query()
+            ->withMax(['privacyChanges' => fn (Builder $changes): Builder => $changes->where('institution_id', $membership->institution_id)], 'id')
             ->with('institution:id,name')
             ->whereBelongsTo($user)
             ->whereBelongsTo($membership->institution)

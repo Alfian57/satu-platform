@@ -11,6 +11,7 @@ use App\Enums\PortfolioVisibility;
 use App\Models\Institution;
 use App\Models\StudentProfile;
 use App\Models\User;
+use App\Support\Portfolio\PortfolioPrivacyRevision;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -38,6 +39,8 @@ final class UpdateStudentProfileVisibility
                 ->lockForUpdate()
                 ->whereKey($studentProfile->getKey())
                 ->firstOrFail();
+            Gate::forUser($actor)->authorize('update', $profile);
+            PortfolioPrivacyRevision::ensureFresh($profile, $data['expected_privacy_revision'] ?? null);
             $this->ensureFresh->handle($profile, $data['expected_updated_at'] ?? null, $data['expected_profile_revision'] ?? null);
             $before = [
                 'portfolio_visibility' => $profile->portfolio_visibility->value,
@@ -48,9 +51,9 @@ final class UpdateStudentProfileVisibility
             if (array_key_exists('portfolio_visibility', $data)) {
                 $visibility = PortfolioVisibility::tryFrom((string) $data['portfolio_visibility']);
 
-                if ($visibility === null) {
+                if ($visibility === null || ! $visibility->isSelectable()) {
                     throw ValidationException::withMessages([
-                        'portfolio_visibility' => 'Visibility portfolio tidak valid.',
+                        'portfolio_visibility' => 'Pilih Hanya saya atau Publik.',
                     ]);
                 }
 
@@ -64,9 +67,9 @@ final class UpdateStudentProfileVisibility
                     FILTER_NULL_ON_FAILURE,
                 );
 
-                if ($discoverable === null) {
+                if ($discoverable !== false) {
                     throw ValidationException::withMessages([
-                        'recruiter_discoverable' => 'Nilai recruiter discoverability tidak valid.',
+                        'recruiter_discoverable' => 'Pencarian perekrut tidak tersedia pada sistem ini.',
                     ]);
                 }
 

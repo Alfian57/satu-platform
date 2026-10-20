@@ -6,15 +6,16 @@ namespace App\Listeners;
 
 use App\Actions\Gamification\AwardVerifiedContributionXp;
 use App\Events\ContributionApproved;
+use App\Exceptions\MissingXpSemester;
 use App\Models\Contribution;
 use App\Models\ContributionReview;
 use App\Models\User;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-final class AwardApprovedContributionXp implements ShouldQueue
+final class AwardApprovedContributionXp implements ShouldQueueAfterCommit
 {
     use Queueable;
 
@@ -52,6 +53,7 @@ final class AwardApprovedContributionXp implements ShouldQueue
         $reviewExists = ContributionReview::query()
             ->whereKey($event->reviewId)
             ->where('contribution_version_id', $event->contributionVersionId)
+            ->where('reviewer_id', $event->reviewerId)
             ->where('decision', 'approved')
             ->exists();
 
@@ -67,17 +69,26 @@ final class AwardApprovedContributionXp implements ShouldQueue
 
         $reviewer = User::query()->find($event->reviewerId);
 
-        $this->award->handle(
-            contribution: $contribution,
-            actor: $reviewer,
-        );
+        try {
+            $this->award->handle(
+                contribution: $contribution,
+                actor: $reviewer,
+            );
+        } catch (MissingXpSemester) {
+            Log::notice('gamification.xp_waiting_for_semester', [
+                'contribution_id' => $event->contributionId,
+                'institution_id' => $event->institutionId,
+                'review_id' => $event->reviewId,
+            ]);
+        }
     }
 
-    public function failed(?Throwable $exception = null): void
+    public function failed(ContributionApproved $event, Throwable $exception): void
     {
         Log::error('gamification.xp_award_failed', [
-            'error_class' => $exception === null ? null : $exception::class,
-            'error' => $exception?->getMessage(),
+            'contribution_id' => $event->contributionId,
+            'institution_id' => $event->institutionId,
+            'error_class' => $exception::class,
         ]);
     }
 }

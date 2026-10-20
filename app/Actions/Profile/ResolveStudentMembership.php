@@ -4,27 +4,39 @@ declare(strict_types=1);
 
 namespace App\Actions\Profile;
 
+use App\Actions\Institution\ResolveConfiguredUniversity;
 use App\Enums\InstitutionMembershipRole;
-use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionStatus;
+use App\Exceptions\InvalidUniversityConfiguration;
 use App\Models\InstitutionMembership;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 final class ResolveStudentMembership
 {
+    public function __construct(private readonly ResolveConfiguredUniversity $resolveUniversity) {}
+
     public function handle(User $user, ?int $institutionId = null): ?InstitutionMembership
     {
+        if (! $user->exists || $user->isDirty($user->getKeyName())) {
+            return null;
+        }
+
+        try {
+            $university = $this->resolveUniversity->handle();
+        } catch (InvalidUniversityConfiguration) {
+            return null;
+        }
+
+        if ($institutionId !== null && $institutionId !== $university->getKey()) {
+            return null;
+        }
+
         return InstitutionMembership::query()
             ->with('institution:id,name,status,timezone')
             ->whereBelongsTo($user)
+            ->forInstitution($university)
             ->where('role', InstitutionMembershipRole::Student)
-            ->whereRelation('institution', 'status', InstitutionStatus::Active)
-            ->when($institutionId !== null, fn (Builder $query): Builder => $query->where('institution_id', $institutionId))
-            ->orderByRaw('CASE WHEN status = ? THEN 0 WHEN status = ? THEN 1 ELSE 2 END', [
-                InstitutionMembershipStatus::Verified->value,
-                InstitutionMembershipStatus::Pending->value,
-            ])
-            ->latest('requested_at')->latest('id')->first();
+            ->when(DB::transactionLevel() > 0, fn ($query) => $query->sharedLock())
+            ->first();
     }
 }

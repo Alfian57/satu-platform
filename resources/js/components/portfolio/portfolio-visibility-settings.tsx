@@ -1,6 +1,6 @@
 import { useHttp } from '@inertiajs/react';
-import { Eye, Save, ShieldCheck, UserRoundSearch } from 'lucide-react';
-import { useState } from 'react';
+import { Eye, Save, ShieldCheck } from 'lucide-react';
+import { useRef, useState } from 'react';
 import {
     PortfolioFormFeedback,
     portfolioFieldError,
@@ -10,10 +10,14 @@ import {
     portfolioVisibilityLabel,
     portfolioVisibilityOptions,
 } from '@/components/portfolio/portfolio-presentation';
+import {
+    PortfolioPrivacyRecoveryNotice,
+    usePortfolioPrivacyRecovery,
+} from '@/components/portfolio/portfolio-privacy-recovery';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { show as showProfile } from '@/routes/student-profiles';
 import { update as updateProfileVisibility } from '@/routes/student-profiles/visibility';
 import type {
     PortfolioProfile,
@@ -26,35 +30,42 @@ type Props = {
     profile: PortfolioProfile;
     onUpdated: (profile: PortfolioProfile) => void;
     dataTestPrefix?: string;
+    onAccessRevoked?: () => void;
 };
 
 export function PortfolioVisibilitySettings({
     profile,
     onUpdated,
     dataTestPrefix = 'portfolio-profile',
+    onAccessRevoked,
 }: Props) {
     const [actionMessage, setActionMessage] = useState<string | null>(null);
-    const [actionError, setActionError] = useState<string | null>(null);
+    const commandLock = useRef(false);
+    const recovery = usePortfolioPrivacyRecovery<
+        PortfolioProfileApiResponse['data']
+    >({
+        resourceId: profile.id,
+        readUrl: showProfile(profile.id).url,
+        onRead: (latest) => onUpdated({ ...profile, ...latest }),
+        onAccessRevoked,
+    });
     const form = useHttp<
         PortfolioProfileVisibilityPayload,
         PortfolioProfileApiResponse
     >({
         portfolio_visibility: profile.portfolio_visibility,
-        recruiter_discoverable: profile.recruiter_discoverable,
+        recruiter_discoverable: false,
         expected_updated_at: profile.updated_at,
+        expected_privacy_revision: profile.privacy_revision,
     });
     const errors = form.errors as PortfolioErrorMap;
     const visibilityError =
         portfolioFieldError(errors, 'portfolio_visibility') ??
         portfolioFieldError(errors, 'profile_visibility');
-    const discoverableError = portfolioFieldError(
-        errors,
-        'recruiter_discoverable',
-    );
-    const isStale = form.data.expected_updated_at !== profile.updated_at;
+    const isStale =
+        form.data.expected_privacy_revision !== profile.privacy_revision;
     const hasChanges =
-        form.data.portfolio_visibility !== profile.portfolio_visibility ||
-        form.data.recruiter_discoverable !== profile.recruiter_discoverable;
+        form.data.portfolio_visibility !== profile.portfolio_visibility;
     const selection = portfolioVisibilityOptions.find(
         (option) => option.value === form.data.portfolio_visibility,
     );
@@ -62,54 +73,46 @@ export function PortfolioVisibilitySettings({
     function applyLatestSettings(): void {
         form.setData({
             portfolio_visibility: profile.portfolio_visibility,
-            recruiter_discoverable: profile.recruiter_discoverable,
+            recruiter_discoverable: false,
             expected_updated_at: profile.updated_at,
+            expected_privacy_revision: profile.privacy_revision,
         });
         form.clearErrors();
-        setActionError(null);
         setActionMessage(null);
     }
 
     function submit(event: React.FormEvent<HTMLFormElement>): void {
         event.preventDefault();
 
-        if (form.processing || isStale) {
+        if (
+            commandLock.current ||
+            form.processing ||
+            isStale ||
+            recovery.blocked
+        ) {
             return;
         }
 
         setActionMessage(null);
-        setActionError(null);
+        commandLock.current = true;
         form.patch(updateProfileVisibility(profile.id).url, {
-            onHttpException: (response: { status: number }) => {
-                setActionError(
-                    response.status === 409
-                        ? 'Pengaturan profil berubah di sesi lain. Muat ulang halaman untuk mengambil pengaturan terbaru.'
-                        : response.status === 403
-                          ? 'Pengaturan profil ini sudah tidak dapat diubah. Periksa akses atau muat ulang halaman.'
-                          : 'Pengaturan profil belum tersimpan. Coba lagi.',
-                );
-
-                return false;
-            },
-            onNetworkError: () => {
-                setActionError(
-                    'Pengaturan profil belum tersimpan. Periksa koneksi lalu coba lagi.',
-                );
-
-                return false;
-            },
+            onHttpException: recovery.onHttpException,
+            onNetworkError: recovery.onNetworkError,
         })
             .then((response) => {
                 form.setData({
                     portfolio_visibility: response.data.portfolio_visibility,
-                    recruiter_discoverable:
-                        response.data.recruiter_discoverable,
+                    recruiter_discoverable: false,
                     expected_updated_at: response.data.updated_at,
+                    expected_privacy_revision: response.data.privacy_revision,
                 });
                 onUpdated({ ...profile, ...response.data });
                 setActionMessage('Pengaturan portofolio sudah tersimpan.');
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(() => {
+                commandLock.current = false;
+            });
     }
 
     return (
@@ -135,8 +138,8 @@ export function PortfolioVisibilitySettings({
                         Kendali visibilitas
                     </h2>
                     <p className="text-sm leading-6 text-muted-foreground">
-                        Kamu menentukan jangkauan profil. Izin ditemukan
-                        perekrut adalah pilihan terpisah.
+                        Pilih Hanya saya atau Publik. Profil Hanya saya menutup
+                        seluruh karya dari pembaca lain.
                     </p>
                 </div>
             </div>
@@ -150,16 +153,6 @@ export function PortfolioVisibilitySettings({
                     </dt>
                     <dd className="font-semibold text-foreground">
                         {portfolioVisibilityLabel(profile.portfolio_visibility)}
-                    </dd>
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <dt className="text-muted-foreground">
-                        Izin ditemukan perekrut
-                    </dt>
-                    <dd className="font-semibold text-foreground">
-                        {profile.recruiter_discoverable
-                            ? 'Diizinkan'
-                            : 'Tidak diizinkan'}
                     </dd>
                 </div>
             </dl>
@@ -180,7 +173,7 @@ export function PortfolioVisibilitySettings({
                             form.clearErrors('portfolio_visibility');
                             setActionMessage(null);
                         }}
-                        disabled={form.processing}
+                        disabled={form.processing || recovery.blocked}
                         aria-invalid={Boolean(visibilityError)}
                         aria-describedby={
                             dataTestPrefix +
@@ -199,65 +192,11 @@ export function PortfolioVisibilitySettings({
                     </select>
                     <p
                         id={dataTestPrefix + '-hint'}
-                        className="text-xs leading-5 text-muted-foreground"
+                        className="rounded-xl border border-[#F2D3A9] bg-[#FFF4E5] p-3 text-xs leading-5 text-[#C2410C]"
                     >
                         {form.data.portfolio_visibility === 'public'
                             ? 'Halaman publik hanya menampilkan karya yang juga dipilih Publik.'
-                            : form.data.portfolio_visibility === 'recruiter'
-                              ? 'Pencarian perekrut juga membutuhkan izin ditemukan profil dan jangkauan karya yang sesuai.'
-                              : selection?.description}
-                    </p>
-                </div>
-                <div className="grid min-w-0 gap-3 rounded-2xl border border-primary/10 bg-card p-4">
-                    <div className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-                        <UserRoundSearch
-                            aria-hidden="true"
-                            className="size-4 shrink-0 text-primary"
-                        />
-                        Pencarian perekrut
-                    </div>
-                    <div className="flex min-w-0 items-start gap-3">
-                        <Checkbox
-                            id={dataTestPrefix + '-discoverable'}
-                            className="mt-1 shrink-0 cursor-pointer disabled:cursor-not-allowed"
-                            checked={form.data.recruiter_discoverable}
-                            onCheckedChange={(checked) => {
-                                form.setData(
-                                    'recruiter_discoverable',
-                                    checked === true,
-                                );
-                                form.clearErrors('recruiter_discoverable');
-                                setActionMessage(null);
-                            }}
-                            disabled={form.processing}
-                            aria-invalid={Boolean(discoverableError)}
-                            aria-describedby={
-                                dataTestPrefix +
-                                '-discoverable-hint' +
-                                (discoverableError
-                                    ? ' ' + dataTestPrefix + '-error'
-                                    : '')
-                            }
-                            data-test={dataTestPrefix + '-discoverable'}
-                        />
-                        <Label
-                            htmlFor={dataTestPrefix + '-discoverable'}
-                            className={
-                                form.processing
-                                    ? 'min-h-11 cursor-not-allowed text-sm leading-6 opacity-50'
-                                    : 'min-h-11 cursor-pointer text-sm leading-6'
-                            }
-                        >
-                            Izinkan perekrut menemukan profilku
-                        </Label>
-                    </div>
-                    <p
-                        id={dataTestPrefix + '-discoverable-hint'}
-                        className="text-xs leading-5 text-muted-foreground"
-                    >
-                        Perekrut yang berhak hanya menerima data yang diizinkan.
-                        Bukti privat, diskusi, dan catatan kampus tidak ikut
-                        dibagikan.
+                            : selection?.description}
                     </p>
                 </div>
                 {hasChanges && !isStale && (
@@ -269,7 +208,11 @@ export function PortfolioVisibilitySettings({
                         Pilihan baru belum disimpan.
                     </p>
                 )}
-                {isStale && (
+                <PortfolioPrivacyRecoveryNotice
+                    recovery={recovery}
+                    prefix={dataTestPrefix}
+                />
+                {isStale && !recovery.blocked && (
                     <div
                         role="status"
                         className="grid gap-3 rounded-xl border border-pending/30 bg-pending-subtle p-3 text-sm leading-6 text-pending-subtle-foreground"
@@ -292,7 +235,8 @@ export function PortfolioVisibilitySettings({
                 )}
                 <PortfolioFormFeedback
                     errors={errors}
-                    actionError={actionError}
+                    actionError={recovery.error}
+                    uncertain={recovery.needsCheck}
                     actionMessage={actionMessage}
                     processing={form.processing}
                     processingMessage="Menyimpan pengaturan profil..."
@@ -301,7 +245,7 @@ export function PortfolioVisibilitySettings({
                 <Button
                     type="submit"
                     className="h-auto min-h-11 w-full py-3 whitespace-normal"
-                    disabled={form.processing || isStale}
+                    disabled={form.processing || isStale || recovery.blocked}
                     data-test={dataTestPrefix + '-save'}
                 >
                     {form.processing ? (

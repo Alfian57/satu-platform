@@ -1,0 +1,59 @@
+{
+    "description": "Maskot SATU membaca laporan dengan kaca pembesar untuk memahami konteks Peringkat.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan, stylized-concept dengan referensi identitas",
+    "generation_id": "exec-9c083de2-11fd-4fbe-8bc9-cdd1240ab310",
+    "identity_references": [
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png",
+            "purpose": "Identitas dan proporsi",
+            "sha256": "3356586B1594DCC874710C91CE71BD294046139FB5E2DC0734CEE851E637ACF1"
+        },
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip.png",
+            "purpose": "Material, ekspresi, warna dan tas asli",
+            "sha256": "A356C316D00EAD034A961170B77847636DF43008C9F459A562A6531443211AE4"
+        }
+    ],
+    "source": {
+        "file": "resources/images/mascot/mascot-ranking-context.png",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "bytes": 1374318,
+        "sha256": "b2b693e147f5663132d3af4f081c753d2047d9c5d1808ff4390ad0a7ae3fcfac",
+        "alpha_range": [0, 255]
+    },
+    "runtime_variants": [
+        {
+            "file": "public/images/mascot-ranking-context-256.webp",
+            "width": 256,
+            "height": 256,
+            "mode": "RGBA",
+            "bytes": 20428,
+            "sha256": "b81b2a32184ce095beedf2d736836ffad6ce70a15d46eaa37a02b48af869f1b9"
+        },
+        {
+            "file": "public/images/mascot-ranking-context-512.webp",
+            "width": 512,
+            "height": 512,
+            "mode": "RGBA",
+            "bytes": 56350,
+            "sha256": "5546ea1704cab9706c2edd5e40947f14d5c7a9780dd3df100b52406936da35fd"
+        },
+        {
+            "file": "public/images/mascot-ranking-context.webp",
+            "width": 1024,
+            "height": 1024,
+            "mode": "RGBA",
+            "bytes": 180922,
+            "sha256": "e998847039969747b6e45b873668b273dace497e7b7a135a426edac757039ab5"
+        }
+    ],
+    "optimization": "Resize mekanis Lanczos ke 256, 512 dan 1024px, WebP kualitas 90 method 6. Alpha dipertahankan tanpa edit kreatif manual.",
+    "alt_purpose": "Dekoratif dengan alt kosong. Bukan hasil karya, skor, status verifikasi, persetujuan atau kontrol pengguna. Seluruh fakta dan tindakan tetap HTML.",
+    "scope": "Hero Peringkat yang dapat diakses mahasiswa/operator. Forbidden tetap memakai kepala pemulihan existing tanpa maskot.",
+    "motion": "Animasi masuk satu kali 420ms mengikuti StudentMenuHero, tanpa reaksi hover dan statis pada reduced motion.",
+    "manual_review": "Burung membaca laporan dengan tiga garis netral memakai kaca pembesar. Tidak ada angka, grafik hasil, podium, mahkota, medali atau persetujuan. Tas navy asli, warna, proporsi serta siluet utuh.",
+    "prompt": "Use case: stylized-concept. Asset type: transparent premium 3D SATU mascot for the university contribution Ranking menu hero. Input image 1 is the canonical identity turnaround and input image 2 preserves materials and expression. Generate ONE full-body kingfisher with EXACT same cobalt/azure layered feathers, fluffy ivory chest/cheeks, warm orange eyebrow and cheek markings, large brown eyes, long graphite beak and bird feet, ORIGINAL NAVY crossbody book satchel with brass buckle and book detail. New calm curious pose: standing comfortably, three-quarter toward the LEFT, one feathered wing cradles a small ivory report sheet on a slim navy backing at chest level, the other feathered wing gently holds a modest brass round magnifying glass over the report, studying its context. Face remains clearly visible with a thoughtful friendly expression and eyes looking toward the viewer. No human hands or fingers; use feathered wing grips, no extra limbs. The report has only THREE subtle pale-blue ruled horizontal lines, no numbers, no chart, no readable text, no ticks or stamps. This illustrates understanding contribution data, NOT winning or judging a person. NO trophy, crown, medal, gold coin, rosette, award, ranking numbers, podium, celebratory confetti, progress chart or fake statistics. Original bag clearly visible, not replaced by the report. No clothing or extra accessories beyond the modest report and magnifying glass. Match detailed soft feather material and original body proportions, premium soft stylized 3D, not a plastic toy. Soft studio light, high-definition clean edges. Square canvas, full crest, both feet, tail and wings inside the frame; centered complete silhouette filling 88-92 percent with clear transparent margins. Genuine transparent background. No floor, pedestal, books underneath feet, backdrop, scenery, shadows outside silhouette, floating UI, text, watermark or other characters."
+}

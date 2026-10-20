@@ -11,7 +11,7 @@ final class MatchScoreVersionPolicy
 {
     public function create(User $user): bool
     {
-        return $user->exists && $user->is_platform_admin;
+        return $user->isUniversityAdmin();
     }
 
     public function view(User $user, MatchScoreVersion $version): bool

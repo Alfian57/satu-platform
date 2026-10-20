@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('public_identifier', 26);
             $table->text('bio')->nullable();
             $table->string('study_program')->nullable();
+            $table->string('faculty')->nullable();
+            $table->unsignedSmallInteger('admission_year')->nullable();
             $table->unsignedTinyInteger('study_year')->nullable();
             $table->string('portfolio_visibility', 20)->default('private');
             $table->boolean('recruiter_discoverable')->default(false);

@@ -1,5 +1,13 @@
 # Data Model SATU
 
+## Batas Role Runtime (17 Oktober 2026)
+
+Workspace hanya `student` dan `campus_admin`. Nilai `is_platform_admin` serta
+tabel organisasi/membership perekrut lama dipertahankan untuk pembacaan riwayat,
+bukan role aktif atau sumber hak akses. Tidak ada penghapusan akun, audit,
+institusi atau data pengguna massal. Tidak mengubah nilai visibility lama menjadi
+publik; penyimpanan historis bukan pilihan role atau berbagi yang tersedia di UI.
+
 ## 1. Principles
 
 - MySQL adalah target production.
@@ -26,7 +34,79 @@ Purpose, target hash/reference, OTP hash, expires-at, attempts, resend count, co
 
 Institution identity/status dan membership role/status/history. Role berasal dari membership relationship, bukan global user role.
 
+Kontrak U01 pada 14 Oktober 2026 menetapkan satu universitas per deployment
+dan role inti Mahasiswa serta Admin Universitas. `institutions` serta
+`institution_id` tetap menjadi referensi kepemilikan. Konfigurasi server
+menunjuk satu institusi yang valid dan aktif, tanpa ID tetap atau pemilihan
+record pertama. Data institusi lain yang masih ada tidak otomatis dipindahkan,
+digabung atau dihapus.
+
+Target role Admin Universitas bersumber dari membership universitas sasaran.
+U03 masih menyimpan flag `users.is_platform_admin` sebagai metadata transisi,
+tetapi flag itu tidak memberi akses, tidak menerima mass assignment dan tidak
+masuk serialisasi akun. Membership serta workspace memakai alias teknis
+`campus_admin` sebagai satu sumber role admin UTY. Pemetaan akun, role,
+undangan dan consumer harus eksplisit, idempotent, diaudit dan dapat
+dipulihkan; tidak mempromosikan akun dari institusi lain secara otomatis.
+ID pelaku dan sumber versi keputusan lama tetap utuh. Alias role transisi
+tidak menjadi sumber hak akses independen atau role inti ketiga.
+
+U01 tidak menambah atau mengubah kolom, migration maupun isi database. U02
+memakai schema existing tanpa migration baru. Slug UTY dikonfigurasi sebagai
+referensi stabil; numeric ID tetap berasal dari database. Seeder lokal
+menambah dataset UTY tersendiri dan tidak mereset data institusi lama.
+
+Provisioning pertama U02 membuat membership `campus_admin` berstatus verified
+sebagai alias transisi. Tidak mengubah password/identitas akun atau flag
+`is_platform_admin`; `verification_method` tidak diisi dengan roster match
+atau undangan fiktif. Audit `university.admin.provisioned` mencatat sumber
+`deployment_cli`, alasan, universitas serta akun sasaran. Actor audit null
+menandakan operasi sistem/deployment, bukan mahasiswa yang memberi hak pada
+dirinya. Penambahan membership dan audit satu transaksi; retry tidak menambah
+riwayat palsu. Akun/membership existing yang konflik ditolak, bukan ditimpa.
+
+Kebutuhan schema lanjutan diputuskan setelah inventaris aktual. Perubahan kolom
+tabel existing mengikuti migration asal sesuai aturan repository; perubahan
+schema tidak menggantikan prosedur pemetaan data dan backup/pemulihan.
+
+U03 tidak menambah kolom atau migration. Status admin berubah verified atau
+suspended melalui Action dan Policy tersendiri, bukan transisi afiliasi
+mahasiswa. `verified_at` dan provenance existing dipertahankan. Revision
+mencakup atribut serta ID audit terakhir. Audit `university.admin.status.changed`
+mencatat actor, alasan dan perubahan status; penghapusan akun mandiri mencabut
+membership sebelum anonimisasi, tanpa menghapus riwayat.
+
+Pemetaan eksplisit mencatat `university.admin.mapped` dengan actor deployment
+null. Cadangan terenkripsi berisi ID universitas/akun, flag sebelum perubahan
+dan ID membership sebelum grant, tanpa password atau nomor. Rollback mencatat
+`university.admin.mapping.rolled_back`; grant baru menjadi suspended, bukan
+menghapus record. Flag yang dipulihkan tetap inert. Membership existing tidak
+ditulis ulang; sumber yang berubah ditolak. Data institusi lain tetap utuh.
+
+`PrivilegedInvitationPolicy` mengotorisasi penerbitan/pencabutan dari membership
+UTY. Undangan historis mempertahankan issuer, nomor terikat dan audit. Hanya
+undangan UTY dari issuer yang masih aktif dapat diterima; undangan institusi
+lain tidak dipindahkan atau diaktifkan. `InclusionSignal` menerapkan kontrak
+`InstitutionOwned` untuk pemeriksaan kepemilikan, tanpa menambah field atau
+membuka gate analitik restricted.
+
 ### `institution_rosters`, `institution_roster_rows`
+
+U05 tidak mengubah schema atau memindahkan data. Semester pada Pengaturan
+membaca sumber roster dan riwayat, tanpa menulis kalender baru. Direktori
+Mahasiswa hanya memproyeksikan nama/status/program, bukan bukti privat profil.
+Halaman admin memakai sumber membership/revision existing dan daftar undangan
+masked. Katalog tetap global sebagai istilah, tetapi penggunaan profil/peran
+dibaca hanya dalam UTY; istilah yang masih dirujuk tidak dihapus.
+
+U04 sendiri tidak mengubah schema. Context aktif mahasiswa menunjuk UTY dari
+server, bukan menulis ulang `institution_id` pada profil atau membership lama.
+Tidak membuat afiliasi/profil pada GET atau registrasi. Pengajuan NIM tetap
+menyimpan request/membership mahasiswa dengan exact match atau status pending,
+versi roster dan audit existing. Pengajuan ulang tidak mengubah NIM yang sudah
+verified. Profil kampus lain tidak disalin, dan keputusan/manual review tetap
+append-only. Nama universitas serta keadaan locked merupakan proyeksi
+baca-saja, bukan row default baru.
 
 Import batch, effective semester, source filename metadata, checksum, normalized NIM, normalized phone hash/encrypted value, student display data minimum, active flag, validation outcome, dan row error. Import history immutable setelah committed.
 
@@ -34,11 +114,47 @@ Import batch, effective semester, source filename metadata, checksum, normalized
 
 Student, institution, NIM, roster match result, status, reviewer, reason code, note, timestamps, dan append-only transition history.
 
+Proyeksi peninjauan afiliasi mengeluarkan `nim` lengkap serta `phone` nullable
+dari relasi nomor akun, hanya bagi Admin Universitas UTY berwenang. Ini bukan
+perubahan schema atau atribut Hidden model. Nilai tetap terenkripsi pada
+penyimpanan; hash dan username tidak diserialisasi ke antrean. Direktori
+mahasiswa serta proyeksi lain tidak ikut diperluas.
+
+`affiliation_profile_drafts` menyimpan hanya fakultas, program studi, dan
+angkatan masuk yang dikirim bersama pengajuan afiliasi. Satu draft terikat ke
+satu pengajuan, pengguna, dan universitas; nilai akademik memakai encrypted
+array cast. Draft bukan `student_profiles`, tidak masuk serializer antrean
+admin, dan hanya diproyeksikan kepada mahasiswa pemilik setelah afiliasi
+verified. Nilai nonkosong pada draft immutable saat pengajuan ulang. Pembuatan
+profil memakai nilai draft nonkosong sebagai sumber otoritatif, menolak input
+yang berbeda, lalu menghapus draft di transaksi yang sama.
+
+Pengajuan HTTP baru mewajibkan NIM serta tiga nilai akademik tersebut.
+Nullable pada penyimpanan profil tetap mengakomodasi data legacy, bukan
+izin mengirim pengajuan baru yang tidak lengkap. Ringkasan aktivasi read-only
+menentukan kewajiban afiliasi atau pelengkapan profil setelah verified.
+Pengajuan pending tidak membuat profil, termasuk saat modal ditutup otomatis
+sesudah respons sukses.
+
 ### `privileged_invitations`
 
 Institution/recruiter organization, intended role, normalized phone, token hash, expiry, delivery status, accepted/revoked timestamps, issuer, dan audit reference.
 
 ## 3. Profile, Projects, dan Workspace
+
+`student_profiles.faculty` menyimpan pilihan fakultas katalog UTY dan
+`admission_year` menyimpan tahun masuk nullable berupa unsigned small integer.
+`study_program` memakai nama dan jenjang dari fakultas yang sama pada katalog
+server `university.faculties`. Nilai nonkosong fakultas, program studi, dan
+angkatan masuk bersifat set-once bagi mahasiswa: update tidak boleh mengubah
+atau mengosongkannya, sedangkan nilai kosong dapat diisi satu kali. Aturan ini
+diperiksa pada Form Request dan Action. Pasangan dikontrol pada request
+create/update; editor tidak menghapus program legacy saat menyimpan bagian lain
+tanpa perubahan akademik. `study_year` dipertahankan sebagai data legacy, tidak
+ditampilkan sebagai angkatan dan tidak diisi pada alur baru. Tidak menebak
+tahun masuk dari tingkat studi, tidak mengubah roster atau izin proyeksi.
+Migration asal profil diperbarui; database existing membutuhkan penambahan
+dua kolom nullable secara terkontrol, bukan migrate:fresh atau reset dataset.
 
 - `student_profiles`, `skills`, `profile_skills`, `availability_windows`
 - `projects`, `project_roles`, `project_role_skills`, `team_memberships`, `team_invitations`, `team_join_requests`, `team_membership_events`
@@ -118,7 +234,7 @@ default pada GET. Riwayat hasil/feedback tidak dihapus saat invalidasi.
 - `contribution_versions`: immutable claim and summary.
 - `contribution_evidence`: private source metadata dan storage reference.
 - `contribution_reviews`: campus reviewer decision, required reason for non-approval, note, immutable policy version, and reviewed-at.
-- `portfolio_entries`: approved source, visible fields, visibility level, published/withdrawn-at.
+- `portfolio_entries`: approved source, visible fields, visibility level, published/withdrawn-at. Command hanya private/public. Enum institution/recruiter dipertahankan untuk membaca riwayat, tetapi diproyeksikan privat dan tidak memberi akses. Tidak ada konversi data massal. Revisi privasi dihitung dari state berbagi serta ID audit perubahan privasi terakhir per resource/institusi; token wajib dibandingkan di bawah row lock untuk mencegah konflik serta ABA pada detik sama. Tidak menambah kolom. Profil privat menutup proyeksi karya pada daftar, detail dan ringkasan pengajuan; hanya pemilik mendapat akses penuh.
 
 Team confirmation tidak menjadi state requirement. Approval campus reviewer adalah validation authority.
 
@@ -134,7 +250,35 @@ sebagai field browser. Karya tersimpan atomik bersama approval dengan default
 private. Replay tidak mereset visibility atau withdrawal. Pencabutan berbagi
 memakai audit existing tanpa menghapus versi, keputusan, atau sumber karya.
 
+Proyeksi antrean peninjauan menambahkan `submitted_at` turunan tanpa kolom baru. Nilainya memakai audit `contribution.submitted` untuk versi aktual dengan auditable type, universitas, actor pemilik, status pending dan nomor versi yang konsisten. Audit mentah tidak dikirim. Waktu yang tidak tersedia tetap null; updated_at tidak menggantikannya. Pencarian dibatasi nama tampilan pengaju, judul proyek serta klaim/ringkasan versi dalam berkas yang diizinkan Policy existing. Hasil approved tidak membuka izin portofolio baru.
+
 ## 6. Gamification
+
+Cache pembacaan proyeksi menyimpan daftar atribut mentah berupa array/scalar,
+bukan objek Eloquent, enum atau Carbon. Key menyertakan format attributes-v1,
+institusi, semester, versi aturan dan digest snapshot. Cache objek lama tidak
+dibaca dan dibiarkan kedaluwarsa; tidak perlu flush global. Hasil direhidrasi
+sebagai proyeksi hanya-baca, dengan periode aktual dari database. Persetujuan
+individual tetap diperiksa setiap request. Pengamanan serializable_classes=false
+dipertahankan. Tes menguji cache database dingin dan hangat, bukan hanya array
+store tanpa serialisasi. Kegagalan resolver deferred dilaporkan server dan
+dikirim melalui rescuedProps agar UI menyediakan pemulihan.
+
+Integritas 20 Oktober 2026 tidak menambah tabel/kolom. expected_version dibandingkan
+di bawah lock institusi sebelum mengubah preference; audit tetap append-only.
+Nomor individual dihitung pada salinan row berizin sebelum pagination, bukan
+ditulis dari GET. Guard pekerjaan identik memakai owner/proyek/tugas, klaim dan
+ringkasan ternormalisasi, di bawah lock proyek pada create/revise/submit/approval.
+Mengganti bukti tidak membuat pekerjaan identik menjadi baru. Anggota lain dan
+uraian berbeda tetap boleh; parafrasa/kolusi masih memerlukan peninjauan manusia.
+Tidak menghapus duplikasi atau ledger historis otomatis.
+
+ReconcileApprovedContributionXp memeriksa approved tanpa award asal dalam
+universitas terkonfigurasi, memakai consumer approval yang sama secara retryable
+dan idempotent. Reversal tidak dianggap award hilang. MissingXpSemester berarti
+roster belum berlaku pada reviewed_at; semester tidak diperkirakan. Command
+gamification:reconcile-xp dijadwalkan tiap jam, tidak membuat review atau karya.
+Panel XP pemilik membaca jumlah approved tanpa award, bukan janji waktu selesai.
 
 ### `xp_ledger_entries`
 
@@ -186,6 +330,16 @@ Projection dapat dikenali stale dari \`computed_at\` dan threshold 24 jam.
 Rebuild dijalankan melalui queued job \`RebuildLeaderboardProjections\` dengan unique
 key per institution dan semester. Command \`gamification:rebuild-leaderboards\`
 mengambil active roster dan dijalankan scheduler secara berkala.
+
+Integrasi Peringkat 16 Oktober 2026 meminta rebuild setelah commit award,
+reversal dan perubahan preference, bukan melalui GET. Job melepaskan unique
+lock saat mulai dan menserialisasi pemrosesan per institution/semester agar
+perubahan yang datang saat komputasi tetap dapat diantrekan. Cache pembacaan
+diikat pada digest snapshot. Retry award tanpa parameter kebijakan eksplisit
+mempertahankan semester serta amount historis; semester awal ditentukan roster
+yang telah diaktifkan ketika review dilakukan, bukan waktu worker memproses.
+Ringkasan XP pribadi dibaca dari ledger tenant/semester yang sama tanpa
+menyertakan source privat atau membuka daftar individual kepada admin.
 
 ## 7. Notifications dan WhatsApp
 

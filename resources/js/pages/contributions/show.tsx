@@ -839,8 +839,7 @@ export default function ContributionsShow({
                 <p className="text-xs leading-5 text-muted-foreground">
                     Validasi mengacu pada kontribusi dan versi yang ditinjau,
                     bukan seluruh keahlian atau jaminan kualitas mutlak. Tidak
-                    ada janji waktu pemeriksaan, kredit akademik, atau akses
-                    perekrut.
+                    ada janji waktu pemeriksaan atau kredit akademik.
                 </p>
             </section>
             <div className="flex items-start gap-3 border-t border-border/70 px-1 pt-5 text-sm leading-6 text-muted-foreground">
@@ -850,7 +849,7 @@ export default function ContributionsShow({
                 />
                 <p>
                     Bukti pekerjaan bersifat privat. Aksesnya mengikuti izin
-                    pada proyek, bukan otomatis terbuka untuk perekrut.
+                    pada proyek, bukan otomatis terbuka untuk publik.
                 </p>
             </div>
         </div>

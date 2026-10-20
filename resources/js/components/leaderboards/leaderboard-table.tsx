@@ -21,11 +21,15 @@ type Props = {
     onExplain: (row: LeaderboardRow) => void;
 };
 
-function formatNumber(value: number): string {
-    return new Intl.NumberFormat('id-ID').format(value);
+function formatNumber(value: number | null): string {
+    return value === null ? '-' : new Intl.NumberFormat('id-ID').format(value);
 }
 
-function formatScore(value: string): string {
+function formatScore(value: string | null): string {
+    if (value === null) {
+        return '-';
+    }
+
     return new Intl.NumberFormat('id-ID', {
         maximumFractionDigits: 4,
         minimumFractionDigits: 2,

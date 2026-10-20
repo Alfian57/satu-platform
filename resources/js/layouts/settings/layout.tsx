@@ -1,14 +1,17 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
+    ArrowUpRight,
+    Check,
     CircleUserRound,
+    Fingerprint,
     Settings2,
-    ShieldAlert,
     ShieldCheck,
     Sun,
 } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import { AppPage } from '@/components/app-page';
-import Mascot from '@/components/mascot';
+import { CampusOperationHeader } from '@/components/campus-operation-layout';
+import StudentMenuHero from '@/components/student-menu-hero';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
@@ -20,90 +23,83 @@ const settingsItems = [
     {
         key: 'profile',
         title: 'Profil',
-        description: 'Nama dan identitas untuk masuk',
+        description: 'Nama dan identitas masuk',
         href: editProfile(),
         icon: CircleUserRound,
     },
     {
         key: 'security',
         title: 'Keamanan',
-        description: 'Password dan perlindungan akun',
+        description: 'Password dan akses pribadi',
         href: editSecurity(),
         icon: ShieldCheck,
     },
     {
         key: 'appearance',
         title: 'Tampilan',
-        description: 'Gaya ruang kerja yang digunakan',
+        description: 'Kenali ruang kerjamu',
         href: editAppearance(),
         icon: Sun,
     },
     {
         key: 'data-rights',
         title: 'Hak Data',
-        description: 'Arsip dan kendali data pribadi',
+        description: 'Arsip dan kendali data',
         href: editDataRights(),
-        icon: ShieldAlert,
+        icon: Fingerprint,
     },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentUrl } = useCurrentUrl();
+    const user = usePage().props.auth.user;
+    const isStudent = user?.workspace.role === 'student';
 
     return (
         <AppPage>
             <div
-                className="grid w-full min-w-0 gap-6"
+                className="settings-workspace grid w-full min-w-0 gap-6"
                 data-test="settings-root"
             >
-                <header
-                    className="relative isolate min-w-0 overflow-hidden rounded-4xl border border-primary/10 bg-gradient-to-br from-[#E7F2FF] via-[#F2F8FF] to-white p-6 sm:p-8 lg:p-10"
-                    data-test="settings-header"
-                >
-                    <div
-                        aria-hidden="true"
-                        className="pointer-events-none absolute -top-20 -right-16 size-80 rounded-full bg-primary/5"
+                {!isStudent ? (
+                    <CampusOperationHeader
+                        theme="account"
+                        icon={Settings2}
+                        title="Pengaturan akun"
+                        description="Kelola identitas masuk, password dan hak data akun pribadi. Pengaturan universitas dikelola terpisah."
+                        institution={user?.workspace.institution?.name ?? null}
+                        testId="settings-header"
                     />
-                    <div className="relative grid min-w-0 items-center gap-6 sm:grid-cols-[minmax(0,1fr)_9rem] lg:grid-cols-[minmax(0,1fr)_12rem]">
-                        <div className="min-w-0">
-                            <p className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-white/80 px-3 py-1.5 text-xs font-semibold text-primary">
-                                <Settings2
-                                    aria-hidden="true"
-                                    className="size-4 shrink-0"
-                                />
-                                Pengaturan akun
-                            </p>
-                            <h1 className="mt-4 max-w-[24ch] text-headline font-semibold tracking-tight text-balance">
-                                Akunmu, tetap dalam kendalimu.
-                            </h1>
-                            <p className="mt-3 max-w-[65ch] text-sm leading-7 text-muted-foreground">
-                                Atur identitas untuk masuk, perbarui password,
-                                dan kenali tampilan ruang kerjamu. Pilih bagian
-                                yang ingin kamu kelola di bawah ini.
-                            </p>
-                            <p className="mt-5 flex items-start gap-2 text-xs leading-6 text-muted-foreground">
-                                <ShieldCheck
-                                    aria-hidden="true"
-                                    className="mt-1 size-4 shrink-0 text-primary"
-                                />
-                                <span>
-                                    Pengaturan akun terpisah dari afiliasi
-                                    kampus dan jangkauan karya.
-                                </span>
-                            </p>
-                        </div>
-                        <div className="pointer-events-none hidden justify-center sm:flex">
-                            <Mascot
-                                pose="guide"
-                                priority
-                                className="w-36 lg:w-48"
+                ) : (
+                    <StudentMenuHero
+                        icon={Settings2}
+                        eyebrow="Pengaturan akun"
+                        title="Ruang pribadimu, kendalimu."
+                        description="Kelola identitas, jaga akses akun, dan tentukan kendali atas data pribadimu. Satu tempat, tertata untukmu."
+                        pose="account-care"
+                        theme="settings"
+                        testId="settings-header"
+                        note={
+                            isStudent
+                                ? 'Pengaturan ini tidak mengubah afiliasi atau jangkauan portofoliomu.'
+                                : 'Pengaturan akun pribadi terpisah dari Pengaturan universitas.'
+                        }
+                    >
+                        <span className="inline-flex items-center gap-2 rounded-full border border-satu-orange-border bg-satu-orange-soft px-3 py-2 text-xs font-medium text-satu-orange-ink">
+                            <Fingerprint
+                                aria-hidden="true"
+                                className="size-4 shrink-0"
                             />
-                        </div>
-                    </div>
-                </header>
+                            Akun pribadi
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                            Pilih bagian yang ingin kamu kelola.
+                        </span>
+                    </StudentMenuHero>
+                )}
                 <nav
                     aria-label="Kategori pengaturan akun"
-                    className="grid min-w-0 grid-cols-3 gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm sm:gap-3 sm:p-3"
+                    className="grid min-w-0 grid-cols-2 gap-3 xl:grid-cols-4"
                     data-test="settings-navigation"
                 >
                     {settingsItems.map((item) => {
@@ -117,30 +113,54 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 aria-current={active ? 'page' : undefined}
                                 data-test={'settings-nav-' + item.key}
                                 className={cn(
-                                    'flex min-h-16 min-w-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl p-2 text-center transition-colors duration-fast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none sm:flex-row sm:justify-start sm:gap-3 sm:p-3 sm:text-left',
+                                    'group flex min-h-28 min-w-0 cursor-pointer flex-col gap-3 rounded-[20px] border p-4 text-left transition-colors duration-standard focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none sm:p-5',
                                     active
-                                        ? 'bg-accent text-primary'
-                                        : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+                                        ? 'border-primary/25 bg-accent/70'
+                                        : 'border-border bg-card hover:border-primary/25 hover:bg-accent/30',
                                 )}
                             >
-                                <span
-                                    className={cn(
-                                        'grid size-9 shrink-0 place-items-center rounded-xl sm:size-11',
-                                        active
-                                            ? 'bg-white text-primary'
-                                            : 'bg-background text-muted-foreground',
+                                <span className="flex w-full items-center justify-between gap-2">
+                                    <span
+                                        className={cn(
+                                            'grid size-10 shrink-0 place-items-center rounded-xl border',
+                                            active
+                                                ? 'border-primary/10 bg-white text-primary'
+                                                : 'border-border bg-background text-muted-foreground',
+                                        )}
+                                    >
+                                        <item.icon
+                                            aria-hidden="true"
+                                            className="size-5"
+                                            strokeWidth={1.75}
+                                        />
+                                    </span>
+                                    {active ? (
+                                        <span className="flex items-center gap-1 text-[11px] font-semibold text-primary">
+                                            <Check
+                                                aria-hidden="true"
+                                                className="size-3.5"
+                                            />
+                                            Aktif
+                                        </span>
+                                    ) : (
+                                        <ArrowUpRight
+                                            aria-hidden="true"
+                                            className="size-4 text-muted-foreground"
+                                        />
                                     )}
-                                >
-                                    <item.icon
-                                        aria-hidden="true"
-                                        className="size-5"
-                                    />
                                 </span>
                                 <span className="min-w-0">
-                                    <span className="block text-xs font-semibold [overflow-wrap:anywhere] sm:text-sm">
+                                    <span
+                                        className={cn(
+                                            'block text-sm font-semibold',
+                                            active
+                                                ? 'text-primary'
+                                                : 'text-foreground',
+                                        )}
+                                    >
                                         {item.title}
                                     </span>
-                                    <span className="mt-1 hidden text-xs leading-5 text-muted-foreground lg:block">
+                                    <span className="mt-1 block text-xs leading-5 wrap-anywhere text-muted-foreground">
                                         {item.description}
                                     </span>
                                 </span>

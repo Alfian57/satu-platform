@@ -2,6 +2,7 @@
 
 namespace App\Concerns;
 
+use App\Models\StudentProfile;
 use App\Rules\ProfileEvidenceUrl;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Validation\Rule;
@@ -13,9 +14,31 @@ trait StudentProfileValidationRules
      */
     protected function studentProfileRules(): array
     {
+        /** @var array<string, list<string>> $faculties */
+        $faculties = config('university.faculties', []);
+        $profile = $this->route('studentProfile');
+        $profile = $profile instanceof StudentProfile ? $profile : null;
+        $facultyInput = $this->input('faculty', $profile?->faculty);
+        $programInput = $this->input('study_program', $profile?->study_program);
+        $faculty = is_string($facultyInput) ? $facultyInput : '';
+        $program = is_string($programInput) ? $programInput : '';
+        $programs = $faculties[$faculty] ?? [];
+        $facultyNames = array_keys($faculties);
+        $academicTouched = $this->exists('faculty') || $this->exists('study_program');
+        $unchangedLegacy = $profile !== null
+            && $faculty === ($profile->faculty ?? '')
+            && $program === ($profile->study_program ?? '')
+            && ! in_array($program, $programs, true);
+        if ($unchangedLegacy) {
+            $programs[] = $program;
+            $facultyNames[] = $faculty;
+        }
+
         return [
             'bio' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'study_program' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'faculty' => ['nullable', 'string', 'max:255', Rule::requiredIf($academicTouched && $program !== '' && ! $unchangedLegacy), Rule::in($facultyNames)],
+            'study_program' => ['nullable', 'string', 'max:255', Rule::requiredIf($academicTouched && $faculty !== '' && ! $unchangedLegacy), Rule::in($programs)],
+            'admission_year' => ['sometimes', 'nullable', 'integer', 'digits:4', 'between:1900,'.now()->year],
             'study_year' => ['sometimes', 'nullable', 'integer', 'between:1,10'],
             'skills' => ['sometimes', 'array', 'max:30'],
             'skills.*' => ['array:taxonomy_id,proficiency,evidence_metadata'],
@@ -41,6 +64,20 @@ trait StudentProfileValidationRules
                 'distinct',
                 $this->verifiedInterestTaxonomyRule(),
             ],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'faculty.in' => 'Pilih fakultas dari daftar yang tersedia.',
+            'faculty.required' => 'Pilih fakultas untuk program studi ini.',
+            'study_program.in' => 'Pilih program studi yang sesuai dengan fakultas.',
+            'study_program.required' => 'Pilih program studi pada fakultas yang dipilih.',
+            'admission_year.integer' => 'Angkatan masuk harus berupa tahun empat digit, misalnya 2023.',
+            'admission_year.digits' => 'Angkatan masuk harus berupa tahun empat digit, misalnya 2023.',
+            'admission_year.between' => 'Angkatan masuk harus antara 1900 dan tahun berjalan.',
         ];
     }
 

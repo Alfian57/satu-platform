@@ -10,16 +10,19 @@ import { ArrowDown, ArrowUpRight, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { AppPage } from '@/components/app-page';
 import { DashboardAffiliationNotice } from '@/components/dashboard-affiliation-notice';
-import { DashboardArchiveArt } from '@/components/dashboard-archive-art';
 import { DashboardContextRail } from '@/components/dashboard-context-rail';
 import type { DashboardRecommendationFeedback } from '@/components/dashboard-context-rail';
 import { DashboardNextAction } from '@/components/dashboard-next-action';
+import { DashboardPendingHero } from '@/components/dashboard-pending-hero';
 import { DashboardProjectLedger } from '@/components/dashboard-project-ledger';
 import { DashboardStateNotice } from '@/components/dashboard-state-notice';
-import Mascot from '@/components/mascot';
+import StudentHeroBackdrop from '@/components/student-hero-backdrop';
+import StudentHeroMascot from '@/components/student-hero-mascot';
 import { StudentJourneySummary } from '@/components/student-journey-summary';
 import { useStudentOnboardingLauncher } from '@/components/student-onboarding-context';
 import { Button } from '@/components/ui/button';
+import { isAffiliationAwaitingReview } from '@/lib/student-activation';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { show as contributionShow } from '@/routes/contributions';
 import {
@@ -40,6 +43,7 @@ import type {
     DashboardProjectsRegion,
     DashboardRecommendationRegion,
 } from '@/types';
+import type { StudentActivation } from '@/types/onboarding';
 
 type DashboardRoute = ReturnType<typeof dashboard>;
 
@@ -99,10 +103,22 @@ export default function Dashboard() {
         auth.user?.name.trim().split(/\s+/).find(Boolean) ?? 'mahasiswa';
     const [processingFeedback, setProcessingFeedback] =
         useState<DashboardRecommendationFeedback | null>(null);
-    const { auth: sharedAuth, shell } = usePage().props;
+    const {
+        auth: sharedAuth,
+        shell,
+        onboarding,
+    } = usePage<{
+        onboarding?: StudentActivation | null;
+        [key: string]: unknown;
+    }>().props;
     const isStudent = sharedAuth.user?.workspace.role === 'student';
     const canExploreProjects =
         isStudent && shell.institutionMembership?.status === 'verified';
+    const isAwaitingReview =
+        isStudent &&
+        shell.institutionMembership?.status === 'pending' &&
+        isAffiliationAwaitingReview(onboarding);
+    const useReferenceLayout = isAwaitingReview || canExploreProjects;
     const openOnboarding = useStudentOnboardingLauncher();
     const refreshForm = useHttp<
         { institution_id: number },
@@ -169,7 +185,7 @@ export default function Dashboard() {
                 onSuccess: () => reloadRecommendations(restoreFocus),
                 onError: () => {
                     setRefreshError(
-                        'Pembaruan tidak dapat diminta. Periksa konteks kampus dan kelengkapan profil.',
+                        'Pembaruan tidak dapat diminta. Periksa status afiliasi dan kelengkapan profil.',
                     );
                 },
                 onHttpException: (response) => {
@@ -265,101 +281,115 @@ export default function Dashboard() {
                     data-dashboard-surface="mascot-workspace"
                     data-dashboard-source="application"
                     data-test="dashboard-root"
+                    className={
+                        isAwaitingReview
+                            ? 'dashboard-pending-view dashboard-ledger-view'
+                            : canExploreProjects
+                              ? 'dashboard-verified-view dashboard-ledger-view'
+                              : undefined
+                    }
                 >
-                    <header
-                        className="relative isolate mb-10 rounded-4xl border border-white bg-linear-to-br from-accent via-sky-100 to-blue-100 px-5 pt-7 pb-52 shadow-md sm:mt-6 sm:min-h-80 sm:px-8 sm:py-9 lg:mt-12 lg:px-10 lg:py-10"
-                        data-test="dashboard-hero"
-                    >
-                        <div
-                            aria-hidden="true"
-                            className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-4xl"
+                    {isAwaitingReview ? (
+                        <DashboardPendingHero firstName={firstName} />
+                    ) : (
+                        <header
+                            className={cn(
+                                'student-hero-home relative isolate mb-10 rounded-4xl border border-white px-5 pt-7 pb-52 shadow-md sm:min-h-80 sm:px-8 sm:py-9 lg:px-10 lg:py-10',
+                                canExploreProjects
+                                    ? 'sm:mt-4 lg:mt-6'
+                                    : 'sm:mt-6 lg:mt-12',
+                            )}
+                            data-test="dashboard-hero"
                         >
-                            <div className="absolute -top-24 -right-12 size-96 rounded-full border border-white/70 bg-white/30" />
-                            <div className="absolute right-12 -bottom-36 h-64 w-[32rem] -rotate-12 rounded-[50%] bg-white/45" />
-                            <div className="absolute -right-16 -bottom-40 h-60 w-[30rem] rotate-12 rounded-[50%] bg-primary/5" />
-                            <DashboardArchiveArt className="absolute right-24 bottom-7 w-36 -rotate-6 opacity-65 sm:right-[18%] sm:bottom-9 sm:w-44 lg:right-[22%] lg:w-52" />
-                            <div className="absolute top-8 right-8 h-1.5 w-12 -rotate-12 rounded-full bg-satu-feather/70" />
-                        </div>
-                        <div className="relative z-10 sm:max-w-[55%] lg:max-w-[60%]">
-                            <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white bg-white/80 px-3 py-1.5 text-xs font-semibold text-primary">
-                                <Sparkles
-                                    aria-hidden="true"
-                                    className="size-3.5"
-                                />
-                                Ruang kolaborasimu
-                            </p>
-                            <h1 className="text-3xl leading-[1.12] font-bold tracking-tight text-foreground sm:text-4xl lg:text-[2.75rem]">
-                                Halo,{' '}
-                                <span className="wrap-anywhere text-primary">
-                                    {firstName}!
-                                </span>
-                            </h1>
-                            <p className="mt-4 max-w-[28rem] text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
-                                Temukan peluang, lanjutkan pekerjaan tim, dan
-                                bangun portofolio dari kontribusi yang
-                                terverifikasi.
-                            </p>
-                            <div className="mt-6 flex flex-wrap gap-2.5">
-                                <Button
-                                    asChild
-                                    className="group min-h-11 w-full rounded-xl px-5 shadow-sm hover:shadow-md motion-safe:transition-[background-color,box-shadow,transform] motion-safe:duration-standard motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 sm:w-auto"
-                                >
-                                    <a href="#dashboard-next-action">
-                                        Lihat langkah utama
-                                        <ArrowDown
-                                            aria-hidden="true"
-                                            className="size-4 motion-safe:transition-transform motion-safe:duration-standard motion-safe:group-hover:translate-y-0.5"
-                                        />
-                                    </a>
-                                </Button>
-                                {canExploreProjects && (
+                            <StudentHeroBackdrop theme="home" />
+                            <div className="relative z-10 sm:max-w-[55%] lg:max-w-[60%]">
+                                <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white bg-white/80 px-3 py-1.5 text-xs font-semibold text-primary">
+                                    <Sparkles
+                                        aria-hidden="true"
+                                        className="size-3.5"
+                                    />
+                                    Ruang kolaborasimu
+                                </p>
+                                <h1 className="text-3xl leading-[1.12] font-bold tracking-tight text-foreground sm:text-4xl lg:text-[2.75rem]">
+                                    Halo,{' '}
+                                    <span className="wrap-anywhere text-primary">
+                                        {firstName}!
+                                    </span>
+                                </h1>
+                                <p className="mt-4 max-w-[28rem] text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
+                                    Temukan peluang, lanjutkan pekerjaan tim,
+                                    dan bangun portofolio dari kontribusi yang
+                                    terverifikasi.
+                                </p>
+                                <div className="mt-6 flex flex-wrap gap-2.5">
                                     <Button
                                         asChild
-                                        variant="ghost"
-                                        className="min-h-11 w-full rounded-xl bg-white/65 px-4 text-primary hover:bg-white sm:w-auto"
+                                        className="group min-h-11 w-full rounded-xl px-5 shadow-sm hover:shadow-md motion-safe:transition-[background-color,box-shadow,transform] motion-safe:duration-standard motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 sm:w-auto"
                                     >
-                                        <Link
-                                            href={projectsIndex()}
-                                            data-test="dashboard-explore-projects"
-                                        >
-                                            Jelajahi proyek
-                                            <ArrowUpRight
+                                        <a href="#dashboard-next-action">
+                                            Lihat langkah utama
+                                            <ArrowDown
                                                 aria-hidden="true"
-                                                className="size-4"
+                                                className="size-4 motion-safe:transition-transform motion-safe:duration-standard motion-safe:group-hover:translate-y-0.5"
                                             />
-                                        </Link>
+                                        </a>
                                     </Button>
-                                )}
+                                    {canExploreProjects && (
+                                        <Button
+                                            asChild
+                                            variant="ghost"
+                                            className="min-h-11 w-full rounded-xl bg-white/65 px-4 text-primary hover:bg-white sm:w-auto"
+                                        >
+                                            <Link
+                                                href={projectsIndex()}
+                                                data-test="dashboard-explore-projects"
+                                            >
+                                                Jelajahi proyek
+                                                <ArrowUpRight
+                                                    aria-hidden="true"
+                                                    className="size-4"
+                                                />
+                                            </Link>
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                        <div className="absolute right-0 -bottom-7 z-10 w-52 sm:right-2 sm:w-[39%] sm:max-w-80 lg:right-7 lg:w-[36%] lg:max-w-96">
-                            <Mascot
-                                pose="welcome"
-                                interactive
-                                priority
-                                className="w-full"
-                            />
-                        </div>
-                    </header>
+                            <StudentHeroMascot pose="welcome" interactive />
+                        </header>
+                    )}
 
-                    <div className="grid gap-6">
-                        {dashboardNotice && (
-                            <DashboardStateNotice
-                                notice={dashboardNotice}
-                                getActionHref={actionHref}
-                                onAction={handleAction}
-                            />
-                        )}
-                        {isStudent && (
-                            <DashboardAffiliationNotice shell={shell} />
-                        )}
+                    <div className="dashboard-content-stack grid gap-6">
+                        <div
+                            className={
+                                isAwaitingReview
+                                    ? 'dashboard-affiliation-board'
+                                    : 'contents'
+                            }
+                        >
+                            {dashboardNotice && (
+                                <DashboardStateNotice
+                                    notice={dashboardNotice}
+                                    affiliationReview={
+                                        isAwaitingReview &&
+                                        dashboardNotice.action?.key ===
+                                            'onboarding'
+                                    }
+                                    getActionHref={actionHref}
+                                    onAction={handleAction}
+                                />
+                            )}
+                            {isStudent && (
+                                <DashboardAffiliationNotice shell={shell} />
+                            )}
+                        </div>
                         <div
                             className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]"
                             data-test="dashboard-workspace-grid"
                         >
-                            <div className="grid min-w-0 gap-6">
+                            <div className="dashboard-workspace-main grid min-w-0 gap-6">
                                 <DashboardNextAction
                                     action={nextAction}
+                                    referenceLayout={useReferenceLayout}
                                     getActionHref={actionHref}
                                     onAction={handleAction}
                                 />
@@ -368,12 +398,14 @@ export default function Dashboard() {
                                     fallback={
                                         <DashboardProjectLedger
                                             region={loadingProjects()}
+                                            referenceLayout={useReferenceLayout}
                                             getActionHref={actionHref}
                                             onAction={handleAction}
                                         />
                                     }
                                 >
                                     <DashboardProjectLedger
+                                        referenceLayout={useReferenceLayout}
                                         region={
                                             activeProjects ?? loadingProjects()
                                         }
@@ -390,6 +422,10 @@ export default function Dashboard() {
                                     data="recommendations"
                                     fallback={
                                         <DashboardContextRail
+                                            referenceLayout={useReferenceLayout}
+                                            pendingAffiliation={
+                                                isAwaitingReview
+                                            }
                                             reviewQueue={reviewQueue}
                                             recommendationRegion={loadingRecommendations()}
                                             refreshError={refreshError}
@@ -405,6 +441,8 @@ export default function Dashboard() {
                                     }
                                 >
                                     <DashboardContextRail
+                                        referenceLayout={useReferenceLayout}
+                                        pendingAffiliation={isAwaitingReview}
                                         reviewQueue={reviewQueue}
                                         recommendationRegion={
                                             recommendations ??
@@ -432,6 +470,7 @@ export default function Dashboard() {
                             <StudentJourneySummary
                                 key={auth.user.id}
                                 userId={auth.user.id}
+                                referenceLayout={useReferenceLayout}
                             />
                         )}
                     </div>

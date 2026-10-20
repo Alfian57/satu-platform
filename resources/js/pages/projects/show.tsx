@@ -191,15 +191,15 @@ function ProjectContextRail({ project }: { project: ProjectDetail }) {
         <div className="grid min-w-0 gap-5 border-t border-border px-1 pt-5">
             <section className="grid gap-3 border-b border-border/60 pb-5">
                 <p className="text-xs font-semibold text-primary">
-                    Konteks kampus
+                    Universitas
                 </p>
                 <h2 className="text-title font-semibold wrap-anywhere">
                     {project.institution.name}
                 </h2>
                 <p className="text-sm leading-6 text-muted-foreground">
-                    Detail ini mengikuti konteks afiliasi kampus yang berwenang.
-                    Informasi pemilik, status, batas waktu, dan kebutuhan tim
-                    berasal dari proyek yang sama.
+                    Akses mengikuti keanggotaan dan izin proyek. Informasi
+                    pemilik, status, batas waktu, dan kebutuhan tim berasal dari
+                    proyek yang sama.
                 </p>
             </section>
 

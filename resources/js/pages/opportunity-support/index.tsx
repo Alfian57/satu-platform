@@ -1,4 +1,4 @@
-import { Head, Link, router, useHttp } from '@inertiajs/react';
+import { Head, Link, router, useHttp, usePage } from '@inertiajs/react';
 import { HandHelping, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { AppPage } from '@/components/app-page';
@@ -7,6 +7,7 @@ import {
     campusControlClass,
 } from '@/components/campus-operation-layout';
 import { Button } from '@/components/ui/button';
+import { show as overview } from '@/routes/campus/overview';
 import { index, store, transition } from '@/routes/opportunity-support';
 import { index as projectsIndex, show as projectShow } from '@/routes/projects';
 
@@ -99,6 +100,8 @@ function date(value: string): string {
 }
 
 export default function OpportunitySupport(initial: Props) {
+    const administration =
+        usePage().props.auth.user?.workspace.role === 'campus_admin';
     const [data, setData] = useState(initial);
     const [selected, setSelected] = useState<SupportCase | null>(null);
     const [need, setNeed] = useState('find_role');
@@ -411,10 +414,12 @@ export default function OpportunitySupport(initial: Props) {
             <AppPage className="max-w-none [&_*]:motion-reduce:animate-none [&_*]:motion-reduce:transition-none">
                 <div className="space-y-5">
                     <CampusOperationHeader
+                        theme="support"
+                        formal={administration}
                         icon={HandHelping}
                         eyebrow={
-                            data.reviewer
-                                ? 'Operasi kampus'
+                            administration
+                                ? 'Admin Universitas'
                                 : 'Kesempatan kolaborasi'
                         }
                         institution={data.institution.name}
@@ -423,18 +428,29 @@ export default function OpportunitySupport(initial: Props) {
                                 ? 'Tindak lanjut kesempatan'
                                 : 'Bantuan kesempatan'
                         }
-                        description="Bantuan yang Anda pilih, bukan penilaian kepribadian. Tawaran membuka arahan, bukan kewajiban bergabung."
+                        description={
+                            administration
+                                ? 'Tindak lanjuti kebutuhan yang sengaja dibagikan mahasiswa, hanya sesuai penunjukan peninjau dan izin per berkas.'
+                                : 'Bantuan yang Anda pilih, bukan penilaian kepribadian. Tawaran membuka arahan, bukan kewajiban bergabung.'
+                        }
                     />
                     <div className="flex flex-wrap gap-3">
                         <Button variant="outline" asChild>
                             <Link
-                                href={projectsIndex({
-                                    query: {
-                                        institution_id: data.institution.id,
-                                    },
-                                })}
+                                href={
+                                    administration
+                                        ? overview(data.institution.id)
+                                        : projectsIndex({
+                                              query: {
+                                                  institution_id:
+                                                      data.institution.id,
+                                              },
+                                          })
+                                }
                             >
-                                Jelajahi proyek
+                                {administration
+                                    ? 'Kembali ke ringkasan'
+                                    : 'Jelajahi proyek'}
                             </Link>
                         </Button>
                         <Button
@@ -448,6 +464,20 @@ export default function OpportunitySupport(initial: Props) {
                                 : 'Periksa data terbaru'}
                         </Button>
                     </div>
+                    {administration && !data.reviewer && (
+                        <section className={sheet}>
+                            <h2 className="font-bold">
+                                Anda belum ditunjuk sebagai peninjau bantuan
+                            </h2>
+                            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                Role Admin Universitas tidak otomatis membuka
+                                berkas mahasiswa. Penunjukan, tujuan akses,
+                                consent dan gate ditetapkan melalui proses
+                                terkontrol. Data bantuan mahasiswa tidak
+                                ditampilkan.
+                            </p>
+                        </section>
+                    )}
                     {(error || errors.length > 0) && (
                         <div
                             ref={errorRef}
@@ -497,10 +527,9 @@ export default function OpportunitySupport(initial: Props) {
                                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
                                         Proses, peninjau dan kebijakan privasi
                                         kampus perlu disetujui terlebih dahulu.
-                                        Anda tetap dapat mencari peluang melalui
-                                        Proyek. Riwayat milik Anda dan
-                                        pencabutan izin tetap tersedia jika
-                                        sudah ada.
+                                        {administration
+                                            ? 'Anda tetap dapat mengelola roster, afiliasi dan validasi melalui menu inti. Role admin tidak membuka berkas bantuan secara otomatis.'
+                                            : 'Anda tetap dapat mencari peluang melalui Proyek. Riwayat milik Anda dan pencabutan izin tetap tersedia jika sudah ada.'}
                                     </p>
                                 </section>
                             )}

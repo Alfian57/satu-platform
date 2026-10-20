@@ -20,6 +20,7 @@ import {
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppPage } from '@/components/app-page';
+import { CampusOperationHeader } from '@/components/campus-operation-layout';
 import { DashboardArchiveArt } from '@/components/dashboard-archive-art';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -52,8 +53,8 @@ type ReasonCode =
 
 type ReviewItem = {
     id: number;
-    maskedNim: string;
-    maskedPhone: string | null;
+    nim: string;
+    phone: string | null;
     matchResult: MatchResult;
     status: 'pending_review';
     version: number;
@@ -62,7 +63,6 @@ type ReviewItem = {
     rosterSemester: string | null;
     lock: {
         ownedByCurrentUser: boolean;
-        owner: string | null;
         expiresAt: string | null;
     } | null;
 };
@@ -708,19 +708,18 @@ function ReviewQueueRegion({
                                     <dl className="mt-4 grid min-w-0 gap-3 border-y border-border py-3 sm:grid-cols-2">
                                         <div className="min-w-0">
                                             <dt className="text-xs text-muted-foreground">
-                                                NIM tersamarkan
+                                                NIM
                                             </dt>
                                             <dd className="mt-1 font-label text-sm font-medium break-words">
-                                                {item.maskedNim}
+                                                {item.nim}
                                             </dd>
                                         </div>
                                         <div className="min-w-0">
                                             <dt className="text-xs text-muted-foreground">
-                                                WhatsApp tersamarkan
+                                                Nomor WhatsApp
                                             </dt>
                                             <dd className="mt-1 font-label text-sm font-medium break-words">
-                                                {item.maskedPhone ??
-                                                    'Belum tersedia'}
+                                                {item.phone ?? 'Belum tersedia'}
                                             </dd>
                                         </div>
                                     </dl>
@@ -891,7 +890,7 @@ function ReviewQueueRegion({
                         <ol className="mt-3 space-y-2 border-t border-border pt-3 text-xs leading-5 text-muted-foreground">
                             {[
                                 'Ambil kunci berkas.',
-                                'Periksa hasil roster dan data tersamarkan.',
+                                'Cocokkan NIM dan nomor WhatsApp dengan data mahasiswa.',
                                 'Simpan keputusan beserta alasan.',
                             ].map((step, index) => (
                                 <li key={step} className="flex gap-2">
@@ -933,19 +932,18 @@ function ReviewQueueRegion({
                             <dl className="mt-3 space-y-2 rounded-2xl bg-accent/40 p-3 text-sm">
                                 <div>
                                     <dt className="text-xs text-muted-foreground">
-                                        NIM tersamarkan
+                                        NIM
                                     </dt>
                                     <dd className="mt-1 font-label break-words">
-                                        {selected.maskedNim}
+                                        {selected.nim}
                                     </dd>
                                 </div>
                                 <div>
                                     <dt className="text-xs text-muted-foreground">
-                                        WhatsApp tersamarkan
+                                        Nomor WhatsApp
                                     </dt>
                                     <dd className="mt-1 font-label break-words">
-                                        {selected.maskedPhone ??
-                                            'Belum tersedia'}
+                                        {selected.phone ?? 'Belum tersedia'}
                                     </dd>
                                 </div>
                                 <div>
@@ -1243,41 +1241,15 @@ function CampusAffiliationsContent({
                     className="space-y-4 sm:space-y-5"
                     data-test="affiliation-review-root"
                 >
-                    <header className="relative isolate overflow-hidden rounded-3xl border border-primary/15 bg-linear-to-br from-white via-white to-accent/50 p-5 shadow-sm sm:p-6">
-                        <DashboardArchiveArt className="absolute top-1 right-4 hidden size-28 opacity-30 lg:block" />
-                        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="flex min-w-0 items-start gap-4">
-                                <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-primary/15 bg-accent text-primary">
-                                    <ClipboardCheck
-                                        aria-hidden="true"
-                                        className="size-6"
-                                    />
-                                </span>
-                                <div className="min-w-0">
-                                    <p className="text-xs font-semibold tracking-wide text-primary uppercase">
-                                        Peninjauan kampus
-                                    </p>
-                                    <h1 className="mt-1 text-2xl leading-tight font-bold tracking-tight sm:text-3xl">
-                                        Afiliasi kampus
-                                    </h1>
-                                    <p className="mt-2 max-w-prose text-sm leading-6 text-muted-foreground">
-                                        Periksa permohonan, cocokkan dengan
-                                        roster, dan catat keputusan beserta
-                                        alasannya.
-                                    </p>
-                                </div>
-                            </div>
-                            <p className="flex max-w-full shrink-0 items-start gap-2 self-start rounded-xl border border-primary/10 bg-accent/70 px-3 py-2.5 text-xs leading-5 font-semibold text-primary sm:max-w-64 sm:self-center 2xl:max-w-80">
-                                <ShieldCheck
-                                    aria-hidden="true"
-                                    className="mt-0.5 size-4 shrink-0"
-                                />
-                                <span className="min-w-0 break-words">
-                                    {institution.name}
-                                </span>
-                            </p>
-                        </div>
-                    </header>
+                    <CampusOperationHeader
+                        theme="affiliations"
+                        icon={ClipboardCheck}
+                        title="Afiliasi kampus"
+                        description="Periksa permohonan, cocokkan dengan roster, dan catat keputusan beserta alasannya."
+                        institution={institution.name}
+                        eyebrow="Peninjauan kampus"
+                        testId="affiliation-review-header"
+                    />
                     {reviewOutcome && !requestError && !isForbidden && (
                         <Alert
                             role="status"

@@ -6,21 +6,22 @@ namespace App\Http\Controllers;
 
 use App\Actions\Gamification\ReadLeaderboardProjections;
 use App\Actions\Gamification\SetLeaderboardIndividualPreference;
+use App\Actions\Profile\ResolveStudentMembership;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
 use App\Enums\InstitutionRosterStatus;
-use App\Enums\InstitutionStatus;
 use App\Enums\LeaderboardScopeType;
 use App\Http\Requests\LeaderboardIndexRequest;
 use App\Http\Requests\UpdateLeaderboardPreferenceRequest;
-use App\Jobs\RebuildLeaderboardProjections as RebuildLeaderboardProjectionsJob;
 use App\Models\BadgeAward;
+use App\Models\Contribution;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\LeaderboardPeriod;
 use App\Models\LeaderboardPreference;
 use App\Models\LeaderboardProjection;
 use App\Models\User;
+use App\Models\XpLedgerEntry;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -33,6 +34,7 @@ final class LeaderboardController extends Controller
     public function __construct(
         private readonly ReadLeaderboardProjections $readProjections,
         private readonly SetLeaderboardIndividualPreference $setPreference,
+        private readonly ResolveStudentMembership $resolveStudentMembership,
     ) {}
 
     public function index(LeaderboardIndexRequest $request): Response
@@ -75,8 +77,8 @@ final class LeaderboardController extends Controller
         $semesters = $periods->pluck('semester')->unique()->values();
         $rosterSemester = $this->activeRosterSemester($institution);
 
-        if ($semesters->isEmpty() && $rosterSemester !== null) {
-            $semesters->push($rosterSemester);
+        if ($rosterSemester !== null) {
+            $semesters = $semesters->reject(fn (mixed $semester): bool => $semester === $rosterSemester)->prepend($rosterSemester)->values();
         }
 
         $requestedSemester = Str::of((string) ($validated['semester'] ?? ''))
@@ -119,6 +121,12 @@ final class LeaderboardController extends Controller
                 ],
                 'badges' => $this->badges($user, $institution),
                 'isCampusOperator' => $isCampusOperator,
+                'personalXp' => $isCampusOperator ? null : $this->personalXp($user, $institution, $selectedSemester),
+                'pendingXpCount' => $isCampusOperator ? null : Contribution::query()
+                    ->whereBelongsTo($institution)
+                    ->where('owner_id', $user->getKey())
+                    ->awaitingXp()
+                    ->count(),
             ],
             'leaderboardRows' => Inertia::defer(
                 fn (): array => $this->rows(
@@ -128,6 +136,7 @@ final class LeaderboardController extends Controller
                     $scope,
                     $page,
                 ),
+                rescue: true,
             ),
         ]);
     }
@@ -153,27 +162,14 @@ final class LeaderboardController extends Controller
             actor: $user,
             institution: $membership->institution,
             isOptedIn: $request->boolean('is_opted_in'),
+            expectedVersion: $request->integer('expected_version'),
         );
-
-        $semesters = $membership->institution->rosters()
-            ->where('status', InstitutionRosterStatus::Active->value)
-            ->pluck('semester')
-            ->filter()
-            ->unique()
-            ->values();
-
-        foreach ($semesters as $semester) {
-            RebuildLeaderboardProjectionsJob::dispatch(
-                $membership->institution->getKey(),
-                (string) $semester,
-            );
-        }
 
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => $preference->is_opted_in
-                ? 'Leaderboard individual diaktifkan.'
-                : 'Leaderboard individual disembunyikan.',
+                ? 'Persetujuan peringkat individual tersimpan.'
+                : 'Persetujuan peringkat individual ditarik.',
         ]);
 
         $query = array_filter([
@@ -186,18 +182,20 @@ final class LeaderboardController extends Controller
 
     private function activeMembership(User $user): ?InstitutionMembership
     {
-        return InstitutionMembership::query()
-            ->with('institution:id,name,status')
+        $membership = $user->universityAdminMembership() ?? $this->resolveStudentMembership->handle($user);
+        $membership?->loadMissing('institution:id,name,status');
+
+        return $membership?->status === InstitutionMembershipStatus::Verified ? $membership : null;
+    }
+
+    private function personalXp(User $user, Institution $institution, string $semester): int
+    {
+        return max(0, (int) XpLedgerEntry::query()
+            ->whereBelongsTo($institution)
             ->whereBelongsTo($user)
-            ->where('status', InstitutionMembershipStatus::Verified->value)
-            ->whereIn('role', [
-                InstitutionMembershipRole::Student->value,
-                InstitutionMembershipRole::CampusAdmin->value,
-            ])
-            ->whereRelation('institution', 'status', InstitutionStatus::Active->value)
-            ->latest('verified_at')
-            ->latest('id')
-            ->first();
+            ->where('semester', $semester)
+            ->withNetAmount()
+            ->value('net_amount'));
     }
 
     /**
@@ -328,6 +326,7 @@ final class LeaderboardController extends Controller
                     $optedInLookup[$projection->scope_id],
                 ),
             );
+            $projections = $this->rankVisibleIndividuals($projections);
         }
 
         $total = $projections->count();
@@ -343,8 +342,8 @@ final class LeaderboardController extends Controller
                 'scopeLabel' => $projection->scope_label,
                 'rank' => $projection->rank,
                 'sharedRankGroup' => $projection->shared_rank_group,
-                'score' => (string) $projection->score,
-                'verifiedXpTotal' => $projection->verified_xp_total,
+                'score' => $projection->suppressed ? null : (string) $projection->score,
+                'verifiedXpTotal' => $projection->suppressed ? null : $projection->verified_xp_total,
                 'activeMemberDenominator' => $projection->active_member_denominator,
                 'cohortSize' => $projection->cohort_size,
                 'suppressed' => $projection->suppressed,
@@ -363,6 +362,38 @@ final class LeaderboardController extends Controller
             ],
             'emptyReason' => $total === 0 ? 'no_verified_xp' : null,
         ];
+    }
+
+    /**
+     * @param  Collection<int, LeaderboardProjection>  $projections
+     * @return Collection<int, LeaderboardProjection>
+     */
+    private function rankVisibleIndividuals(Collection $projections): Collection
+    {
+        $previousScore = null;
+        $rank = 0;
+        $counts = [];
+        $ranked = new Collection;
+
+        foreach ($projections->values() as $index => $projection) {
+            $row = clone $projection;
+
+            if ($previousScore !== $row->score) {
+                $rank = $index + 1;
+            }
+
+            $row->rank = $rank;
+            $row->shared_rank_group = null;
+            $counts[$rank] = ($counts[$rank] ?? 0) + 1;
+            $previousScore = $row->score;
+            $ranked->push($row);
+        }
+
+        foreach ($ranked as $row) {
+            $row->shared_rank_group = ($counts[$row->rank] ?? 0) > 1 ? $row->rank : null;
+        }
+
+        return $ranked;
     }
 
     /**

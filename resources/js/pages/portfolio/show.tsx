@@ -203,7 +203,7 @@ export default function PortfolioShow({
                     'Detail belum diperbarui. Karya tersimpan tetap aman. Coba lagi.',
                 ),
             onHttpException: (response) => {
-                if (response.status === 403) {
+                if ([401, 403, 404].includes(response.status)) {
                     setIsForbidden(true);
                 }
 
@@ -368,6 +368,9 @@ export default function PortfolioShow({
                                         entry={entry}
                                         profileId={resolvedProfile.id}
                                         onUpdated={setEntryOverride}
+                                        onAccessRevoked={() =>
+                                            setIsForbidden(true)
+                                        }
                                         dataTestPrefix={`portfolio-detail-entry-${entry.id}`}
                                     />
                                 )}
@@ -412,6 +415,9 @@ export default function PortfolioShow({
                                         key={resolvedProfile.id}
                                         profile={resolvedProfile}
                                         onUpdated={setProfileOverride}
+                                        onAccessRevoked={() =>
+                                            setIsForbidden(true)
+                                        }
                                     />
                                 ) : (
                                     <PortfolioAccessNote />
@@ -424,8 +430,7 @@ export default function PortfolioShow({
                                     <p>
                                         Pengaturan profil tidak menggantikan
                                         jangkauan setiap karya. Publikasi juga
-                                        tidak otomatis memberi akses kepada
-                                        perekrut.
+                                        tidak otomatis membuka bukti privat.
                                     </p>
                                 </div>
                             </aside>

@@ -22,6 +22,7 @@ final class SubmitContribution
         private readonly AuditRecorder $audit,
         private readonly NotifyContributionReviewers $notifyReviewers,
         private readonly ContributionRequirements $requirements,
+        private readonly EnsureUniqueContributionWork $uniqueWork,
     ) {}
 
     public function handle(User $actor, Contribution $contribution, string $expectedRevision): Contribution
@@ -57,6 +58,14 @@ final class SubmitContribution
             }
 
             $this->requirements->ensureAvailableEvidence($version, $lockedContribution->project);
+            $this->uniqueWork->handle(
+                project: $lockedContribution->project,
+                ownerId: $actor->getKey(),
+                taskId: $version->task_id,
+                claim: $version->claim,
+                summary: $version->summary,
+                exceptId: $lockedContribution->getKey(),
+            );
             $evidenceCount = $version->evidence->count();
 
             $institution = Institution::query()

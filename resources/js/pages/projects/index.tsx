@@ -11,7 +11,10 @@ import {
     CircleDot,
     CircleX,
     Clock3,
+    Compass,
     Filter,
+    GraduationCap,
+    Lightbulb,
     Plus,
     Search,
     ShieldCheck,
@@ -20,8 +23,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppPage } from '@/components/app-page';
-import { DashboardArchiveArt as ArchiveArt } from '@/components/dashboard-archive-art';
-import Mascot from '@/components/mascot';
+import StudentMenuHero from '@/components/student-menu-hero';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -264,19 +266,13 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
         <li
             data-project-id={project.id}
             data-test="project-row"
-            className="min-w-0 rounded-3xl border border-border bg-card shadow-sm focus-within:border-primary/30 focus-within:shadow-md motion-safe:transition-[border-color,box-shadow] motion-safe:duration-standard motion-safe:ease-ledger"
+            className="project-discovery-card min-w-0 rounded-[20px] border border-border bg-card shadow-sm focus-within:border-primary/40"
         >
-            <article className="flex h-full min-w-0 flex-col gap-5 p-5 sm:p-6">
+            <article className="flex h-full min-w-0 flex-col gap-4 p-4 sm:p-5">
                 <div className="min-w-0 space-y-4">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        <span className="mr-auto flex size-11 items-center justify-center rounded-2xl border border-border bg-accent text-primary">
-                            <BriefcaseBusiness
-                                aria-hidden="true"
-                                className="size-5"
-                            />
-                        </span>
                         <ProjectStatusBadge status={project.status} />
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                        <span className="ml-auto inline-flex max-w-full items-center gap-1.5 text-xs text-muted-foreground">
                             <ShieldCheck
                                 aria-hidden="true"
                                 className="size-3.5"
@@ -303,7 +299,7 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                     </div>
 
                     <div className="grid min-w-0 gap-4">
-                        <div className="min-w-0 space-y-3 rounded-2xl bg-linear-to-br from-accent/80 to-background p-4">
+                        <div className="project-discovery-roles min-w-0 space-y-3 rounded-xl p-3.5">
                             <p className="flex items-center gap-2 text-xs font-semibold text-primary">
                                 <UsersRound
                                     aria-hidden="true"
@@ -312,16 +308,16 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                                 Peran yang dibutuhkan
                             </p>
                             {project.roles.length > 0 ? (
-                                <ul className="flex flex-wrap gap-2 text-sm">
+                                <ul className="grid gap-2.5 text-sm">
                                     {project.roles.slice(0, 3).map((role) => (
                                         <li
                                             key={role.id}
-                                            className="flex max-w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-white bg-card/80 px-3 py-2 text-foreground"
+                                            className="grid min-w-0 gap-1 border-t border-primary/10 pt-2.5 first:border-0 first:pt-0"
                                         >
-                                            <span className="min-w-0 font-medium wrap-anywhere">
+                                            <span className="min-w-0 font-semibold wrap-anywhere text-foreground">
                                                 {role.title}
                                             </span>
-                                            <span className="shrink-0 text-xs text-muted-foreground">
+                                            <span className="text-xs leading-5 text-muted-foreground">
                                                 {beginnerLabel(
                                                     role.accepts_beginners,
                                                 )}
@@ -364,7 +360,7 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                                     {skills.slice(0, 3).map((skill) => (
                                         <li
                                             key={skill.name}
-                                            className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-lg bg-background px-2.5 py-1.5 text-xs text-foreground"
+                                            className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-md border border-border/80 px-2 py-1 text-xs text-foreground"
                                         >
                                             <span className="min-w-0 wrap-anywhere">
                                                 {skill.name}
@@ -425,36 +421,40 @@ function ProjectLedgerRow({ project }: { project: ProjectSummary }) {
                             </span>
                         </dd>
                     </div>
-
-                    <div className="col-span-2 min-w-0 space-y-1 border-t border-border/60 pt-3">
-                        <p className="mb-2 text-xs leading-5 text-muted-foreground">
-                            {opportunityStatus(
-                                project.capacity_stats,
-                                project.status,
-                                project.deadline,
-                            )}
-                        </p>
-                        <dt className="text-xs text-muted-foreground">
-                            Pemilik proyek
-                        </dt>
-                        <dd className="text-sm font-medium break-words">
-                            {project.owner.name}
-                        </dd>
-                    </div>
                 </dl>
-                <Button
-                    asChild
-                    variant="outline"
-                    className="min-h-11 w-full rounded-xl border-primary/25 bg-accent/30 text-primary hover:border-primary hover:bg-accent hover:text-primary motion-safe:transition-[background-color,border-color] motion-safe:duration-standard motion-safe:active:translate-y-0.5"
-                >
-                    <Link
-                        href={projectShow(project.id)}
-                        aria-label={`Lihat proyek ${project.title}`}
+                <p className="text-xs leading-5 text-muted-foreground">
+                    {opportunityStatus(
+                        project.capacity_stats,
+                        project.status,
+                        project.deadline,
+                    )}
+                </p>
+                <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-3">
+                    <div className="min-w-0 flex-1">
+                        <p className="text-xs text-muted-foreground">
+                            Pemilik proyek
+                        </p>
+                        <p className="mt-1 text-sm font-medium wrap-anywhere">
+                            {project.owner.name}
+                        </p>
+                    </div>
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="min-h-11 shrink-0 rounded-xl border-primary/25 bg-white text-primary hover:bg-accent hover:text-primary"
                     >
-                        Lihat proyek{' '}
-                        <ArrowUpRight aria-hidden="true" className="size-4" />
-                    </Link>
-                </Button>
+                        <Link
+                            href={projectShow(project.id)}
+                            aria-label={`Lihat proyek ${project.title}`}
+                        >
+                            Lihat proyek{' '}
+                            <ArrowUpRight
+                                aria-hidden="true"
+                                className="size-4"
+                            />
+                        </Link>
+                    </Button>
+                </div>
             </article>
         </li>
     );
@@ -465,7 +465,7 @@ function ProjectLedgerSkeleton() {
         <li
             aria-hidden="true"
             data-test="project-skeleton-row"
-            className="grid min-w-0 gap-5 rounded-3xl border border-border bg-card p-5 sm:p-6"
+            className="grid min-w-0 gap-4 rounded-[20px] border border-border bg-card p-4 sm:p-5"
         >
             <div className="grid gap-5">
                 <div className="space-y-4">
@@ -476,11 +476,11 @@ function ProjectLedgerSkeleton() {
                     <Skeleton className="h-6 w-3/5 max-w-sm" />
                     <Skeleton className="h-4 w-full max-w-2xl" />
                     <Skeleton className="h-4 w-4/5 max-w-xl" />
-                    <div className="grid gap-3 rounded-2xl bg-accent/50 p-4">
+                    <div className="grid gap-3 rounded-xl bg-accent/50 p-3.5">
                         <Skeleton className="h-4 w-36" />
-                        <div className="flex flex-wrap gap-2">
-                            <Skeleton className="h-9 w-24 rounded-xl" />
-                            <Skeleton className="h-9 w-28 rounded-xl" />
+                        <div className="grid gap-2.5">
+                            <Skeleton className="h-12 w-4/5 rounded-lg" />
+                            <Skeleton className="h-12 w-3/5 rounded-lg" />
                         </div>
                         <Skeleton className="h-3 w-4/5" />
                     </div>
@@ -492,7 +492,10 @@ function ProjectLedgerSkeleton() {
                     <Skeleton className="h-4 w-24" />
                     <Skeleton className="col-span-2 h-4 w-36" />
                 </div>
-                <Skeleton className="h-11 w-full rounded-xl" />
+                <div className="flex items-center justify-between gap-4">
+                    <Skeleton className="h-8 w-28" />
+                    <Skeleton className="h-11 w-32 rounded-xl" />
+                </div>
             </div>
         </li>
     );
@@ -510,9 +513,20 @@ function ProjectEmptyState({
     return (
         <section
             data-test="projects-empty"
-            className="grid justify-items-center gap-4 rounded-3xl border border-dashed border-border bg-linear-to-b from-card to-background px-5 py-10 text-center"
+            className="project-discovery-empty grid justify-items-center gap-4 rounded-[20px] border border-dashed border-primary/25 px-5 py-8 text-center"
         >
-            <ArchiveArt className="w-28" />
+            <img
+                src="/images/dashboard-project-folder.webp"
+                srcSet="/images/dashboard-project-folder-128.webp 128w, /images/dashboard-project-folder.webp 256w"
+                sizes="96px"
+                width={256}
+                height={256}
+                alt=""
+                aria-hidden="true"
+                className="size-24 object-contain"
+                loading="lazy"
+                decoding="async"
+            />
             <div className="grid max-w-lg gap-2">
                 <h3 className="text-title font-semibold">
                     {isMine
@@ -743,118 +757,81 @@ export default function ProjectIndex({
             <AppPage className="min-w-0">
                 <div
                     data-test="projects-root"
-                    className="w-full min-w-0 space-y-6"
+                    className="project-discovery w-full min-w-0 space-y-5"
                 >
-                    <header
-                        className="relative overflow-hidden rounded-4xl border border-white bg-linear-to-br from-accent via-sky-100 to-blue-100 p-5 shadow-md sm:p-7"
-                        data-test="project-discovery-header"
+                    <StudentMenuHero
+                        theme="projects"
+                        icon={BriefcaseBusiness}
+                        eyebrow={
+                            isMine
+                                ? 'Pekerjaan bersama tim'
+                                : 'Peluang kolaborasi'
+                        }
+                        title={
+                            isMine
+                                ? 'Ide bersama, karya nyata.'
+                                : 'Ada tempat untuk kemampuanmu.'
+                        }
+                        description={
+                            isMine
+                                ? 'Lanjutkan proyek yang kamu kelola atau kerjakan bersama tim. Draft milikmu juga ada di sini.'
+                                : 'Temukan peran yang sesuai, kenali kebutuhan tim, lalu mulai berkarya bersama. Belum punya karya? Kamu tetap bisa memulai.'
+                        }
+                        pose="project-plan"
+                        testId="project-discovery-header"
                     >
-                        <div
-                            aria-hidden="true"
-                            className="pointer-events-none absolute -top-24 -right-12 size-80 rounded-full border border-white/70 bg-white/30"
-                        />
-                        <ArchiveArt className="absolute top-5 right-28 hidden w-36 -rotate-6 opacity-55 sm:block lg:right-36 lg:w-44" />
-                        <span
-                            aria-hidden="true"
-                            className="absolute top-7 right-7 h-1.5 w-10 -rotate-12 rounded-full bg-satu-feather/70"
-                        />
-                        <div className="relative flex items-center justify-between gap-4">
-                            <div className="max-w-2xl min-w-0">
-                                <p className="inline-flex items-center gap-2 rounded-full border border-white bg-white/80 px-3 py-1.5 text-xs font-semibold text-primary">
-                                    <BriefcaseBusiness
-                                        aria-hidden="true"
-                                        className="size-3.5"
-                                    />
-                                    {isMine
-                                        ? 'Pekerjaan bersama tim'
-                                        : 'Peluang kolaborasi'}
-                                </p>
-                                <h1 className="mt-4 text-2xl leading-snug font-bold tracking-tight text-foreground sm:text-3xl">
-                                    {isMine
-                                        ? 'Lanjutkan proyek dan pekerjaanmu.'
-                                        : 'Temukan tim untuk ide dan keahlianmu.'}
-                                </h1>
-                                <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
-                                    {isMine
-                                        ? 'Temukan proyek yang kamu kelola dan tim yang masih kamu ikuti, termasuk draft milikmu. Buka proyek untuk melanjutkan pekerjaan.'
-                                        : 'Jelajahi proyek, kenali kebutuhan tim, dan pilih peluang yang ingin kamu kerjakan bersama.'}
-                                </p>
-                            </div>
-                            <Mascot
-                                pose="guide"
-                                className="hidden w-32 shrink-0 sm:block lg:w-40"
-                            />
-                        </div>
-                        <div className="relative mt-5 flex flex-col gap-4 border-t border-white/80 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                            <p className="flex min-w-0 items-start gap-2 text-sm font-medium text-foreground">
-                                <ShieldCheck
-                                    aria-hidden="true"
-                                    className="mt-0.5 size-4 shrink-0 text-primary"
-                                />
-                                <span className="min-w-0 wrap-anywhere">
-                                    {institution.name}
-                                </span>
-                            </p>
-                            <Button
-                                asChild
-                                className="min-h-11 w-full shrink-0 rounded-xl shadow-sm hover:bg-primary sm:w-auto dark:hover:bg-primary"
-                                data-test="create-project-link"
-                            >
-                                <Link
-                                    href={projectsCreate({
-                                        query: {
-                                            institution_id: institution.id,
-                                        },
-                                    })}
-                                >
-                                    <Plus
-                                        aria-hidden="true"
-                                        className="size-4"
-                                    />
-                                    Buat proyek
-                                </Link>
-                            </Button>
-                        </div>
-                    </header>
-
-                    <div className="rounded-2xl border border-primary/15 bg-white px-5 py-4 text-sm leading-6 shadow-sm">
-                        <p>
-                            Belum menemukan peran yang sesuai? Bantuan kampus
-                            bersifat pilihan, bukan syarat mengajukan minat.
-                        </p>
                         <Button
-                            variant="link"
-                            className="mt-1 min-h-11 px-0"
                             asChild
+                            className="student-menu-hero__primary min-h-11 rounded-xl px-4"
+                            data-test="create-project-link"
                         >
-                            <Link href={opportunitySupport(institution.id)}>
-                                Bantuan kesempatan
+                            <Link
+                                href={projectsCreate({
+                                    query: { institution_id: institution.id },
+                                })}
+                            >
+                                <Plus aria-hidden="true" className="size-4" />
+                                Buat proyek
                             </Link>
                         </Button>
-                    </div>
+                        <p className="flex min-w-0 items-start gap-2 text-xs leading-5 text-muted-foreground">
+                            <GraduationCap
+                                aria-hidden="true"
+                                className="mt-0.5 size-4 shrink-0 text-primary"
+                            />
+                            <span className="min-w-0 wrap-anywhere">
+                                {institution.name}
+                            </span>
+                        </p>
+                    </StudentMenuHero>
                     <nav
                         aria-label="Tampilan proyek"
-                        className="flex flex-wrap items-center gap-2 rounded-2xl border border-primary/15 bg-card p-2 shadow-sm"
+                        className="project-discovery-views flex min-w-0 flex-wrap items-center gap-1.5 border-b border-border pb-3"
                         data-test="project-views"
                     >
                         <Button
                             type="button"
-                            variant={isMine ? 'ghost' : 'default'}
+                            variant="ghost"
                             disabled={isPending}
                             aria-pressed={!isMine}
                             onClick={() => changeView('opportunities')}
-                            className="min-h-11 flex-1 sm:flex-none"
+                            className="project-discovery-view min-h-11 flex-1 sm:flex-none"
                         >
+                            <Compass aria-hidden="true" className="size-4" />
                             Peluang
                         </Button>
                         <Button
                             type="button"
-                            variant={isMine ? 'default' : 'ghost'}
+                            variant="ghost"
                             disabled={isPending}
                             aria-pressed={isMine}
                             onClick={() => changeView('mine')}
-                            className="min-h-11 flex-1 sm:flex-none"
+                            className="project-discovery-view min-h-11 flex-1 sm:flex-none"
                         >
+                            <BriefcaseBusiness
+                                aria-hidden="true"
+                                className="size-4"
+                            />
                             Proyek saya
                         </Button>
                         <p className="basis-full px-3 py-1 text-xs leading-5 text-muted-foreground sm:basis-auto">
@@ -866,10 +843,10 @@ export default function ProjectIndex({
                     <section
                         aria-labelledby="project-filters-title"
                         data-test="project-filters"
-                        className="min-w-0 rounded-3xl border border-primary/20 bg-card shadow-md"
+                        className="project-discovery-search min-w-0 rounded-[20px] border border-border bg-card shadow-sm"
                     >
                         <form
-                            className="grid gap-5 p-5 sm:p-6"
+                            className="grid gap-4 p-4 sm:p-5"
                             onSubmit={(event) => {
                                 event.preventDefault();
                                 visitDiscovery();
@@ -879,21 +856,17 @@ export default function ProjectIndex({
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                                         <div>
-                                            <p className="text-xs font-bold tracking-[0.13em] text-primary uppercase">
-                                                Temukan peluang
-                                            </p>
                                             <h2
                                                 id="project-filters-title"
-                                                className="mt-1 text-title font-bold tracking-[-0.02em] text-foreground"
+                                                className="text-lg font-bold tracking-tight text-foreground"
                                             >
-                                                Cari proyek yang sesuai
+                                                {isMine
+                                                    ? 'Cari dalam proyekmu'
+                                                    : 'Mulai dari peran yang kamu minati'}
                                             </h2>
                                         </div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Filter tersimpan di URL
-                                        </p>
                                     </div>
-                                    <div className="relative mt-4">
+                                    <div className="relative mt-3">
                                         <Search
                                             aria-hidden="true"
                                             className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground"
@@ -923,6 +896,59 @@ export default function ProjectIndex({
                                     Terapkan filter
                                 </Button>
                             </div>
+
+                            {!isMine && (
+                                <div
+                                    className="project-discovery-beginner flex min-w-0 flex-col gap-3 rounded-xl p-3.5 sm:flex-row sm:items-center sm:justify-between"
+                                    data-test="project-first-opportunity"
+                                >
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-satu-orange-border bg-white text-satu-orange-ink">
+                                            <Lightbulb
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                        </span>
+                                        <div className="min-w-0">
+                                            <h3 className="text-sm font-semibold text-foreground">
+                                                Mulai dari peran pertama
+                                            </h3>
+                                            <p className="mt-1 max-w-prose text-sm leading-6 text-muted-foreground">
+                                                Temukan peran terbuka yang
+                                                menerima pemula, lalu baca
+                                                kriterianya.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="min-h-11 shrink-0 bg-white"
+                                        disabled={isPending}
+                                        aria-pressed={
+                                            filters.beginner === 'accepting' &&
+                                            filters.availability === 'available'
+                                        }
+                                        onClick={() =>
+                                            visitQuery({
+                                                view: 'opportunities',
+                                                institution_id:
+                                                    filters.institution_id,
+                                                beginner: 'accepting',
+                                                availability: 'available',
+                                            })
+                                        }
+                                        data-test="project-beginner-shortcut"
+                                    >
+                                        {filters.beginner === 'accepting' &&
+                                            filters.availability ===
+                                                'available' && (
+                                                <CheckCircle2 aria-hidden="true" />
+                                            )}
+                                        Peran pemula
+                                    </Button>
+                                </div>
+                            )}
 
                             <details
                                 className="min-w-0 border-t border-border/60 pt-4"
@@ -1271,7 +1297,7 @@ export default function ProjectIndex({
                         aria-labelledby="project-results-title"
                         aria-busy={isPending}
                         data-test="projects-results"
-                        className="min-w-0 space-y-4"
+                        className="project-discovery-results min-w-0 space-y-4"
                     >
                         <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
                             <div className="min-w-0 space-y-1">
@@ -1320,7 +1346,7 @@ export default function ProjectIndex({
                                 </p>
                                 <ul
                                     aria-hidden="true"
-                                    className="grid min-w-0 gap-5 xl:grid-cols-2"
+                                    className="project-discovery-grid grid min-w-0 gap-4"
                                 >
                                     <ProjectLedgerSkeleton />
                                 </ul>
@@ -1342,7 +1368,7 @@ export default function ProjectIndex({
                         {!hasError && projects.data.length > 0 && (
                             <ul
                                 data-test="project-ledger"
-                                className="grid min-w-0 gap-5 xl:grid-cols-2"
+                                className="project-discovery-grid grid min-w-0 gap-4"
                             >
                                 {projects.data.map((project) => (
                                     <ProjectLedgerRow
@@ -1439,6 +1465,37 @@ export default function ProjectIndex({
                             </nav>
                         )}
                     </section>
+                    <aside
+                        aria-label="Bantuan menemukan kesempatan"
+                        className="project-discovery-support flex min-w-0 flex-col gap-2 rounded-2xl border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <div className="flex min-w-0 items-start gap-3">
+                            <Lightbulb
+                                aria-hidden="true"
+                                className="mt-1 size-4 shrink-0 text-satu-orange-ink"
+                            />
+                            <p className="text-sm leading-6 text-muted-foreground">
+                                <span className="font-semibold text-foreground">
+                                    Belum menemukan peran yang sesuai?
+                                </span>{' '}
+                                Bantuan kampus bersifat pilihan, bukan syarat
+                                bergabung.
+                            </p>
+                        </div>
+                        <Button
+                            variant="link"
+                            className="min-h-11 shrink-0 justify-start px-0"
+                            asChild
+                        >
+                            <Link href={opportunitySupport(institution.id)}>
+                                Bantuan kesempatan{' '}
+                                <ArrowUpRight
+                                    aria-hidden="true"
+                                    className="size-4"
+                                />
+                            </Link>
+                        </Button>
+                    </aside>
                 </div>
             </AppPage>
         </>

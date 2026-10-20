@@ -4,7 +4,6 @@ import {
     CalendarDays,
     CircleAlert,
     ClipboardList,
-    FileCheck2,
     FileText,
     FolderOpen,
     Plus,
@@ -19,7 +18,7 @@ import {
     contributionStatusMeta,
 } from '@/components/contributions/contribution-status';
 import { DashboardArchiveArt as ArchiveArt } from '@/components/dashboard-archive-art';
-import Mascot from '@/components/mascot';
+import StudentMenuHero from '@/components/student-menu-hero';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -306,93 +305,62 @@ export default function ContributionsIndex({
             <Head title="Kontribusi" />
             <AppPage className="min-w-0">
                 <div
-                    className="grid w-full min-w-0 gap-6"
+                    className="contribution-discovery grid w-full min-w-0 gap-6"
                     data-test="contributions-root"
                 >
-                    <header
-                        className="relative overflow-hidden rounded-4xl border border-white bg-linear-to-br from-accent via-sky-100 to-blue-100 p-5 shadow-md sm:p-7"
-                        data-test="contributions-header"
-                    >
-                        <div
-                            aria-hidden="true"
-                            className="pointer-events-none absolute -top-24 -right-12 size-80 rounded-full border border-white/70 bg-white/30"
-                        />
-                        <ArchiveArt className="absolute top-5 right-28 hidden w-36 -rotate-6 opacity-55 sm:block lg:right-36 lg:w-44" />
-                        <span
-                            aria-hidden="true"
-                            className="absolute top-7 right-7 h-1.5 w-10 -rotate-12 rounded-full bg-satu-feather/70"
-                        />
-                        <div className="relative flex min-w-0 items-center justify-between gap-4">
-                            <div className="max-w-2xl min-w-0">
-                                <p className="inline-flex items-center gap-2 rounded-full border border-white bg-white/80 px-3 py-1.5 text-xs font-semibold text-primary">
-                                    <FileCheck2
-                                        aria-hidden="true"
-                                        className="size-3.5"
-                                    />
-                                    Catatan kontribusimu
-                                </p>
-                                <h1 className="mt-4 text-2xl leading-snug font-bold tracking-tight text-foreground sm:text-3xl">
-                                    Cerita di balik pekerjaanmu, tercatat dengan
-                                    baik.
-                                </h1>
-                                <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
-                                    Susun kontribusi dari tugas yang kamu
-                                    kerjakan, sertakan bukti, dan ikuti
-                                    perkembangan validasi kampus di sini.
-                                </p>
-                            </div>
-                            <Mascot
-                                pose="guide"
-                                priority
-                                className="hidden w-32 shrink-0 sm:block lg:w-40"
-                            />
-                        </div>
-                        <div className="relative mt-5 flex min-w-0 flex-col gap-4 border-t border-white/80 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                            <p className="flex min-w-0 items-start gap-2 text-sm leading-6 text-foreground">
+                    <StudentMenuHero
+                        theme="contributions"
+                        icon={FileText}
+                        eyebrow="Catatan kontribusimu"
+                        title="Pekerjaanmu punya cerita."
+                        description="Catat bagian yang kamu kerjakan, sertakan bukti, lalu ikuti proses validasi kampus."
+                        pose="contribution-notes"
+                        testId="contributions-header"
+                        note={
+                            <p className="flex min-w-0 items-start gap-2">
                                 <ShieldCheck
                                     aria-hidden="true"
-                                    className="mt-1 size-4 shrink-0 text-primary"
+                                    className="mt-0.5 size-4 shrink-0 text-primary"
                                 />
                                 <span>
                                     Bukti privat tetap mengikuti izin akses
                                     proyek dan validasi kampus.
                                 </span>
                             </p>
-                            <div className="flex min-w-0 shrink-0 flex-col gap-2 sm:flex-row">
-                                {canCreate && !isForbidden && (
-                                    <Button
-                                        asChild
-                                        className="min-h-11 shadow-sm hover:bg-primary dark:hover:bg-primary"
-                                    >
-                                        <Link
-                                            href={contributionsCreate()}
-                                            data-test="create-contribution-link"
-                                        >
-                                            <Plus aria-hidden="true" />
-                                            Susun kontribusi
-                                        </Link>
-                                    </Button>
-                                )}
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="min-h-11 bg-card"
-                                    onClick={refresh}
-                                    disabled={isRefreshing}
-                                    data-test="contributions-refresh"
+                        }
+                    >
+                        {canCreate && !isForbidden && (
+                            <Button
+                                asChild
+                                className="student-menu-hero__primary min-h-11 rounded-xl px-4"
+                            >
+                                <Link
+                                    href={contributionsCreate()}
+                                    data-test="create-contribution-link"
                                 >
-                                    <RefreshCw
-                                        aria-hidden="true"
-                                        className={cn(
-                                            isRefreshing &&
-                                                'animate-spin motion-reduce:animate-none',
-                                        )}
-                                    />
-                                    Muat ulang
-                                </Button>
-                            </div>
-                        </div>
-                    </header>
+                                    <Plus aria-hidden="true" />
+                                    Susun kontribusi
+                                </Link>
+                            </Button>
+                        )}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="min-h-11 bg-card"
+                            onClick={refresh}
+                            disabled={isRefreshing}
+                            data-test="contributions-refresh"
+                        >
+                            <RefreshCw
+                                aria-hidden="true"
+                                className={cn(
+                                    isRefreshing &&
+                                        'animate-spin motion-reduce:animate-none',
+                                )}
+                            />
+                            Muat ulang
+                        </Button>
+                    </StudentMenuHero>
                     <section
                         aria-label="Cara kerja kontribusi"
                         className="grid min-w-0 gap-5 border-y border-border/70 py-5 sm:grid-cols-3 sm:gap-6"

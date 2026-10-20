@@ -20,6 +20,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -38,9 +39,7 @@ final class IssueInvitation
         string $phone,
         string $intendedRole,
     ): PrivilegedInvitation {
-        if (! $actor->is_platform_admin) {
-            throw new AuthorizationException('Only platform admins can issue invitations.');
-        }
+        Gate::forUser($actor)->authorize('create', [PrivilegedInvitation::class, $institution]);
 
         if ($institution->status !== InstitutionStatus::Active) {
             throw ValidationException::withMessages([
@@ -63,6 +62,11 @@ final class IssueInvitation
         }
 
         return DB::transaction(function () use ($actor, $institution, $phone, $intendedRole): PrivilegedInvitation {
+            $institution = Institution::query()->whereKey($institution->id)->lockForUpdate()->firstOrFail();
+            if (! $actor->isUniversityAdmin($institution)) {
+                throw new AuthorizationException('Akses admin atau konteks universitas sudah berubah.');
+            }
+
             $this->revokeExisting($actor, $institution, $phone, $intendedRole);
 
             $plainToken = Str::random(64);
@@ -81,7 +85,7 @@ final class IssueInvitation
             ]);
 
             $message = sprintf(
-                'Undangan Admin Kampus SATU untuk %s. Buka %s sebelum %s.',
+                'Undangan Admin Universitas SATU untuk %s. Buka %s sebelum %s.',
                 $institution->name,
                 route('invitation.show', ['token' => $plainToken]),
                 $expiresAt->timezone($institution->timezone)->translatedFormat('d F Y H:i'),

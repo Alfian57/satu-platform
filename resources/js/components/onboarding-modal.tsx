@@ -8,6 +8,7 @@ import {
     Clock3,
     GraduationCap,
     LockKeyhole,
+    LogOut,
     Plus,
     RefreshCw,
     Search,
@@ -17,7 +18,11 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { toast } from 'sonner';
+import { AcademicProgramFields } from '@/components/academic-program-fields';
+import InputError from '@/components/input-error';
 import Mascot from '@/components/mascot';
+import OnboardingAffiliationIntro from '@/components/onboarding-affiliation-intro';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,7 +34,9 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { activationNotice } from '@/lib/student-activation';
 import { cn } from '@/lib/utils';
+import { dashboard, logout } from '@/routes';
 import { store as storeAffiliation } from '@/routes/institution-memberships';
 import {
     index as searchTaxonomy,
@@ -44,6 +51,7 @@ import {
 import { update as updateAvailability } from '@/routes/student-profiles/availability';
 import { update as updateVisibility } from '@/routes/student-profiles/visibility';
 import type { Auth, ShellContext } from '@/types';
+import type { StudentActivation as OnboardingState } from '@/types/onboarding';
 
 type Proficiency = 'beginner' | 'intermediate' | 'advanced' | 'expert';
 type Visibility = 'private' | 'institution' | 'recruiter' | 'public';
@@ -67,7 +75,8 @@ type Availability = {
 type ProfilePayload = {
     institution_id: number;
     study_program: string;
-    study_year: number;
+    faculty: string;
+    admission_year: number | null;
     bio: string;
     skills: {
         taxonomy_id: number;
@@ -86,20 +95,6 @@ type ProfileResponse = {
         portfolio_visibility?: Visibility;
         recruiter_discoverable?: boolean;
     };
-};
-type OnboardingState = {
-    required: boolean;
-    institutionId: number | null;
-    institutionName: string | null;
-    membershipStatus: string;
-    profileId: number | null;
-    studyProgram: string;
-    studyYear: number;
-    bio: string;
-    skillsCount: number;
-    availabilityCount: number;
-    institutions?: { id: number; name: string }[];
-    nim?: string;
 };
 type OnboardingProps = {
     auth: Auth;
@@ -124,7 +119,7 @@ type SaveProgress = {
     finished: Set<string>;
 };
 
-const steps = ['Kampusmu', 'Keahlianmu', 'Cara berkolaborasi'];
+const steps = ['Afiliasi kampus', 'Bekal kemampuan', 'Cara berkolaborasi'];
 const proficiencyLabels: Record<Proficiency, string> = {
     beginner: 'Pemula',
     intermediate: 'Menengah',
@@ -154,11 +149,6 @@ const visibilityChoices: {
         value: 'institution',
         label: 'Kampus',
         detail: 'Bagikan dalam lingkup kampusmu.',
-    },
-    {
-        value: 'recruiter',
-        label: 'Recruiter',
-        detail: 'Izinkan akses melalui Talent Portal.',
     },
     {
         value: 'public',
@@ -228,16 +218,24 @@ export function OnboardingModal({
     openRequest?: number;
 }) {
     const { onboarding } = usePage<OnboardingProps>().props;
-    const [step, setStep] = useState(0);
-    const [institutionId, setInstitutionId] = useState(
-        onboarding?.institutionId ? String(onboarding.institutionId) : '',
+    const [step, setStep] = useState(
+        onboarding?.membershipStatus === 'verified' ? 1 : 0,
+    );
+    const institutionId = onboarding?.institutionId
+        ? String(onboarding.institutionId)
+        : '';
+    const [draftInstitutionId, setDraftInstitutionId] = useState(
+        onboarding?.institutionId ?? null,
     );
     const [nim, setNim] = useState(onboarding?.nim ?? '');
     const [studyProgram, setStudyProgram] = useState(
         onboarding?.studyProgram ?? '',
     );
-    const [studyYear, setStudyYear] = useState(
-        String(onboarding?.studyYear || 1),
+    const [faculty, setFaculty] = useState(onboarding?.faculty ?? '');
+    const [admissionYear, setAdmissionYear] = useState(
+        onboarding?.admissionYear == null
+            ? ''
+            : String(onboarding.admissionYear),
     );
     const [bio, setBio] = useState(onboarding?.bio ?? '');
     const [skills, setSkills] = useState<DraftSkill[]>([]);
@@ -246,29 +244,28 @@ export function OnboardingModal({
     const [endsAt, setEndsAt] = useState('17:00');
     const [timezone] = useState(timezoneName);
     const [visibility, setVisibility] = useState<Visibility>('private');
-    const [discoverable, setDiscoverable] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<Taxonomy[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchError, setSearchError] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [phase, setPhase] = useState<Phase>('editing');
+    const [phase, setPhase] = useState<Phase>(
+        onboarding?.membershipStatus === 'pending' &&
+            onboarding.affiliationStatus !== 'revision_required'
+            ? 'pending'
+            : 'editing',
+    );
     const [holdOpen, setHoldOpen] = useState(false);
     const [dismissed, setDismissed] = useState(false);
     const returnFocus = useRef<HTMLElement | null>(null);
+    const handledOpenRequest = useRef(0);
     const titleRef = useRef<HTMLHeadingElement>(null);
     const errorRef = useRef<HTMLDivElement>(null);
     const draftTouched = useRef(false);
     const savingRef = useRef(false);
-    const verifiedAffiliation = useRef<string | null>(
-        onboarding?.membershipStatus === 'verified' &&
-            onboarding.institutionId &&
-            onboarding.nim
-            ? `${onboarding.institutionId}:${onboarding.nim.trim().toLowerCase()}`
-            : null,
-    );
     const pendingAffiliation = useRef<string | null>(
         onboarding?.membershipStatus === 'pending' &&
+            onboarding.affiliationStatus === 'pending_review' &&
             onboarding.institutionId &&
             onboarding.nim
             ? `${onboarding.institutionId}:${onboarding.nim.trim().toLowerCase()}`
@@ -276,17 +273,30 @@ export function OnboardingModal({
     );
     const saveProgress = useRef<SaveProgress | null>(null);
     const needsReconciliation = useRef(false);
+    const [affiliationUncertain, setAffiliationUncertain] = useState(false);
     const busy = Boolean(phaseLabels[phase]);
-    const institutions = onboarding?.institutions ?? [];
+    const notice = activationNotice(onboarding);
+    const contextChanged =
+        draftInstitutionId !== null &&
+        typeof onboarding?.institutionId === 'number' &&
+        draftInstitutionId !== onboarding?.institutionId;
+    const locked = notice.locked || contextChanged;
+    const isProfileStage = onboarding?.membershipStatus === 'verified';
+    const canDismiss =
+        !busy &&
+        !onboarding?.required &&
+        (phase === 'pending' ||
+            (isProfileStage && Boolean(onboarding?.profileId)));
     const isOpen =
-        !dismissed &&
         phase !== 'complete' &&
-        Boolean(onboarding?.required || holdOpen);
+        Boolean(onboarding?.required || (!dismissed && holdOpen));
 
     useEffect(() => {
-        if (openRequest === 0) {
+        if (openRequest === 0 || handledOpenRequest.current === openRequest) {
             return;
         }
+
+        handledOpenRequest.current = openRequest;
 
         const frame = requestAnimationFrame(() => {
             returnFocus.current =
@@ -295,20 +305,59 @@ export function OnboardingModal({
                     : null;
             setDismissed(false);
             setHoldOpen(true);
-            setPhase('editing');
+            setStep(onboarding?.membershipStatus === 'verified' ? 1 : 0);
+            setPhase(
+                onboarding?.membershipStatus === 'pending' &&
+                    onboarding.affiliationStatus !== 'revision_required'
+                    ? 'pending'
+                    : 'editing',
+            );
         });
 
         return () => cancelAnimationFrame(frame);
-    }, [openRequest]);
+    }, [
+        openRequest,
+        onboarding?.membershipStatus,
+        onboarding?.affiliationStatus,
+    ]);
 
     useEffect(() => {
         onVisibilityChange?.(isOpen);
     }, [isOpen, onVisibilityChange]);
 
+    useEffect(() => {
+        if (!onboarding?.required || savingRef.current) {
+            return;
+        }
+
+        const frame = requestAnimationFrame(() => {
+            setDismissed(false);
+            setPhase('editing');
+            setStep(onboarding.membershipStatus === 'verified' ? 1 : 0);
+            setFaculty((current) => onboarding.faculty || current);
+            setStudyProgram((current) => onboarding.studyProgram || current);
+            setAdmissionYear((current) =>
+                onboarding.admissionYear == null
+                    ? current
+                    : String(onboarding.admissionYear),
+            );
+        });
+
+        return () => cancelAnimationFrame(frame);
+    }, [
+        onboarding?.required,
+        onboarding?.membershipStatus,
+        onboarding?.profileId,
+        onboarding?.faculty,
+        onboarding?.studyProgram,
+        onboarding?.admissionYear,
+    ]);
+
     const profileForm = useHttp<ProfilePayload, ProfileResponse>({
         institution_id: 0,
         study_program: '',
-        study_year: 1,
+        faculty: '',
+        admission_year: null,
         bio: '',
         skills: [],
         availability_windows: [],
@@ -414,7 +463,6 @@ export function OnboardingModal({
                 }
 
                 setVisibility(result.data.portfolio_visibility ?? 'private');
-                setDiscoverable(result.data.recruiter_discoverable ?? false);
             })
             .catch(() => {
                 /* The user's draft remains editable if the existing profile cannot be read. */
@@ -428,6 +476,9 @@ export function OnboardingModal({
     }
 
     function moveTo(next: number) {
+        setDraftInstitutionId(
+            (current) => current ?? onboarding?.institutionId ?? null,
+        );
         setStep(next);
         setError(null);
         window.requestAnimationFrame(() => titleRef.current?.focus());
@@ -439,20 +490,44 @@ export function OnboardingModal({
     }
 
     function validateStep(): boolean {
+        if (locked || !onboarding?.canSubmitAffiliation || !institutionId) {
+            showError(
+                contextChanged
+                    ? 'Pengaturan layanan berubah saat mengisi. Isianmu belum dikirim. Hubungi pengelola SATU sebelum melanjutkan.'
+                    : notice.description,
+            );
+
+            return false;
+        }
+
         if (step === 0) {
+            const year = Number(admissionYear);
+
             if (
-                !institutionId ||
-                !institutions.some(
-                    (institution) => String(institution.id) === institutionId,
-                )
+                !/^\d{4}$/.test(admissionYear) ||
+                year < 1900 ||
+                year > new Date().getFullYear()
             ) {
-                showError('Pilih kampus yang tersedia untuk melanjutkan.');
+                showError(
+                    'Isi angkatan masuk dengan tahun empat digit antara 1900 dan tahun berjalan, misalnya 2023.',
+                );
 
                 return false;
             }
 
-            if (!nim.trim() || !studyProgram.trim()) {
-                showError('Lengkapi NIM dan program studimu.');
+            if (
+                !faculty ||
+                !(onboarding?.academicOptions?.[faculty] ?? []).includes(
+                    studyProgram,
+                )
+            ) {
+                showError('Pilih program studi yang sesuai dengan fakultas.');
+
+                return false;
+            }
+
+            if (!nim.trim() && onboarding?.membershipStatus !== 'verified') {
+                showError('Masukkan NIM yang terdaftar di universitas.');
 
                 return false;
             }
@@ -517,15 +592,35 @@ export function OnboardingModal({
 
         try {
             const latest = await refreshOnboarding();
+            setAffiliationUncertain(false);
             const affiliationKey = `${institutionId}:${nim.trim().toLowerCase()}`;
             const matches =
                 latest?.institutionId === Number(institutionId) &&
                 latest.nim?.trim().toLowerCase() === nim.trim().toLowerCase();
 
-            if (matches && latest.membershipStatus === 'verified') {
-                pendingAffiliation.current = null;
-                verifiedAffiliation.current = affiliationKey;
+            if (latest && activationNotice(latest).locked) {
                 setPhase('editing');
+                showError(activationNotice(latest).description);
+            } else if (matches && latest.membershipStatus === 'verified') {
+                pendingAffiliation.current = null;
+
+                if (latest.profileId) {
+                    setHoldOpen(false);
+                    setPhase('complete');
+                    router.visit(editProfile());
+
+                    return;
+                }
+
+                setFaculty((current) => latest.faculty || current);
+                setStudyProgram((current) => latest.studyProgram || current);
+                setAdmissionYear((current) =>
+                    latest.admissionYear == null
+                        ? current
+                        : String(latest.admissionYear),
+                );
+                setPhase('editing');
+                moveTo(1);
             } else if (matches && latest.membershipStatus === 'pending') {
                 pendingAffiliation.current = affiliationKey;
                 setPhase('pending');
@@ -533,7 +628,7 @@ export function OnboardingModal({
                 pendingAffiliation.current = null;
                 setPhase('editing');
                 showError(
-                    'Status afiliasi untuk isian ini belum dapat dipastikan. Periksa kembali kampus dan NIM sebelum mengirim permintaan.',
+                    'Status terbaru sudah diperiksa. Periksa NIM sebelum melanjutkan. Isian profil belum dikirim.',
                 );
             }
         } catch (failure) {
@@ -559,13 +654,19 @@ export function OnboardingModal({
             return;
         }
 
-        if (step < 2) {
+        if (affiliationUncertain) {
+            await checkPendingStatus();
+
+            return;
+        }
+
+        if (step === 1) {
             moveTo(step + 1);
 
             return;
         }
 
-        if (availabilityDays.length > 0 && endsAt <= startsAt) {
+        if (step === 2 && availabilityDays.length > 0 && endsAt <= startsAt) {
             showError('Jam selesai harus setelah jam mulai.');
 
             return;
@@ -579,7 +680,8 @@ export function OnboardingModal({
         const payload: ProfilePayload = {
             institution_id: selectedInstitution,
             study_program: studyProgram.trim(),
-            study_year: Number(studyYear),
+            faculty,
+            admission_year: admissionYear === '' ? null : Number(admissionYear),
             bio: bio.trim(),
             skills: skills.map((skill) => ({
                 taxonomy_id: skill.taxonomy_id,
@@ -592,21 +694,45 @@ export function OnboardingModal({
                 timezone,
             })),
             portfolio_visibility: visibility,
-            recruiter_discoverable:
-                (visibility === 'recruiter' || visibility === 'public') &&
-                discoverable,
+            recruiter_discoverable: false,
         };
         let latest = onboarding ?? null;
         let failureMessage =
             'Profil belum selesai disimpan. Data isianmu tetap tersedia. Coba lagi.';
 
         try {
-            if (verifiedAffiliation.current !== affiliationKey) {
-                if (pendingAffiliation.current === affiliationKey) {
+            setPhase('refresh');
+            latest = await refreshOnboarding();
+
+            if (
+                !latest ||
+                latest.institutionId !== selectedInstitution ||
+                activationNotice(latest).locked
+            ) {
+                throw new Error(activationNotice(latest).description);
+            }
+
+            const alreadyVerified = latest.membershipStatus === 'verified';
+
+            if (step > 0 && !alreadyVerified) {
+                setStep(0);
+
+                throw new Error(
+                    'Afiliasi belum terverifikasi. Pengisian profil tersedia setelah afiliasi disetujui.',
+                );
+            }
+
+            if (!alreadyVerified) {
+                if (
+                    pendingAffiliation.current === affiliationKey &&
+                    latest.affiliationStatus === 'pending_review' &&
+                    !latest.needsRosterRefresh
+                ) {
                     setPhase('refresh');
                     latest = await refreshOnboarding();
                 } else {
                     setPhase('affiliation');
+                    setAffiliationUncertain(true);
                     latest = await new Promise<OnboardingState | null>(
                         (resolve, reject) => {
                             router.post(
@@ -614,17 +740,26 @@ export function OnboardingModal({
                                 {
                                     institution_id: selectedInstitution,
                                     nim: nim.trim(),
+                                    faculty: faculty || null,
+                                    study_program: studyProgram.trim() || null,
+                                    admission_year:
+                                        admissionYear === ''
+                                            ? null
+                                            : Number(admissionYear),
                                 },
                                 {
                                     preserveState: true,
                                     preserveScroll: true,
-                                    onSuccess: (page) =>
+                                    onSuccess: (page) => {
+                                        setAffiliationUncertain(false);
                                         resolve(
                                             (page.props.onboarding as
                                                 OnboardingState | undefined) ??
                                                 null,
-                                        ),
-                                    onError: (errors) =>
+                                        );
+                                    },
+                                    onError: (errors) => {
+                                        setAffiliationUncertain(false);
                                         reject(
                                             new Error(
                                                 firstError(
@@ -632,7 +767,8 @@ export function OnboardingModal({
                                                     'Afiliasi belum dapat diproses. Periksa data kampusmu.',
                                                 ),
                                             ),
-                                        ),
+                                        );
+                                    },
                                     onHttpException: () => {
                                         reject(
                                             new Error(
@@ -676,7 +812,12 @@ export function OnboardingModal({
 
                 if (latest?.membershipStatus === 'pending') {
                     pendingAffiliation.current = affiliationKey;
-                    setPhase('pending');
+                    setHoldOpen(false);
+                    setPhase('complete');
+                    toast.success(
+                        'Pengajuan afiliasi berhasil dikirim. Menunggu verifikasi Admin Universitas.',
+                    );
+                    router.visit(dashboard.url());
 
                     return;
                 }
@@ -688,7 +829,6 @@ export function OnboardingModal({
                 }
 
                 pendingAffiliation.current = null;
-                verifiedAffiliation.current = affiliationKey;
             }
 
             if (latest?.profileId) {
@@ -699,6 +839,13 @@ export function OnboardingModal({
                         query: { institution_id: selectedInstitution },
                     }),
                 );
+
+                return;
+            }
+
+            if (step === 0) {
+                setPhase('editing');
+                moveTo(1);
 
                 return;
             }
@@ -827,6 +974,8 @@ export function OnboardingModal({
 
             setHoldOpen(false);
             setPhase('complete');
+            toast.success('Data profil berhasil tersimpan.');
+            router.visit(dashboard.url());
         } catch (failure) {
             setPhase('editing');
             const knownMessage =
@@ -844,6 +993,10 @@ export function OnboardingModal({
             <DialogPrimitive.Portal>
                 <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-sm" />
                 <DialogPrimitive.Content
+                    onOpenAutoFocus={(event) => {
+                        event.preventDefault();
+                        requestAnimationFrame(() => titleRef.current?.focus());
+                    }}
                     onCloseAutoFocus={(event) => {
                         if (returnFocus.current?.isConnected) {
                             event.preventDefault();
@@ -853,146 +1006,211 @@ export function OnboardingModal({
                         }
                     }}
                     onEscapeKeyDown={(event) => {
-                        if (busy) {
+                        if (!canDismiss) {
                             event.preventDefault();
                         } else {
                             setDismissed(true);
                         }
                     }}
                     onPointerDownOutside={(event) => event.preventDefault()}
-                    className="fixed top-1/2 left-1/2 z-50 flex h-[94svh] max-h-[94svh] w-[calc(100%-1.5rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[2rem] border border-white bg-white shadow-2xl focus:outline-none lg:flex-row"
+                    className={cn(
+                        'fixed top-1/2 left-1/2 z-50 flex h-[94svh] max-h-[94svh] w-[calc(100%-1.5rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[2rem] border border-white bg-white shadow-2xl focus:outline-none lg:flex-row',
+                        !isProfileStage && 'satu-affiliation-dialog',
+                    )}
                 >
-                    <div
-                        aria-hidden="true"
-                        className="relative h-16 shrink-0 bg-gradient-to-r from-[#e7f4ff] via-[#d7efff] to-[#b9e6ff] lg:hidden"
-                    >
-                        <Mascot
-                            pose={
-                                phase === 'pending' || phase === 'pending-check'
-                                    ? 'peek'
-                                    : 'guide'
-                            }
-                            className="absolute -top-5 right-5 w-28"
-                        />
-                    </div>
-                    <aside className="relative hidden w-72 shrink-0 flex-col justify-between bg-[#e7f4ff] p-7 lg:flex">
-                        <div>
-                            <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold text-blue-800">
-                                <GraduationCap
-                                    aria-hidden="true"
-                                    className="size-4"
-                                />
-                                Kenalan dulu, yuk.
-                            </span>
-                            <h2 className="mt-6 text-3xl leading-tight font-bold tracking-tight text-slate-950">
-                                Cerita hebat dimulai dari{' '}
-                                <span className="text-blue-600">dirimu.</span>
-                            </h2>
-                            <p className="mt-4 text-sm leading-6 text-slate-600">
-                                Bantu SATU mengenali keahlian dan waktu luangmu
-                                untuk kolaborasi yang lebih cocok.
-                            </p>
-                        </div>
-                        <div className="relative mt-24 h-48 rounded-[1.75rem] bg-gradient-to-br from-sky-200 to-blue-200">
-                            <Mascot
-                                pose={
-                                    phase === 'pending' ||
-                                    phase === 'pending-check'
-                                        ? 'peek'
-                                        : 'guide'
-                                }
-                                interactive
-                                className="absolute -top-16 left-1/2 w-64 -translate-x-1/2"
-                            />
-                        </div>
-                        <p className="mt-7 flex items-start gap-2 text-xs leading-5 text-slate-600">
-                            <LockKeyhole
+                    {isProfileStage ? (
+                        <>
+                            <div
                                 aria-hidden="true"
-                                className="mt-0.5 size-4 shrink-0 text-blue-600"
-                            />
-                            Portofoliomu privat sampai kamu memilih untuk
-                            membagikannya.
-                        </p>
-                    </aside>
-                    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                        <header className="shrink-0 px-5 pt-6 pb-5 sm:px-8">
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="float-right size-11"
-                                aria-label="Tutup pelengkapan afiliasi"
-                                disabled={busy}
-                                onClick={() => setDismissed(true)}
+                                className="relative h-20 shrink-0 bg-gradient-to-r from-[#e7f4ff] via-[#d7efff] to-[#b9e6ff] lg:hidden"
                             >
-                                <X aria-hidden="true" />
-                            </Button>
-                            <p className="mb-2 text-xs font-bold tracking-[0.12em] text-blue-700 uppercase">
-                                Ruang untuk bertumbuh
+                                <Mascot
+                                    pose={
+                                        phase === 'pending' ||
+                                        phase === 'pending-check'
+                                            ? 'peek'
+                                            : 'guide'
+                                    }
+                                    className="absolute top-0 right-5 w-24"
+                                />
+                            </div>
+                            <aside className="relative hidden w-72 shrink-0 flex-col justify-between bg-[#e7f4ff] p-7 lg:flex">
+                                <div>
+                                    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold text-blue-800">
+                                        <GraduationCap
+                                            aria-hidden="true"
+                                            className="size-4"
+                                        />
+                                        Kenalan dulu, yuk.
+                                    </span>
+                                    <h2 className="mt-6 text-3xl leading-tight font-bold tracking-tight text-slate-950">
+                                        Cerita hebat dimulai dari{' '}
+                                        <span className="text-blue-600">
+                                            dirimu.
+                                        </span>
+                                    </h2>
+                                    <p className="mt-4 text-sm leading-6 text-slate-600">
+                                        {isProfileStage
+                                            ? 'Bantu SATU mengenali keahlian dan waktu luangmu untuk kolaborasi yang lebih cocok.'
+                                            : 'Verifikasi status mahasiswamu sebelum mulai berkolaborasi di SATU.'}
+                                    </p>
+                                </div>
+                                <div className="relative mt-24 h-48 rounded-[1.75rem] bg-gradient-to-br from-sky-200 to-blue-200">
+                                    <Mascot
+                                        pose={
+                                            phase === 'pending' ||
+                                            phase === 'pending-check'
+                                                ? 'peek'
+                                                : 'guide'
+                                        }
+                                        interactive
+                                        className="absolute -top-16 left-1/2 w-64 -translate-x-1/2"
+                                    />
+                                </div>
+                                <p className="mt-7 flex items-start gap-2 text-xs leading-5 text-slate-600">
+                                    <LockKeyhole
+                                        aria-hidden="true"
+                                        className="mt-0.5 size-4 shrink-0 text-blue-600"
+                                    />
+                                    {isProfileStage
+                                        ? 'Portofoliomu privat sampai kamu memilih untuk membagikannya.'
+                                        : phase === 'pending' ||
+                                            phase === 'pending-check'
+                                          ? 'Pengajuan afiliasi sudah tercatat. Periksa status untuk melihat keputusan Admin Universitas.'
+                                          : 'Data pengajuan diverifikasi sebelum akses kolaborasi dibuka. Mengisi form belum berarti afiliasi disetujui.'}
+                                </p>
+                            </aside>
+                        </>
+                    ) : (
+                        <OnboardingAffiliationIntro
+                            state={
+                                locked || affiliationUncertain
+                                    ? 'locked'
+                                    : phase === 'pending' ||
+                                        phase === 'pending-check'
+                                      ? 'pending'
+                                      : 'editing'
+                            }
+                        />
+                    )}
+                    <div className="onboarding-main flex min-h-0 min-w-0 flex-1 flex-col">
+                        <header className="onboarding-header shrink-0 px-5 pt-6 pb-5 sm:px-8">
+                            {canDismiss ? (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="float-right size-11"
+                                    aria-label="Tutup pelengkapan afiliasi"
+                                    disabled={busy}
+                                    onClick={() => setDismissed(true)}
+                                >
+                                    <X aria-hidden="true" />
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="float-right min-h-11"
+                                    disabled={busy}
+                                    onClick={() => {
+                                        router.flushAll();
+                                        router.post(logout.url());
+                                    }}
+                                >
+                                    <LogOut aria-hidden="true" />
+                                    Keluar akun
+                                </Button>
+                            )}
+                            <p className="onboarding-kicker mb-2 text-xs font-bold tracking-[0.12em] text-blue-700 uppercase">
+                                {isProfileStage
+                                    ? 'Ruang untuk bertumbuh'
+                                    : 'Verifikasi mahasiswa'}
                             </p>
                             <DialogPrimitive.Title
                                 ref={titleRef}
                                 tabIndex={-1}
                                 className="text-2xl font-bold tracking-tight text-slate-950 outline-none sm:text-3xl"
                             >
-                                {phase === 'pending' ||
-                                phase === 'pending-check'
-                                    ? 'Kampus sedang meninjau.'
-                                    : steps[step]}
+                                {locked
+                                    ? notice.title
+                                    : phase === 'pending' ||
+                                        phase === 'pending-check'
+                                      ? notice.title
+                                      : isProfileStage
+                                        ? steps[step]
+                                        : 'Pengajuan afiliasi kampus'}
                             </DialogPrimitive.Title>
                             <DialogPrimitive.Description className="mt-2 text-sm leading-6 text-slate-600">
-                                {phase === 'pending' ||
-                                phase === 'pending-check'
-                                    ? 'Permintaan afiliasimu sudah diterima. Profil belum disimpan hingga afiliasi terverifikasi.'
-                                    : 'Lengkapi tiga langkah untuk menyiapkan ruang kolaborasimu.'}
+                                {locked
+                                    ? 'Akun dan riwayat tetap aman. Periksa status atau hubungi pengelola untuk melanjutkan.'
+                                    : phase === 'pending' ||
+                                        phase === 'pending-check'
+                                      ? 'Verifikasi status mahasiswa membantu menjaga ruang kolaborasi tetap tepercaya.'
+                                      : isProfileStage
+                                        ? 'Afiliasi sudah terverifikasi. Siapkan kemampuan dan waktu. Karya terdahulu tidak wajib.'
+                                        : 'Lengkapi data sesuai catatan universitas untuk membuka akses kolaborasi.'}
                             </DialogPrimitive.Description>
-                            <ol
-                                aria-label="Tahapan profil"
-                                className="mt-5 flex gap-2"
-                            >
-                                {steps.map((label, index) => (
-                                    <li
-                                        key={label}
-                                        aria-current={
-                                            step === index ? 'step' : undefined
-                                        }
-                                        className="flex min-w-0 flex-1 items-center gap-2"
-                                    >
-                                        <span
-                                            className={cn(
-                                                'flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                                                index <= step
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-slate-100 text-slate-600',
-                                            )}
+                            {!locked &&
+                                !isProfileStage &&
+                                phase === 'editing' && (
+                                    <p className="onboarding-mandatory mt-3 text-xs leading-5 text-slate-600">
+                                        Isian bertanda bintang wajib diisi.
+                                        Periksa datamu sebelum dikirim.
+                                    </p>
+                                )}
+                            {!locked && isProfileStage && (
+                                <ol
+                                    aria-label="Tahapan profil"
+                                    className="mt-5 flex gap-2"
+                                >
+                                    {steps.slice(1).map((label, index) => (
+                                        <li
+                                            key={label}
+                                            aria-current={
+                                                step - 1 === index
+                                                    ? 'step'
+                                                    : undefined
+                                            }
+                                            className="flex min-w-0 flex-1 items-center gap-2"
                                         >
-                                            {index < step ? (
-                                                <Check
-                                                    aria-hidden="true"
-                                                    className="size-4"
-                                                />
-                                            ) : (
-                                                index + 1
-                                            )}
-                                        </span>
-                                        <span
-                                            className={cn(
-                                                'hidden text-xs font-semibold sm:block',
-                                                index === step
-                                                    ? 'text-blue-800'
-                                                    : 'text-slate-600',
-                                            )}
-                                        >
-                                            {label}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ol>
+                                            <span
+                                                className={cn(
+                                                    'flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+                                                    index <= step - 1
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'bg-slate-100 text-slate-600',
+                                                )}
+                                            >
+                                                {index < step - 1 ? (
+                                                    <Check
+                                                        aria-hidden="true"
+                                                        className="size-4"
+                                                    />
+                                                ) : (
+                                                    index + 1
+                                                )}
+                                            </span>
+                                            <span
+                                                className={cn(
+                                                    'hidden text-xs font-semibold sm:block',
+                                                    index === step - 1
+                                                        ? 'text-blue-800'
+                                                        : 'text-slate-600',
+                                                )}
+                                            >
+                                                {label}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ol>
+                            )}
                         </header>
-                        <div className="min-h-0 overflow-y-auto px-5 pb-6 sm:px-8">
+                        <div className="onboarding-body min-h-0 overflow-y-auto px-5 pb-6 sm:px-8">
                             {error && (
                                 <div
                                     ref={errorRef}
+                                    id="onboarding-error"
                                     tabIndex={-1}
                                     role="alert"
                                     className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-800"
@@ -1000,8 +1218,46 @@ export function OnboardingModal({
                                     {error}
                                 </div>
                             )}
-                            {phase === 'pending' ||
-                            phase === 'pending-check' ? (
+                            {locked || affiliationUncertain ? (
+                                <section
+                                    className="space-y-4 py-3"
+                                    aria-label="Pemulihan aktivasi"
+                                    data-test="onboarding-locked"
+                                >
+                                    <div className="space-y-2 rounded-2xl border border-correction/30 bg-correction-subtle p-5 text-correction-subtle-foreground">
+                                        <LockKeyhole
+                                            aria-hidden="true"
+                                            className="size-5"
+                                        />
+                                        <h3 className="font-semibold">
+                                            {contextChanged
+                                                ? 'Pengaturan layanan berubah'
+                                                : affiliationUncertain
+                                                  ? 'Hasil pengiriman perlu diperiksa'
+                                                  : notice.title}
+                                        </h3>
+                                        <p className="text-sm leading-6">
+                                            {contextChanged
+                                                ? 'Isianmu belum dikirim agar data tetap aman. Hubungi pengelola SATU sebelum melanjutkan. Data yang sudah tersimpan tidak diubah.'
+                                                : affiliationUncertain
+                                                  ? 'Respons belum dapat dipastikan. Isianmu tetap tersedia dalam sesi ini. Periksa status server sebelum mengirim lagi.'
+                                                  : notice.description}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        className="w-full"
+                                        onClick={checkPendingStatus}
+                                        disabled={busy}
+                                    >
+                                        <RefreshCw aria-hidden="true" />
+                                        {busy
+                                            ? 'Memeriksa status...'
+                                            : 'Periksa status afiliasi'}
+                                    </Button>
+                                </section>
+                            ) : phase === 'pending' ||
+                              phase === 'pending-check' ? (
                                 <div className="space-y-5 py-3">
                                     <div
                                         role="status"
@@ -1013,13 +1269,17 @@ export function OnboardingModal({
                                             className="mt-1 size-5 shrink-0"
                                         />
                                         <p className="text-sm leading-6">
-                                            Data kampusmu memerlukan peninjauan.
-                                            Isian profil masih tersimpan di
-                                            halaman ini. Kamu dapat memeriksa
-                                            status tanpa mengirim permintaan
-                                            baru.
+                                            {notice.description}
                                         </p>
                                     </div>
+                                    <p className="text-sm leading-6 text-muted-foreground">
+                                        Fakultas, program studi, dan angkatan
+                                        masuk tersimpan sebagai draft pribadi
+                                        dan akan terisi otomatis setelah
+                                        afiliasi disetujui. Isian profil lainnya
+                                        masih sementara dan dapat hilang jika
+                                        halaman dimuat ulang atau ditutup.
+                                    </p>
                                     <Button
                                         type="button"
                                         className="w-full cursor-pointer"
@@ -1053,8 +1313,41 @@ export function OnboardingModal({
                                     onSubmit={save}
                                     onChange={() => {
                                         draftTouched.current = true;
+                                        setDraftInstitutionId(
+                                            (current) =>
+                                                current ??
+                                                onboarding?.institutionId ??
+                                                null,
+                                        );
                                     }}
                                 >
+                                    {onboarding?.hasLegacyAffiliation &&
+                                        onboarding.membershipStatus !==
+                                            'verified' && (
+                                            <p
+                                                className="mb-5 rounded-2xl bg-accent/60 p-4 text-sm leading-6 text-muted-foreground"
+                                                data-test="onboarding-legacy"
+                                            >
+                                                Afiliasi akunmu perlu ditinjau.
+                                                Verifikasi status mahasiswa
+                                                dengan NIM yang sesuai. Profil,
+                                                karya dan riwayat tersimpan
+                                                tidak diubah. Hubungi Admin
+                                                Universitas jika membutuhkan
+                                                bantuan.
+                                            </p>
+                                        )}
+                                    {(onboarding?.affiliationStatus ===
+                                        'revision_required' ||
+                                        onboarding?.affiliationStatus ===
+                                            'rejected') && (
+                                        <p
+                                            role="status"
+                                            className="mb-5 rounded-2xl bg-pending-subtle p-4 text-sm leading-6 text-pending-subtle-foreground"
+                                        >
+                                            {notice.description}
+                                        </p>
+                                    )}
                                     <fieldset
                                         disabled={busy}
                                         className="space-y-5 disabled:opacity-70"
@@ -1064,70 +1357,39 @@ export function OnboardingModal({
                                         </legend>
                                         {step === 0 && (
                                             <div className="grid gap-5 sm:grid-cols-2">
-                                                <div className="grid gap-2 sm:col-span-2">
-                                                    <Label htmlFor="institution_id">
-                                                        Kampus
-                                                    </Label>
-                                                    <Select
-                                                        value={institutionId}
-                                                        onValueChange={(
-                                                            value,
-                                                        ) => {
-                                                            draftTouched.current = true;
-                                                            setInstitutionId(
-                                                                value,
-                                                            );
-                                                        }}
-                                                        disabled={
-                                                            busy ||
-                                                            institutions.length ===
-                                                                0
-                                                        }
-                                                    >
-                                                        <SelectTrigger
-                                                            id="institution_id"
-                                                            className="h-12 w-full rounded-xl"
-                                                        >
-                                                            <SelectValue placeholder="Pilih kampusmu" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {institutions.map(
-                                                                (
-                                                                    institution,
-                                                                ) => (
-                                                                    <SelectItem
-                                                                        key={
-                                                                            institution.id
-                                                                        }
-                                                                        value={String(
-                                                                            institution.id,
-                                                                        )}
-                                                                    >
-                                                                        {
-                                                                            institution.name
-                                                                        }
-                                                                    </SelectItem>
-                                                                ),
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    {institutions.length ===
-                                                        0 && (
-                                                        <p
-                                                            role="status"
-                                                            className="text-sm text-slate-600"
-                                                        >
-                                                            Belum ada kampus
-                                                            yang tersedia.
-                                                            Hubungi pengelola
-                                                            SATU untuk
-                                                            melanjutkan.
+                                                <section
+                                                    className="affiliation-university space-y-2 rounded-2xl border border-primary/15 bg-accent/60 p-4 sm:col-span-2"
+                                                    aria-label="Universitas"
+                                                >
+                                                    <GraduationCap
+                                                        aria-hidden="true"
+                                                        className="affiliation-university-icon"
+                                                    />
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-primary">
+                                                            Universitas
                                                         </p>
-                                                    )}
-                                                </div>
-                                                <div className="grid gap-2">
+                                                        <p
+                                                            className="text-base font-bold wrap-anywhere text-foreground"
+                                                            data-test="onboarding-university"
+                                                        >
+                                                            {onboarding?.institutionName ??
+                                                                'Belum tersedia'}
+                                                        </p>
+                                                    </div>
+                                                </section>
+                                                <div className="grid content-start gap-2">
                                                     <Label htmlFor="nim">
                                                         Nomor Induk Mahasiswa
+                                                        {onboarding?.membershipStatus !==
+                                                            'verified' && (
+                                                            <span
+                                                                aria-hidden="true"
+                                                                className="affiliation-required-marker"
+                                                            >
+                                                                *
+                                                            </span>
+                                                        )}
                                                     </Label>
                                                     <Input
                                                         id="nim"
@@ -1140,69 +1402,141 @@ export function OnboardingModal({
                                                         }
                                                         placeholder="NIM terdaftar"
                                                         maxLength={50}
-                                                        required
+                                                        required={
+                                                            onboarding?.membershipStatus !==
+                                                            'verified'
+                                                        }
+                                                        readOnly={
+                                                            onboarding?.membershipStatus ===
+                                                            'verified'
+                                                        }
+                                                        aria-invalid={
+                                                            step === 0 &&
+                                                            Boolean(error)
+                                                        }
+                                                        aria-describedby={
+                                                            error
+                                                                ? 'onboarding-nim-help onboarding-error'
+                                                                : 'onboarding-nim-help'
+                                                        }
                                                         className="h-12 rounded-xl"
                                                     />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="study_year">
-                                                        Tahun studi
-                                                    </Label>
-                                                    <Select
-                                                        value={studyYear}
-                                                        onValueChange={(
-                                                            value,
-                                                        ) => {
-                                                            draftTouched.current = true;
-                                                            setStudyYear(value);
-                                                        }}
-                                                        disabled={busy}
+                                                    <p
+                                                        id="onboarding-nim-help"
+                                                        className="text-sm leading-6 text-muted-foreground"
                                                     >
-                                                        <SelectTrigger
-                                                            id="study_year"
-                                                            className="h-12 w-full rounded-xl"
-                                                        >
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {[
-                                                                1, 2, 3, 4, 5,
-                                                            ].map((year) => (
-                                                                <SelectItem
-                                                                    key={year}
-                                                                    value={String(
-                                                                        year,
-                                                                    )}
-                                                                >
-                                                                    Tahun ke-
-                                                                    {year}
-                                                                    {year === 5
-                                                                        ? ' atau lebih'
-                                                                        : ''}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                        {onboarding?.membershipStatus ===
+                                                        'verified'
+                                                            ? 'Afiliasi sudah terverifikasi. NIM tidak diubah melalui profil.'
+                                                            : 'Gunakan NIM yang tercatat pada roster mahasiswa.'}
+                                                    </p>
                                                 </div>
-                                                <div className="grid gap-2 sm:col-span-2">
-                                                    <Label htmlFor="study_program">
-                                                        Program studi
+                                                <div className="grid content-start gap-2">
+                                                    <Label htmlFor="admission_year">
+                                                        Angkatan masuk
+                                                        {onboarding?.admissionYear ==
+                                                            null && (
+                                                            <span
+                                                                aria-hidden="true"
+                                                                className="affiliation-required-marker"
+                                                            >
+                                                                *
+                                                            </span>
+                                                        )}
                                                     </Label>
                                                     <Input
-                                                        id="study_program"
-                                                        value={studyProgram}
-                                                        onChange={(event) =>
-                                                            setStudyProgram(
+                                                        id="admission_year"
+                                                        type="number"
+                                                        required
+                                                        inputMode="numeric"
+                                                        min={1900}
+                                                        max={new Date().getFullYear()}
+                                                        step={1}
+                                                        placeholder="Contoh: 2023"
+                                                        readOnly={
+                                                            onboarding?.admissionYear !=
+                                                            null
+                                                        }
+                                                        value={admissionYear}
+                                                        onChange={(event) => {
+                                                            draftTouched.current = true;
+                                                            setAdmissionYear(
                                                                 event.target
                                                                     .value,
-                                                            )
+                                                            );
+                                                        }}
+                                                        disabled={busy}
+                                                        aria-readonly={
+                                                            onboarding?.admissionYear !=
+                                                            null
                                                         }
-                                                        placeholder="Contoh: Teknik Informatika"
-                                                        required
-                                                        className="h-12 rounded-xl"
+                                                        aria-invalid={Boolean(
+                                                            profileForm.errors
+                                                                .admission_year,
+                                                        )}
+                                                        aria-describedby="admission-year-help admission-year-error"
+                                                        className={`h-12 rounded-xl ${onboarding?.admissionYear != null ? 'cursor-default bg-muted/50' : ''}`}
+                                                    />
+                                                    <p
+                                                        id="admission-year-help"
+                                                        className="text-xs leading-5 text-muted-foreground"
+                                                    >
+                                                        {onboarding?.admissionYear !=
+                                                        null
+                                                            ? 'Data yang sudah tercatat tidak dapat diubah dari menu mahasiswa.'
+                                                            : 'Tahun pertama masuk kuliah, bukan tingkat studi saat ini.'}
+                                                    </p>
+                                                    <InputError
+                                                        id="admission-year-error"
+                                                        message={
+                                                            profileForm.errors
+                                                                .admission_year
+                                                        }
                                                     />
                                                 </div>
-                                                <p className="flex items-start gap-2 rounded-2xl bg-blue-50 p-4 text-sm leading-6 text-blue-900 sm:col-span-2">
+                                                <AcademicProgramFields
+                                                    prefix="onboarding"
+                                                    showOptionalLabel={false}
+                                                    showRequiredMark
+                                                    conciseHelp
+                                                    required
+                                                    options={
+                                                        onboarding?.academicOptions ??
+                                                        {}
+                                                    }
+                                                    faculty={faculty}
+                                                    program={studyProgram}
+                                                    disabled={busy}
+                                                    facultyReadOnly={Boolean(
+                                                        onboarding?.faculty,
+                                                    )}
+                                                    programReadOnly={Boolean(
+                                                        onboarding?.studyProgram,
+                                                    )}
+                                                    errors={profileForm.errors}
+                                                    onChange={(
+                                                        nextFaculty,
+                                                        nextProgram,
+                                                    ) => {
+                                                        draftTouched.current = true;
+                                                        setFaculty(nextFaculty);
+                                                        setStudyProgram(
+                                                            nextProgram,
+                                                        );
+                                                    }}
+                                                />
+                                                <p className="affiliation-academic-note flex items-start gap-2 text-xs leading-5 text-slate-600 sm:col-span-2">
+                                                    <LockKeyhole
+                                                        aria-hidden="true"
+                                                        className="mt-0.5 size-4 shrink-0"
+                                                    />
+                                                    Fakultas, program studi, dan
+                                                    angkatan masuk tidak dapat
+                                                    diubah dari menu mahasiswa
+                                                    setelah dikirim. Periksa
+                                                    kembali sebelum mengajukan.
+                                                </p>
+                                                <p className="affiliation-match-note flex items-start gap-2 rounded-2xl bg-blue-50 p-4 text-sm leading-6 text-blue-900 sm:col-span-2">
                                                     <ShieldCheck
                                                         aria-hidden="true"
                                                         className="mt-1 size-4 shrink-0"
@@ -1218,10 +1552,7 @@ export function OnboardingModal({
                                             <div className="space-y-5">
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="bio">
-                                                        Tentang dirimu{' '}
-                                                        <span className="font-normal text-slate-500">
-                                                            (opsional)
-                                                        </span>
+                                                        Tentang dirimu
                                                     </Label>
                                                     <textarea
                                                         id="bio"
@@ -1485,7 +1816,7 @@ export function OnboardingModal({
                                                         Kapan kamu bisa
                                                         berkolaborasi?
                                                     </legend>
-                                                    <div className="grid grid-cols-7 gap-1.5">
+                                                    <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
                                                         {days.map((day) => (
                                                             <button
                                                                 key={day.value}
@@ -1637,37 +1968,11 @@ export function OnboardingModal({
                                                         )}
                                                     </div>
                                                 </fieldset>
-                                                {(visibility === 'recruiter' ||
-                                                    visibility ===
-                                                        'public') && (
-                                                    <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-blue-50 p-4">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={
-                                                                discoverable
-                                                            }
-                                                            onChange={(event) =>
-                                                                setDiscoverable(
-                                                                    event.target
-                                                                        .checked,
-                                                                )
-                                                            }
-                                                            className="mt-1 size-4 accent-blue-600"
-                                                        />
-                                                        <span className="text-sm leading-6 text-slate-700">
-                                                            Tampilkan profil
-                                                            saya dalam pencarian
-                                                            recruiter. Pilihan
-                                                            ini dapat diubah
-                                                            nanti.
-                                                        </span>
-                                                    </label>
-                                                )}
                                             </div>
                                         )}
                                     </fieldset>
-                                    <footer className="sticky -bottom-6 mt-7 flex items-center justify-between gap-3 border-t border-slate-100 bg-white py-5">
-                                        {step > 0 ? (
+                                    <footer className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-white py-5">
+                                        {step > 1 ? (
                                             <Button
                                                 type="button"
                                                 variant="outline"
@@ -1683,7 +1988,9 @@ export function OnboardingModal({
                                             </Button>
                                         ) : (
                                             <span className="text-xs text-slate-600">
-                                                Langkah {step + 1} dari 3
+                                                {isProfileStage
+                                                    ? 'Langkah 1 dari 2'
+                                                    : 'Pengajuan afiliasi wajib'}
                                             </span>
                                         )}
                                         <Button
@@ -1691,7 +1998,8 @@ export function OnboardingModal({
                                             disabled={
                                                 busy ||
                                                 skillForm.processing ||
-                                                institutions.length === 0
+                                                locked ||
+                                                !onboarding?.canSubmitAffiliation
                                             }
                                             className="min-h-12 cursor-pointer rounded-xl px-5"
                                         >
@@ -1702,7 +2010,9 @@ export function OnboardingModal({
                                                 </>
                                             ) : step < 2 ? (
                                                 <>
-                                                    Lanjutkan
+                                                    {step === 0
+                                                        ? 'Ajukan afiliasi'
+                                                        : 'Lanjutkan'}
                                                     <ArrowRight
                                                         aria-hidden="true"
                                                         className="size-4"

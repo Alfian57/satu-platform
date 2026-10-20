@@ -2,9 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\RecruiterMembershipRole;
-use App\Enums\RecruiterMembershipStatus;
-use App\Enums\RecruiterOrganizationStatus;
 use App\Models\RecruiterOrganization;
 use App\Models\User;
 
@@ -15,7 +12,7 @@ final class RecruiterOrganizationPolicy
      */
     public function view(User $user, RecruiterOrganization $organization): bool
     {
-        return $organization->memberships()->where('user_id', $user->getKey())->exists();
+        return false;
     }
 
     /**
@@ -23,27 +20,14 @@ final class RecruiterOrganizationPolicy
      */
     public function update(User $user, RecruiterOrganization $organization): bool
     {
-        if ($organization->status === RecruiterOrganizationStatus::Suspended ||
-            $organization->status === RecruiterOrganizationStatus::Rejected) {
-            return false;
-        }
-
-        return $organization->memberships()
-            ->where('user_id', $user->getKey())
-            ->where('status', RecruiterMembershipStatus::Active)
-            ->whereIn('role', [RecruiterMembershipRole::Owner, RecruiterMembershipRole::Admin])
-            ->exists();
+        return false;
     }
 
     /**
-     * Determine whether the user can review the organization verification.
-     *
-     * Platform review bergantung pada mekanisme platform-admin nyata yang
-     * belum ada di current contract. Dikunci deny-by-default sampai
-     * prerequisite tersebut terpenuhi (gate:conditional).
+     * Role perekrut dihapus. Konfigurasi lama tidak memulihkan kewenangan.
      */
     public function review(User $user, RecruiterOrganization $organization): bool
     {
-        return (bool) $user->is_platform_admin;
+        return false;
     }
 }

@@ -1,5 +1,12 @@
 # Information Architecture SATU
 
+## Role Aktif
+
+Sejak 17 Oktober 2026 hanya Mahasiswa (`student`) dan Admin Universitas UTY
+(`campus_admin`). Tidak ada workspace, navigasi atau endpoint perekrut maupun
+admin platform terpisah. Data organisasi lama pada hierarki hanya arsip, bukan
+role aktif. Pending, verified dan suspended adalah status akses.
+
 ## Object Hierarchy
 
 ```text
@@ -17,7 +24,7 @@ Institution
 ├── Inclusion reviews
 └── Academic integrations
 
-Recruiter organization
+Arsip organisasi lama (bukan role atau akses aktif)
 ├── Verified memberships
 ├── Entitlement
 ├── Saved candidates
@@ -27,15 +34,28 @@ Recruiter organization
 ## Student Navigation
 
 - Beranda
-- Temukan Proyek
-- Proyek Saya
+- Proyek (Peluang dan Proyek saya)
 - Kontribusi
-- Portfolio
-- Peringkat
+- Portofolio
+- Fitur lanjutan: Peringkat
 - Notifikasi
 - Profil dan Pengaturan
 
-## Campus Navigation
+## Navigasi Admin Universitas U05
+
+- Ringkasan
+- Mahasiswa (daftar afiliasi dan pintasan peninjauan)
+- Roster mahasiswa
+- Validasi kontribusi
+- Bantuan kesempatan (tetap mengikuti izin dan gate)
+- Pengaturan: Profil universitas, Semester, Katalog keahlian, Akun admin
+
+Profil universitas menampilkan konfigurasi server tanpa pergantian institusi.
+Semester mengikuti sumber roster; impor baru tidak mengubah semester riwayat.
+Pengaturan akun pribadi berada pada menu akun, terpisah dari pengaturan universitas.
+Jalur platform lama bukan ruang admin kedua. Modul lanjutan tetap terpisah.
+
+## Campus Navigation Lama
 
 - Ringkasan
 - Roster dan Afiliasi
@@ -45,7 +65,11 @@ Recruiter organization
 - Pemetaan Kredit
 - Sinkronisasi
 
-## Platform Navigation
+## Platform Navigation Lama
+
+U05 tidak menampilkan ruang platform kedua. GET platform/afiliasi lama
+mengalihkan admin UTY setelah otorisasi; persetujuan institusi baru ditutup.
+Katalog legacy tetap endpoint kompatibilitas, ditampilkan dalam Pengaturan.
 
 - Operasi platform, dengan region Institusi, Undangan Campus Admin, Recruiter Organization, Entitlement, Provider Operations, dan Audit
 - Afiliasi kampus

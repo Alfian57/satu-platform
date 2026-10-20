@@ -11,17 +11,17 @@ final class BadgeRuleVersionPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->exists && $user->is_platform_admin;
+        return $user->exists && $user->canAdministerAdvancedModule('gamification');
     }
 
     public function view(User $user, BadgeRuleVersion $version): bool
     {
-        return $user->exists && $user->is_platform_admin && $version->exists;
+        return $user->exists && $user->canAdministerAdvancedModule('gamification') && $version->exists;
     }
 
     public function create(User $user): bool
     {
-        return $user->exists && $user->is_platform_admin;
+        return $user->exists && $user->canAdministerAdvancedModule('gamification');
     }
 
     public function update(User $user, BadgeRuleVersion $version): bool

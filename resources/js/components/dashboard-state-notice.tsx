@@ -1,6 +1,13 @@
 import { Link } from '@inertiajs/react';
 import type { InertiaLinkProps } from '@inertiajs/react';
-import { Clock3, RefreshCw, ShieldAlert } from 'lucide-react';
+import {
+    ArrowUpRight,
+    Clock3,
+    FileCheck2,
+    RefreshCw,
+    ShieldAlert,
+    Sparkle,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -10,6 +17,7 @@ type ActionHref = NonNullable<InertiaLinkProps['href']>;
 
 type Props = {
     notice: DashboardNotice;
+    affiliationReview?: boolean;
     getActionHref: (action: DashboardAction) => ActionHref | null;
     onAction: (action: DashboardAction) => void;
 };
@@ -39,6 +47,7 @@ const noticeStyles: Record<
 
 export function DashboardStateNotice({
     notice,
+    affiliationReview = false,
     getActionHref,
     onAction,
 }: Props) {
@@ -46,6 +55,80 @@ export function DashboardStateNotice({
     const Icon = style.icon;
     const action = notice.action;
     const actionHref = action ? getActionHref(action) : null;
+
+    if (affiliationReview && notice.tone === 'pending') {
+        return (
+            <section
+                aria-labelledby="dashboard-review-heading"
+                aria-live="polite"
+                className="dashboard-review-card"
+                data-dashboard-notice="pending"
+                data-dashboard-affiliation-review
+                data-test="dashboard-state-notice"
+                role="status"
+            >
+                <div
+                    className="dashboard-review-card__decoration"
+                    aria-hidden="true"
+                >
+                    <Sparkle />
+                </div>
+                <div className="dashboard-review-card__top">
+                    <span className="dashboard-review-card__icon">
+                        <FileCheck2 aria-hidden="true" className="size-5" />
+                    </span>
+                    <p className="dashboard-review-card__eyebrow">
+                        Pengajuan tercatat
+                    </p>
+                    <span className="dashboard-review-card__status">
+                        <Clock3 aria-hidden="true" className="size-3.5" />
+                        Menunggu tinjauan
+                    </span>
+                </div>
+                <h2 id="dashboard-review-heading">{notice.title}</h2>
+                <p className="dashboard-review-card__description">
+                    {notice.description}
+                </p>
+                {notice.timestamp && (
+                    <p className="dashboard-review-card__timestamp">
+                        <time dateTime={notice.timestampIso}>
+                            {notice.timestamp}
+                        </time>
+                    </p>
+                )}
+                <div className="dashboard-review-card__footer">
+                    <p>Tidak perlu mengajukan ulang.</p>
+                    {action && actionHref !== null && (
+                        <Button
+                            asChild
+                            className="dashboard-review-card__action"
+                        >
+                            <Link href={actionHref}>
+                                {action.label}
+                                <ArrowUpRight
+                                    aria-hidden="true"
+                                    className="size-4"
+                                />
+                            </Link>
+                        </Button>
+                    )}
+                    {action && actionHref === null && (
+                        <Button
+                            type="button"
+                            className="dashboard-review-card__action"
+                            onClick={() => onAction(action)}
+                        >
+                            {action.label}
+                            <ArrowUpRight
+                                aria-hidden="true"
+                                className="size-4"
+                            />
+                        </Button>
+                    )}
+                </div>
+            </section>
+        );
+    }
 
     return (
         <div

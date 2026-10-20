@@ -26,6 +26,7 @@ final class CampusContributionReviewController extends Controller
         $reviewer = $request->user();
         $status = $request->status();
         $sort = $request->sort();
+        $search = $request->search();
         $page = $request->integer('page', 1);
 
         return Inertia::render('campus/contributions', [
@@ -34,6 +35,7 @@ final class CampusContributionReviewController extends Controller
                 'name' => $institution->name,
             ],
             'filters' => [
+                'q' => $search,
                 'status' => $status === null ? 'all' : $status->value,
                 'sort' => $sort,
             ],
@@ -44,6 +46,7 @@ final class CampusContributionReviewController extends Controller
                 $institution,
                 $status,
                 $sort,
+                $search,
                 $page,
             ): array {
                 $paginator = $reviewQueue->paginate(
@@ -52,6 +55,7 @@ final class CampusContributionReviewController extends Controller
                     status: $status,
                     sort: $sort,
                     page: $page,
+                    search: $search,
                 );
 
                 return [

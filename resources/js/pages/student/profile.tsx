@@ -1,4 +1,4 @@
-import { Head, Link, router, useHttp } from '@inertiajs/react';
+import { Head, Link, router, useHttp, usePage } from '@inertiajs/react';
 import type { LayoutCallback } from '@inertiajs/react';
 import {
     BookOpenCheck,
@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { toast } from 'sonner';
+import { AcademicProgramFields } from '@/components/academic-program-fields';
 import { AppPage } from '@/components/app-page';
 import { DashboardArchiveArt } from '@/components/dashboard-archive-art';
 import InputError from '@/components/input-error';
@@ -30,6 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import StudentLayout from '@/layouts/student-layout';
+import { activationNotice } from '@/lib/student-activation';
 import {
     capabilityDraft,
     editableEvidence,
@@ -41,11 +44,14 @@ import type {
     CapabilityProfile,
     Proficiency,
 } from '@/lib/student-capabilities';
+import { dashboard } from '@/routes';
 import { show as showContribution } from '@/routes/contributions';
 import { index as projectsIndex } from '@/routes/projects';
 import { edit, show, store, update } from '@/routes/student-profiles';
+import type { StudentActivation } from '@/types/onboarding';
 
 type Props = {
+    academicOptions: Record<string, string[]>;
     institution: { id: number; name: string; timezone: string } | null;
     access: 'verified' | 'pending' | 'unverified' | 'suspended';
     profile: CapabilityProfile | null;
@@ -70,7 +76,14 @@ const selectClass =
 const sectionClass =
     'min-w-0 space-y-5 rounded-3xl border border-border bg-card p-5 shadow-md sm:p-6';
 
+function isAcademicValueSet(
+    value: string | number | null | undefined,
+): boolean {
+    return value !== null && value !== undefined && String(value).trim() !== '';
+}
+
 export default function CapabilityProfilePage({
+    academicOptions = {},
     institution,
     access,
     profile,
@@ -93,10 +106,25 @@ export default function CapabilityProfilePage({
         null,
     );
     const confirmationFocus = useRef<HTMLElement | null>(null);
+    const { onboarding } = usePage<{
+        onboarding?: StudentActivation | null;
+        [key: string]: unknown;
+    }>().props;
     const form = useHttp<CapabilityPayload, { data: CapabilityProfile }>(
-        capabilityDraft(profile, institution?.id ?? 0),
+        capabilityDraft(
+            profile,
+            institution?.id ?? 0,
+            access === 'verified' && profile === null
+                ? {
+                      study_program: onboarding?.studyProgram,
+                      faculty: onboarding?.faculty,
+                      admission_year: onboarding?.admissionYear,
+                  }
+                : null,
+        ),
     );
     const openAffiliation = useStudentOnboardingLauncher();
+    const notice = activationNotice(onboarding);
     const busy = form.processing || refreshing;
     const canEdit = access === 'verified' && institution !== null && !blocked;
     const missing = matchingReadiness(savedProfile);
@@ -114,6 +142,18 @@ export default function CapabilityProfilePage({
         }
     });
     const errors = form.errors as Record<string, string>;
+    const recordedFaculty =
+        savedProfile?.faculty ??
+        (profile === null ? (onboarding?.faculty ?? null) : null);
+    const recordedProgram =
+        savedProfile?.study_program ??
+        (profile === null ? (onboarding?.studyProgram ?? null) : null);
+    const recordedAdmissionYear =
+        savedProfile?.admission_year ??
+        (profile === null ? (onboarding?.admissionYear ?? null) : null);
+    const facultyReadOnly = isAcademicValueSet(recordedFaculty);
+    const programReadOnly = isAcademicValueSet(recordedProgram);
+    const admissionYearReadOnly = isAcademicValueSet(recordedAdmissionYear);
 
     useEffect(() => {
         if (issue) {
@@ -178,9 +218,16 @@ export default function CapabilityProfilePage({
 
         try {
             const options = {
-                onError: () => {
+                onError: (responseErrors: Record<string, string>) => {
+                    const statusUnclear = Boolean(
+                        responseErrors.institution_id,
+                    );
+
+                    setMustReconcile(statusUnclear);
                     setIssue(
-                        'Profil belum tersimpan. Periksa isian yang ditandai; draft tetap tersedia.',
+                        statusUnclear
+                            ? 'Status profil belum dapat dipastikan. Muat data tersimpan untuk memastikan apakah profil sudah tercatat.'
+                            : 'Profil belum tersimpan. Periksa isian yang ditandai; draft tetap tersedia.',
                     );
                     focusError();
                 },
@@ -194,9 +241,8 @@ export default function CapabilityProfilePage({
             }
 
             acceptProfile(result.data);
-            setMessage(
-                'Profil tersimpan. Keahlian tetap merupakan pernyataan sendiri, bukan hasil validasi kampus.',
-            );
+            toast.success('Data profil berhasil tersimpan.');
+            router.visit(dashboard.url());
         } catch (error) {
             const status = (error as { response?: { status?: number } })
                 .response?.status;
@@ -404,14 +450,14 @@ export default function CapabilityProfilePage({
                                 className="size-8 text-primary"
                             />
                             <h2 className="text-xl font-bold">
-                                Profil menunggu akses kampus
+                                {blocked
+                                    ? 'Akses profil perlu diperiksa'
+                                    : notice.title}
                             </h2>
                             <p className="text-sm leading-6 text-muted-foreground">
-                                {access === 'pending'
-                                    ? 'Afiliasi sedang menunggu tinjauan. Profil kampus belum dapat disimpan.'
-                                    : access === 'suspended'
-                                      ? 'Akses kampus ditangguhkan. Profil dan bukti tidak ditampilkan.'
-                                      : 'Verifikasi afiliasi diperlukan sebelum membuat atau membuka profil kampus.'}
+                                {blocked
+                                    ? 'Data profil sebelumnya tidak ditampilkan. Periksa status afiliasi terbaru untuk memastikan akses. Isian yang belum tersimpan tidak dikirim ulang otomatis.'
+                                    : notice.description}
                             </p>
                             <Button type="button" onClick={openAffiliation}>
                                 Periksa afiliasi
@@ -441,51 +487,68 @@ export default function CapabilityProfilePage({
                                         <h2 className="text-xl font-bold">
                                             Tentang dirimu
                                         </h2>
+                                        {(facultyReadOnly ||
+                                            programReadOnly ||
+                                            admissionYearReadOnly) && (
+                                            <p className="text-sm leading-6 text-muted-foreground">
+                                                Data akademik yang sudah
+                                                tercatat bersifat tetap. Bagian
+                                                yang belum terisi masih dapat
+                                                dilengkapi.
+                                            </p>
+                                        )}
                                         <div className="grid min-w-0 gap-4 sm:grid-cols-2">
-                                            <div className="min-w-0 space-y-2">
-                                                <Label htmlFor="capability-program">
-                                                    Program studi (opsional)
-                                                </Label>
-                                                <Input
-                                                    id="capability-program"
-                                                    value={
-                                                        form.data.study_program
-                                                    }
-                                                    maxLength={255}
-                                                    onChange={(e) =>
-                                                        form.setData(
-                                                            'study_program',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    aria-invalid={Boolean(
-                                                        errors.study_program,
-                                                    )}
-                                                    aria-describedby="capability-program-error"
-                                                />
-                                                <InputError
-                                                    id="capability-program-error"
-                                                    message={
-                                                        errors.study_program
-                                                    }
-                                                />
-                                            </div>
+                                            <AcademicProgramFields
+                                                prefix="capability"
+                                                options={academicOptions}
+                                                faculty={form.data.faculty}
+                                                program={
+                                                    form.data.study_program
+                                                }
+                                                disabled={busy}
+                                                showOptionalLabel={false}
+                                                facultyReadOnly={
+                                                    facultyReadOnly
+                                                }
+                                                programReadOnly={
+                                                    programReadOnly
+                                                }
+                                                errors={errors}
+                                                onChange={(
+                                                    nextFaculty,
+                                                    nextProgram,
+                                                ) =>
+                                                    form.setData({
+                                                        ...form.data,
+                                                        faculty: nextFaculty,
+                                                        study_program:
+                                                            nextProgram,
+                                                    })
+                                                }
+                                            />
                                             <div className="min-w-0 space-y-2">
                                                 <Label htmlFor="capability-year">
-                                                    Tahun studi (opsional)
+                                                    Angkatan masuk
                                                 </Label>
                                                 <Input
                                                     id="capability-year"
                                                     type="number"
-                                                    min={1}
-                                                    max={10}
+                                                    inputMode="numeric"
+                                                    min={1900}
+                                                    max={new Date().getFullYear()}
+                                                    step={1}
+                                                    placeholder="Contoh: 2023"
+                                                    readOnly={
+                                                        admissionYearReadOnly
+                                                    }
                                                     value={
-                                                        form.data.study_year ??
+                                                        form.data
+                                                            .admission_year ??
                                                         ''
                                                     }
                                                     onChange={(e) =>
                                                         form.setData(
-                                                            'study_year',
+                                                            'admission_year',
                                                             e.target.value ===
                                                                 ''
                                                                 ? null
@@ -496,19 +559,37 @@ export default function CapabilityProfilePage({
                                                         )
                                                     }
                                                     aria-invalid={Boolean(
-                                                        errors.study_year,
+                                                        errors.admission_year,
                                                     )}
-                                                    aria-describedby="capability-year-error"
+                                                    aria-describedby="capability-year-help capability-year-error"
+                                                    aria-readonly={
+                                                        admissionYearReadOnly
+                                                    }
+                                                    className={
+                                                        admissionYearReadOnly
+                                                            ? 'cursor-default bg-muted/50'
+                                                            : undefined
+                                                    }
                                                 />
+                                                <p
+                                                    id="capability-year-help"
+                                                    className="text-xs leading-5 text-muted-foreground"
+                                                >
+                                                    {admissionYearReadOnly
+                                                        ? 'Data yang sudah tercatat tidak dapat diubah dari menu mahasiswa.'
+                                                        : 'Tahun pertama masuk kuliah, bukan tingkat studi saat ini. Setelah tercatat, data tidak dapat diubah dari menu mahasiswa.'}
+                                                </p>
                                                 <InputError
                                                     id="capability-year-error"
-                                                    message={errors.study_year}
+                                                    message={
+                                                        errors.admission_year
+                                                    }
                                                 />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="capability-bio">
-                                                Cerita singkat (opsional)
+                                                Cerita singkat
                                             </Label>
                                             <textarea
                                                 id="capability-bio"
@@ -1483,7 +1564,7 @@ export default function CapabilityProfilePage({
                                     </p>
                                     <p className="text-xs leading-5 text-muted-foreground">
                                         Simpan kemampuan tidak mengubah
-                                        jangkauan portofolio atau izin perekrut.
+                                        jangkauan portofolio.
                                     </p>
                                 </footer>
                             </form>
@@ -1541,9 +1622,9 @@ export default function CapabilityProfilePage({
                                     </h2>
                                     <p className="text-xs leading-5 text-muted-foreground">
                                         Tautan awal belum ditinjau dan tidak
-                                        dibagikan ke kampus, tim, perekrut atau
-                                        publik. Akses di situs tujuan tetap
-                                        diatur penyedianya.
+                                        dibagikan ke kampus, tim atau publik.
+                                        Akses di situs tujuan tetap diatur
+                                        penyedianya.
                                     </p>
                                     <ul className="space-y-3">
                                         {savedProfile?.skills.flatMap((skill) =>

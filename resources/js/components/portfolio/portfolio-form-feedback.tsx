@@ -23,6 +23,7 @@ export function PortfolioFormFeedback({
     processing,
     processingMessage,
     prefix,
+    uncertain = false,
 }: {
     errors: PortfolioErrorMap;
     actionError: string | null;
@@ -30,6 +31,7 @@ export function PortfolioFormFeedback({
     processing: boolean;
     processingMessage: string;
     prefix: string;
+    uncertain?: boolean;
 }) {
     const errorRef = useRef<HTMLDivElement>(null);
     const wasProcessing = useRef(false);
@@ -83,8 +85,9 @@ export function PortfolioFormFeedback({
                         </>
                     )}
                     <p>
-                        Pilihanmu tetap ada dan belum mengubah pengaturan
-                        tersimpan.
+                        {uncertain
+                            ? 'Pilihan lokal tetap ada. Status tersimpan perlu diperiksa sebelum mencoba kembali.'
+                            : 'Pilihanmu tetap ada dan belum mengubah pengaturan tersimpan.'}
                     </p>
                 </div>
             )}

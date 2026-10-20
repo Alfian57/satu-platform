@@ -47,15 +47,13 @@ final class SearchTalentCandidates
             throw new InvalidArgumentException('Page size must be between 1 and 100.');
         }
 
-        if (! $recruiter->is_platform_admin) {
-            $isMember = $organization->memberships()
-                ->where('user_id', $recruiter->id)
-                ->where('status', RecruiterMembershipStatus::Active)
-                ->exists();
+        $isMember = $organization->memberships()
+            ->where('user_id', $recruiter->id)
+            ->where('status', RecruiterMembershipStatus::Active)
+            ->exists();
 
-            if (! $isMember) {
-                throw new AuthorizationException('You are not an active member of this recruiter organization.');
-            }
+        if (! $isMember) {
+            throw new AuthorizationException('You are not an active member of this recruiter organization.');
         }
 
         $hasEntitlement = $this->verifyEntitlement->check(

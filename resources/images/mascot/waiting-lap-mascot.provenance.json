@@ -1,0 +1,67 @@
+{
+    "description": "Pose maskot SATU menunggu sambil memangku buku, dipasang pada dudukan putih-biru existing.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan, precise-object-edit",
+    "generation_id": "exec-5d7e9985-167e-493a-8095-edb56d344db4",
+    "edit_target": {
+        "file": "resources/images/mascot/mascot-waiting-stone.png",
+        "purpose": "Menghapus batu bertekstur dan mempertahankan maskot menunggu dengan buku di pangkuan. Dudukan putih-biru existing dipulihkan melalui CSS."
+    },
+    "identity_references": [
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png",
+            "role": "Identitas, proporsi, pola bulu dan sudut pandang",
+            "sha256": "3356586B1594DCC874710C91CE71BD294046139FB5E2DC0734CEE851E637ACF1"
+        },
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip.png",
+            "role": "Material, warna, ekspresi dan tas buku",
+            "sha256": "A356C316D00EAD034A961170B77847636DF43008C9F459A562A6531443211AE4"
+        }
+    ],
+    "source": {
+        "file": "resources/images/mascot/mascot-waiting-lap.png",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_range": [0, 255],
+        "bytes": 1645608,
+        "sha256": "5f995180c8f3d1c9746f0d142f23f65e8ad2303149c4996a75667f9f6c1348a0"
+    },
+    "runtime_variants": [
+        {
+            "file": "public/images/mascot-waiting-lap-256.webp",
+            "width": 256,
+            "height": 256,
+            "bytes": 23126,
+            "sha256": "d6d980ecd399a93f599211c42c2c7f0f82c1c027d7d9c2695cd3fc80ac9e167d"
+        },
+        {
+            "file": "public/images/mascot-waiting-lap-512.webp",
+            "width": 512,
+            "height": 512,
+            "bytes": 64938,
+            "sha256": "4d7e2476a9a77f960706f62da8850dee54b8519acfb6b20ff2b96742004b3a52"
+        },
+        {
+            "file": "public/images/mascot-waiting-lap.webp",
+            "width": 1024,
+            "height": 1024,
+            "bytes": 197374,
+            "sha256": "89f75cfb2bc0132325c3019eddb1ee8083e1f21e112186e4dff6dbe803801875"
+        }
+    ],
+    "layout": {
+        "seat_anchor": {
+            "y": 0.875,
+            "unit": "Fraksi tinggi kanvas sumber dari atas",
+            "purpose": "Titik kontak duduk pada bawah badan, bukan ujung kaki yang menjuntai di depan dudukan."
+        },
+        "surface": "Gundukan CSS putih-biru existing. Tidak memakai batu bertekstur dalam bitmap."
+    },
+    "optimization": "Resize mekanis Lanczos ke lebar 256, 512 dan 1024px, WebP kualitas 90 method 6. Alpha asli dipertahankan, tanpa perubahan kreatif manual.",
+    "alt_purpose": "Dekoratif dengan alt kosong. Pose menunggu bukan durasi, progres atau persetujuan afiliasi. Teks dan tindakan tetap HTML.",
+    "scope": "Hanya pose waiting-review di hero Beranda pending_review biasa. Asset lama serta varian batu bertekstur dipertahankan sebagai riwayat sumber edit, tidak dipakai runtime.",
+    "manual_review": "Maskot duduk dengan kedua sayap memegang satu buku tertutup di pangkuan, tanpa buku di bawah badan atau kaki. Tidak ada batu dalam asset; dudukan putih-biru existing dipasang terpisah. Identitas, warna dan tas dipertahankan.",
+    "prompt": "Use case: precise-object-edit.\nInput image 1 is the edit target, the SATU bird holding a book while seated on a textured gray rock. Input image 2 is the canonical identity turnaround. Input image 3 preserves feather material, expression and the navy cross-body satchel.\nChange ONLY this: completely REMOVE THE GRAY ROCK and all its texture/shadow from image 1. Keep the bird's seated waiting pose, face, expression, markings, wings, feet, tail, satchel and the closed book held across its lap. The book must remain gently cradled by both feathered wings above its seated ivory body and thighs, never under its rump or feet. Do not add any new seat, stone, pedestal, book beneath it, floor, backdrop, halo, glow or platform. The empty space under the seated bird must be genuine transparency; a white-blue seat will be drawn separately by the application.\nOutput one high-resolution SQUARE transparent cutout, roughly 1024 by 1024 or larger, tightly reframed so the whole seated bird occupies about 88 to 92 percent of canvas height, crest around 3 percent from the top and the tips of the relaxed feet near 94 percent from the top. Keep complete crest, feet and tail with a clean transparent margin. Center the visible torso and seated contact point horizontally at 50 percent of canvas, not shifted to the right. Keep the existing soft patient friendly upward gaze. Preserve blue/ivory/orange colors, detailed 3D feather material, graphite bird feet/beak, brown eyes, original navy cross-body satchel with brass hardware and the separate navy lap book with ivory pages and orange ribbon. No text, letters, watermark, additional characters, human fingers or human hands, approval marks, clock or new objects. This is an isolated seated bird holding a lap book, with NO ROCK and NO BOOK SEAT."
+}

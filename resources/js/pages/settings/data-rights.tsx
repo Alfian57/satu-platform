@@ -4,6 +4,7 @@ import { useState } from 'react';
 import DeleteUser from '@/components/delete-user';
 import ExportUserData from '@/components/export-user-data';
 import InputError from '@/components/input-error';
+import { SettingsCardHeading } from '@/components/settings/settings-panel';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -152,33 +153,20 @@ export default function DataRights({ summary, status }: Props) {
                             aria-labelledby="data-rights-heading"
                             className="grid min-w-0 gap-5 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"
                         >
-                            <header className="flex min-w-0 items-start gap-3">
-                                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent text-primary">
-                                    <Shield
-                                        aria-hidden="true"
-                                        className="size-5"
-                                    />
-                                </span>
-                                <div className="min-w-0">
-                                    <h2
-                                        id="data-rights-heading"
-                                        className="text-title font-semibold"
-                                    >
-                                        Hak Data dan Privasi
-                                    </h2>
-                                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                                        Unduh arsip dan ajukan kendali data
-                                        pribadi. Riwayat persetujuan dibedakan
-                                        dari status pemenuhan permintaan.
-                                    </p>
-                                </div>
-                            </header>
+                            <SettingsCardHeading
+                                id="data-rights-heading"
+                                icon={Shield}
+                                title="Hak Data dan Privasi"
+                                description="Unduh arsip dan ajukan kendali data pribadi. Riwayat persetujuan dibedakan dari status pemenuhan permintaan."
+                            />
                             <h3 className="text-base font-semibold">
                                 Riwayat persetujuan
                             </h3>
                             {summary.consents.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">
                                     Belum ada riwayat persetujuan tercatat.
+                                    Riwayat akan tampil di sini setelah ada
+                                    tindakan yang tercatat.
                                 </p>
                             ) : (
                                 <ul className="divide-y divide-border">
@@ -227,10 +215,12 @@ export default function DataRights({ summary, status }: Props) {
                                             className="grid min-w-0 content-between gap-5 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"
                                         >
                                             <div className="min-w-0">
-                                                <item.Icon
-                                                    aria-hidden="true"
-                                                    className="size-5 text-primary"
-                                                />
+                                                <span className="grid size-10 place-items-center rounded-xl border border-satu-orange-border bg-satu-orange-soft text-satu-orange-ink">
+                                                    <item.Icon
+                                                        aria-hidden="true"
+                                                        className="size-5"
+                                                    />
+                                                </span>
                                                 <h3 className="mt-3 text-lg font-semibold">
                                                     {item.title}
                                                 </h3>

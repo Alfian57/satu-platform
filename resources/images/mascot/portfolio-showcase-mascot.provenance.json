@@ -1,0 +1,59 @@
+{
+    "description": "Maskot SATU memperlihatkan map karya terbuka untuk hero Portofolio.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan, stylized-concept dengan referensi identitas",
+    "generation_id": "exec-d3563620-e777-4f53-a93f-944fb2d2ee11",
+    "identity_references": [
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png",
+            "purpose": "Identitas dan proporsi",
+            "sha256": "3356586B1594DCC874710C91CE71BD294046139FB5E2DC0734CEE851E637ACF1"
+        },
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip.png",
+            "purpose": "Material, ekspresi, warna dan tas asli",
+            "sha256": "A356C316D00EAD034A961170B77847636DF43008C9F459A562A6531443211AE4"
+        }
+    ],
+    "source": {
+        "file": "resources/images/mascot/mascot-portfolio-showcase.png",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "bytes": 1446076,
+        "sha256": "25215ac7d4ab5d23e81bb6b57ac8b1b3dfd61347011a3defe51f46aa9dabdded",
+        "alpha_range": [0, 255]
+    },
+    "runtime_variants": [
+        {
+            "file": "public/images/mascot-portfolio-showcase-256.webp",
+            "width": 256,
+            "height": 256,
+            "mode": "RGBA",
+            "bytes": 22236,
+            "sha256": "4a7d6d026bb228fde08924f87ab98508e01fcd9ebf04f1a68e3877336bf05a0f"
+        },
+        {
+            "file": "public/images/mascot-portfolio-showcase-512.webp",
+            "width": 512,
+            "height": 512,
+            "mode": "RGBA",
+            "bytes": 61040,
+            "sha256": "bd0facfbf729c0c03a2b76d408a9b9747b0e56bcc92605ceb529b866182da674"
+        },
+        {
+            "file": "public/images/mascot-portfolio-showcase.webp",
+            "width": 1024,
+            "height": 1024,
+            "mode": "RGBA",
+            "bytes": 187838,
+            "sha256": "70f2d2a818fa485cb2f8e9efc9bb98329d80d8de232833b13e4720b62df2dbbf"
+        }
+    ],
+    "optimization": "Resize mekanis Lanczos ke 256, 512 dan 1024px, WebP kualitas 90 method 6. Alpha dipertahankan tanpa edit kreatif manual.",
+    "alt_purpose": "Dekoratif dengan alt kosong. Bukan hasil karya, skor, status verifikasi, persetujuan atau kontrol pengguna. Seluruh fakta dan tindakan tetap HTML.",
+    "scope": "Hero daftar Portofolio mahasiswa. Tidak mengganti detail atau portofolio publik.",
+    "motion": "Animasi masuk satu kali 420ms mengikuti StudentMenuHero, tanpa reaksi hover dan statis pada reduced motion.",
+    "manual_review": "Burung memperlihatkan satu map karya berisi motif abstrak biru-oranye, bukan karya pengguna atau sertifikat. Tas navy asli terpisah, siluet dan kaki utuh. Tidak ada cap, centang atau medali.",
+    "prompt": "Use case: stylized-concept. Asset type: transparent premium 3D mascot cutout for SATU student Portfolio menu hero. Input image 1 is the canonical identity turnaround; input image 2 is the material/expression reference. Generate ONE full-body kingfisher, preserving exactly cobalt/azure layered feathers, fluffy ivory chest and cheeks, orange eyebrow and cheek markings, warm brown eyes, graphite long beak and bird feet, ORIGINAL NAVY cross-body book satchel with brass buckles. New pose: standing comfortably, facing slightly LEFT toward page copy, gently smiling, presenting one open slim ivory PORTFOLIO FOLIO with two pages in front of its torso. One feathered wing supports the bottom of the open folio, the other opens the cover to show it, no human fingers. The pages contain only tasteful abstract blue and warm-orange geometric artwork blocks, NO text, NO numbers, NO checkmarks, NO stamps, NO certification or award seals. This is a decorative symbol of collecting student work, not actual app screenshots or verified work. The original navy bag remains clearly separate and visible. No pencil (different from the Contribution pose), no graduation cap, no extra clothing or accessories. Keep original body proportions, realistic soft layered feather detail and high-end stylized 3D material matching references, not plastic. Soft studio light and clear high definition edges. Complete crest, wings, feet and tail visible, centered full silhouette filling about 88-92 percent of a square canvas with transparent margins. Genuine transparent background. No floor, pedestal, book underneath feet, scenery, floating icons, glow, frame, UI, text, watermark, extra characters or extra limbs."
+}

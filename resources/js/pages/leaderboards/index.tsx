@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { AppPage } from '@/components/app-page';
+import { CampusOperationHeader } from '@/components/campus-operation-layout';
 import { DashboardArchiveArt as ArchiveArt } from '@/components/dashboard-archive-art';
 import {
     formatLeaderboardDate,
@@ -28,7 +29,7 @@ import {
     formatScore,
     LeaderboardTable,
 } from '@/components/leaderboards/leaderboard-table';
-import Mascot from '@/components/mascot';
+import StudentMenuHero from '@/components/student-menu-hero';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -108,12 +109,14 @@ function LeaderboardLoading({ refreshing = false }: { refreshing?: boolean }) {
 }
 
 export default function LeaderboardIndex() {
-    const { leaderboard, leaderboardRows } =
+    const { auth, leaderboard, leaderboardRows } =
         usePage<LeaderboardPageProps>().props;
+    const isAdmin = auth.user?.workspace.role === 'campus_admin';
     const [isNavigating, setIsNavigating] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [isForbidden, setIsForbidden] = useState(false);
     const [pendingPreference, setPendingPreference] = useState(false);
+    const [needsPreferenceCheck, setNeedsPreferenceCheck] = useState(false);
     const [preferenceIntent, setPreferenceIntent] = useState<boolean | null>(
         null,
     );
@@ -211,6 +214,7 @@ export default function LeaderboardIndex() {
                 setLoadError(null);
                 setFailedSelection(null);
                 setPreferenceError(null);
+                setNeedsPreferenceCheck(false);
             },
             onError: () =>
                 setLoadError(
@@ -250,6 +254,10 @@ export default function LeaderboardIndex() {
     }
 
     function openPreference(): void {
+        if (needsPreferenceCheck || pendingPreference) {
+            return;
+        }
+
         preferenceReturnFocus.current =
             document.activeElement instanceof HTMLElement
                 ? document.activeElement
@@ -260,7 +268,7 @@ export default function LeaderboardIndex() {
     }
 
     function submitPreference(isOptedIn: boolean): void {
-        if (pendingPreference) {
+        if (pendingPreference || needsPreferenceCheck) {
             return;
         }
 
@@ -271,6 +279,7 @@ export default function LeaderboardIndex() {
             individualPreference(),
             {
                 is_opted_in: isOptedIn,
+                expected_version: leaderboard.preference.version,
                 semester: leaderboard.semester || undefined,
                 scope: leaderboard.scope,
             },
@@ -286,11 +295,16 @@ export default function LeaderboardIndex() {
                             : 'Persetujuan ditarik. Baris individual tidak ditampilkan pada pembacaan berikutnya. XP dan badge tetap tersimpan.',
                     );
                 },
-                onError: (errors) =>
+                onError: (errors) => {
+                    if (errors.expected_version) {
+                        setNeedsPreferenceCheck(true);
+                    }
+
                     setPreferenceError(
                         Object.values(errors).join(' ') ||
                             'Persetujuan belum tersimpan. Periksa pilihan dan coba lagi.',
-                    ),
+                    );
+                },
                 onHttpException: (response) => {
                     if ([401, 403].includes(response.status)) {
                         setIsForbidden(true);
@@ -299,6 +313,7 @@ export default function LeaderboardIndex() {
                             'Akses peringkat tidak tersedia. Persetujuan belum dapat dikonfirmasi. Periksa afiliasi lalu muat ulang.',
                         );
                     } else {
+                        setNeedsPreferenceCheck(true);
                         setPreferenceError(
                             'Persetujuan belum dapat dikonfirmasi. Periksa status dengan memuat ulang sebelum mencoba kembali.',
                         );
@@ -307,6 +322,7 @@ export default function LeaderboardIndex() {
                     return false;
                 },
                 onNetworkError: () => {
+                    setNeedsPreferenceCheck(true);
                     setPreferenceError(
                         'Koneksi terputus. Persetujuan belum dapat dikonfirmasi. Periksa koneksi dan muat ulang untuk memastikan statusnya.',
                     );
@@ -339,23 +355,34 @@ export default function LeaderboardIndex() {
                         className="grid w-full min-w-0 gap-6"
                         data-test="leaderboard-root"
                     >
-                        <header className="grid min-w-0 gap-4 rounded-4xl border border-white bg-linear-to-br from-accent via-sky-100 to-blue-100 p-5 shadow-md sm:p-7">
-                            <LockKeyhole
-                                aria-hidden="true"
-                                className="size-10 text-primary"
+                        {isAdmin ? (
+                            <CampusOperationHeader
+                                theme="rankings"
+                                icon={LockKeyhole}
+                                title="Peringkat belum tersedia."
+                                description="Akses Peringkat tidak tersedia. Hasil sebelumnya tidak ditampilkan. Periksa akses dan muat ulang setelah tersedia."
+                                institution={null}
+                                testId="leaderboard-header"
                             />
-                            <p className="text-sm font-semibold text-primary">
-                                Akses kampus
-                            </p>
-                            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                                Peringkat belum tersedia.
-                            </h1>
-                            <p className="max-w-[65ch] text-sm leading-7 text-muted-foreground">
-                                Peringkat hanya tersedia bagi anggota kampus
-                                dengan akses yang terverifikasi. Hasil
-                                sebelumnya tidak ditampilkan.
-                            </p>
-                        </header>
+                        ) : (
+                            <header className="grid min-w-0 gap-4 rounded-4xl border border-white bg-linear-to-br from-accent via-sky-100 to-blue-100 p-5 shadow-md sm:p-7">
+                                <LockKeyhole
+                                    aria-hidden="true"
+                                    className="size-10 text-primary"
+                                />
+                                <p className="text-sm font-semibold text-primary">
+                                    Akses kampus
+                                </p>
+                                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                                    Peringkat belum tersedia.
+                                </h1>
+                                <p className="max-w-[65ch] text-sm leading-7 text-muted-foreground">
+                                    Peringkat hanya tersedia bagi anggota kampus
+                                    dengan akses yang terverifikasi. Hasil
+                                    sebelumnya tidak ditampilkan.
+                                </p>
+                            </header>
+                        )}
                         <LeaderboardNotice
                             tone="warning"
                             title="Periksa akses kampus"
@@ -403,92 +430,102 @@ export default function LeaderboardIndex() {
             <Head title="Peringkat" />
             <AppPage>
                 <div
-                    className="grid w-full min-w-0 gap-6"
+                    className="leaderboard-discovery grid w-full min-w-0 gap-6"
                     data-leaderboard-source="application"
                     data-test="leaderboard-root"
                 >
-                    <header
-                        className="relative isolate min-w-0 overflow-hidden rounded-4xl border border-white bg-linear-to-br from-accent via-sky-100 to-blue-100 p-5 shadow-md sm:p-7"
-                        data-test="leaderboard-header"
-                    >
-                        <div
-                            aria-hidden="true"
-                            className="pointer-events-none absolute -top-20 -right-16 size-80 rounded-full bg-primary/5"
-                        />
-                        <ArchiveArt className="absolute top-5 right-28 hidden w-36 -rotate-6 opacity-55 sm:block lg:right-36 lg:w-44" />
-                        <span
-                            aria-hidden="true"
-                            className="absolute top-7 right-7 h-1.5 w-10 -rotate-12 rounded-full bg-satu-feather/70"
-                        />
-                        <div className="relative grid min-w-0 items-center gap-6 sm:grid-cols-[minmax(0,1fr)_8rem] lg:grid-cols-[minmax(0,1fr)_10rem]">
-                            <div className="min-w-0">
-                                <p className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/15 bg-white/80 px-3 py-1.5 text-xs font-semibold text-primary">
-                                    <BookOpenCheck
+                    {isAdmin ? (
+                        <CampusOperationHeader
+                            theme="rankings"
+                            icon={BookOpenCheck}
+                            title="Peringkat kontribusi"
+                            description="Tinjau XP kontribusi terverifikasi per kelompok, semester dan dasar perhitungannya. Peringkat bukan penilaian kemampuan seluruh mahasiswa."
+                            institution={leaderboard.institution?.name ?? null}
+                            testId="leaderboard-header"
+                        >
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="min-h-11 bg-card"
+                            >
+                                <a href="#leaderboard-method">
+                                    <BookOpenCheck aria-hidden="true" />
+                                    Pahami perhitungan
+                                </a>
+                            </Button>
+                        </CampusOperationHeader>
+                    ) : (
+                        <StudentMenuHero
+                            theme="rankings"
+                            icon={BookOpenCheck}
+                            eyebrow="Peringkat kontribusi"
+                            title="Setiap kontribusi punya arti."
+                            description="Lihat XP dari kontribusi terverifikasi, beserta dasar perhitungannya. Angka ini bukan ukuran nilai dirimu."
+                            pose="ranking-context"
+                            testId="leaderboard-header"
+                            note={
+                                <p className="flex min-w-0 items-start gap-2">
+                                    <GraduationCap
                                         aria-hidden="true"
-                                        className="size-4 shrink-0"
+                                        className="mt-0.5 size-4 shrink-0 text-primary"
                                     />
-                                    Peringkat kontribusi
+                                    <span className="min-w-0 wrap-anywhere">
+                                        {leaderboard.institution?.name ??
+                                            'Kampus'}
+                                    </span>
                                 </p>
-                                <h1 className="mt-4 max-w-[28ch] text-2xl leading-snug font-bold tracking-tight text-balance sm:text-3xl">
-                                    Apresiasi kontribusi. Pahami konteksnya.
-                                </h1>
-                                <p className="mt-3 max-w-[65ch] text-sm leading-7 text-muted-foreground sm:text-base">
-                                    Lihat aktivitas yang sudah terverifikasi
-                                    dari program studi, tim, atau individu.
-                                    Setiap angka punya dasar yang jelas, bukan
-                                    ukuran nilai dirimu.
-                                </p>
-                            </div>
-                            <div className="pointer-events-none hidden justify-center sm:flex">
-                                <Mascot
-                                    pose="guide"
-                                    priority
-                                    className="w-32 lg:w-40"
-                                />
-                            </div>
-                        </div>
-                        <div className="relative mt-5 flex min-w-0 flex-col gap-4 border-t border-white/80 pt-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                            <p className="flex min-w-0 items-start gap-2 text-sm font-medium text-foreground">
-                                <GraduationCap
-                                    aria-hidden="true"
-                                    className="mt-0.5 size-4 shrink-0 text-primary"
-                                />
-                                <span className="[overflow-wrap:anywhere]">
-                                    {leaderboard.institution?.name ?? 'Kampus'}
-                                </span>
-                            </p>
-                            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
+                            }
+                        >
+                            <Button
+                                asChild
+                                className="student-menu-hero__primary min-h-11"
+                            >
+                                <a href="#leaderboard-method">
+                                    <BookOpenCheck aria-hidden="true" />
+                                    Pahami perhitungan
+                                </a>
+                            </Button>
+                            {!leaderboard.isCampusOperator && (
                                 <Button
                                     asChild
                                     variant="outline"
-                                    className="min-h-11 bg-white/80"
+                                    className="min-h-11 bg-card"
                                 >
-                                    <a href="#leaderboard-method">
-                                        <BookOpenCheck aria-hidden="true" />
-                                        Pahami perhitungan
-                                    </a>
+                                    <Link href={contributionsIndex()}>
+                                        Lihat kontribusi saya
+                                        <ArrowRight aria-hidden="true" />
+                                    </Link>
                                 </Button>
-                                {!leaderboard.isCampusOperator && (
-                                    <Button
-                                        asChild
-                                        variant="ghost"
-                                        className="min-h-11 bg-white/70"
-                                    >
-                                        <Link href={contributionsIndex()}>
-                                            Lihat kontribusi saya
-                                            <ArrowRight aria-hidden="true" />
-                                        </Link>
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                    </header>
+                            )}
+                        </StudentMenuHero>
+                    )}
 
                     {preferenceFeedback && (
                         <LeaderboardNotice title="Pengaturan diperbarui">
                             <p data-test="leaderboard-preference-success">
                                 {preferenceFeedback}
                             </p>
+                        </LeaderboardNotice>
+                    )}
+                    {needsPreferenceCheck && (
+                        <LeaderboardNotice
+                            tone="warning"
+                            title="Periksa status persetujuan"
+                        >
+                            <p>
+                                Hasil penyimpanan belum pasti. Muat ulang hasil
+                                untuk memeriksa persetujuan sebelum mengirim
+                                perubahan lagi.
+                            </p>
+                            <Button
+                                variant="outline"
+                                className="mt-3 min-h-11"
+                                disabled={busy}
+                                onClick={() => requestRows()}
+                                data-test="leaderboard-preference-check"
+                            >
+                                Periksa status terbaru
+                            </Button>
                         </LeaderboardNotice>
                     )}
                     {preferenceError && preferenceIntent === null && (
@@ -1010,7 +1047,7 @@ export default function LeaderboardIndex() {
                         </div>
                         <LeaderboardContext
                             data={leaderboard}
-                            pending={busy}
+                            pending={busy || needsPreferenceCheck}
                             savingPreference={pendingPreference}
                             onPreference={openPreference}
                         />
@@ -1133,7 +1170,7 @@ export default function LeaderboardIndex() {
                                 preferenceIntent ? 'default' : 'destructive'
                             }
                             className="min-h-11"
-                            disabled={pendingPreference}
+                            disabled={pendingPreference || needsPreferenceCheck}
                             onClick={() =>
                                 submitPreference(preferenceIntent === true)
                             }

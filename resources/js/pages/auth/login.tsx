@@ -1,5 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
-import { LogIn } from 'lucide-react';
+import { LockKeyhole, LogIn, UserRound } from 'lucide-react';
+import AuthInputFrame from '@/components/auth/auth-input-frame';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -37,22 +38,24 @@ export default function Login({ status }: Props) {
                                 >
                                     Nama pengguna
                                 </Label>
-                                <Input
-                                    id="username"
-                                    type="text"
-                                    name="username"
-                                    required
-                                    autoFocus
-                                    autoComplete="username"
-                                    placeholder="Masukkan nama pengguna"
-                                    aria-describedby={
-                                        errors.username
-                                            ? 'username-help login-username-error'
-                                            : 'username-help'
-                                    }
-                                    className="h-11 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                                    aria-invalid={Boolean(errors.username)}
-                                />
+                                <AuthInputFrame icon={UserRound}>
+                                    <Input
+                                        id="username"
+                                        type="text"
+                                        name="username"
+                                        required
+                                        autoFocus
+                                        autoComplete="username"
+                                        placeholder="Masukkan nama pengguna"
+                                        aria-describedby={
+                                            errors.username
+                                                ? 'username-help login-username-error'
+                                                : 'username-help'
+                                        }
+                                        className="h-11 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        aria-invalid={Boolean(errors.username)}
+                                    />
+                                </AuthInputFrame>
                                 <p
                                     id="username-help"
                                     className="text-xs leading-relaxed text-slate-500"
@@ -73,20 +76,22 @@ export default function Login({ status }: Props) {
                                 >
                                     Password
                                 </Label>
-                                <PasswordInput
-                                    id="password"
-                                    name="password"
-                                    required
-                                    autoComplete="current-password"
-                                    placeholder="Masukkan password"
-                                    className="h-11 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                                    aria-invalid={Boolean(errors.password)}
-                                    aria-describedby={
-                                        errors.password
-                                            ? 'login-password-error'
-                                            : undefined
-                                    }
-                                />
+                                <AuthInputFrame icon={LockKeyhole}>
+                                    <PasswordInput
+                                        id="password"
+                                        name="password"
+                                        required
+                                        autoComplete="current-password"
+                                        placeholder="Masukkan password"
+                                        className="h-11 rounded-xl border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                                        aria-invalid={Boolean(errors.password)}
+                                        aria-describedby={
+                                            errors.password
+                                                ? 'login-password-error'
+                                                : undefined
+                                        }
+                                    />
+                                </AuthInputFrame>
                                 <InputError
                                     id="login-password-error"
                                     message={errors.password}
@@ -118,7 +123,7 @@ export default function Login({ status }: Props) {
 
                             <Button
                                 type="submit"
-                                className="h-11 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-md motion-reduce:transition-none"
+                                className="auth-submit-static h-11 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-sm font-semibold text-white shadow-md shadow-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                 disabled={processing}
                                 data-test="login-button"
                             >

@@ -8,7 +8,6 @@ use App\Actions\Audit\AuditRecorder;
 use App\Enums\ContributionStatus;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionRosterStatus;
 use App\Enums\LeaderboardScopeType;
 use App\Enums\TeamMembershipStatus;
 use App\Models\Contribution;
@@ -175,6 +174,8 @@ final class RebuildLeaderboardProjections
         $membershipTable = (new InstitutionMembership)->getTable();
         $rosterTable = (new InstitutionRoster)->getTable();
         $rowTable = (new InstitutionRosterRow)->getTable();
+        $rosterId = InstitutionRoster::query()->whereBelongsTo($institution)
+            ->where('semester', $semester)->latest('activated_at')->latest('id')->value('id');
 
         /** @var EloquentCollection<int, InstitutionMembership> $memberships */
         $memberships = InstitutionMembership::query()
@@ -199,7 +200,7 @@ final class RebuildLeaderboardProjections
                 $rowTable.'.nim',
             )
             ->where($rosterTable.'.semester', $semester)
-            ->where($rosterTable.'.status', InstitutionRosterStatus::Active->value)
+            ->where($rosterTable.'.id', $rosterId)
             ->where($rowTable.'.semester', $semester)
             ->where($rowTable.'.is_active', true)
             ->select([
@@ -256,6 +257,7 @@ final class RebuildLeaderboardProjections
             ->where($ledgerTable.'.source_type', $sourceType)
             ->whereIn($ledgerTable.'.user_id', $activeUserIds)
             ->where($contributionTable.'.institution_id', $institution->getKey())
+            ->whereColumn($contributionTable.'.owner_id', $ledgerTable.'.user_id')
             ->where($contributionTable.'.status', ContributionStatus::Approved->value)
             ->select($ledgerTable.'.user_id as leaderboard_user_id')
             ->selectRaw(
@@ -305,6 +307,7 @@ final class RebuildLeaderboardProjections
             ->where($ledgerTable.'.source_type', $sourceType)
             ->whereIn($ledgerTable.'.user_id', $activeUserIds)
             ->where($contributionTable.'.institution_id', $institution->getKey())
+            ->whereColumn($contributionTable.'.owner_id', $ledgerTable.'.user_id')
             ->where($contributionTable.'.status', ContributionStatus::Approved->value)
             ->select([
                 $ledgerTable.'.user_id as leaderboard_user_id',

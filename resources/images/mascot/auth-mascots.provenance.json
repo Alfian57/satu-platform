@@ -1,0 +1,90 @@
+{
+    "description": "Dua pose maskot SATU khusus login dan registrasi mahasiswa.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan",
+    "identity_references": [
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png",
+            "role": "Identitas, pola bulu, proporsi dan sudut pandang",
+            "sha256": "3356586B1594DCC874710C91CE71BD294046139FB5E2DC0734CEE851E637ACF1"
+        },
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip.png",
+            "role": "Material, ekspresi, warna dan tas buku",
+            "sha256": "A356C316D00EAD034A961170B77847636DF43008C9F459A562A6531443211AE4"
+        }
+    ],
+    "optimization": "Konversi mekanis dari PNG RGBA ke WebP kualitas 90, method 6, resize Lanczos persegi 256/512/1024. Alpha dipertahankan tanpa menghapus latar manual atau mengubah pose.",
+    "alt_purpose": "Ilustrasi dekoratif ber-alt kosong dalam tombol sapaan berlabel. Balon dan formulir tetap HTML; jurnal bukan data atau keputusan nyata.",
+    "scope": "Login memakai login-return. Register termasuk OTP memakai register-start. Pose welcome, guide dan peek serta halaman lain dipertahankan.",
+    "assets": [
+        {
+            "pose": "login-return",
+            "source": "resources/images/mascot/mascot-login-return.png",
+            "runtime": "public/images/mascot-login-return.webp",
+            "prompt": "Use case: identity-preserve. Asset type: transparent character cutout for the SATU login page. Reference image 1 is the canonical SATU character turnaround and defines identity, proportions and marking placement. Reference image 2 defines feather materials, facial expression, lighting quality and the original navy cross-body book satchel. Create ONE new full-body pose of this exact friendly kingfisher mascot, not a redesigned character. Login pose: a gentle welcome-back bow, body leaning forward slightly, head tilted warmly toward the viewer, relaxed happy eyes, one feathered wing resting over the chest near the bag strap and the other wing raised beside the shoulder in a small friendly greeting. Face in a three-quarter view looking slightly toward the viewer's right, where the login form will sit. Both graphite bird feet grounded and fully visible; short tail fully visible. Preserve vivid cobalt and azure blue feather layers, ivory cheeks and belly, the distinctive orange eyebrow and cheek patches, large brown eyes, graphite kingfisher beak, and the identical navy leather cross-body book satchel with brass hardware and visible cream paper. Premium polished 3D character rendering, fine fluffy feather texture, soft diffuse studio lighting, warm approachable and elegant, same material style as reference 2. Square high-resolution canvas, character centered and occupying roughly 86 percent of height, generous clean transparent margin around all wing tips, feet and crest, crisp antialiased alpha edges. Genuine transparent background. No text, labels, UI, speech bubbles, background, room, platform, extra props, extra animals, clothing, hat, glasses, human hands or fingers, extra limbs, confetti, sparkle particles, watermark, border or logo.",
+            "generation_id": "exec-9b3116fd-cc0f-4962-b03e-0670411f89ea",
+            "source_bytes": 1369209,
+            "source_dimensions": {
+                "width": 1254,
+                "height": 1254
+            },
+            "alpha_range": [0, 255],
+            "sha256": "61E78DC436176599539E2F68AB9281B77DB3B532F0CADECE323D1BAD9023EC66",
+            "runtime_variants": [
+                {
+                    "file": "public/images/mascot-login-return-256.webp",
+                    "width": 256,
+                    "height": 256,
+                    "sha256": "E7F9D0F4EF31F9A0BB9F9D04F80AE368D9E18DD7076BA5DDCD73290D7A4A86F3"
+                },
+                {
+                    "file": "public/images/mascot-login-return-512.webp",
+                    "width": 512,
+                    "height": 512,
+                    "sha256": "33A24BAAAF5EB15ECA41C3C0E628CCA16C117C0EADC238075176348A772B7D7E"
+                },
+                {
+                    "file": "public/images/mascot-login-return.webp",
+                    "width": 1024,
+                    "height": 1024,
+                    "sha256": "49BE12BBC28CDCE5013B1A9AD6B61D262B6251B31A1894F0C95A5135E7A071A9"
+                }
+            ]
+        },
+        {
+            "pose": "register-start",
+            "source": "resources/images/mascot/mascot-register-start.png",
+            "runtime": "public/images/mascot-register-start.webp",
+            "prompt": "Use case: identity-preserve. Asset type: transparent character cutout for the SATU student registration page. Reference image 1 is the canonical SATU character turnaround and defines identity, proportions and marking placement. Reference image 2 defines feather materials, facial expression, lighting quality and the original navy cross-body book satchel. Create ONE new full-body pose of this exact friendly kingfisher mascot, clearly different from a waving or bowing pose. Registration pose: the bird stands upright in a lively but balanced small step forward, gently cradling one small open blank ivory journal against its body with one feathered wing, while the other wing extends toward the viewer's right in a friendly invitation to begin. Look slightly toward the right-hand registration form with bright welcoming brown eyes and a subtle happy open beak. The small journal has blue binding and a tiny orange ribbon, absolutely no writing or symbols. Keep the original navy leather cross-body book satchel worn diagonally on the body, with brass hardware, clearly visible and not replaced by the journal. Preserve the exact cobalt and azure layered plumage, ivory cheeks and belly, orange eyebrow and cheek markings, graphite beak and bird feet, crest and tail from the references. Both feet and all wing tips fully visible, no human fingers. Premium polished 3D character rendering with the same fluffy feather material as reference 2, soft diffuse studio lighting, elegant friendly SATU identity. Square high-resolution canvas, centered character occupying roughly 86 percent of height, transparent margin, crisp alpha edges. Genuine transparent background. No text, UI, background scene, speech bubbles, platform, graduation cap, clothing, glasses, extra characters, extra limbs, confetti, sparkles, watermark, border or logo.",
+            "generation_id": "exec-923bc408-5f74-4e4c-915d-a513f657a5b5",
+            "source_bytes": 1404144,
+            "source_dimensions": {
+                "width": 1254,
+                "height": 1254
+            },
+            "alpha_range": [0, 255],
+            "sha256": "38FD10FAE4972AECBB73D28E54CF7E15707E2DE5A995CEA43C5C2A0006A1A222",
+            "runtime_variants": [
+                {
+                    "file": "public/images/mascot-register-start-256.webp",
+                    "width": 256,
+                    "height": 256,
+                    "sha256": "AD4780FFAE04A74087C91AE47C6BB600CC092B3D355454D33E3E15E364A09C45"
+                },
+                {
+                    "file": "public/images/mascot-register-start-512.webp",
+                    "width": 512,
+                    "height": 512,
+                    "sha256": "47598A67FC4286B969EECA0430D5D893E388608436C09403056147B2A4648668"
+                },
+                {
+                    "file": "public/images/mascot-register-start.webp",
+                    "width": 1024,
+                    "height": 1024,
+                    "sha256": "13A4B2C9C5CC526256EBE74AE60E383BB970523489CC6DA9761BEE16974EFD88"
+                }
+            ]
+        }
+    ]
+}

@@ -151,9 +151,8 @@ class AffiliationReviewController extends Controller
         $serialized = collect($paginator->items())
             ->map(fn (AffiliationRequest $affiliationRequest): array => [
                 'id' => $affiliationRequest->getKey(),
-                'username' => $affiliationRequest->user->username,
-                'maskedNim' => $affiliationRequest->maskedNim(),
-                'maskedPhone' => $affiliationRequest->user->phoneNumber?->masked,
+                'nim' => $affiliationRequest->nim,
+                'phone' => $affiliationRequest->user->phoneNumber?->number,
                 'matchResult' => $affiliationRequest->match_result->value,
                 'status' => $affiliationRequest->status->value,
                 'version' => $affiliationRequest->version,
@@ -162,7 +161,6 @@ class AffiliationReviewController extends Controller
                 'rosterSemester' => $affiliationRequest->roster?->semester,
                 'lock' => $affiliationRequest->isReviewLockActive() ? [
                     'ownedByCurrentUser' => $affiliationRequest->review_locked_by_id === $reviewer->getKey(),
-                    'owner' => $affiliationRequest->lockOwner?->username,
                     'expiresAt' => $affiliationRequest->review_lock_expires_at?->toIso8601String(),
                 ] : null,
             ])

@@ -3,13 +3,13 @@
 namespace App\Policies;
 
 use App\Enums\InstitutionMembershipRole;
-use App\Enums\InstitutionMembershipStatus;
 use App\Models\InclusionSignal;
-use App\Models\InstitutionMembership;
 use App\Models\User;
 
 class InclusionSignalPolicy
 {
+    public function __construct(private readonly InstitutionContextResolver $context) {}
+
     /**
      * Determine whether the user can view any models.
      */
@@ -20,15 +20,7 @@ class InclusionSignalPolicy
 
     public function view(User $user, InclusionSignal $inclusionSignal): bool
     {
-        $membership = InstitutionMembership::where('user_id', $user->id)
-            ->where('institution_id', $inclusionSignal->institution_id)
-            ->first();
-
-        if (! $membership || $membership->status !== InstitutionMembershipStatus::Verified) {
-            return false;
-        }
-
-        return $membership->role === InstitutionMembershipRole::CampusAdmin;
+        return $this->context->resolve($user, $inclusionSignal, [InstitutionMembershipRole::CampusAdmin]) !== null;
     }
 
     public function create(User $user): bool

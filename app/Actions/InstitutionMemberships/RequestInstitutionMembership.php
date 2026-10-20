@@ -3,38 +3,41 @@
 namespace App\Actions\InstitutionMemberships;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Actions\Institution\ResolveConfiguredUniversity;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionStatus;
 use App\Events\InstitutionMembershipRequested;
+use App\Exceptions\VerifiedPhoneRequired;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 final class RequestInstitutionMembership
 {
     public function __construct(
         private readonly TransitionInstitutionMembership $transition,
         private readonly AuditRecorder $audit,
+        private readonly ResolveConfiguredUniversity $resolveUniversity,
     ) {}
 
     public function handle(User $user, Institution $institution): InstitutionMembership
     {
+        Gate::forUser($user)->authorize('create', [InstitutionMembership::class, $institution]);
+
         return DB::transaction(function () use ($user, $institution): InstitutionMembership {
-            $lockedUser = User::query()
-                ->lockForUpdate()
-                ->whereKey($user->getKey())
-                ->firstOrFail();
             $lockedInstitution = Institution::query()
                 ->lockForUpdate()
                 ->whereKey($institution->getKey())
                 ->firstOrFail();
-
-            if ($lockedInstitution->status !== InstitutionStatus::Active) {
-                throw new AuthorizationException('This institution is not accepting affiliation requests.');
+            $this->resolveUniversity->handle($lockedInstitution);
+            $lockedUser = User::query()->lockForUpdate()->whereKey($user->getKey())->firstOrFail();
+            Gate::forUser($lockedUser)->authorize('create', [InstitutionMembership::class, $lockedInstitution]);
+            if ($lockedUser->phoneNumbers()->verified()->sharedLock()->first(['id']) === null) {
+                throw new VerifiedPhoneRequired;
             }
 
             $membership = InstitutionMembership::query()

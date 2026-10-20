@@ -1,0 +1,88 @@
+{
+    "description": "Hero Pengaturan akun pribadi, maskot penjaga arsip dan latar arsip tenang.",
+    "date": "2026-10-20",
+    "method": "Imagegen bawaan dengan referensi identitas SATU.",
+    "identity_references": [
+        "resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png",
+        "resources/images/mascot/reference/maskot-01-burung-arsip.png"
+    ],
+    "generations": {
+        "mascot": "exec-a6487cb5-742b-4a53-afff-73c1da6af0df",
+        "background": "exec-d249e528-666f-43a5-8b31-039c33cbb2a2"
+    },
+    "prompts": {
+        "mascot": "Use case: identity-preserve stylized-concept. Asset type: ONE premium 3D SATU kingfisher mascot cutout for Account Settings hero. Input 1 is canonical identity turnaround, input 2 is canonical materials/expression. Preserve EXACT identity: layered cobalt and azure feathers, fluffy ivory chest and cheeks, warm orange eyebrow and cheek markings, large friendly brown eyes, long graphite bird beak and graphite bird feet, ORIGINAL navy crossbody book satchel and brass buckle with visible book detail. NEW pose: full-body standing calmly, three-quarter facing slightly LEFT toward hero text, friendly composed smile, one feathered wing gently holding ONE small warm-brass key by its round bow at chest height, the other wing resting naturally on the original satchel. Feathered wing grips, NOT human hands/fingers. Key is a simple physical key, not an icon, badge or medal. Theme is personal account care, NOT verification approval. Original bag stays visible and unchanged. Square image, entire head, tail and feet visible, centered with 6 percent safe margins, natural proportions matching references. High-definition detailed feathers, soft studio daylight, restrained polished 3D finish. GENUINELY TRANSPARENT background with clean alpha, no white backdrop, no gradient, no floor/platform/pedestal, no baked drop shadow. No shield with checkmark, no text, no logos, no numbers, no cards, no floating icons, no extra objects or characters. Output one transparent PNG asset, not a UI screenshot.",
+        "background": "Use case: stylized-concept. Asset type: wide decorative background plate for SATU Account Settings hero, landscape panorama ratio 3:1, high definition at least 2048px wide. A quiet elegant contemporary archive alcove, rendered in soft premium 3D with matte ivory and pale sky-blue materials. LEFT 62 percent is a clean luminous pale-blue-to-white wall with extremely subtle daylight and ample LOW-CONTRAST negative space for dark UI copy. RIGHT third has one shallow rounded architectural niche with two orderly ivory closed archival binders and one thin warm-orange bookmark edge on a very low built-in ledge near the bottom, restrained blue inset detailing and beautiful soft angled daylight. Calm personal archive, tidy, minimal and elegant, not an office photo. Floor and ledge remain understated, room in foreground for a separate bird mascot. Palette pale blue #E7F2FF, white/ivory, soft azure, very selective muted warm orange #FFB85C. No text, no lettering, no logos, no numbers, NO mascot/people/animals, no padlock icons, no security badges, no shields, no checkmarks, no UI panels, no floating cards/confetti/gears, no busy line art, no dramatic shadows or saturated dark areas. Background only, no transparency. This is an atmospheric illustration, not a real campus, a data visualization or security status."
+    },
+    "alt_purpose": "Dekoratif dengan alt kosong dan aria-hidden. Bukan hasil pemeriksaan keamanan, verifikasi atau persetujuan. Teks, data dan kontrol tetap HTML.",
+    "optimization": "Resize mekanis GD bicubic ke varian WebP; transparansi maskot dipertahankan. Tidak mengubah gambar kreatif dengan kode.",
+    "manual_review": "Identitas burung, bulu, warna, tas, kaki dan paruh mengikuti referensi. Kunci kuningan tanpa tanda persetujuan. Latar hanya ceruk arsip dan detail oranye, tanpa teks atau data.",
+    "motion": "Mengikuti entrance satu kali hero Beranda. Tidak bereaksi saat hover dan statis pada reduced motion.",
+    "assets": [
+        {
+            "source": {
+                "file": "resources/images/mascot/mascot-account-care.png",
+                "width": 1254,
+                "height": 1254,
+                "bytes": 1417871,
+                "sha256": "c54a69c5714b7d815fd208147e100a21a378ac763a90f285685a20b644edee24"
+            },
+            "variants": [
+                {
+                    "file": "public/images/mascot-account-care-256.webp",
+                    "width": 256,
+                    "height": 256,
+                    "bytes": 14852,
+                    "sha256": "c7001ff7651e7ef9cacf2f4e7ca900f7c92d9f9d58bec87ff3fb55a4ab2c0921"
+                },
+                {
+                    "file": "public/images/mascot-account-care-512.webp",
+                    "width": 512,
+                    "height": 512,
+                    "bytes": 44404,
+                    "sha256": "d067d2135a6ef466bbead0deb45ff677d40e188cfedff59e4dd0cc852f110f60"
+                },
+                {
+                    "file": "public/images/mascot-account-care.webp",
+                    "width": 1024,
+                    "height": 1024,
+                    "bytes": 136322,
+                    "sha256": "7a3f37e65577022c0f44320a54db87b901ba1771328c20358f7ca011fca07332"
+                }
+            ],
+            "transparent_sample_pixels": 39331
+        },
+        {
+            "source": {
+                "file": "resources/images/mascot/student-hero-settings.png",
+                "width": 2172,
+                "height": 724,
+                "bytes": 1578641,
+                "sha256": "7e3c7fe6bb9f0d354322b1ecc15a2ae7d175716c2ed37b616b8498e834daf328"
+            },
+            "variants": [
+                {
+                    "file": "public/images/student-hero-settings-768.webp",
+                    "width": 768,
+                    "height": 256,
+                    "bytes": 9040,
+                    "sha256": "76fc53c928c6e303b2bb6b341a2b3344875fb81a65cfd65b265ceb614308f612"
+                },
+                {
+                    "file": "public/images/student-hero-settings-1280.webp",
+                    "width": 1280,
+                    "height": 427,
+                    "bytes": 16720,
+                    "sha256": "ca7c2fd3bbd6f1f94fba7995b650e1d769ca644f6dcceb2f318358d241fd5c47"
+                },
+                {
+                    "file": "public/images/student-hero-settings.webp",
+                    "width": 2048,
+                    "height": 683,
+                    "bytes": 31684,
+                    "sha256": "cdd78272ddcf38b3b50d959dfc06b726ce79c3bb549c382aadaab7a5525b4ca9"
+                }
+            ]
+        }
+    ]
+}

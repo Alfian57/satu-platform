@@ -1,22 +1,21 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    BookOpenCheck,
-    BookmarkCheck,
-    BriefcaseBusiness,
+    Blocks,
     Building2,
+    ChartBar,
     ClipboardCheck,
-    FileCheck2,
-    FileSpreadsheet,
-    GraduationCap,
-    LayoutDashboard,
-    ListOrdered,
-    Network,
-    Search,
-    RefreshCw,
-    SendHorizontal,
-    ShieldCheck,
-    Sparkles,
-    X,
+    ContactRound,
+    FolderKanban,
+    GalleryVerticalEnd,
+    HandHeart,
+    House,
+    LayoutPanelTop,
+    Menu,
+    NotebookPen,
+    SlidersHorizontal,
+    TableProperties,
+    Waypoints,
+    Workflow,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { DashboardArchiveArt as ArchiveArt } from '@/components/dashboard-archive-art';
@@ -42,16 +41,13 @@ import { show as campusOverview } from '@/routes/campus/overview';
 import { show as campusRoster } from '@/routes/campus/roster';
 import { index as contributionsIndex } from '@/routes/contributions';
 import { index as leaderboardsIndex } from '@/routes/leaderboards';
-import { index as platformAffiliationsIndex } from '@/routes/platform/affiliations';
-import { index as platformOperationsIndex } from '@/routes/platform/operations';
-import { index as platformSkillsIndex } from '@/routes/platform/skills';
+import { index as opportunitySupport } from '@/routes/opportunity-support';
+import { index as legacySkills } from '@/routes/platform/skills';
 import { index as portfolioIndex } from '@/routes/portfolio';
 import { index as projectsIndex } from '@/routes/projects';
-import {
-    saved as savedCandidates,
-    search as talentSearch,
-} from '@/routes/recruiter/talent';
-import { index as contactRequestsIndex } from '@/routes/recruiter/talent/contact-requests';
+import { index as universityAdmins } from '@/routes/university/admins';
+import { index as universitySettings } from '@/routes/university/settings';
+import { index as universityStudents } from '@/routes/university/students';
 import type {
     InstitutionMembershipStatus,
     NavItem,
@@ -62,22 +58,27 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Beranda',
         href: dashboard(),
-        icon: LayoutDashboard,
+        icon: House,
     },
     {
         title: 'Proyek',
         href: projectsIndex(),
-        icon: BriefcaseBusiness,
+        icon: FolderKanban,
     },
     {
         title: 'Kontribusi',
         href: contributionsIndex(),
-        icon: FileCheck2,
+        icon: NotebookPen,
     },
     {
         title: 'Portofolio',
         href: portfolioIndex(),
-        icon: BookOpenCheck,
+        icon: GalleryVerticalEnd,
+    },
+    {
+        title: 'Peringkat',
+        href: leaderboardsIndex(),
+        icon: ChartBar,
     },
 ];
 
@@ -99,9 +100,11 @@ function InstitutionMembershipContext({ shell }: { shell: ShellContext }) {
     const status = membership ? membershipStatuses[membership.status] : null;
     const content = (
         <WorkspaceContextCard
-            label="Afiliasi kampus"
-            name={membership?.institutionName ?? 'Hubungkan kampus'}
+            label="Universitas"
+            showLabel={false}
+            name={membership?.institutionName ?? 'Afiliasi belum diajukan'}
             icon={Building2}
+            logoSrc={membership ? '/images/university-uty.webp' : undefined}
         >
             {status && (
                 <Badge
@@ -123,7 +126,7 @@ function InstitutionMembershipContext({ shell }: { shell: ShellContext }) {
             aria-label={
                 membership
                     ? `Buka status afiliasi ${membership.institutionName}`
-                    : 'Hubungkan akun dengan kampus'
+                    : 'Buka aktivasi afiliasi universitas'
             }
         >
             {content}
@@ -138,130 +141,95 @@ function CampusWorkspaceContext({
 }) {
     return (
         <WorkspaceContextCard
-            label="Operasi kampus"
+            label="Universitas"
             name={institutionName}
             icon={Building2}
-        />
-    );
-}
-
-function PlatformWorkspaceContext() {
-    return (
-        <WorkspaceContextCard
-            label="Operasi platform"
-            name="Lintas institusi SATU"
-            icon={ShieldCheck}
-        />
-    );
-}
-
-function RecruiterWorkspaceContext({
-    organizationName,
-}: {
-    organizationName: string;
-}) {
-    return (
-        <WorkspaceContextCard
-            label="Ruang perekrut"
-            name={organizationName}
-            icon={BriefcaseBusiness}
+            logoSrc="/images/university-uty.webp"
         />
     );
 }
 
 export function AppSidebar() {
-    const { auth, shell } = usePage().props;
+    const page = usePage();
+    const { auth, shell } = page.props;
+    const path = page.url.split('?')[0];
     const workspace = auth.user?.workspace;
     const role = workspace?.role ?? 'student';
     const roleContext = getWorkspaceContext(role);
     const RoleIcon = roleContext.icon;
     const { isMobile, setOpenMobile } = useSidebar();
     const campusInstitution = workspace?.institution;
-    const recruiterOrganization = workspace?.recruiterOrganization;
-    const isPlatformAdmin = role === 'platform_admin';
     const isCampusWorkspace =
         role === 'campus_admin' &&
         campusInstitution !== null &&
         campusInstitution !== undefined;
-    const isRecruiterWorkspace =
-        role === 'recruiter' &&
-        recruiterOrganization !== null &&
-        recruiterOrganization !== undefined;
-    const visibleMainNavItems = isPlatformAdmin
+    const visibleMainNavItems: NavItem[] = isCampusWorkspace
         ? [
               {
-                  title: 'Operasi platform',
-                  href: platformOperationsIndex(),
-                  icon: ShieldCheck,
+                  title: 'Ringkasan',
+                  href: campusOverview({
+                      institution: campusInstitution.id,
+                  }),
+                  icon: LayoutPanelTop,
               },
               {
-                  title: 'Afiliasi kampus',
-                  href: platformAffiliationsIndex(),
-                  icon: Building2,
+                  title: 'Mahasiswa',
+                  href: universityStudents({
+                      institution: campusInstitution.id,
+                  }),
+                  icon: ContactRound,
+                  isActive:
+                      path === universityStudents.url(campusInstitution.id) ||
+                      path === affiliationIndex.url(campusInstitution.id),
               },
               {
-                  title: 'Taksonomi skill',
-                  href: platformSkillsIndex(),
-                  icon: Sparkles,
+                  title: 'Roster mahasiswa',
+                  href: campusRoster({
+                      institution: campusInstitution.id,
+                  }),
+                  icon: TableProperties,
+              },
+              {
+                  title: 'Validasi kontribusi',
+                  href: campusContributionsIndex({
+                      institution: campusInstitution.id,
+                  }),
+                  icon: ClipboardCheck,
+              },
+              {
+                  title: 'Peringkat',
+                  href: leaderboardsIndex(),
+                  icon: ChartBar,
+              },
+              {
+                  title: 'Bantuan kesempatan',
+                  href: opportunitySupport(campusInstitution.id),
+                  icon: HandHeart,
+              },
+              {
+                  title: 'Pengaturan',
+                  href: universitySettings(campusInstitution.id),
+                  icon: SlidersHorizontal,
+                  isActive:
+                      path === universitySettings.url(campusInstitution.id) ||
+                      path.startsWith(
+                          universitySettings.url(campusInstitution.id) + '/',
+                      ) ||
+                      path === universityAdmins.url(campusInstitution.id) ||
+                      path === legacySkills.url(),
               },
           ]
-        : isCampusWorkspace
-          ? [
-                {
-                    title: 'Ringkasan',
-                    href: campusOverview({
-                        institution: campusInstitution.id,
-                    }),
-                    icon: LayoutDashboard,
-                },
-                {
-                    title: 'Afiliasi kampus',
-                    href: affiliationIndex({
-                        institution: campusInstitution.id,
-                    }),
-                    icon: ClipboardCheck,
-                },
-                {
-                    title: 'Roster mahasiswa',
-                    href: campusRoster({
-                        institution: campusInstitution.id,
-                    }),
-                    icon: FileSpreadsheet,
-                },
-                {
-                    title: 'Validasi kontribusi',
-                    href: campusContributionsIndex({
-                        institution: campusInstitution.id,
-                    }),
-                    icon: FileCheck2,
-                },
-            ]
-          : isRecruiterWorkspace
-            ? [
-                  {
-                      title: 'Cari talenta',
-                      href: talentSearch(),
-                      icon: Search,
-                  },
-                  {
-                      title: 'Kandidat tersimpan',
-                      href: savedCandidates(),
-                      icon: BookmarkCheck,
-                  },
-                  {
-                      title: 'Permintaan kontak',
-                      href: contactRequestsIndex(),
-                      icon: SendHorizontal,
-                  },
-              ]
-            : shell.institutionMembership?.status === 'verified'
-              ? mainNavItems
-              : mainNavItems.filter(
-                    (item) =>
-                        !['Proyek', 'Kontribusi', 'Portofolio'].includes(
-                            item.title,
-                        ),
-                );
+        : shell.institutionMembership?.status === 'verified'
+          ? mainNavItems
+          : mainNavItems.filter(
+                (item) =>
+                    ![
+                        'Proyek',
+                        'Kontribusi',
+                        'Portofolio',
+                        'Peringkat',
+                    ].includes(item.title),
+            );
     const advancedNavItems: NavItem[] = isCampusWorkspace
         ? [
               {
@@ -269,33 +237,24 @@ export function AppSidebar() {
                   href: campusInclusionIndex({
                       institution: campusInstitution.id,
                   }),
-                  icon: Network,
+                  icon: Waypoints,
               },
               {
                   title: 'Pemetaan kredit',
                   href: campusCreditMappingsIndex({
                       institution: campusInstitution.id,
                   }),
-                  icon: GraduationCap,
+                  icon: Blocks,
               },
               {
                   title: 'Sinkronisasi akademik',
                   href: campusIntegrationsIndex({
                       institution: campusInstitution.id,
                   }),
-                  icon: RefreshCw,
+                  icon: Workflow,
               },
           ]
-        : role === 'student' &&
-            shell.institutionMembership?.status === 'verified'
-          ? [
-                {
-                    title: 'Peringkat',
-                    href: leaderboardsIndex(),
-                    icon: ListOrdered,
-                },
-            ]
-          : [];
+        : [];
 
     return (
         <Sidebar
@@ -308,24 +267,16 @@ export function AppSidebar() {
                 <div className="relative flex items-start gap-2">
                     <Link
                         aria-label={
-                            isPlatformAdmin
-                                ? 'SATU: Operasi platform'
-                                : isCampusWorkspace
-                                  ? 'SATU: Operasi kampus'
-                                  : isRecruiterWorkspace
-                                    ? 'SATU: Ruang perekrut'
-                                    : 'SATU: Beranda'
+                            isCampusWorkspace
+                                ? 'SATU: Admin Universitas'
+                                : 'SATU: Beranda'
                         }
                         href={
-                            isPlatformAdmin
-                                ? platformOperationsIndex()
-                                : isCampusWorkspace
-                                  ? campusOverview({
-                                        institution: campusInstitution.id,
-                                    })
-                                  : isRecruiterWorkspace
-                                    ? talentSearch()
-                                    : dashboard()
+                            isCampusWorkspace
+                                ? campusOverview({
+                                      institution: campusInstitution.id,
+                                  })
+                                : dashboard()
                         }
                         prefetch
                         className="flex min-h-14 min-w-0 flex-1 cursor-pointer items-center rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
@@ -346,7 +297,11 @@ export function AppSidebar() {
                             data-test="sidebar-close"
                             onClick={() => setOpenMobile(false)}
                         >
-                            <X aria-hidden="true" className="size-4" />
+                            <Menu
+                                aria-hidden="true"
+                                className="size-5"
+                                strokeWidth={1.75}
+                            />
                         </Button>
                     )}
                 </div>
@@ -363,34 +318,21 @@ export function AppSidebar() {
                 <NavMain
                     items={visibleMainNavItems}
                     ariaLabel={
-                        isPlatformAdmin
-                            ? 'Navigasi admin platform'
-                            : isCampusWorkspace
-                              ? 'Navigasi operator kampus'
-                              : isRecruiterWorkspace
-                                ? 'Navigasi perekrut'
-                                : 'Navigasi utama'
+                        isCampusWorkspace
+                            ? 'Navigasi Admin Universitas'
+                            : 'Navigasi utama'
                     }
                     label={
-                        isPlatformAdmin
-                            ? 'Operasi platform'
-                            : isCampusWorkspace
-                              ? 'Operasi kampus'
-                              : isRecruiterWorkspace
-                                ? 'Ruang perekrut'
-                                : 'Ruang kerja'
+                        isCampusWorkspace ? 'Admin Universitas' : 'Ruang kerja'
                     }
                     description={
-                        isRecruiterWorkspace
-                            ? 'Modul lanjutan. Akses tetap mengikuti izin mahasiswa dan hak organisasi.'
-                            : role === 'student' &&
-                                shell.institutionMembership?.status !==
-                                    'verified'
-                              ? shell.institutionMembership?.status ===
-                                'suspended'
-                                  ? 'Menu kolaborasi tidak tersedia selama akses kampus ditangguhkan.'
-                                  : 'Menu kolaborasi tersedia setelah afiliasi kampus terverifikasi.'
-                              : undefined
+                        role === 'student' &&
+                        shell.institutionMembership?.status !== 'verified'
+                            ? shell.institutionMembership?.status ===
+                              'suspended'
+                                ? 'Menu kolaborasi tidak tersedia selama akses kampus ditangguhkan.'
+                                : 'Menu kolaborasi tersedia setelah afiliasi kampus terverifikasi.'
+                            : undefined
                     }
                 />
                 {advancedNavItems.length > 0 && (
@@ -404,15 +346,9 @@ export function AppSidebar() {
                     />
                 )}
                 <SidebarFooter className="mt-auto shrink-0 border-t border-primary/10 bg-linear-to-b from-card to-accent/35 p-3">
-                    {isPlatformAdmin ? (
-                        <PlatformWorkspaceContext />
-                    ) : isCampusWorkspace ? (
+                    {isCampusWorkspace ? (
                         <CampusWorkspaceContext
                             institutionName={campusInstitution.name}
-                        />
-                    ) : isRecruiterWorkspace ? (
-                        <RecruiterWorkspaceContext
-                            organizationName={recruiterOrganization.name}
                         />
                     ) : (
                         <InstitutionMembershipContext shell={shell} />

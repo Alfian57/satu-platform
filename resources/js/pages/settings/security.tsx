@@ -87,6 +87,7 @@ export default function Security({ passwordRules }: { passwordRules: string }) {
                             });
                         }}
                         className="grid min-w-0 gap-6 border-t border-border pt-6"
+                        aria-busy={processing}
                     >
                         <SettingsFormFeedback
                             errors={errors}
@@ -231,7 +232,7 @@ export default function Security({ passwordRules }: { passwordRules: string }) {
                                 />
                             </div>
                         </div>
-                        <div className="flex min-w-0 flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
+                        <div className="flex min-w-0 flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-background/60 p-4">
                             <p className="text-xs leading-6 text-muted-foreground">
                                 Kolom password dikosongkan setelah berhasil
                                 diperbarui.
@@ -292,7 +293,7 @@ export default function Security({ passwordRules }: { passwordRules: string }) {
                             </span>
                         </li>
                     </ul>
-                    <p className="rounded-2xl border border-primary/10 bg-accent/60 p-4 text-xs leading-6 text-muted-foreground">
+                    <p className="rounded-2xl border border-satu-orange-border bg-white/80 p-4 text-xs leading-6 text-muted-foreground">
                         Mengubah password tidak mengubah karya, afiliasi kampus,
                         atau pilihan visibilitasmu.
                     </p>

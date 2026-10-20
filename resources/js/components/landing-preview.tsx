@@ -1,20 +1,8 @@
-import {
-    BadgeCheck,
-    FileText,
-    FolderOpen,
-    LockKeyhole,
-    UsersRound,
-} from 'lucide-react';
+import { BadgeCheck, FileText, FolderOpen, UsersRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type LandingPreviewKind =
-    | 'project'
-    | 'team'
-    | 'contribution'
-    | 'validation'
-    | 'portfolio'
-    | 'campus'
-    | 'recruiter';
+    'project' | 'team' | 'contribution' | 'validation' | 'portfolio' | 'campus';
 
 const previews: Record<
     LandingPreviewKind,
@@ -99,18 +87,6 @@ const previews: Record<
             ['Afiliasi kampus', 'Pemeriksaan roster dan peninjauan'],
             ['Kontribusi', 'Versi, bukti, dan alasan keputusan'],
             ['Akses', 'Operator yang mendapat kewenangan'],
-        ],
-    },
-    recruiter: {
-        label: 'Proyeksi portofolio',
-        title: 'Karya yang diizinkan terlihat.',
-        description:
-            'Contoh batas proyeksi untuk perekrut, bukan profil kandidat nyata.',
-        icon: LockKeyhole,
-        facts: [
-            ['Dapat ditampilkan', 'Portofolio yang diizinkan mahasiswa'],
-            ['Tidak ditampilkan', 'Percakapan tim dan bukti privat'],
-            ['Akses', 'Organisasi terverifikasi dan hak akses aktif'],
         ],
     },
 };

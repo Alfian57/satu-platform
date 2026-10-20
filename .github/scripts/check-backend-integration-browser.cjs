@@ -14,7 +14,6 @@ const artifacts = fs.mkdtempSync(
 );
 const date = '2026-10-11T10:00:00Z';
 let checks = 0;
-let phoneVisible = true;
 let createFailure = null;
 const errors = [],
     mutations = [];
@@ -41,7 +40,6 @@ function check(condition, label) {
         '<div id="app"></div></body></html>';
     function payload(url) {
         const campus = url.pathname.includes('/campus/');
-        const recruiter = url.pathname.includes('/recruiter/');
         let component = 'settings/data-rights';
         const props = {
             ...initial.props,
@@ -55,15 +53,8 @@ function check(condition, label) {
                     created_at: date,
                     updated_at: date,
                     workspace: {
-                        role: campus
-                            ? 'campus_admin'
-                            : recruiter
-                              ? 'recruiter'
-                              : 'student',
+                        role: campus ? 'campus_admin' : 'student',
                         institution: { id: 99002, name: 'Kampus synthetic' },
-                        recruiterOrganization: recruiter
-                            ? { id: 99004, name: 'Organisasi synthetic' }
-                            : null,
                     },
                 },
             },
@@ -103,44 +94,6 @@ function check(condition, label) {
                     status_options: [],
                     connection_options: [],
                 },
-            });
-        } else if (url.pathname.includes('contact-requests')) {
-            component = 'talent/contact-requests';
-            Object.assign(props, {
-                entitlement: { has_entitlement: true },
-                requests: [
-                    {
-                        id: 99010,
-                        purpose: 'Kolaborasi synthetic',
-                        message: null,
-                        status: 'accepted',
-                        created_at: date,
-                        expires_at: date,
-                        responded_at: date,
-                        candidate_name: 'Kandidat synthetic',
-                        candidate_headline: 'Karya synthetic',
-                        candidate_phone: phoneVisible ? '+6281200000099' : null,
-                    },
-                ],
-            });
-        } else if (recruiter) {
-            component = 'talent/candidate-detail';
-            Object.assign(props, {
-                candidate: {
-                    id: 99010,
-                    headline: 'Karya synthetic',
-                    bio: null,
-                    skills: [],
-                    badges: [],
-                    contributions: [],
-                    availability_status: 'available',
-                    verified_at: null,
-                    institution_name: 'Kampus synthetic',
-                    phone: phoneVisible ? '+6281200000099' : null,
-                },
-                isSaved: false,
-                contactConsequenceNotice:
-                    'Kontak hanya tersedia dengan persetujuan.',
             });
         }
 
@@ -268,8 +221,6 @@ function check(condition, label) {
         const paths = [
             '/settings/data-rights',
             '/campus/99002/integrations',
-            '/recruiter/talent/candidates/99010',
-            '/recruiter/talent/contact-requests',
             '/settings/profile',
         ];
 
@@ -366,25 +317,6 @@ function check(condition, label) {
                 'synthetic_provider',
             'Jaringan gagal tidak mengklaim koneksi berhasil.',
         );
-
-        for (const url of paths.slice(2, 4)) {
-            await page.goto(qaOrigin + url);
-            check(
-                (await page
-                    .getByRole('link', { name: 'Hubungi via WhatsApp' })
-                    .getAttribute('href')) === 'https://wa.me/6281200000099',
-                'Handoff memakai nomor synthetic yang dikirim server.',
-            );
-            phoneVisible = false;
-            await page.reload();
-            check(
-                (await page
-                    .getByRole('link', { name: 'Hubungi via WhatsApp' })
-                    .count()) === 0,
-                'Kontak tidak tampil setelah server menarik handoff.',
-            );
-            phoneVisible = true;
-        }
 
         check(
             errors.length === 0,

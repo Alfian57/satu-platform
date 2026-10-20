@@ -22,6 +22,7 @@ type ActionHref = NonNullable<InertiaLinkProps['href']>;
 
 type Props = {
     region: DashboardProjectsRegion;
+    referenceLayout?: boolean;
     getActionHref: (action: DashboardAction) => ActionHref | null;
     onAction: (action: DashboardAction) => void;
 };
@@ -133,6 +134,7 @@ function ProjectRegionState({
     region,
     getActionHref,
     onAction,
+    referenceLayout,
 }: {
     region: Extract<
         DashboardProjectsRegion,
@@ -140,18 +142,24 @@ function ProjectRegionState({
     >;
     getActionHref: (action: DashboardAction) => ActionHref | null;
     onAction: (action: DashboardAction) => void;
+    referenceLayout: boolean;
 }) {
     const Icon = region.state === 'error' ? RefreshCw : FolderOpen;
 
     return (
         <div
-            className="flex flex-col gap-4 rounded-3xl border border-dashed border-border bg-card/70 p-5 sm:p-6"
+            className={cn(
+                'dashboard-project-state flex flex-col gap-4 rounded-3xl border border-dashed border-border bg-card/70 p-5 sm:p-6',
+                referenceLayout &&
+                    region.state !== 'error' &&
+                    'dashboard-project-state--illustrated',
+            )}
             data-test={`dashboard-projects-${region.state}`}
             role={region.state === 'error' ? 'alert' : undefined}
         >
-            <div className="flex min-w-0 items-start gap-4">
-                {region.state === 'empty' ? (
-                    <DashboardArchiveArt className="w-20 shrink-0 sm:w-24" />
+            <div className="dashboard-project-state__copy flex min-w-0 items-start gap-4">
+                {region.state === 'empty' && !referenceLayout ? (
+                    <DashboardArchiveArt className="dashboard-project-state__illustration w-20 shrink-0 sm:w-24" />
                 ) : (
                     <span className="shrink-0 rounded-2xl bg-accent p-3 text-primary">
                         <Icon
@@ -175,10 +183,32 @@ function ProjectRegionState({
                 </div>
             </div>
             {region.action && (
-                <RegionAction
-                    action={region.action}
-                    getActionHref={getActionHref}
-                    onAction={onAction}
+                <div
+                    className={
+                        referenceLayout
+                            ? 'dashboard-project-state__action'
+                            : 'contents'
+                    }
+                >
+                    <RegionAction
+                        action={region.action}
+                        getActionHref={getActionHref}
+                        onAction={onAction}
+                    />
+                </div>
+            )}
+            {referenceLayout && region.state !== 'error' && (
+                <img
+                    src="/images/dashboard-project-folder.webp"
+                    srcSet="/images/dashboard-project-folder-128.webp 128w, /images/dashboard-project-folder.webp 256w"
+                    sizes="64px"
+                    width={256}
+                    height={256}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
+                    className="dashboard-project-state__folder"
                 />
             )}
         </div>
@@ -218,6 +248,7 @@ function ProjectLoading({ announcement }: { announcement: string }) {
 
 export function DashboardProjectLedger({
     region,
+    referenceLayout = false,
     getActionHref,
     onAction,
 }: Props) {
@@ -240,6 +271,12 @@ export function DashboardProjectLedger({
                         id="active-projects-heading"
                         className="text-lg font-bold tracking-tight text-foreground sm:text-xl"
                     >
+                        {referenceLayout && (
+                            <FolderOpen
+                                aria-hidden="true"
+                                className="size-5 shrink-0 text-primary"
+                            />
+                        )}
                         Proyek aktif
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -267,13 +304,14 @@ export function DashboardProjectLedger({
                 region.state === 'forbidden') && (
                 <ProjectRegionState
                     region={region}
+                    referenceLayout={referenceLayout}
                     getActionHref={getActionHref}
                     onAction={onAction}
                 />
             )}
 
             {region.state === 'ready' && (
-                <div className="rounded-3xl border border-border bg-card p-2 shadow-sm sm:p-3">
+                <div className="dashboard-project-list rounded-3xl border border-border bg-card p-2 shadow-sm sm:p-3">
                     <ol className="grid divide-y divide-border/60">
                         {region.projects.map((project) => (
                             <ProjectRow key={project.id} project={project} />

@@ -22,7 +22,9 @@ let checks = 0,
     delay = 0,
     contribution,
     selectedRole = 'student',
-    confirmChoice = true;
+    confirmChoice = true,
+    listCanCreate = true,
+    listEmpty = false;
 const rev = (n) => String(n).repeat(64);
 function check(value, message) {
     assert.ok(value, message);
@@ -146,7 +148,8 @@ const projects = [
         });
         function payload(url) {
             const campus = url.pathname.includes('/campus/'),
-                create = url.pathname.endsWith('/create');
+                create = url.pathname.endsWith('/create'),
+                listing = url.pathname === '/contributions';
             selectedRole = campus ? 'campus_admin' : 'student';
             const props = {
                 ...initial.props,
@@ -187,28 +190,70 @@ const projects = [
                 contribution: structuredClone(contribution),
             };
 
+            if (listing) {
+                props.can_create = listCanCreate;
+                props.contributions = listEmpty
+                    ? []
+                    : [
+                          {
+                              id: contribution.id,
+                              project: contribution.project,
+                              status: contribution.status,
+                              current_version: contribution.current_version
+                                  ? {
+                                        id: contribution.current_version.id,
+                                        version_number:
+                                            contribution.current_version
+                                                .version_number,
+                                        task: contribution.current_version.task,
+                                    }
+                                  : null,
+                              created_at: date,
+                              updated_at: date,
+                          },
+                      ];
+            }
+
             if (campus) {
                 props.institution = {
                     id: 99002,
                     name: 'Kampus A. Data sintetis',
                 };
-                props.filters = { status: 'pending', sort: 'oldest' };
+                const status = url.searchParams.get('status') || 'pending';
+                const q = url.searchParams.get('q') || '';
+                const matches =
+                    contribution.status !== 'draft' &&
+                    (status === 'all' || status === contribution.status) &&
+                    [
+                        person.name,
+                        contribution.project.title,
+                        contribution.current_version.claim,
+                        contribution.current_version.summary,
+                    ]
+                        .join(' ')
+                        .toLowerCase()
+                        .includes(q.toLowerCase());
+                props.filters = {
+                    status,
+                    sort: url.searchParams.get('sort') || 'oldest',
+                    q,
+                };
                 props.reviewQueue = {
-                    items:
-                        contribution.status === 'pending'
-                            ? [
-                                  {
-                                      ...structuredClone(contribution),
-                                      reference: 'CN-099040',
-                                      contributor: person,
-                                  },
-                              ]
-                            : [],
+                    items: matches
+                        ? [
+                              {
+                                  ...structuredClone(contribution),
+                                  reference: 'CN-099040',
+                                  contributor: person,
+                                  submitted_at: date,
+                              },
+                          ]
+                        : [],
                     pagination: {
                         current_page: 1,
                         last_page: 1,
                         per_page: 25,
-                        total: contribution.status === 'pending' ? 1 : 0,
+                        total: matches ? 1 : 0,
                     },
                     summary: {
                         total: 1,
@@ -224,9 +269,11 @@ const projects = [
                 ...initial,
                 component: campus
                     ? 'campus/contributions'
-                    : create
-                      ? 'contributions/create'
-                      : 'contributions/show',
+                    : listing
+                      ? 'contributions/index'
+                      : create
+                        ? 'contributions/create'
+                        : 'contributions/show',
                 url: url.pathname + url.search,
                 props,
                 deferredProps: undefined,
@@ -365,6 +412,10 @@ const projects = [
 
             reads.push(url.pathname);
 
+            if (url.pathname === '/contributions' && delay) {
+                await new Promise((resolve) => setTimeout(resolve, delay));
+            }
+
             if (req.headers()['x-inertia'] && readFailure) {
                 return readFailure === 'network'
                     ? route.abort('failed')
@@ -408,7 +459,9 @@ const projects = [
                         ? '/campus/99002/contributions'
                         : surface === 'create'
                           ? '/contributions/create'
-                          : '/contributions/99040'),
+                          : surface === 'index'
+                            ? '/contributions'
+                            : '/contributions/99040'),
                 { waitUntil: 'domcontentloaded' },
             );
             await el(
@@ -416,7 +469,9 @@ const projects = [
                     ? 'campus-contribution-review-root'
                     : surface === 'create'
                       ? 'contribution-create-root'
-                      : 'contribution-detail-root',
+                      : surface === 'index'
+                        ? 'contributions-root'
+                        : 'contribution-detail-root',
             ).waitFor();
         }
         async function layout(name) {
@@ -432,6 +487,265 @@ const projects = [
                 fullPage: true,
             });
         }
+        reset();
+        const master = fs.readFileSync(
+            path.join(
+                __dirname,
+                '../../resources/images/mascot/mascot-contribution-notes.png',
+            ),
+        );
+        check(
+            master.readUInt32BE(16) >= 1024 && master[25] === 6,
+            'Maskot Kontribusi memiliki master HD transparan.',
+        );
+
+        for (const suffix of ['-256', '-512', '']) {
+            const image = fs.readFileSync(
+                path.join(
+                    __dirname,
+                    '../../public/images/mascot-contribution-notes' +
+                        suffix +
+                        '.webp',
+                ),
+            );
+            check(
+                image.toString('ascii', 8, 12) === 'WEBP' &&
+                    image.length < 200000,
+                'Varian maskot Kontribusi ' +
+                    (suffix || '1024') +
+                    ' teroptimasi.',
+            );
+        }
+
+        for (const width of [320, 390, 768, 1366, 1920, 3440]) {
+            await page.setViewportSize({ width, height: 900 });
+            await load('index');
+            check(
+                await page
+                    .locator('.student-menu-hero__actions')
+                    .evaluate(
+                        (actions) =>
+                            parseFloat(getComputedStyle(actions).marginTop) ===
+                            (innerWidth >= 640 ? 48 : 36),
+                    ),
+                'Kontribusi: tombol dan catatan hero turun selaras pada ' +
+                    width +
+                    'px.',
+            );
+            const bird = page.locator('[data-pose="contribution-notes"] img');
+            await bird.evaluate((img) => img.decode());
+            const box = await bird.boundingBox();
+            const hero = await el('contributions-header').boundingBox();
+            const root = await el('contributions-root').boundingBox();
+            const expectedWidth =
+                width >= 1024
+                    ? Math.min((hero.width - 2) * 0.36, 384)
+                    : width >= 640
+                      ? Math.min((hero.width - 2) * 0.39, 320)
+                      : 208;
+            check(
+                Math.abs(box.width - expectedWidth) < 1 &&
+                    Math.abs(box.y + box.height - hero.y - hero.height - 27) <
+                        1 &&
+                    Math.abs(
+                        hero.x +
+                            hero.width -
+                            box.x -
+                            box.width -
+                            (width >= 1024 ? 29 : width >= 640 ? 9 : 1),
+                    ) < 1 &&
+                    (await el('contributions-header').evaluate(
+                        (node) => getComputedStyle(node).overflow === 'visible',
+                    )),
+                width +
+                    ': ukuran/posisi maskot Kontribusi mengikuti Beranda tanpa clipping.',
+            );
+            check(
+                Math.abs(root.x - hero.x) < 1 &&
+                    Math.abs(root.width - hero.width) < 1,
+                width + ': hero mengikuti batas konten Beranda/Proyek.',
+            );
+            check(
+                (await el('contributions-header').innerText()).includes(
+                    'Bukti privat tetap mengikuti izin akses',
+                ),
+                width + ': batas bukti privat tetap terbaca.',
+            );
+            check(
+                (await page
+                    .locator('[data-pose="contribution-notes"] button')
+                    .count()) === 0 &&
+                    (await page
+                        .locator('.student-hero-backdrop')
+                        .getAttribute('aria-hidden')) === 'true',
+                width + ': maskot dan motif hanya dekorasi.',
+            );
+            await layout('kontribusi-hero-' + width);
+        }
+
+        for (const status of [
+            'draft',
+            'pending',
+            'revision',
+            'approved',
+            'rejected',
+            'archived',
+        ]) {
+            reset(status);
+            await load('index');
+            check(
+                (await el('contribution-row-99040').count()) === 1,
+                status + ': catatan tetap dapat dibuka tanpa perubahan status.',
+            );
+        }
+
+        listCanCreate = false;
+        listEmpty = true;
+        await load('index');
+        check(
+            (await el('contributions-header')
+                .locator('[data-test="create-contribution-link"]')
+                .count()) === 0 &&
+                (await el('contributions-empty').innerText()).includes(
+                    'Bergabunglah dengan proyek terlebih dahulu',
+                ),
+            'Tanpa izin menyusun, hero tidak menawarkan pengajuan dan pemulihan proyek tetap tersedia.',
+        );
+        listCanCreate = true;
+        await load('index');
+        check(
+            (await el('contributions-header')
+                .locator('[data-test="create-contribution-link"]')
+                .count()) === 1,
+            'Izin menyusun membuka CTA hero pada keadaan kosong.',
+        );
+        listEmpty = false;
+        await load('index');
+        delay = 450;
+        await el('contributions-refresh').click();
+        await el('contributions-loading').waitFor();
+        check(
+            await el('contributions-refresh').isDisabled(),
+            'Refresh memakai skeleton regional dan mengunci hanya tombol terkait.',
+        );
+        await el('contributions-loading').waitFor({ state: 'hidden' });
+        delay = 0;
+
+        for (const mode of [500, 403, 'network']) {
+            readFailure = mode;
+            await el('contributions-refresh').click();
+            await el('contributions-refresh-error').waitFor();
+            check(
+                (await el('contributions-ledger').count()) ===
+                    (mode === 403 ? 0 : 1) &&
+                    (await el('contributions-header')
+                        .locator('[data-test="create-contribution-link"]')
+                        .count()) === (mode === 403 ? 0 : 1),
+                mode + ': state gagal mengikuti batas akses dan pemulihan.',
+            );
+            readFailure = null;
+            await el('contributions-refresh').click();
+            await el('contributions-refresh-error').waitFor({
+                state: 'hidden',
+            });
+            await el('contributions-ledger').waitFor();
+            check(
+                (await el('contributions-header')
+                    .locator('[data-test="create-contribution-link"]')
+                    .count()) === 1,
+                mode + ': GET memulihkan daftar serta tindakan sesuai izin.',
+            );
+        }
+
+        await page.setViewportSize({ width: 1366, height: 900 });
+        await page.emulateMedia({ reducedMotion: 'no-preference' });
+        await load('index');
+        const bird = page.locator('[data-pose="contribution-notes"] img');
+        check(
+            await bird.evaluate((img) => {
+                const animation = img.getAnimations()[0];
+
+                if (!animation) {
+                    return false;
+                }
+
+                window.__qaContributionAnimation = animation;
+                animation.finish();
+
+                return (
+                    getComputedStyle(img).animationName ===
+                        'satu-mascot-enter' &&
+                    animation.effect.getTiming().duration === 420
+                );
+            }),
+            'Animasi masuk Kontribusi memakai keyframe dan durasi Beranda/Proyek.',
+        );
+        const primary = el('contributions-header').locator(
+            '[data-test="create-contribution-link"]',
+        );
+        const beforeHover = await primary.evaluate((node) =>
+            [
+                getComputedStyle(node).backgroundColor,
+                getComputedStyle(node).boxShadow,
+                getComputedStyle(node).transform,
+            ].join('|'),
+        );
+        await primary.hover();
+        check(
+            beforeHover ===
+                (await primary.evaluate((node) =>
+                    [
+                        getComputedStyle(node).backgroundColor,
+                        getComputedStyle(node).boxShadow,
+                        getComputedStyle(node).transform,
+                    ].join('|'),
+                )),
+            'CTA hero tidak berubah warna, bayangan atau posisi saat hover.',
+        );
+        await primary.focus();
+        check(
+            await primary.evaluate(
+                (node) =>
+                    getComputedStyle(node).outlineStyle !== 'none' ||
+                    getComputedStyle(node).boxShadow !== 'none',
+            ),
+            'CTA hero mempertahankan fokus keyboard.',
+        );
+        await el('contributions-refresh').click();
+        await page.waitForFunction(
+            () =>
+                !document.querySelector('[data-test="contributions-refresh"]')
+                    .disabled,
+        );
+        check(
+            await bird.evaluate(
+                (img) =>
+                    img.getAnimations()[0] ===
+                        window.__qaContributionAnimation &&
+                    img.getAnimations()[0].playState === 'finished',
+            ),
+            'Refresh tidak mengulang animasi maskot.',
+        );
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        check(
+            await bird.evaluate(
+                (img) =>
+                    getComputedStyle(img).animationName === 'none' &&
+                    getComputedStyle(img).opacity === '1',
+            ),
+            'Reduced motion langsung menampilkan maskot akhir.',
+        );
+        await page.evaluate(
+            () => (document.documentElement.style.fontSize = '200%'),
+        );
+        await layout('kontribusi-hero-text200');
+        await page.evaluate(
+            () => (document.documentElement.style.fontSize = ''),
+        );
+        check(
+            mutations.length === 0,
+            'Redesign hero dan refresh tidak mengirim command bisnis.',
+        );
         reset();
         await load();
 
@@ -631,6 +945,18 @@ const projects = [
         await page
             .locator('#campus-contribution-review-reason')
             .fill('Alasan yang perlu diperiksa.');
+        confirmChoice = false;
+        await page
+            .getByRole('button', { name: 'Hasil disetujui', exact: true })
+            .click();
+        check(
+            new URL(page.url()).searchParams.get('status') !== 'approved' &&
+                (await page
+                    .locator('#campus-contribution-review-reason')
+                    .inputValue()) === 'Alasan yang perlu diperiksa.',
+            'Membatalkan perpindahan tampilan mempertahankan draft keputusan.',
+        );
+        confirmChoice = true;
         failure = 422;
         await el('campus-contribution-decision-submit').click();
         await page.waitForTimeout(250);
@@ -810,6 +1136,50 @@ const projects = [
             ),
             'Menutup editor mengembalikan fokus ke pemicu edit.',
         );
+        reset('approved');
+        await load('campus');
+        await page
+            .getByRole('button', { name: 'Hasil disetujui', exact: true })
+            .click();
+        await page.waitForURL(
+            (url) => url.searchParams.get('status') === 'approved',
+        );
+        await el('campus-contribution-result-99040').waitFor();
+        check(
+            (
+                await el('campus-contribution-result-99040').textContent()
+            ).includes(contribution.current_version.summary),
+            'Hasil disetujui menampilkan ringkasan individual tanpa membuka izin berbagi baru.',
+        );
+        await el('campus-contribution-search').fill('tidak-ada-hasil');
+        await page
+            .getByRole('button', { name: 'Cari kontribusi', exact: true })
+            .click();
+        await page.waitForURL(
+            (url) => url.searchParams.get('q') === 'tidak-ada-hasil',
+        );
+        await el('campus-contribution-queue-empty').waitFor();
+        check(
+            (
+                await el('campus-contribution-queue-empty').textContent()
+            ).includes('Belum ada hasil yang cocok'),
+            'Pencarian kosong menjelaskan hasil sesuai filter.',
+        );
+        await el('campus-contribution-search').fill('');
+        await page
+            .getByRole('button', { name: 'Cari kontribusi', exact: true })
+            .click();
+        await el('campus-contribution-result-99040').waitFor();
+        await el('campus-contribution-status-filter').selectOption('all');
+        await page.waitForURL(
+            (url) => url.searchParams.get('status') === 'all',
+        );
+
+        for (const width of [320, 1280, 3440]) {
+            await page.setViewportSize({ width, height: 900 });
+            await layout('hasil-disetujui-' + width);
+        }
+
         check(
             errors.length === 0,
             'Tidak ada exception JavaScript pada alur sintetis.',

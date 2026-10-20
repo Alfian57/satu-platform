@@ -163,7 +163,6 @@ class AcademicCreditMappingController extends Controller
         $workspace = $this->resolveUserWorkspace->handle(
             $user,
             requestedInstitution: $institution,
-            requestedWorkspace: WorkspaceRole::CampusAdmin,
         );
 
         abort_unless(

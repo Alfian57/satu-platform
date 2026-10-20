@@ -2,13 +2,271 @@
 
 ## Strategi dan Status Dokumen
 
+Keputusan 17 Oktober 2026 menghentikan role perekrut serta admin platform
+terpisah. Runtime memakai tepat dua role: Mahasiswa dan Admin Universitas UTY.
+Pekerjaan Talent Portal/perekrut pada roadmap lama hanya riwayat, bukan modul
+tertunda yang dapat diaktifkan. Penghapusan mencakup workspace, UI, rute,
+undangan, pilihan berbagi perekrut dan proteksi terhadap konfigurasi lama.
+Pembuktiannya memakai uji dua role, URL lama ditolak, alur inti, serta login
+mahasiswa/admin aktual. Tidak menghapus akun atau audit historis.
+
 Roadmap ini menerjemahkan fokus yang disetujui pada 9 Oktober 2026 menjadi urutan pekerjaan. Tujuannya membuktikan kesempatan bergabung, hubungan kerja baru, dan pengakuan kontribusi, bukan menyelesaikan sebanyak mungkin modul.
 
 Tahap T01 sampai T10 adalah urutan outcome dan dependensi, bukan status pekerjaan, persentase, atau milestone GitHub baru. Issue dan milestone existing tetap sumber kebenaran pelaksanaan. Perubahan GitHub hanya dilakukan melalui permintaan terpisah; dokumen ini tidak menyatakan seluruh pekerjaan lama telah selesai atau dipindahkan.
 
 Gunakan implementasi yang sudah ada apabila sesuai kontrak. Audit gap sebelum membangun ulang. Tidak menghapus data atau menonaktifkan job, route, listener, dan permission melalui perubahan dokumentasi.
 
-Sumber: [PRODUCT.md](../../PRODUCT.md), [PRD](../product/PRD.md), [Business Flow](../product/BUSINESS_FLOW.md), serta keputusan [DEC-033](../governance/DECISIONS.md#pemfokusan-rilis-kesempatan-kolaborasi).
+Sumber: [PRODUCT.md](../../PRODUCT.md), [PRD](../product/PRD.md), [Business Flow](../product/BUSINESS_FLOW.md), serta keputusan [DEC-033](../governance/DECISIONS.md#pemfokusan-rilis-kesempatan-kolaborasi) dan [DEC-034](../governance/DECISIONS.md#dec-034-universitas-tunggal-dan-admin-universitas-14-oktober-2026).
+
+## Transisi Universitas Tunggal U01 Sampai U06
+
+Penyusutan scope pada 14 Oktober 2026 menetapkan satu universitas dengan role
+Mahasiswa dan Admin Universitas. Nomor U01 sampai U06 adalah enam tahap
+transisi yang disetujui pemilik produk. T01 sampai T10 di bawah tetap menjadi
+alur nilai dan riwayat implementasi inti; tidak dinomori ulang atau diklaim
+telah lulus seluruh gate.
+
+`U01 -> U02 -> U03 -> U04 -> U05 -> U06`
+
+| Tahap | Fokus                                     | Dependensi               | Keluaran                                                                                       | Kriteria selesai                                                                                                                                            |
+| ----- | ----------------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| U01   | Kontrak scope dan kewenangan              | Keputusan pemilik produk | PRODUCT, PRD, alur, DEC-034, kontrak engineering/UX dan traceability                           | Satu universitas dan dua role inti konsisten; batas data, matriks akses, riwayat serta open gate jelas; belum mengubah runtime                              |
+| U02   | Konteks universitas dan provisioning awal | U01                      | Konfigurasi server, resolver universitas, provisioning admin pertama, inventaris data dan akun | Universitas valid/aktif ditentukan eksplisit; konfigurasi hilang/salah tidak memilih institusi lain; provisioning privat, idempotent dan diaudit            |
+| U03   | Penggabungan otorisasi dan akun admin     | U02                      | Satu sumber role admin, pemetaan akun/undangan, route/redirect, Policies dan consumer          | Tidak ada eskalasi hak dari input publik; akses lintas institusi ditolak; pencabutan, admin terakhir dan validasi sendiri aman; riwayat tidak ditulis ulang |
+| U04   | Aktivasi mahasiswa satu universitas       | U02, U03                 | Nama kampus otomatis, NIM dan verifikasi existing, pemulihan onboarding                        | Tanpa pilihan kampus; ID lain ditolak; pending/suspended serta draft tetap jelas; tidak ada afiliasi otomatis tanpa bukti                                   |
+| U05   | Satu ruang admin dan penjelasan produk    | U03, U04                 | Navigasi admin, pengaturan, landing, tur dan copy konsisten                                    | Dua role inti dijelaskan; pekerjaan utama dapat ditemukan; keadaan locked/forbidden tetap jujur; responsif, keyboard dan reduced motion lulus               |
+| U06   | Pembuktian transisi dan alur lengkap      | U02 sampai U05           | Dataset sintetis, regresi, dry run pemetaan, backup/pemulihan dan UAT                          | Mahasiswa sampai pengakuan/berbagi teruji; dua admin, akses dicabut, konfigurasi salah dan jalur lama diuji; data nyata tetap menunggu gate                 |
+
+### U01: Kontrak Scope dan Kewenangan
+
+Tahap 1 memperbarui kontrak produk, requirements, alur bisnis, matriks tindakan,
+keputusan scope dan sumber engineering/UX. Kewenangan Admin Universitas tidak
+menjadi bypass semua resource. Data institusi, audit, versi dan izin berbagi
+tetap mempunyai batas. Catat target secara terpisah dari runtime lama.
+
+Keluaran dokumentasi 14 Oktober 2026: scope dan matriks pada PRODUCT/PRD,
+DEC-034, alur aktivasi/provisioning/transisi, serta enam tahap U01 sampai U06.
+Verifikasi berupa format, tautan internal, referensi UX dan konsistensi
+requirement. Tidak ada perubahan akun, schema, route, seeder, permission atau
+GitHub melalui tahap ini.
+
+### U02: Konteks Universitas dan Provisioning Awal
+
+1. Tentukan referensi universitas melalui konfigurasi milik aplikasi; gunakan
+   resolver bersama yang memeriksa identitas, keberadaan dan status aktif.
+   Jangan menggunakan ID tetap atau fallback `first()`/membership terbaru.
+2. Inventaris institusi, membership, akun admin, undangan dan resource lama.
+   Laporkan konflik atau kepemilikan yang tidak sesuai sebelum pemetaan.
+3. Siapkan provisioning admin pertama melalui operasi deployment terkontrol,
+   dengan nomor WhatsApp yang telah diverifikasi, audit, idempotensi dan
+   pemulihan yang jelas. Data demo tidak menjadi bukti verifikasi akun nyata.
+4. Pertahankan `institution_id`, foreign key, query, job, cache, storage, export
+   serta broadcast. Konfigurasi salah harus terkunci dan dapat dipulihkan
+   tanpa menulis ulang kepemilikan data.
+
+Keluaran U02 pada 14 Oktober 2026: `config/university.php` menetapkan slug
+UTY melalui `SATU_UNIVERSITY_SLUG`; `ResolveConfiguredUniversity` memeriksa
+institusi aktif dan kepemilikan resource tanpa fallback. Command
+`university:inspect` menginventaris data serta akun lama secara baca-saja.
+`university:provision-admin` memakai dry run default, identitas masuk lengkap,
+WhatsApp terverifikasi, transaksi, penguncian dan audit deployment. Retry
+admin yang sama idempotent; akun platform atau membership lama yang konflik
+ditolak untuk pemetaan U03.
+
+`UtyJourneySeeder` menggantikan seeder akun lama dan menjadi pemanggilan default
+`DatabaseSeeder`, terbatas pada MySQL lokal atau SQLite uji di memori. Dataset
+berlabel sintetis kini berisi sepuluh skenario mahasiswa dan dua Admin Universitas,
+tanpa flag admin platform. Tidak melakukan reset database atau verifikasi
+identitas nyata. Runbook serta kredensial contoh berada pada
+[Operations](../engineering/OPERATIONS.md#dataset-ui-alur-inti-uty-lokal).
+
+Verifikasi fondasi memakai 50 pemeriksaan terisolasi pada
+`check-university-foundation.php`; dataset memakai 39 pemeriksaan pada
+`check-core-flow-ui-seeder.php`. Keduanya memakai SQLite di memori, bukan
+database pengguna. Resolver belum menggantikan semua context/policy publik;
+alias teknis `campus_admin`, jalur platform lama, pengamanan pengelolaan admin
+terakhir dan pilihan kampus tetap ditangani pada U03/U04. U02 tidak menyatakan
+transisi U03 sampai U06 selesai.
+
+Seeder juga telah dijalankan pada MySQL lokal, menghasilkan delapan akun
+UTY, dua admin, enam proyek, empat kontribusi dan satu karya privat. Seed ulang
+melalui `DatabaseSeeder` tidak mengubah dataset. Login serta halaman delapan
+akun lulus 160 pemeriksaan browser pada 320px, 1280px dan 1920px, tanpa
+exception JavaScript atau mutasi bisnis dari script pemeriksaan. Pint,
+PHPStan, lint, format, Wayfinder/TypeScript, tautan/referensi dokumentasi dan
+suite regresi teknis inti lulus. Ini bukti dataset sintetis lokal, bukan UAT
+kampus, pengujian concurrency MySQL atau pembukaan gate data nyata.
+
+### U03: Penggabungan Otorisasi dan Akun Admin
+
+1. Inventaris enum, `is_platform_admin`, membership `campus_admin`, resolver
+   workspace, middleware, Policies, Form Requests, route, command serta job.
+2. Tetapkan satu sumber kewenangan Admin Universitas melalui membership pada
+   universitas sasaran. Alias lama hanya untuk transisi yang eksplisit.
+3. Buat dry run pemetaan akun/undangan berdasarkan sumber yang sah, dengan
+   backup, audit dan rollback. Jangan mempromosikan semua akun lama atau
+   memindahkan data institusi lain secara otomatis.
+4. Satukan tujuan setelah login dan akses operasi inti. Petakan route lama
+   menjadi pengalihan berotorisasi atau penolakan; persetujuan institusi baru
+   serta operasi lintas institusi tidak tetap terbuka melalui URL langsung.
+5. Terapkan pencabutan akses, autentikasi ulang untuk pengelolaan admin,
+   perlindungan admin aktif terakhir dan larangan validasi sendiri. Keputusan
+   dua admin memakai sumber aktual dan transaksi existing.
+6. Petakan versi pencocokan, perekrut, revocation, event consumer dan scheduler
+   sebelum menghentikan flag global. Modul lanjutan tetap mengikuti gate serta
+   izin existing; consumer portofolio dan notifikasi inti tidak terputus.
+
+Keluaran U03 pada 14 Oktober 2026: `User::universityAdminMembership` menjadi
+sumber izin admin yang membaca UTY aktif serta membership verified aktual,
+tanpa cache relasi. Resolver workspace dan context Policy memakai sumber ini;
+middleware menolak URL administrasi kampus lain. Flag platform tersimpan hanya
+untuk inventaris/pemetaan, tidak menerima mass assignment, tidak membuka
+workspace dan tidak memberi bypass sumber rekomendasi atau Talent Portal.
+Alias teknis `campus_admin` tetap satu identifier penyimpanan/workspace.
+
+GET platform/afiliasi lama beralih ke ringkasan/afiliasi UTY setelah otorisasi;
+persetujuan dan penangguhan institusi baru ditutup pada request serta Action.
+Katalog keahlian dan versi pencocokan memakai admin UTY. Administrasi perekrut
+dan gamifikasi memerlukan konfigurasi berizin terpisah yang default tertutup;
+membership/entitlement perekrut, pencabutan consent, consumer portofolio,
+notifikasi dan scheduler existing dipertahankan.
+
+Undangan memerlukan pengundang aktif, target UTY, penerimaan eksplisit dan
+WhatsApp yang cocok. Pencabutan admin menutup undangan menunggu; worker tidak
+mengirim undangan yang kehilangan izin. Backend daftar/status admin mempunyai
+Policy, nonce revision, konfirmasi password serta proteksi admin terakhir.
+Penghapusan akun mandiri tidak melewati proteksi tersebut. Transaksi memakai
+row universitas sebagai mutex pengelolaan admin, tanpa menulis ulang riwayat.
+
+`university:transition-admin` menyediakan dry run, pemilihan satu akun legacy,
+cadangan terenkripsi sebelum apply, audit sistem/deployment dan rollback yang
+menolak sumber berubah. Tidak memindahkan membership/data kampus lain atau
+mengaktifkan ulang hak suspended. Rollback grant baru menangguhkan membership,
+bukan menghapus audit, dan tidak menghidupkan kembali bypass flag lama.
+Runbook berada pada [Operations](../engineering/OPERATIONS.md#transisi-admin-universitas-u03).
+
+Verifikasi: 68 pemeriksaan otorisasi terisolasi serta suite teknis inti lulus,
+termasuk dua admin, status stale/ABA, larangan validasi sendiri, pencabutan,
+undangan, pemetaan/rollback dan kegagalan audit. Browser lokal lulus 176
+pemeriksaan pada 320px, 1280px dan 1920px untuk delapan akun UTY, akses katalog,
+pengalihan platform dan penolakan URL kampus lama. Akun UTY existing sudah
+sesuai sumber izin, tanpa apply pemetaan massal. Aktivasi/konteks mahasiswa
+diterapkan pada U04 di bawah; UI admin terpadu tetap U05. U06 tetap pembuktian concurrency MySQL/UAT serta gate nyata.
+
+### U04: Aktivasi Mahasiswa Satu Universitas
+
+Status runtime 14 Oktober 2026: diterapkan untuk aktivasi serta konteks
+mahasiswa. Nama UTY read-only berasal dari konfigurasi; NIM diperiksa sebelum
+profil. Form Request, Controller, Policy dan Actions menolak kampus lain;
+shell/Beranda/profil/daftar proyek/kontribusi/portofolio tidak memakai membership
+terbaru atau institusi pertama. Exact match dan manual review tetap tersedia,
+tanpa afiliasi otomatis atau pemindahan profil/riwayat kampus lama.
+
+Pending, revisi/penolakan, roster berubah, WhatsApp belum verified, suspended
+serta konfigurasi terkunci mempunyai pemulihan. Draft memori sesi bertahan
+pada penutupan modal dan network error; hasil belum pasti dibaca melalui GET
+sebelum command berikutnya. Reload penuh tidak mengklaim draft telah tersimpan.
+Profil existing dibuka melalui editor, bukan ditimpa; pemula boleh tanpa karya,
+keahlian atau jadwal. Tidak ada perubahan schema, reset database atau OTP nyata.
+
+Bukti: `check-university-activation.php` lulus 71 pemeriksaan SQLite di memori,
+termasuk registrasi tanpa grant, exact/mismatch/roster kosong, manual review,
+versi ulang, konfigurasi, akun lama, ID lain, suspension dan rollback audit.
+`check-university-activation-browser.cjs` lulus 55 pemeriksaan fixture synthetic
+dengan command dicegat, mencakup 320px sampai 3440px, zoom 200%, Escape/fokus,
+draft pending termasuk perpindahan ke Beranda, roster/konteks berubah dan network/validation recovery.
+Regresi delapan akun UTY lokal lulus 176 pemeriksaan halaman tanpa command
+bisnis. Suite inti dan pemeriksaan statis tetap syarat penyelesaian. Bukti ini
+bukan final UAT, pilot atau concurrency MySQL; UI admin terpadu tetap U05 dan
+pembuktian penuh tetap U06.
+
+1. Tampilkan nama universitas server sebagai informasi, lalu isian NIM dan
+   verifikasi roster. Server menolak ID universitas lain dari klien.
+2. Pertahankan WhatsApp OTP, exact match dan peninjauan manual, serta pemisahan
+   akun/afiliasi/profil. Draft tidak ditimpa ketika pending atau jaringan gagal.
+3. Uji roster kosong, mismatch, konfigurasi terkunci, afiliasi ditangguhkan,
+   akun lama dan mahasiswa tanpa karya. Afiliasi tidak dibuat otomatis karena
+   konfigurasi hanya memuat satu kampus.
+
+### U05: Satu Ruang Admin dan Penjelasan Produk
+
+Implementasi U05 selesai dan verifikasi teknis lulus pada 15 Oktober 2026.
+Perubahan menyediakan enam menu inti, direktori afiliasi
+Mahasiswa, kategori Pengaturan dan halaman akun admin. Profil universitas
+bersifat baca-saja dari server; semester mengikuti roster dan perubahan melalui
+impor baru. Katalog mewarisi operasi existing, membatasi hitungan penggunaan
+ke UTY dan menolak penghapusan istilah yang dipakai profil, minat atau peran.
+Undangan, pencabutan serta penangguhan/pemulihan memakai dialog dengan
+konfirmasi sandi terpisah, alasan, revision dan GET setelah hasil belum pasti.
+Landing dan label role/notifikasi mengikuti dua role inti; bantuan tidak
+mengaktifkan gate atau memberi akses reviewer otomatis.
+
+Bukti U05: `check-university-workspace.php` lulus 44 pemeriksaan terisolasi
+di memori. `check-university-workspace-browser.cjs` lulus 63 pemeriksaan
+fixture Data synthetic dengan semua command dicegat, termasuk reflow
+320px sampai 3440px, zoom, keyboard/fokus, salah sandi, validasi, expired
+confirmation, konflik, jaringan dan kehilangan izin. Regresi inti serta
+Pint, PHPStan, lint, format, Wayfinder/TypeScript dan kontrak dokumentasi
+lulus sebagai pemeriksaan akhir. Regresi onboarding U04 lulus 55 pemeriksaan
+browser, dan landing lulus 124 pemeriksaan termasuk peran admin, maskot,
+keyboard, zoom dan mobile sampai ultrawide. Tidak ada migration, reset data, build production
+atau pengiriman provider nyata. Bukti teknis bukan UAT/pilot atau concurrency
+MySQL; pembuktian penuh tetap U06. Regresi delapan akun UTY lokal lulus 218
+pemeriksaan halaman dan pembatasan akses, tanpa mutasi bisnis atau reset data.
+
+1. Gunakan menu Ringkasan, Mahasiswa, Roster mahasiswa, Validasi kontribusi,
+   Bantuan kesempatan dan Pengaturan. Bantuan tetap mengikuti izin dan gate.
+2. Tempatkan profil universitas, semester, katalog keahlian dan akun admin pada
+   Pengaturan; secret provider tetap melalui operasi deployment.
+3. Selaraskan landing, onboarding, sidebar, tur, notifikasi, label role dan
+   pemulihan. Penjelasan tidak menawarkan ekspansi atau jenis akun admin publik.
+4. Ikuti DESIGN serta state matrix UX. Verifikasi mobile sampai ultrawide,
+   keyboard, fokus, zoom, reduced motion dan izin yang hilang.
+
+### U06: Pembuktian Transisi dan Alur Lengkap
+
+Pelaksanaan U06 memakai dua lapis bukti: regresi SQLite/browser yang sudah
+tersedia dan pemeriksaan MySQL lokal dengan proses PHP terpisah. Runner
+MySQL hanya boleh membuat schema sementara bernama acak dengan penanda
+kepemilikan. Database aplikasi, akun lama dan gate deployment tidak diubah.
+Kriteria tambahan adalah dua admin berebut keputusan versi yang sama,
+penangguhan serentak yang menyisakan satu admin aktif, pemulihan logical
+schema uji, antrean dan checksum bukti. Hasil otomatis tidak menggantikan
+final UAT, persetujuan kampus atau drill pemulihan production.
+
+1. Siapkan dataset sintetis satu universitas dan dua akun admin, serta fixture
+   negatif institusi lain yang tetap terisolasi. Jangan reset database pengguna.
+2. Jalankan mahasiswa baru sampai tim, tugas, kontribusi, revisi, approval,
+   karya privat, berbagi dan pencabutan. Sertakan pemilik proyek serta bantuan
+   berizin sesuai gate, tanpa klaim dampak dari data sintetis.
+3. Uji konfigurasi hilang/salah, ID klien lain, akun suspended/revoked, undangan
+   usang, akses langsung route lama, admin terakhir dan dua admin bersamaan.
+4. Uji dry run dan pemulihan pemetaan akun, antrean serta cache/broadcast.
+   Jalankan pemeriksaan statis, browser dan UAT sesuai risiko. Runtime satu
+   universitas baru dinyatakan selesai setelah semua acceptance transisi lulus.
+
+Verifikasi teknis backend U06 pada 15 Oktober 2026: perjalanan lengkap lulus
+77 pemeriksaan dalam dua reset memori; MySQL lokal 8.0.30 lulus 33 pemeriksaan
+dua worker, last-admin, review versi sama, pemulihan logical tabel/baris/trigger,
+foreign key, antrean, receipt dan checksum bukti. Runner guard menolak tanpa
+opt-in, production, host nonlokal serta penanda worker tidak sah. Ditemukan
+dan diperbaiki nama indeks pemetaan kredit yang melebihi batas MySQL pada
+migration asal, tanpa memigrasikan database pengguna. Suite regresi inti
+tetap memakai database terisolasi. Perintah, batas dan handoff ada pada
+[Operations](../engineering/OPERATIONS.md#pembuktian-transisi-u06).
+
+Regresi browser pada kode akhir lulus 337 pemeriksaan synthetic serta 218
+pemeriksaan halaman delapan akun UTY lokal. Cakupan meliputi mobile/desktop,
+zoom, keyboard, konflik, jaringan gagal dan akses dicabut. Seluruh command
+bisnis browser dicegat; delapan akun lokal hanya melakukan login dan GET.
+Pint, lint, format, Wayfinder/TypeScript, PHPStan tanpa error, tautan/referensi
+UX serta `git diff --check` lulus. Jumlah users, membership, proyek, kontribusi,
+audit dan antrean aplikasi tetap sama; tidak ada schema sementara tersisa.
+
+Bagian implementasi dan pembuktian otomatis tersedia. Final UAT/persetujuan
+visual, kampus, standar bukti, retensi, provider/websocket nyata serta drill
+recovery production belum disetujui atau dibuktikan melalui tes ini. Acceptance
+rilis penuh tetap menunggu gate tersebut, bukan dinyatakan selesai otomatis.
 
 ## Tahapan Implementasi Fokus
 
@@ -295,6 +553,12 @@ final UAT/persetujuan visual, concurrency MySQL, drill recovery produksi,
 Reverb/provider nyata dan seluruh izin pilot masih memerlukan tindak lanjut.
 
 Owner utama: QA, product-design, devops, serta pemilik kampus untuk pilot nyata.
+
+Penyederhanaan landing 19 Oktober 2026 menggantikan penempatan graf pelengkap
+pada catatan teknis di atas. Dropdown peta/daftar hubungan dan pemuatan modulnya
+dihapus dari landing. Verifikasi frontend memastikan pelengkap tidak dimuat
+dan demo delapan tahap beserta skenario tetap berjalan, bukan lagi menguji
+loading/error peta pada landing. Riwayat pengujian dan modul analitik tidak dihapus.
 
 1. Selaraskan landing, tur, dan demo dengan satu perjalanan inti. Tetap gunakan identitas dan aset SATU yang disetujui.
 2. Siapkan dataset sintetis yang dapat direset, termasuk mahasiswa tanpa riwayat dan keadaan gagal.

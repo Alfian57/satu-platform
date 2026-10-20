@@ -34,11 +34,8 @@ final class PortfolioEntryPolicy
 
     public function viewAll(User $user, StudentProfile $studentProfile): bool
     {
-        $roles = $studentProfile->user_id === $user->getKey()
-            ? [InstitutionMembershipRole::Student]
-            : [InstitutionMembershipRole::CampusAdmin];
-
-        return $this->institutionContextResolver->resolve($user, $studentProfile, $roles) !== null;
+        return $studentProfile->user_id === $user->getKey()
+            && $this->institutionContextResolver->resolve($user, $studentProfile, [InstitutionMembershipRole::Student]) !== null;
     }
 
     public function view(User $user, PortfolioEntry $portfolioEntry): bool
@@ -55,14 +52,6 @@ final class PortfolioEntryPolicy
             ) !== null;
         }
 
-        if ($this->institutionContextResolver->resolve(
-            $user,
-            $portfolioEntry,
-            [InstitutionMembershipRole::CampusAdmin],
-        ) !== null) {
-            return true;
-        }
-
         return PortfolioEntry::query()
             ->whereKey($portfolioEntry->getKey())
             ->visibleToInstitution()
@@ -71,7 +60,7 @@ final class PortfolioEntryPolicy
             && $this->institutionContextResolver->resolve(
                 $user,
                 $portfolioEntry,
-                [InstitutionMembershipRole::Student],
+                [InstitutionMembershipRole::Student, InstitutionMembershipRole::CampusAdmin],
             ) !== null;
     }
 

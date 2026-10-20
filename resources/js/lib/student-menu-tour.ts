@@ -28,7 +28,7 @@ const affiliationStep: StudentTourStep = {
     menu: 'dashboard',
     menuLabel: 'Beranda',
     target: '#dashboard-affiliation-heading',
-    title: 'Pahami akses kampusmu',
+    title: 'Verifikasi status mahasiswa',
     description:
         'Menu kolaborasi tersedia setelah afiliasi kampus terverifikasi dan aksesnya aktif. Periksa penjelasan statusmu. Tur menu lain dapat dimulai kembali melalui Panduan menu setelah akses tersedia.',
 };
@@ -123,7 +123,7 @@ const verifiedSteps: StudentTourStep[] = [
         target: '[data-test="portfolio-profile-settings"]',
         title: 'Kamu mengendalikan visibilitas',
         description:
-            'Pilih jangkauan profil dan tiap karya; kamu dapat mencabut berbagi. Bukti privat dan catatan peninjau tidak menjadi isi karya publik. Perekrut adalah pengembangan lanjutan dengan izin terpisah. Tur tidak mengubah pilihanmu.',
+            'Pilih jangkauan profil dan tiap karya; kamu dapat mencabut berbagi. Bukti privat dan catatan peninjau tidak menjadi isi karya publik. Tur tidak mengubah pilihanmu.',
     },
 ];
 

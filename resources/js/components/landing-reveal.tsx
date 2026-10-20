@@ -1,13 +1,15 @@
 import { useEffect, useRef } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 export default function LandingReveal({
     children,
     className,
+    delay = 0,
 }: {
     children: ReactNode;
     className?: string;
+    delay?: number;
 }) {
     const ref = useRef<HTMLDivElement>(null);
 
@@ -37,7 +39,15 @@ export default function LandingReveal({
     }, []);
 
     return (
-        <div ref={ref} className={cn('landing-reveal', className)}>
+        <div
+            ref={ref}
+            className={cn('landing-reveal', className)}
+            style={
+                {
+                    '--landing-reveal-delay': `${Math.min(160, Math.max(0, delay))}ms`,
+                } as CSSProperties
+            }
+        >
             {children}
         </div>
     );

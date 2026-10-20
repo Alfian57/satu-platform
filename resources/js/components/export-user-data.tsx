@@ -56,21 +56,21 @@ export default function ExportUserData() {
     return (
         <section
             aria-labelledby="data-rights-title"
-            className="grid gap-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+            className="grid min-w-0 gap-5 rounded-2xl border border-border bg-card p-5 sm:p-6"
             data-test="data-rights-card"
         >
             <header className="flex items-start gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-satu-orange-border bg-satu-orange-soft text-satu-orange-ink">
                     <FileText aria-hidden="true" className="size-5" />
                 </span>
-                <div className="grid gap-1">
+                <div className="grid min-w-0 gap-2">
                     <h2
                         id="data-rights-title"
-                        className="text-title font-bold tracking-[-0.02em] text-slate-950"
+                        className="text-title font-semibold text-foreground"
                     >
                         Hak akses data
                     </h2>
-                    <p className="text-sm leading-6 text-slate-600">
+                    <p className="text-sm leading-6 text-muted-foreground">
                         Unduh salinan data pribadi, profil, riwayat afiliasi,
                         dan persetujuan yang tersimpan pada akunmu dalam format
                         JSON.

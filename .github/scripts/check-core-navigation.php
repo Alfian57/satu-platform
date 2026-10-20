@@ -83,6 +83,7 @@ function expectCore(bool $condition, string $message): void
 }
 
 $campus = Institution::factory()->active()->create(['name' => 'Kampus A. Data sintetis']);
+config()->set('university.slug', $campus->slug);
 $otherCampus = Institution::factory()->active()->create(['name' => 'Kampus B. Data sintetis']);
 $student = User::factory()->create();
 $peer = User::factory()->create();

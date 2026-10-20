@@ -20,6 +20,7 @@ use App\Models\ProfileInterest;
 use App\Models\ProfileSkill;
 use App\Models\StudentProfile;
 use App\Models\User;
+use App\Support\Portfolio\PortfolioPrivacyRevision;
 use App\Support\Profile\ProfileRevision;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
@@ -42,6 +43,7 @@ class StudentProfileController extends Controller
             'taxonomies' => $membership?->status === InstitutionMembershipStatus::Verified
                 ? $taxonomies->execute()->map(fn ($taxonomy): array => $taxonomy->only(['id', 'name', 'category']))->values()->all() : [],
             'approvedSources' => $context['approvedSources'],
+            'academicOptions' => config('university.faculties', []),
         ]);
     }
 
@@ -118,7 +120,10 @@ class StudentProfileController extends Controller
             'bio' => $profile->bio,
             'study_program' => $profile->study_program,
             'study_year' => $profile->study_year,
-            'portfolio_visibility' => $profile->portfolio_visibility->value,
+            'faculty' => $profile->faculty,
+            'admission_year' => $profile->admission_year,
+            'portfolio_visibility' => $profile->portfolio_visibility->effective()->value,
+            'privacy_revision' => PortfolioPrivacyRevision::for($profile),
             'recruiter_discoverable' => $profile->recruiter_discoverable,
             'skills' => $profile->skills->map(static fn (ProfileSkill $skill): array => [
                 'id' => $skill->getKey(),

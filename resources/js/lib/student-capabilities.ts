@@ -17,7 +17,8 @@ export type CapabilityProfile = {
     revision: string;
     bio: string | null;
     study_program: string | null;
-    study_year: number | null;
+    faculty: string | null;
+    admission_year: number | null;
     skills: (Omit<CapabilitySkill, 'evidence_metadata'> & {
         name: string;
         evidence_metadata: unknown;
@@ -29,7 +30,8 @@ export type CapabilityPayload = {
     institution_id: number;
     bio: string;
     study_program: string;
-    study_year: number | null;
+    faculty: string;
+    admission_year: number | null;
     skills: CapabilitySkill[];
     interests: number[];
     availability_windows: CapabilityWindow[];
@@ -114,12 +116,20 @@ export function editableEvidence(value: unknown): EvidenceLink[] | undefined {
 export function capabilityDraft(
     profile: CapabilityProfile | null,
     institutionId: number,
+    academicDraft?: {
+        study_program?: string;
+        faculty?: string;
+        admission_year?: number | null;
+    } | null,
 ): CapabilityPayload {
     return {
         institution_id: institutionId,
         bio: profile?.bio ?? '',
-        study_program: profile?.study_program ?? '',
-        study_year: profile?.study_year ?? null,
+        study_program:
+            profile?.study_program ?? academicDraft?.study_program ?? '',
+        faculty: profile?.faculty ?? academicDraft?.faculty ?? '',
+        admission_year:
+            profile?.admission_year ?? academicDraft?.admission_year ?? null,
         skills:
             profile?.skills.map((skill) => {
                 const evidence = editableEvidence(skill.evidence_metadata);

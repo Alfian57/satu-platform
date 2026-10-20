@@ -85,8 +85,8 @@ export const DEMO_NODES: readonly DemoNode[] = [
         label: 'Karya Budi',
         caption: 'Jangkauan dipilih oleh Budi.',
         description:
-            'Karya contoh berasal hanya dari kontribusi Budi yang disetujui. Persetujuan kontribusi tidak otomatis memublikasikan karya atau membuka akses perekrut.',
-        next: 'Pilih jangkauan karya atau pertahankan privat. Perekrut merupakan pengembangan lanjutan.',
+            'Karya contoh berasal hanya dari kontribusi Budi yang disetujui. Persetujuan kontribusi tidak otomatis memublikasikan karya.',
+        next: 'Pilih jangkauan karya atau pertahankan privat.',
         facts: [
             ['Sumber karya', 'Kontribusi Budi yang disetujui'],
             ['Jangkauan contoh', 'Privat. Belum dibagikan'],

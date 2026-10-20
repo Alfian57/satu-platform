@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\Portfolio\RebuildTalentCandidateProjection;
 use App\Actions\Profile\CreateStudentProfile;
 use App\Actions\Profile\ResolveStudentMembership;
+use App\Actions\Profile\StudentActivationSummary;
 use App\Actions\Profile\StudentProfileWorkspaceQuery;
 use App\Actions\Profile\SyncStudentProfileTaxonomies;
 use App\Actions\Profile\UpdateStudentProfile;
@@ -87,6 +88,7 @@ function expectCapabilityFailure(callable $operation, string $exception, string 
 }
 
 $campus = Institution::factory()->active()->create();
+config()->set('university.slug', $campus->slug);
 $otherCampus = Institution::factory()->active()->create();
 $user = User::factory()->create();
 $peer = User::factory()->create();
@@ -193,4 +195,51 @@ expectCapability(count($context['approvedSources']) === 1 && $context['approvedS
 expectCapability(! $context['approvedSources'][0]['can_view'], 'Ringkasan sumber tidak memalsukan izin detail setelah tidak menjadi anggota tim.');
 expectCapability(array_keys($context['approvedSources'][0]) === ['id', 'title', 'version', 'can_view', 'verification_label'], 'Ringkasan sumber tidak membuka catatan reviewer, URL bukti atau data rekan.');
 
+$validateAcademics = function (array $data, ?StudentProfile $existing = null) use ($campus): bool {
+    $data = ['institution_id' => $campus->id, ...$data];
+    $request = $existing === null
+        ? StoreStudentProfileRequest::create('/student-profiles', 'POST', $data)
+        : UpdateStudentProfileRequest::create('/student-profiles/'.$existing->id, 'PATCH', $data);
+    if ($existing !== null) {
+        $route = new Route('PATCH', '/student-profiles/{studentProfile}', fn () => null);
+        $route->bind($request);
+        $route->setParameter('studentProfile', $existing);
+        $request->setRouteResolver(fn (): Route => $route);
+    }
+
+    return Validator::make($data, $request->rules(), $request->messages())->passes();
+};
+$science = 'Fakultas Sains & Teknologi';
+$business = 'Fakultas Bisnis & Humaniora';
+$catalog = config('university.faculties');
+expectCapability(array_keys($catalog) === [$science, $business] && count($catalog[$science]) === 10 && count($catalog[$business]) === 9, 'Katalog memuat dua fakultas serta 19 pilihan program/jenjang sesuai daftar pemilik.');
+foreach ($catalog as $faculty => $programs) {
+    foreach ($programs as $program) {
+        expectCapability($validateAcademics(['faculty' => $faculty, 'study_program' => $program, 'admission_year' => 2023]), 'Pasangan program yang sah diterima: '.$program);
+    }
+}
+expectCapability($validateAcademics([]) && $validateAcademics(['faculty' => null, 'study_program' => null, 'admission_year' => null]), 'Profil akademik tetap opsional dan nilai kosong tidak dipalsukan.');
+foreach ([1, 23, 1899, 2027, 2023.5, 'abcd'] as $invalidYear) {
+    expectCapability(! $validateAcademics(['admission_year' => $invalidYear]), 'Angkatan bukan tingkat studi, tahun masa depan atau tahun tidak valid: '.$invalidYear);
+}
+expectCapability(! $validateAcademics(['faculty' => $science, 'study_program' => 'Akuntansi (D3)']), 'Program lintas fakultas ditolak server.');
+expectCapability(! $validateAcademics(['faculty' => $business, 'study_program' => 'Akuntansi']), 'Akuntansi tanpa jenjang tidak diterima sebagai pilihan baru.');
+expectCapability(! $validateAcademics(['faculty' => $science]) && ! $validateAcademics(['study_program' => 'Informatika (S1)']), 'Fakultas dan program harus dipilih berpasangan.');
+expectCapability(! $validateAcademics(['faculty' => 'Fakultas tidak dikenal', 'study_program' => 'Program rekaan']), 'Pilihan rekaan tidak dapat dikirim dengan manipulasi request.');
+$profile->forceFill(['study_program' => 'Program lama', 'faculty' => null, 'study_year' => 2, 'admission_year' => null])->save();
+expectCapability($validateAcademics(['study_program' => 'Program lama', 'faculty' => null, 'bio' => 'Tetap disimpan'], $profile), 'Program legacy yang tidak diubah tidak menghalangi penyimpanan bagian profil lain.');
+expectCapability(! $validateAcademics(['study_program' => 'Program rekaan', 'faculty' => null], $profile), 'Pengecualian legacy tidak membolehkan nilai baru di luar katalog.');
+$legacyRevision = ProfileRevision::for($profile->fresh());
+$academic = ['faculty' => $business, 'study_program' => 'Akuntansi (D3)', 'admission_year' => 2023];
+expectCapability($validateAcademics($academic, $profile), 'Perubahan legacy ke fakultas/program sah diterima.');
+$updatedAcademic = $updater->handle($user, $profile->fresh(), $academic);
+expectCapability($updatedAcademic->faculty === $business && $updatedAcademic->study_program === 'Akuntansi (D3)' && $updatedAcademic->admission_year === 2023 && $updatedAcademic->study_year === 2, 'Penyimpanan angkatan/fakultas/program dapat dibaca kembali tanpa mengubah tingkat studi lama.');
+expectCapability(ProfileRevision::for($updatedAcademic) !== $legacyRevision, 'Snapshot berubah ketika informasi akademik berubah.');
+expectCapability($validateAcademics(['bio' => 'Perubahan saja'], $updatedAcademic), 'PATCH bagian profil lain tidak mewajibkan pengiriman ulang pasangan akademik.');
+$newStudent = User::factory()->create();
+InstitutionMembership::factory()->student()->verifiedByRosterExactMatch()->create(['institution_id' => $campus->id, 'user_id' => $newStudent->id]);
+$createdAcademic = $app->make(CreateStudentProfile::class)->handle($newStudent, $campus, $academic)->fresh();
+expectCapability($createdAcademic->admission_year === 2023 && $createdAcademic->faculty === $business && $createdAcademic->study_program === 'Akuntansi (D3)' && $createdAcademic->study_year === null, 'Profil baru menyimpan angkatan/fakultas/program tanpa mengisi tingkat studi lama.');
+$activationAcademic = $app->make(StudentActivationSummary::class)->handle($newStudent);
+expectCapability($activationAcademic['admissionYear'] === 2023 && $activationAcademic['faculty'] === $business && $activationAcademic['academicOptions'] === $catalog && ! array_key_exists('studyYear', $activationAcademic), 'Ringkasan aktivasi membaca kembali nilai tersimpan serta katalog server yang sama.');
 echo $passed.' pemeriksaan lulus. Seluruh fixture memakai SQLite :memory:, tanpa data aplikasi.'.PHP_EOL;

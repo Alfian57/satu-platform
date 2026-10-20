@@ -1,0 +1,54 @@
+{
+    "description": "Pose maskot SATU duduk santai menunggu verifikasi afiliasi pada Beranda mahasiswa.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan",
+    "generation_id": "exec-b76c1ba8-0a87-4d98-86fe-c02ffbc0b4e8",
+    "identity_references": [
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png",
+            "role": "Identitas, proporsi, pola bulu dan sudut pandang",
+            "sha256": "3356586B1594DCC874710C91CE71BD294046139FB5E2DC0734CEE851E637ACF1"
+        },
+        {
+            "file": "resources/images/mascot/reference/maskot-01-burung-arsip.png",
+            "role": "Material, warna, ekspresi dan tas buku",
+            "sha256": "A356C316D00EAD034A961170B77847636DF43008C9F459A562A6531443211AE4"
+        }
+    ],
+    "source": {
+        "file": "resources/images/mascot/mascot-waiting-review.png",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_range": [0, 255],
+        "bytes": 1379153,
+        "sha256": "d566a66d85bde35a997d46749f2dd85d75dc45f25d8d6a01803563604fe9c45a"
+    },
+    "runtime_variants": [
+        {
+            "file": "public/images/mascot-waiting-review-256.webp",
+            "width": 256,
+            "height": 256,
+            "bytes": 18586,
+            "sha256": "cc9a2254803420b8baa94ef01ef27a5e5219d2cbc63224ed04d490b27458da2f"
+        },
+        {
+            "file": "public/images/mascot-waiting-review-512.webp",
+            "width": 512,
+            "height": 512,
+            "bytes": 52492,
+            "sha256": "e5a1e589ae5d8da2345e56161720f42b1c16703211b7a49e71436d9e09efe481"
+        },
+        {
+            "file": "public/images/mascot-waiting-review.webp",
+            "width": 1024,
+            "height": 1024,
+            "bytes": 169918,
+            "sha256": "4c580bf9e3e3226fba45d3c26eca1edce509f3407092a6cc520ccfbfb514fe02"
+        }
+    ],
+    "optimization": "Resize mekanis Lanczos ke 256, 512 dan 1024px, WebP kualitas 90 method 6. Alpha asli dipertahankan tanpa perubahan kreatif manual.",
+    "alt_purpose": "Ilustrasi dekoratif dengan alt kosong. Pose bukan indikator durasi, progres atau persetujuan. Status dan tindakan tetap HTML.",
+    "scope": "Hero Beranda mahasiswa dengan pengajuan pending_review, nomor terverifikasi dan tidak perlu pembaruan roster. Pose lain tidak ditimpa.",
+    "prompt": "Use case: identity-preserve. Asset type: transparent full-body SATU mascot cutout for the student dashboard while university affiliation is awaiting human review. Reference image 1 is the canonical bird turnaround and defines identity, proportions and exact marking placement. Reference image 2 defines feather material, expression, graphite beak and the original navy leather cross-body book satchel with brass hardware. Create ONE new clearly recognizable patient-waiting pose of the same kingfisher, not a new character. The bird is sitting comfortably on one small closed navy archive book with ivory page edges and a tiny orange ribbon, both graphite bird feet visible and relaxed in front of the book, wings resting gently together on the original cross-body satchel at the belly. Head tilted slightly, bright kind brown eyes looking gently upward toward the viewer's left, relaxed softly smiling expression, not bored, sad, tired, anxious or impatient. The existing cross-body satchel must remain worn with its strap, gold hardware and visible cream paper; the simple closed book underneath is a seat, not a replacement bag. Preserve cobalt and azure layered feathers, ivory cheeks and belly, distinctive orange eyebrow and cheek patches, crest, tail, graphite beak and bird anatomy exactly as references. Premium polished 3D character rendering with detailed fluffy feather texture and soft diffuse studio lighting matching reference 2. Square high-resolution composition, bird and small book occupying roughly 85 percent of the canvas height, every crest tip, wing, foot and tail fully visible inside a clean transparent margin. Genuine transparent background. No text, writing, numbers, approval stamp, check marks, badges, clock, hourglass, countdown, progress meter, UI, speech bubbles, background scene, floor, platform, large cast shadow, extra books, additional characters, human hands or fingers, clothing, hat, glasses, extra limbs, confetti, stars, border, logo or watermark."
+}

@@ -2,10 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Enums\MessagePurpose;
 use App\Enums\MessageStatus;
 use App\Models\MessageDelivery;
 use App\Models\MessageOutbox;
 use App\Models\PrivilegedInvitation;
+use App\Models\User;
 use App\Support\Notification\WhatsAppGateway;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,6 +40,20 @@ class SendWhatsAppMessage implements ShouldQueue
 
         if ($outbox->status !== MessageStatus::Pending) {
             return;
+        }
+
+        if ($outbox->purpose === MessagePurpose::Invitation) {
+            $invitationId = $outbox->metadata['privileged_invitation_id'] ?? null;
+            $invitation = is_int($invitationId) || (is_string($invitationId) && ctype_digit($invitationId))
+                ? PrivilegedInvitation::query()->with('institution')->whereKey($invitationId)->first()
+                : null;
+            $issuer = $invitation === null ? null : User::query()->find($invitation->issued_by);
+            if ($invitation === null || ! $invitation->isIssued() || $invitation->isExpired()
+                || $issuer === null || ! $issuer->isUniversityAdmin($invitation->institution)) {
+                $outbox->forceFill(['status' => MessageStatus::Cancelled])->save();
+
+                return;
+            }
         }
 
         if ($outbox->attempts >= $outbox->max_attempts) {

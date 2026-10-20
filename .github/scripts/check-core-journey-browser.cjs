@@ -32,9 +32,8 @@ function check(value, message) {
             : {},
     );
     const exceptions = [],
-        mutations = [];
-    let mapState = 'ready',
-        releaseLoading;
+        mutations = [],
+        graphRequests = [];
 
     try {
         const context = await browser.newContext({
@@ -66,19 +65,13 @@ function check(value, message) {
             }
 
             if (
-                url.pathname.includes(
-                    '/resources/js/components/LandingDemoGraph.tsx',
+                /\/components\/(landing-demo|LandingDemoGraph|landing-collaboration-map)\./.test(
+                    url.pathname,
                 )
             ) {
-                if (mapState === 'error') {
-                    return route.abort();
-                }
+                graphRequests.push(url.pathname);
 
-                if (mapState === 'loading') {
-                    await new Promise((resolve) => {
-                        releaseLoading = resolve;
-                    });
-                }
+                return route.abort();
             }
 
             if (url.origin === qaOrigin && url.pathname === '/') {
@@ -98,6 +91,16 @@ function check(value, message) {
             await page.goto(qaOrigin);
             await page.getByTestId('journey-demo').waitFor();
             await page.getByTestId('journey-demo').scrollIntoViewIfNeeded();
+            check(
+                (await page
+                    .locator('summary')
+                    .filter({ hasText: 'Pelengkap: peta' })
+                    .count()) === 0 &&
+                    (await page.getByTestId('landing-demo-region').count()) ===
+                        0,
+                width +
+                    'px: dropdown dan region peta pelengkap tidak tersedia.',
+            );
             check(
                 await page.evaluate(
                     () =>
@@ -124,6 +127,103 @@ function check(value, message) {
                 ),
                 width + 'px: target dan cursor sesuai keadaan.',
             );
+            const journey = page.getByTestId('journey-demo');
+            check(
+                await journey.evaluate((element) => {
+                    const navigation = element
+                        .querySelector('.landing-journey-steps')
+                        .getBoundingClientRect();
+                    const scene = element
+                        .querySelector('.landing-journey-scene')
+                        .getBoundingClientRect();
+                    const story = element
+                        .querySelector('.journey-story')
+                        .getBoundingClientRect();
+                    const preview = element
+                        .querySelector('.journey-preview-stage')
+                        .getBoundingClientRect();
+
+                    return (
+                        (innerWidth >= 1280
+                            ? navigation.right <= scene.left + 1
+                            : navigation.bottom <= scene.top + 1) &&
+                        (innerWidth >= 1024 || story.bottom <= preview.top) &&
+                        element.querySelectorAll('form, input, select')
+                            .length === 0 &&
+                        [
+                            ...element.querySelectorAll('.journey-scenario'),
+                        ].every((button) =>
+                            document
+                                .getElementById(
+                                    button.getAttribute('aria-describedby'),
+                                )
+                                ?.textContent.trim(),
+                        )
+                    );
+                }),
+                width +
+                    'px: indeks dan cerita responsif, pilihan skenario mempunyai penjelasan, tanpa form palsu.',
+            );
+
+            for (const [stepIndex, id, label] of [
+                [0, 'profile', 'Bekal awal'],
+                [1, 'opportunity', 'Peluang pemula'],
+                [2, 'application', 'Pengajuan'],
+                [3, 'decision', 'Keputusan tim'],
+                [4, 'task', 'Bekerja bersama'],
+                [5, 'contribution', 'Kontribusi'],
+                [6, 'recognition', 'Pengakuan'],
+                [7, 'sharing', 'Kendali berbagi'],
+            ]) {
+                await journey
+                    .getByRole('button', {
+                        name: stepIndex + 1 + '. ' + label,
+                        exact: true,
+                    })
+                    .click();
+                await page.waitForFunction(
+                    (stage) =>
+                        document.querySelector('.journey-preview')?.dataset
+                            .stage === stage,
+                    id,
+                );
+                check(
+                    await journey.evaluate((element) => {
+                        const preview =
+                            element.querySelector('.journey-preview');
+                        const bounds = preview.getBoundingClientRect();
+                        const facts = [
+                            ...preview.querySelectorAll(
+                                '.journey-facts dd, .journey-profile > div, .journey-application > p, .journey-team > div, .journey-evidence > div, .journey-review > div',
+                            ),
+                        ];
+
+                        return (
+                            document.documentElement.scrollWidth <=
+                                innerWidth + 1 &&
+                            element.querySelectorAll('[aria-current="step"]')
+                                .length === 1 &&
+                            facts.every((item) => {
+                                const box = item.getBoundingClientRect();
+
+                                return (
+                                    item.scrollWidth <= item.clientWidth + 1 &&
+                                    box.left >= bounds.left &&
+                                    box.right <= bounds.right
+                                );
+                            })
+                        );
+                    }),
+                    width +
+                        'px: tahap ' +
+                        (stepIndex + 1) +
+                        ' mempunyai satu pilihan aktif dan teks pratinjau utuh.',
+                );
+            }
+
+            await journey
+                .getByRole('button', { name: 'Reset perjalanan' })
+                .click();
             await page.screenshot({
                 path: path.join(artifacts, 'journey-' + width + '.png'),
                 animations: 'disabled',
@@ -257,25 +357,7 @@ function check(value, message) {
             focusBox.y >= 80 && focusBox.y + focusBox.height <= 320,
             'Layar pendek: penjelasan yang menerima fokus tidak tertutup header.',
         );
-        await page.setViewportSize({ width: 1280, height: 800 });
-        const disclosure = page
-            .locator('summary')
-            .filter({ hasText: 'Pelengkap: peta' });
-        await disclosure.click();
-        await page
-            .getByRole('tab', { name: 'Daftar hubungan', exact: true })
-            .click();
-        check(
-            await page.locator('#demo').getByRole('table').isVisible(),
-            'Peta pelengkap memiliki tabel hubungan setara.',
-        );
         await page.setViewportSize({ width: 320, height: 640 });
-        check(
-            await page.evaluate(
-                () => document.documentElement.scrollWidth <= innerWidth + 1,
-            ),
-            'Tabel pelengkap tidak meluapkan halaman mobile.',
-        );
         await context.setOffline(true);
         await demo.getByRole('button', { name: 'Reset perjalanan' }).click();
         check(
@@ -289,61 +371,42 @@ function check(value, message) {
         );
         check(
             exceptions.length === 0,
-            'Perjalanan dan peta tanpa exception JavaScript.',
+            'Perjalanan tanpa exception JavaScript.',
         );
-
-        const errorPage = await context.newPage();
-        mapState = 'error';
-        await errorPage.goto(qaOrigin);
-        await errorPage
-            .locator('summary')
-            .filter({ hasText: 'Pelengkap: peta' })
+        check(
+            graphRequests.length === 0,
+            'Landing tidak meminta modul peta atau daftar hubungan pelengkap.',
+        );
+        await page.emulateMedia({ reducedMotion: 'no-preference' });
+        await demo
+            .getByRole('button', { name: '2. Peluang pemula', exact: true })
             .click();
-        await errorPage
-            .getByRole('heading', { name: 'Demo belum dapat dimuat.' })
-            .waitFor();
         check(
-            await errorPage.getByTestId('journey-demo').isVisible(),
-            'Modul peta gagal tidak menghilangkan perjalanan utama.',
-        );
-        check(
-            await errorPage
-                .getByRole('button', {
-                    name: 'Muat ulang halaman',
-                    exact: true,
-                })
-                .isVisible(),
-            'Kegagalan peta menyediakan pemulihan.',
-        );
-        await errorPage.close();
+            await page.locator('.journey-preview-sheet').evaluate((element) => {
+                const style = getComputedStyle(element);
 
-        mapState = 'loading';
-        const loadingPage = await context.newPage();
-        await loadingPage.goto(qaOrigin);
-        await loadingPage
-            .locator('summary')
-            .filter({ hasText: 'Pelengkap: peta' })
-            .click();
-        await loadingPage.locator('[aria-busy="true"]').waitFor();
-        check(
-            await loadingPage.getByTestId('journey-demo').isVisible(),
-            'Loading peta mempertahankan perjalanan dan CTA utama.',
+                return (
+                    style.animationName === 'satu-journey-page' &&
+                    style.animationDuration === '0.22s' &&
+                    style.animationIterationCount === '1'
+                );
+            }),
+            'Pratinjau berganti dengan fade singkat sekali, bukan animasi berulang.',
         );
-        mapState = 'ready';
-        releaseLoading?.();
-        await loadingPage
-            .getByRole('tab', { name: 'Peta kolaborasi', exact: true })
-            .waitFor();
+        await page.emulateMedia({ reducedMotion: 'reduce' });
         check(
-            (await loadingPage.locator('[aria-busy="true"]').count()) === 0,
-            'Loading berganti menjadi peta aktual.',
+            await page
+                .locator('.journey-preview-sheet')
+                .evaluate(
+                    (element) =>
+                        getComputedStyle(element).animationName === 'none',
+                ),
+            'Reduced motion meniadakan fade lembar pratinjau.',
         );
-        await loadingPage.close();
         console.log(
             checks + ' pemeriksaan browser lulus. Artefak: ' + artifacts,
         );
     } finally {
-        releaseLoading?.();
         await browser.close();
     }
 })().catch((error) => {

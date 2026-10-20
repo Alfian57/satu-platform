@@ -6,11 +6,13 @@ namespace App\Actions\Institution;
 
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\InvitationStatus;
+use App\Models\Institution;
 use App\Models\PrivilegedInvitation;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 final class RevokeInvitation
 {
@@ -20,18 +22,25 @@ final class RevokeInvitation
 
     public function handle(User $actor, PrivilegedInvitation $invitation, string $reason): void
     {
-        if (! $actor->is_platform_admin) {
-            throw new AuthorizationException('Only platform admins can revoke invitations.');
-        }
+        Gate::forUser($actor)->authorize('revoke', $invitation);
 
         DB::transaction(function () use ($actor, $invitation, $reason): void {
+            $institution = Institution::query()->whereKey($invitation->institution_id)->lockForUpdate()->firstOrFail();
+            if (! $actor->isUniversityAdmin($institution)) {
+                throw new AuthorizationException('Akses admin atau universitas telah berubah.');
+            }
             $lockedInvitation = PrivilegedInvitation::query()
                 ->lockForUpdate()
                 ->with('institution')
                 ->whereKey($invitation->getKey())
+                ->where('institution_id', $institution->id)
                 ->first();
 
-            if ($lockedInvitation === null || $lockedInvitation->status !== InvitationStatus::Issued) {
+            if ($lockedInvitation === null) {
+                throw new AuthorizationException('Undangan tidak lagi tersedia.');
+            }
+            Gate::forUser($actor)->authorize('revoke', $lockedInvitation);
+            if ($lockedInvitation->status === InvitationStatus::Revoked) {
                 return;
             }
 

@@ -2,9 +2,22 @@
 
 ## 1. Model
 
+Keputusan 17 Oktober 2026 membatasi runtime tepat pada Mahasiswa serta Admin
+Universitas UTY. Role perekrut, Talent Portal dan permintaan kontak dihapus.
+Referensi pasar/pengujian perekrut di bawah merupakan konteks historis yang
+digantikan keputusan ini, bukan target atau tawaran produk saat ini.
+
 Fokus rilis inti pada 9 Oktober 2026 adalah kesempatan kolaborasi berbasis kemampuan sampai pengakuan kontribusi. Mahasiswa dan kampus merupakan pengguna inti. Gamifikasi, Talent Portal, kredit/sinkronisasi akademik, serta graf dan engine inklusi lanjutan bukan dependensi rilis inti. Bagian perekrut, entitlement, eksperimen akademik, dan metrik modul lanjutan di bawah tetap hipotesis pengembangan, bukan kemampuan atau target pilot inti yang telah terbukti. Prioritas mengikuti [PRODUCT](../../PRODUCT.md) dan [PRD](./PRD.md).
 
-SATU menggunakan hipotesis B2B2C. Student tidak dibebankan biaya. Institution memperoleh collaboration operations dan verified activity workflow. Recruiter organization memperoleh Talent Portal melalui entitlement yang dikelola platform.
+Keputusan 14 Oktober 2026 menetapkan produk untuk satu universitas, dengan
+Mahasiswa dan Admin Universitas sebagai role inti. Universitas memperoleh
+operasi kolaborasi dan peninjauan kontribusi untuk mahasiswa lintas program
+studi. Admin platform dan admin kampus digabung melalui transisi U01 sampai
+U06; perubahan dokumen tidak menyatakan runtime sudah berpindah.
+
+Hipotesis B2B2C dan akses organisasi perekrut merupakan konteks pengembangan
+lanjutan. Mahasiswa tidak dibebankan biaya. Penggabungan admin tidak menetapkan
+harga, model pendapatan, pelanggan atau kewenangan perekrut baru.
 
 Rilis perlombaan menguji kelayakan produk dan alur nilai, bukan transaksi komersial. Billing provider, pricing production, pelanggan, dan revenue tidak boleh direkayasa.
 
@@ -35,7 +48,7 @@ Rilis perlombaan menguji kelayakan produk dan alur nilai, bukan transaksi komers
 1. Competition demo dengan synthetic data dan satu tenant.
 2. Design-partner validation dengan satu institution pilot.
 3. Limited pilot setelah privacy, retention, roster, support, dan API gates selesai.
-4. Multi-institution rollout hanya setelah isolation dan operating model terbukti.
+4. Operasi produk tetap pada universitas yang dikonfigurasi. Ekspansi banyak institusi memerlukan keputusan scope baru; model institution-aware dipertahankan untuk integritas serta batas akses data.
 
 ## 4. Entitlement
 

@@ -114,6 +114,7 @@ function teamRequest(string $class, string $name, User $user, Project|TeamJoinRe
     return $request;
 }
 $campus = Institution::factory()->active()->create(['name' => 'Kampus A. Data sintetis']);
+config()->set('university.slug', $campus->slug);
 $otherCampus = Institution::factory()->active()->create(['name' => 'Kampus B. Data sintetis']);
 $owner = User::factory()->create();
 $student = User::factory()->create();
@@ -280,10 +281,13 @@ expectTeam($pageTwo['current_page'] === 2 && count($pageTwo['data']) === 3, 'Hal
 $app->instance('request', Request::create('/'));
 $proofProject = $make();
 $proofRequest = $requester->handle($student, $proofProject);
+\App\Models\StudentProfile::factory()->create(['user_id' => $student->id, 'institution_id' => $campus->id, 'portfolio_visibility' => 'public']);
 $makeProof = function (string $visibility, ?Institution $sourceCampus = null) use ($student, $campus, $proofProject): PortfolioEntry {
     $source = Contribution::factory()->approved()->create(['owner_id' => $student->getKey(), 'institution_id' => ($sourceCampus ?? $campus)->getKey(), 'project_id' => $proofProject->getKey()]);
 
-    return PortfolioEntry::factory()->create(['contribution_id' => $source->getKey(), 'institution_id' => $campus->getKey(), 'user_id' => $student->getKey(), 'visibility' => $visibility, 'title' => 'Karya '.$visibility.'. Data sintetis']);
+    $entry = PortfolioEntry::factory()->create(['contribution_id' => $source->getKey(), 'institution_id' => $campus->getKey(), 'user_id' => $student->getKey(), 'visibility' => $visibility, 'title' => 'Karya '.$visibility.'. Data sintetis']);
+    \App\Models\ContributionReview::factory()->approved()->create(['contribution_version_id' => $entry->contribution_version_id]);
+    return $entry;
 };
 $institutionProof = $makeProof('institution');
 $publicProof = $makeProof('public');
@@ -295,19 +299,21 @@ $staleProof = $makeProof('public');
 $staleProof->contribution->forceFill(['status' => 'revision'])->save();
 $makeProof('public', $otherCampus);
 $ownerProofs = $serializer->serialize($proofProject->fresh(), $owner)['join_requests'][0]['shared_work'];
-expectTeam(array_column($ownerProofs, 'id') === [$publicProof->getKey(), $institutionProof->getKey()], 'Pemilik hanya membaca karya institution/public yang approved aktual, bukan privat, recruiter, ditarik, stale atau sumber lintas tenant.');
-expectTeam(Gate::forUser($owner)->allows('view', $institutionProof) && Gate::forUser($owner)->allows('view', $publicProof), 'Tautan karya tetap memakai Policy detail existing, bukan izin baru.');
+expectTeam(array_column($ownerProofs, 'id') === [$publicProof->getKey()], 'Pemilik hanya membaca karya dan profil publik yang approved aktual, bukan jangkauan lama, privat, ditarik, stale atau sumber lintas tenant.');
+expectTeam(! Gate::forUser($owner)->allows('view', $institutionProof) && Gate::forUser($owner)->allows('view', $publicProof), 'Tautan karya tidak membuka jangkauan kampus lama.');
 expectTeam(array_keys($ownerProofs[0]) === ['id', 'title', 'summary', 'verification_label'], 'Ringkasan karya allowlist tanpa bukti, catatan reviewer, source ID atau kontak.');
 $institutionProof->forceFill(['visibility' => 'private'])->save();
 $publicProof->forceFill(['visibility' => 'private'])->save();
 expectTeam($serializer->serialize($proofProject->fresh(), $owner)['join_requests'][0]['shared_work'] === [], 'Pencabutan visibility menghentikan exposure pada pembacaan berikutnya.');
 for ($index = 0; $index < 4; $index++) {
-    $makeProof('institution');
+    $makeProof('public');
 }
 expectTeam(count($serializer->serialize($proofProject->fresh(), $owner)['join_requests'][0]['shared_work']) === 3, 'Jumlah karya dibatasi tiga per pemohon, bukan seluruh bukti.');
 $peerProofRequest = $requester->handle($peer, $proofProject);
 $peerSource = Contribution::factory()->approved()->create(['owner_id' => $peer->getKey(), 'institution_id' => $campus->getKey(), 'project_id' => $proofProject->getKey()]);
-PortfolioEntry::factory()->create(['contribution_id' => $peerSource->getKey(), 'visibility' => 'institution']);
+\App\Models\StudentProfile::factory()->create(['user_id' => $peer->id, 'institution_id' => $campus->id, 'portfolio_visibility' => 'public']);
+$peerEntry = PortfolioEntry::factory()->create(['contribution_id' => $peerSource->getKey(), 'visibility' => 'public']);
+\App\Models\ContributionReview::factory()->approved()->create(['contribution_version_id' => $peerEntry->contribution_version_id]);
 $ownerTwo = $serializer->serialize($proofProject->fresh(), $owner)['join_requests'];
 expectTeam(count($ownerTwo[0]['shared_work']) === 1 && count($ownerTwo[1]['shared_work']) === 3, 'Eager limit diterapkan per pemohon, tidak membuat pemohon lain kehilangan karya.');
 DB::flushQueryLog();

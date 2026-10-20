@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Actions\Institution\ResolveConfiguredUniversity;
+use App\Enums\InstitutionMembershipRole;
+use App\Enums\InstitutionMembershipStatus;
+use App\Exceptions\InvalidUniversityConfiguration;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -11,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -26,12 +31,47 @@ use Illuminate\Support\Str;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'username', 'password', 'is_platform_admin'])]
-#[Hidden(['password', 'username', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
+#[Fillable(['name', 'username', 'password'])]
+#[Hidden(['password', 'username', 'is_platform_admin', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    public function universityAdminMembership(?Institution $institution = null): ?InstitutionMembership
+    {
+        if (! $this->exists || $this->isDirty($this->getKeyName())) {
+            return null;
+        }
+
+        try {
+            $university = (new ResolveConfiguredUniversity)->handle($institution);
+        } catch (InvalidUniversityConfiguration) {
+            return null;
+        }
+
+        $query = $this->institutionMemberships()->whereBelongsTo($university)
+            ->where('role', InstitutionMembershipRole::CampusAdmin)
+            ->where('status', InstitutionMembershipStatus::Verified)
+            ->whereNotNull('verified_at');
+        if (DB::transactionLevel() > 0) {
+            $query->sharedLock();
+        }
+
+        return $query->first();
+    }
+
+    public function isUniversityAdmin(?Institution $institution = null): bool
+    {
+        return $this->universityAdminMembership($institution) !== null;
+    }
+
+    public function canAdministerAdvancedModule(string $module): bool
+    {
+        return $module === 'gamification'
+            && config('university.advanced_administration.'.$module) === true
+            && $this->isUniversityAdmin();
+    }
 
     /**
      * Normalize username to lowercase and trim on assignment.

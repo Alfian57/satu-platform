@@ -1,5 +1,4 @@
 import {
-    Building2,
     CheckCircle2,
     CircleAlert,
     EyeOff,
@@ -7,7 +6,6 @@ import {
     Globe2,
     LockKeyhole,
     ShieldCheck,
-    UserRoundSearch,
     UsersRound,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,19 +21,6 @@ export const portfolioVisibilityOptions = [
         label: 'Hanya saya',
         description: 'Simpan sebagai catatan pribadi, tanpa dibagikan.',
         icon: LockKeyhole,
-    },
-    {
-        value: 'institution',
-        label: 'Kampus',
-        description: 'Bagikan kepada anggota kampus yang memiliki izin akses.',
-        icon: Building2,
-    },
-    {
-        value: 'recruiter',
-        label: 'Perekrut',
-        description:
-            'Bagikan melalui proyeksi aman kepada perekrut yang berhak.',
-        icon: UserRoundSearch,
     },
     {
         value: 'public',
@@ -67,9 +52,9 @@ export const portfolioStatusMeta: Record<
         icon: LockKeyhole,
     },
     published: {
-        label: 'Terbit sesuai jangkauan',
+        label: 'Dipilih Publik',
         description:
-            'Jangkauan karya sudah dipilih. Akses tetap mengikuti pengaturan profil dan izin pembaca.',
+            'Karya dibagikan hanya jika profil juga Publik. Profil Hanya saya tetap menutup seluruh karya.',
         className:
             'border-verified/40 bg-verified-subtle text-verified-subtle-foreground',
         icon: CheckCircle2,

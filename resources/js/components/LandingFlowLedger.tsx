@@ -89,7 +89,7 @@ export const LANDING_STAGES: readonly LandingStage[] = [
         title: 'Tunjukkan karya. Tetap pegang kendalinya.',
         shortDescription: 'Pilih karya dan atur jangkauannya.',
         description:
-            'Kontribusi yang disetujui menghasilkan karya privat dengan sumber versi yang jelas. Kamu memilih jangkauan ringkasan karya; berkas bukti privat tidak otomatis dipublikasikan. Perekrut adalah pengembangan lanjutan.',
+            'Kontribusi yang disetujui menghasilkan karya privat dengan sumber versi yang jelas. Kamu memilih jangkauan ringkasan karya; berkas bukti privat tidak otomatis dipublikasikan.',
         source: 'Kontribusi yang disetujui',
         outcome: 'Mengelola portofolio dan izin berbagi',
         preview: 'portfolio',

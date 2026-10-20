@@ -1,6 +1,6 @@
 import { useHttp } from '@inertiajs/react';
 import { Save, SlidersHorizontal } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
     PortfolioFormFeedback,
     portfolioFieldError,
@@ -10,9 +10,14 @@ import {
     portfolioVisibilityLabel,
     portfolioVisibilityOptions,
 } from '@/components/portfolio/portfolio-presentation';
+import {
+    PortfolioPrivacyRecoveryNotice,
+    usePortfolioPrivacyRecovery,
+} from '@/components/portfolio/portfolio-privacy-recovery';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { show as showEntry } from '@/routes/student-profiles/portfolio';
 import { update as updateEntryVisibility } from '@/routes/student-profiles/portfolio/visibility';
 import type {
     PortfolioEntry,
@@ -26,6 +31,7 @@ type Props = {
     profileId: number;
     onUpdated: (entry: PortfolioEntry) => void;
     dataTestPrefix?: string;
+    onAccessRevoked?: () => void;
 };
 
 export function PortfolioEntryVisibilityControl({
@@ -33,16 +39,31 @@ export function PortfolioEntryVisibilityControl({
     profileId,
     onUpdated,
     dataTestPrefix = `portfolio-entry-${entry.id}`,
+    onAccessRevoked,
 }: Props) {
     const [actionMessage, setActionMessage] = useState<string | null>(null);
-    const [actionError, setActionError] = useState<string | null>(null);
+    const commandLock = useRef(false);
+    const recovery = usePortfolioPrivacyRecovery<PortfolioEntry>({
+        resourceId: entry.id,
+        readUrl: showEntry({
+            studentProfile: profileId,
+            portfolioEntry: entry.id,
+        }).url,
+        onRead: onUpdated,
+        onAccessRevoked,
+    });
     const form = useHttp<
         PortfolioEntryVisibilityPayload,
         PortfolioEntryApiResponse
-    >({ visibility: entry.visibility, expected_updated_at: entry.updated_at });
+    >({
+        visibility: entry.visibility,
+        expected_updated_at: entry.updated_at,
+        expected_privacy_revision: entry.privacy_revision,
+    });
     const errors = form.errors as PortfolioErrorMap;
     const validationError = portfolioFieldError(errors, 'visibility');
-    const isStale = form.data.expected_updated_at !== entry.updated_at;
+    const isStale =
+        form.data.expected_privacy_revision !== entry.privacy_revision;
     const hasChanges = form.data.visibility !== entry.visibility;
     const selection = portfolioVisibilityOptions.find(
         (option) => option.value === form.data.visibility,
@@ -52,56 +73,49 @@ export function PortfolioEntryVisibilityControl({
         form.setData({
             visibility: entry.visibility,
             expected_updated_at: entry.updated_at,
+            expected_privacy_revision: entry.privacy_revision,
         });
         form.clearErrors();
-        setActionError(null);
         setActionMessage(null);
     }
 
     function submit(event: React.FormEvent<HTMLFormElement>): void {
         event.preventDefault();
 
-        if (form.processing || isStale) {
+        if (
+            commandLock.current ||
+            form.processing ||
+            isStale ||
+            recovery.blocked
+        ) {
             return;
         }
 
         setActionMessage(null);
-        setActionError(null);
+        commandLock.current = true;
         form.patch(
             updateEntryVisibility({
                 studentProfile: profileId,
                 portfolioEntry: entry.id,
             }).url,
             {
-                onHttpException: (response: { status: number }) => {
-                    setActionError(
-                        response.status === 409
-                            ? 'Karya berubah di sesi lain. Muat ulang halaman untuk mengambil pengaturan terbaru.'
-                            : response.status === 403
-                              ? 'Jangkauan karya ini sudah tidak dapat diubah. Periksa akses atau muat ulang halaman.'
-                              : 'Jangkauan karya belum tersimpan. Coba lagi.',
-                    );
-
-                    return false;
-                },
-                onNetworkError: () => {
-                    setActionError(
-                        'Jangkauan karya belum tersimpan. Periksa koneksi lalu coba lagi.',
-                    );
-
-                    return false;
-                },
+                onHttpException: recovery.onHttpException,
+                onNetworkError: recovery.onNetworkError,
             },
         )
             .then((response) => {
                 form.setData({
                     visibility: response.data.visibility,
                     expected_updated_at: response.data.updated_at,
+                    expected_privacy_revision: response.data.privacy_revision,
                 });
                 onUpdated(response.data);
                 setActionMessage('Jangkauan karya sudah tersimpan.');
             })
-            .catch(() => undefined);
+            .catch(() => undefined)
+            .finally(() => {
+                commandLock.current = false;
+            });
     }
 
     return (
@@ -144,7 +158,7 @@ export function PortfolioEntryVisibilityControl({
                     form.clearErrors('visibility');
                     setActionMessage(null);
                 }}
-                disabled={form.processing}
+                disabled={form.processing || recovery.blocked}
                 aria-invalid={Boolean(validationError)}
                 aria-describedby={
                     dataTestPrefix +
@@ -175,7 +189,11 @@ export function PortfolioEntryVisibilityControl({
                     Pilihan baru belum disimpan.
                 </p>
             )}
-            {isStale && (
+            <PortfolioPrivacyRecoveryNotice
+                recovery={recovery}
+                prefix={dataTestPrefix}
+            />
+            {isStale && !recovery.blocked && (
                 <div
                     role="status"
                     className="grid gap-3 rounded-xl border border-pending/30 bg-pending-subtle p-3 text-sm leading-6 text-pending-subtle-foreground"
@@ -198,7 +216,8 @@ export function PortfolioEntryVisibilityControl({
             )}
             <PortfolioFormFeedback
                 errors={errors}
-                actionError={actionError}
+                actionError={recovery.error}
+                uncertain={recovery.needsCheck}
                 actionMessage={actionMessage}
                 processing={form.processing}
                 processingMessage="Menyimpan jangkauan karya..."
@@ -207,7 +226,7 @@ export function PortfolioEntryVisibilityControl({
             <Button
                 type="submit"
                 className="h-auto min-h-11 w-full py-3 whitespace-normal"
-                disabled={form.processing || isStale}
+                disabled={form.processing || isStale || recovery.blocked}
                 data-test={dataTestPrefix + '-visibility-save'}
             >
                 {form.processing ? (

@@ -13,6 +13,14 @@ const suites = [
     ['php', ['.github/scripts/check-opportunity-support.php']],
     ['php', ['.github/scripts/check-core-journey.php']],
     ['php', ['.github/scripts/check-backend-integration.php']],
+    ['php', ['.github/scripts/check-core-flow-ui-seeder.php']],
+    ['php', ['.github/scripts/check-university-foundation.php']],
+    ['php', ['.github/scripts/check-university-authorization.php']],
+    ['php', ['.github/scripts/check-university-activation.php']],
+    ['php', ['.github/scripts/check-university-workspace.php']],
+    ['php', ['.github/scripts/check-affiliation-review-privacy.php']],
+    ['php', ['.github/scripts/check-leaderboard-integration.php']],
+    ['php', ['.github/scripts/check-portfolio-privacy.php']],
     [
         'node',
         [
@@ -21,6 +29,8 @@ const suites = [
             '.github/scripts/check-feature-guide.cjs',
             '.github/scripts/check-landing-demo.cjs',
             '.github/scripts/check-landing-journey.cjs',
+            '.github/scripts/check-university-transition-guards.cjs',
+            '.github/scripts/check-single-university-copy.cjs',
         ],
     ],
     ['node', ['.github/scripts/check-product-docs.cjs']],
@@ -35,9 +45,23 @@ if (process.argv.includes('--browser')) {
         'workspace-collaboration',
         'contribution-recognition',
         'opportunity-support',
+        'university-activation-browser',
+        'university-workspace-browser',
+        'admin-hero-layout',
+        'leaderboard-browser',
+        'portfolio-privacy-browser',
+        'account-settings-browser',
+        'confirm-password-browser',
     ]) {
         suites.push(['node', ['.github/scripts/check-' + suite + '.cjs']]);
     }
+}
+
+if (process.argv.includes('--mysql')) {
+    suites.push([
+        'php',
+        ['.github/scripts/check-university-transition-mysql.php', '--run'],
+    ]);
 }
 
 for (const [command, args] of suites) {
@@ -55,5 +79,5 @@ for (const [command, args] of suites) {
 }
 
 console.log(
-    'Suite teknis inti lulus. Ini bukan persetujuan UAT, pilot atau concurrency MySQL.',
+    'Suite teknis inti lulus. MySQL lokal hanya diperiksa jika --mysql dipilih. Ini bukan UAT, pilot, load test atau recovery production.',
 );

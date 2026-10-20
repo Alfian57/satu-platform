@@ -99,6 +99,7 @@ function workspaceRevision(Task $task): string
 }
 
 $campus = Institution::factory()->active()->create(['name' => 'Kampus A. Data sintetis']);
+config()->set('university.slug', $campus->slug);
 $other = Institution::factory()->active()->create(['name' => 'Kampus B. Data sintetis']);
 $owner = User::factory()->create();
 $student = User::factory()->create();

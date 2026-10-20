@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Gamification;
 
 use App\Actions\Audit\AuditRecorder;
+use App\Jobs\RebuildLeaderboardProjections;
 use App\Models\User;
 use App\Models\XpLedgerEntry;
 use Illuminate\Support\Facades\DB;
@@ -86,6 +87,10 @@ final class ReverseXpAward
                 ],
                 reason: $reason,
             );
+
+            DB::afterCommit(static function () use ($reversal): void {
+                RebuildLeaderboardProjections::dispatch($reversal->institution_id, $reversal->semester);
+            });
 
             return $reversal->refresh()->load([
                 'user',

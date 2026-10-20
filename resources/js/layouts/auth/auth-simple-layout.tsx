@@ -13,11 +13,14 @@ export default function AuthSimpleLayout({
     description,
 }: AuthLayoutProps) {
     const { component } = usePage();
-    const isWelcome =
-        component === 'auth/login' || component === 'auth/register';
+    const isConfirmation = component === 'auth/confirm-password';
+    const usesEntryLayout =
+        component === 'auth/login' ||
+        component === 'auth/register' ||
+        isConfirmation;
     const isSecurityStep =
         component === 'auth/recover' || component === 'auth/confirm-password';
-    const mascotPose = isWelcome
+    const mascotPose = usesEntryLayout
         ? 'welcome'
         : isSecurityStep
           ? 'peek'
@@ -27,17 +30,30 @@ export default function AuthSimpleLayout({
         <div
             className={cn(
                 'relative min-h-svh overflow-x-clip bg-[#edf6ff]',
-                isWelcome && 'satu-auth-entry',
+                usesEntryLayout && 'satu-auth-entry',
                 component === 'auth/login' && 'auth-entry-login',
+                component === 'auth/register' && 'auth-entry-register',
+                isConfirmation && 'auth-entry-confirm',
             )}
         >
-            <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 top-0 h-[36rem] bg-[radial-gradient(ellipse_at_top_left,#c9eaff,transparent_65%)]"
-            />
+            {usesEntryLayout ? (
+                <img
+                    src="/images/auth-entry-background.webp"
+                    alt=""
+                    aria-hidden="true"
+                    width={1672}
+                    height={941}
+                    className="auth-entry-backdrop"
+                />
+            ) : (
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 top-0 h-[36rem] bg-[radial-gradient(ellipse_at_top_left,#c9eaff,transparent_65%)]"
+                />
+            )}
             <header
                 className={
-                    isWelcome
+                    usesEntryLayout
                         ? 'auth-entry-header relative mx-auto'
                         : 'relative mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-6 sm:px-10 lg:px-16'
                 }
@@ -47,10 +63,20 @@ export default function AuthSimpleLayout({
                     aria-label="SATU: Beranda"
                     className="cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
                 >
-                    <AppLogo compact />
+                    <AppLogo
+                        compact
+                        className={
+                            usesEntryLayout ? 'auth-entry-brand' : undefined
+                        }
+                        logoClassName={
+                            usesEntryLayout ? 'auth-entry-logo' : undefined
+                        }
+                    />
                 </Link>
                 <div
-                    className={isWelcome ? 'auth-entry-navigation' : 'contents'}
+                    className={
+                        usesEntryLayout ? 'auth-entry-navigation' : 'contents'
+                    }
                 >
                     <Link
                         href={home()}
@@ -64,22 +90,27 @@ export default function AuthSimpleLayout({
 
             <main
                 className={
-                    isWelcome
+                    usesEntryLayout
                         ? 'auth-entry-main relative mx-auto grid'
                         : 'relative mx-auto grid min-h-[calc(100svh-104px)] max-w-[1320px] items-center gap-6 px-5 pb-10 sm:px-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:px-12 lg:py-12'
                 }
             >
                 <section
-                    aria-label="Selamat datang di SATU"
+                    aria-label={
+                        isConfirmation
+                            ? 'Konfirmasi akses akun'
+                            : 'Selamat datang di SATU'
+                    }
                     className={
-                        isWelcome
-                            ? 'relative min-w-0 lg:self-stretch'
+                        usesEntryLayout
+                            ? 'auth-entry-intro relative min-w-0'
                             : 'relative lg:self-stretch lg:pt-8'
                     }
                 >
-                    {isWelcome ? (
+                    {usesEntryLayout ? (
                         <AuthWelcomePanel
                             isRegistration={component === 'auth/register'}
+                            isConfirmation={isConfirmation}
                         />
                     ) : (
                         <>
@@ -116,7 +147,7 @@ export default function AuthSimpleLayout({
                                     className="absolute -top-12 left-1/2 z-10 w-44 -translate-x-1/2 lg:-top-24 lg:left-[56%] lg:w-[21rem] xl:w-[23rem]"
                                 />
                                 <div className="absolute bottom-5 left-3 z-20 hidden max-w-40 -rotate-3 rounded-2xl border border-white bg-white/90 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm lg:block">
-                                    {isWelcome
+                                    {usesEntryLayout
                                         ? 'Siap mulai cerita kolaborasimu?'
                                         : 'Pelan-pelan, kita lanjutkan bersama.'}
                                     <ArrowUpRight
@@ -139,7 +170,7 @@ export default function AuthSimpleLayout({
 
                 <div
                     className={
-                        isWelcome
+                        usesEntryLayout
                             ? 'auth-entry-form relative mx-auto w-full'
                             : 'relative mx-auto w-full max-w-[30rem]'
                     }
@@ -147,27 +178,30 @@ export default function AuthSimpleLayout({
                     <section
                         className={cn(
                             'auth-entry-card rounded-[2rem] border border-white bg-white/95 shadow-[0_24px_80px_-32px_rgba(31,88,149,0.3)]',
-                            !isWelcome && 'p-6 sm:p-9',
+                            !usesEntryLayout && 'p-6 sm:p-9',
                         )}
                     >
                         <div
                             className={cn(
                                 'auth-entry-form-header',
-                                !isWelcome && 'mb-7',
+                                !usesEntryLayout && 'mb-7',
                             )}
                         >
                             <p
                                 className={cn(
                                     'auth-entry-kicker text-xs font-bold tracking-[0.14em] text-blue-700 uppercase',
-                                    !isWelcome && 'mb-3',
+                                    !usesEntryLayout && 'mb-3',
                                 )}
                             >
-                                Ruang kolaborasimu
+                                {isConfirmation
+                                    ? 'Konfirmasi akses'
+                                    : 'Ruang kolaborasimu'}
                             </p>
                             <h1
                                 className={cn(
                                     'auth-entry-title font-bold tracking-[-0.035em] text-slate-950',
-                                    !isWelcome && 'text-3xl leading-tight',
+                                    !usesEntryLayout &&
+                                        'text-3xl leading-tight',
                                 )}
                             >
                                 {title}
@@ -175,7 +209,8 @@ export default function AuthSimpleLayout({
                             <p
                                 className={cn(
                                     'auth-entry-description text-slate-600',
-                                    !isWelcome && 'mt-3 text-sm leading-6',
+                                    !usesEntryLayout &&
+                                        'mt-3 text-sm leading-6',
                                 )}
                             >
                                 {description}
@@ -184,7 +219,7 @@ export default function AuthSimpleLayout({
                         <div
                             className={cn(
                                 'auth-entry-fields [&_input:not([type=checkbox])]:border-input [&_input:not([type=checkbox])]:bg-white [&_input:not([type=checkbox])]:text-base [&_label]:text-slate-700',
-                                isWelcome
+                                usesEntryLayout
                                     ? '[&_button[type=submit]]:min-h-[var(--auth-control-height,2.75rem)] [&_button[type=submit]]:rounded-xl [&_button[type=submit]]:text-[length:var(--auth-control-font,0.875rem)] [&_input:not([type=checkbox])]:min-h-[var(--auth-control-height,2.75rem)] [&_input:not([type=checkbox])]:rounded-xl [&_label]:text-[length:var(--auth-control-font,0.875rem)] [&_p[id$="help"]]:text-[length:var(--auth-help-font,0.75rem)]'
                                     : '[&_button[type=submit]]:min-h-12 [&_button[type=submit]]:rounded-md [&_input:not([type=checkbox])]:min-h-12 [&_input:not([type=checkbox])]:rounded-md',
                             )}
@@ -195,7 +230,7 @@ export default function AuthSimpleLayout({
                     <p
                         className={cn(
                             'auth-entry-footer text-center text-xs text-slate-600',
-                            !isWelcome && 'mt-6',
+                            !usesEntryLayout && 'mt-6',
                         )}
                     >
                         SATU. Tempat kolaborasi menjadi berarti.

@@ -2,17 +2,20 @@
 
 namespace App\Policies;
 
+use App\Actions\Institution\ResolveConfiguredUniversity;
 use App\Concerns\InstitutionOwned;
 use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionStatus;
+use App\Exceptions\InvalidUniversityConfiguration;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 final class InstitutionContextResolver
 {
+    public function __construct(private readonly ResolveConfiguredUniversity $resolveUniversity) {}
+
     /**
      * Resolve an authorized context from a route-bound institution or owned resource.
      *
@@ -23,43 +26,13 @@ final class InstitutionContextResolver
         Institution|InstitutionOwned|null $source,
         array $allowedRoles,
     ): ?InstitutionContext {
-        if ($source === null || $allowedRoles === []) {
+        if ($source === null || $allowedRoles === [] || ! $actor->exists || $actor->isDirty($actor->getKeyName())) {
             return null;
         }
 
-        if ($source instanceof Institution) {
-            if (! $source->exists || $source->isDirty($source->getKeyName())) {
-                return null;
-            }
-
-            $institutionId = $source->getKey();
-        } else {
-            if (
-                ! $source instanceof Model
-                || ! $source->exists
-                || $source->isDirty([$source->getKeyName(), 'institution_id'])
-            ) {
-                return null;
-            }
-
-            $persistedSource = $source->newQuery()->find($source->getKey());
-
-            if (
-                ! $persistedSource instanceof InstitutionOwned
-                || $persistedSource->institutionId() !== $source->institutionId()
-            ) {
-                return null;
-            }
-
-            $institutionId = $persistedSource->institutionId();
-        }
-
-        $institution = Institution::query()
-            ->whereKey($institutionId)
-            ->where('status', InstitutionStatus::Active->value)
-            ->first();
-
-        if ($institution === null) {
+        try {
+            $institution = $this->resolveUniversity->handle($source);
+        } catch (InvalidUniversityConfiguration) {
             return null;
         }
 
@@ -73,9 +46,11 @@ final class InstitutionContextResolver
             ->whereBelongsTo($actor)
             ->where('status', InstitutionMembershipStatus::Verified->value)
             ->whereIn('role', $roleValues)
+            ->when(DB::transactionLevel() > 0, fn ($query) => $query->sharedLock())
             ->first();
 
-        if ($membership === null) {
+        if ($membership === null || ($membership->role === InstitutionMembershipRole::CampusAdmin
+            && ! $actor->isUniversityAdmin($institution))) {
             return null;
         }
 

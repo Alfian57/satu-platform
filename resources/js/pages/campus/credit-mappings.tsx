@@ -232,6 +232,7 @@ export default function CampusCreditMappings({
                     data-test="campus-credit-mappings-root"
                 >
                     <CampusOperationHeader
+                        theme="credits"
                         title="Pemetaan kredit"
                         description="Atur kredit akademik untuk jenis aktivitas melalui aturan berversi. Draft belum berlaku sampai diaktifkan."
                         institution={institution.name}

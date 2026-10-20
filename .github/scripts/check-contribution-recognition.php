@@ -108,6 +108,7 @@ function recognitionRevision(Contribution $contribution): string
     return ContributionSnapshot::revision($contribution->fresh());
 }
 $campus = Institution::factory()->active()->create(['name' => 'Kampus A. Data sintetis']);
+config()->set('university.slug', $campus->slug);
 $other = Institution::factory()->active()->create(['name' => 'Kampus B. Data sintetis']);
 $owner = User::factory()->create();
 $student = User::factory()->create();
@@ -208,9 +209,9 @@ $recruiterProjection = app(PortfolioEntrySerializer::class)->recruiter($entry);
 expectRecognition(! str_contains(json_encode($recruiterProjection, JSON_THROW_ON_ERROR), $data['declaration']) && ! array_key_exists('evidence', $recruiterProjection), 'Perekrut tidak menerima bukti privat.');
 $profile = StudentProfile::factory()->create(['user_id' => $student->getKey(), 'institution_id' => $campus->getKey(), 'portfolio_visibility' => 'public', 'public_identifier' => Str::uuid()->toString()]);
 expectRecognition(app(BuildPublicPortfolioProjection::class)->handle($profile->public_identifier)['state'] === 'unavailable', 'Profil publik tidak memublikasikan karya privat setelah approval.');
-$entry = app(UpdatePortfolioEntryVisibility::class)->handle($student, $entry, ['visibility' => 'public', 'expected_updated_at' => $entry->updated_at->toIso8601String()]);
+$entry = app(UpdatePortfolioEntryVisibility::class)->handle($student, $entry, ['visibility' => 'public', 'expected_updated_at' => $entry->updated_at->toIso8601String(), 'expected_privacy_revision' => \App\Support\Portfolio\PortfolioPrivacyRevision::for($entry)]);
 expectRecognition(app(BuildPublicPortfolioProjection::class)->handle($profile->public_identifier)['state'] === 'published', 'Pemilik memublikasikan ringkasan dengan pilihan jangkauan eksplisit.');
-$entry = app(UpdatePortfolioEntryVisibility::class)->handle($student, $entry, ['visibility' => 'private', 'expected_updated_at' => $entry->updated_at->toIso8601String()]);
+$entry = app(UpdatePortfolioEntryVisibility::class)->handle($student, $entry, ['visibility' => 'private', 'expected_updated_at' => $entry->updated_at->toIso8601String(), 'expected_privacy_revision' => \App\Support\Portfolio\PortfolioPrivacyRevision::for($entry)]);
 $withdrawn = app(BuildPublicPortfolioProjection::class)->handle($profile->public_identifier);
 expectRecognition($withdrawn['state'] === 'unavailable' && $withdrawn['profile'] === null && $withdrawn['entries'] === [], 'Pencabutan menyembunyikan identitas/karya pada pembacaan publik berikutnya.');
 expectRecognition($entry->withdrawn_at !== null && ContributionReview::count() === 4 && ContributionVersion::count() === 5, 'Withdrawal tidak menghapus keputusan, versi atau sumber karya.');
@@ -234,7 +235,7 @@ DB::listen(function ($query) use (&$injectFailure): void {
         throw new RuntimeException('Gangguan penyimpanan karya sintetis.');
     }
 });
-$failureDraft = $create->handle($student, $project, [...$data, 'evidence' => [$proof->getKey()]]);
+$failureDraft = $create->handle($student, $project, [...$data, 'claim' => 'Karya berbeda untuk menguji rollback penyimpanan', 'evidence' => [$proof->getKey()]]);
 $failureDraft = $submit->handle($student, $failureDraft, recognitionRevision($failureDraft));
 $countReviews = ContributionReview::count();
 $countEntries = PortfolioEntry::count();
@@ -246,7 +247,7 @@ $cleared = $revise->handle($student, $failureDraft->fresh(), ['evidence' => [], 
 expectRecognition($cleared->currentVersion->evidence->isEmpty(), 'Pilihan bukti kosong dapat disimpan tanpa menghapus bukti versi lama.');
 rejectsRecognition(fn () => $submit->handle($student, $cleared, recognitionRevision($cleared)), ValidationException::class, 'Draft yang bukti pilihannya dilepas tidak dapat dikirim.');
 $longProof = app(UploadAttachment::class)->handle($student, $project, UploadedFile::fake()->createWithContent(str_repeat('a', 230).'.txt', 'Bukti nama panjang sintetis.'), purpose: AttachmentPurpose::Evidence);
-$longDraft = $create->handle($student, $project, [...$data, 'evidence' => [$longProof->getKey()]]);
+$longDraft = $create->handle($student, $project, [...$data, 'claim' => 'Karya berbeda untuk menguji label sumber panjang', 'evidence' => [$longProof->getKey()]]);
 expectRecognition(mb_strlen($longDraft->currentVersion->evidence->first()->source_label) <= 160 && mb_strlen($longProof->original_name) > 160, 'Label sumber aman untuk batas MySQL tanpa memangkas nama berkas asli.');
 Storage::disk('private')->delete($longProof->path);
 rejectsRecognition(fn () => $submit->handle($student, $longDraft, recognitionRevision($longDraft)), ValidationException::class, 'Metadata aktif dengan file hilang tetap ditolak saat submit.');
@@ -268,5 +269,47 @@ $team->forceFill(['status' => TeamMembershipStatus::Active])->save();
 $project->forceFill(['status' => ProjectStatus::Closed])->save();
 expectRecognition(! Gate::forUser($student)->allows('submit', $linked), 'Proyek ditutup menahan pengiriman baru tanpa menghapus pengakuan.');
 $project->forceFill(['status' => ProjectStatus::Open])->save();
+
+Carbon::setTestNow('2026-10-12 10:00:00');
+$firstPending = $create->handle($student, $project, [...$data, 'claim' => 'Rancangan pertama untuk pencarian', 'summary' => 'Kelompok urutan pengajuan', 'declaration' => 'Rahasia pencarian tidak boleh ditemukan', 'evidence' => [$proof->getKey()]]);
+$firstPending = $submit->handle($student, $firstPending, recognitionRevision($firstPending));
+$firstSubmittedAt = now()->toIso8601String();
+Carbon::setTestNow('2026-10-13 10:00:00');
+$secondPending = $create->handle($student, $project, [...$data, 'claim' => 'Rancangan kedua untuk pencarian', 'summary' => 'Kelompok urutan pengajuan', 'evidence' => [$proof->getKey()]]);
+$secondPending = $submit->handle($student, $secondPending, recognitionRevision($secondPending));
+$legacyPending = $create->handle($student, $project, [...$data, 'summary' => 'Kelompok urutan pengajuan', 'evidence' => [$proof->getKey()]]);
+$legacyPending->forceFill(['status' => ContributionStatus::Pending])->save();
+foreach ([
+    ['institution_id' => $other->id, 'actor_id' => $student->id, 'version_number' => 1],
+    ['institution_id' => $campus->id, 'actor_id' => $peer->id, 'version_number' => 1],
+    ['institution_id' => $campus->id, 'actor_id' => $student->id, 'version_number' => 99],
+] as $invalidSource) {
+    AuditLog::factory()->create([
+        'institution_id' => $invalidSource['institution_id'], 'actor_id' => $invalidSource['actor_id'],
+        'operation' => 'contribution.submitted', 'auditable_type' => $legacyPending->getMorphClass(), 'auditable_id' => $legacyPending->id,
+        'after_summary' => ['status' => 'pending', 'version_number' => $invalidSource['version_number']],
+    ]);
+}
+Carbon::setTestNow('2026-10-14 10:00:00');
+$firstPending->touch();
+$reviewQueue = app(ContributionReviewQueue::class);
+$oldest = $reviewQueue->paginate($admin, $campus, search: 'Kelompok urutan pengajuan');
+expectRecognition(array_column($oldest->items(), 'id') === [$firstPending->id, $secondPending->id, $legacyPending->id], 'Urutan memakai pengiriman aktual, bukan updated_at, dan sumber waktu belum tersedia berada terakhir.');
+$newest = $reviewQueue->paginate($admin, $campus, sort: 'newest', search: 'Kelompok urutan pengajuan');
+expectRecognition(array_column($newest->items(), 'id') === [$secondPending->id, $firstPending->id, $legacyPending->id], 'Urutan terbaru tetap memakai pengiriman versi, dengan fallback waktu tidak direkayasa.');
+$queueSerializer = app(ContributionReviewQueueSerializer::class);
+expectRecognition($queueSerializer->item($oldest->items()[0])['submitted_at'] === $firstSubmittedAt
+    && $queueSerializer->item($oldest->items()[2])['submitted_at'] === null, 'Timestamp hanya diproyeksikan dari audit pemilik, tenant dan versi yang konsisten.');
+expectRecognition($reviewQueue->paginate($admin, $campus, perPage: 1, page: 2, search: 'Kelompok urutan pengajuan')->items()[0]->id === $secondPending->id, 'Pencarian dan urutan diterapkan sebelum pagination.');
+expectRecognition($reviewQueue->paginate($admin, $campus, search: 'Rancangan pertama untuk pencarian')->total() === 1
+    && $reviewQueue->paginate($admin, $campus, search: 'Rahasia pencarian tidak boleh ditemukan')->total() === 0, 'Pencarian membaca klaim tetapi tidak membaca pernyataan privat.');
+$student->forceFill(['username' => 'private-username-search-only'])->save();
+expectRecognition($reviewQueue->paginate($admin, $campus, search: $student->username)->total() === 0, 'Username privat tidak menjadi indeks pencarian kampus.');
+Contribution::factory()->pending()->create(['institution_id' => $other->id, 'project_id' => $foreign->id, 'owner_id' => $outsider->id]);
+Contribution::factory()->pending()->create(['institution_id' => $campus->id, 'project_id' => $project->id, 'owner_id' => $admin->id]);
+expectRecognition($reviewQueue->paginate($admin, $campus, search: $foreign->title)->total() === 0
+    && $reviewQueue->paginate($admin, $campus, search: $admin->name)->total() === 0, 'Pencarian tidak membuka tenant lain atau kontribusi peninjau sendiri.');
+expectRecognition($reviewQueue->paginate($admin, $campus, status: ContributionStatus::Approved, search: 'Menyusun rancangan individual')->total() === 1, 'Hasil disetujui dapat ditemukan tanpa membuka draft atau memperluas izin berbagi.');
+
 Storage::disk('private')->delete(Storage::disk('private')->allFiles());
 echo 'PASS '.$checks.' pemeriksaan pengakuan individual. SQLite memory only.'.PHP_EOL;

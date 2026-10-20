@@ -1,5 +1,91 @@
 # User Flows SATU
 
+## Dua Role Aktif (17 Oktober 2026)
+
+`Login -> izin Admin Universitas UTY aktual -> Ringkasan`
+
+`Login -> akun tanpa izin admin -> Beranda mahasiswa -> verifikasi afiliasi jika diperlukan`
+
+Role perekrut dan admin platform terpisah dihapus. Membership/flag lama tidak
+memberi workspace atau izin tambahan. Pendaftaran hanya mahasiswa; undangan
+hanya Admin Universitas. Alur Talent Portal dan kontak perekrut di bawah adalah
+riwayat yang dihentikan, bukan fitur tertunda yang dapat diaktifkan. Pilihan
+berbagi ke perekrut dihapus tanpa memublikasikan nilai lama otomatis. Status
+pending atau ditangguhkan tetap status akses, bukan jenis role.
+
+## Target Alur Universitas Tunggal U01
+
+Copy antarmuka mengikuti satu universitas, UTY: nama universitas dibaca dari
+server tanpa ajakan memilih kampus. Lintas program studi menjelaskan peluang
+kolaborasi; lintas kampus bukan alur yang ditawarkan. Keadaan izin, data lama
+dan konfigurasi tetap memiliki pemulihan, tanpa bahasa perpindahan kampus.
+
+Kontrak target 14 Oktober 2026 memakai satu universitas dengan role Mahasiswa
+dan Admin Universitas. Implementasi U02 sampai U06 mengikuti
+[Roadmap](../implementation/ROADMAP.md#transisi-universitas-tunggal-u01-sampai-u06)
+dan [matriks PRD](../product/PRD.md#matriks-kewenangan-inti). U01 memperbarui
+kontrak; rincian surface existing di bawah tetap konteks runtime/transisi.
+
+Runtime U03 menyatukan sumber izin admin pada membership UTY aktif, tanpa
+bypass flag platform. Login admin menuju Ringkasan UTY; GET platform/afiliasi
+lama beralih setelah otorisasi. Undangan dan status admin backend memakai
+konfirmasi password, keputusan actual, revision serta proteksi admin terakhir.
+Pemetaan akun lama hanya CLI terkontrol dengan dry run/cadangan/audit, bukan
+registrasi publik atau pilihan role. UI pengaturan terpadu tersedia pada U05.
+
+Mahasiswa memverifikasi WhatsApp dan membuat akun, membaca nama universitas
+server, lalu mengisi NIM. Exact match roster atau keputusan admin mengaktifkan
+afiliasi. Pending dan mismatch mempunyai pemulihan serta draft. Tidak ada
+pilihan kampus atau afiliasi otomatis hanya karena satu universitas tersedia.
+Nama universitas yang tidak tersedia atau tidak aktif menampilkan keadaan
+terkunci dengan pemulihan, bukan dropdown kampus lain.
+
+Alur mahasiswa tersebut tersedia pada U04. Shell, Beranda, profil serta daftar
+proyek/kontribusi/portofolio membaca universitas yang sama. UI terpadu admin
+tersedia pada U05; bukti teknis tidak menutup UAT/pilot atau concurrency MySQL U06.
+
+Admin pertama diprovisikan melalui operasi deployment terkontrol. Admin
+berikutnya diundang lewat WhatsApp, memverifikasi nomor dan menerima akses
+universitas yang sama. Semua admin berizin menuju satu ruang Admin
+Universitas; beberapa akun tetap mempunyai riwayat masing-masing.
+Pengelolaan akses memerlukan autentikasi ulang yang sesuai, alasan dan audit;
+pencabutan admin aktif terakhir ditolak dengan penjelasan dan langkah berikutnya.
+
+Admin menemukan afiliasi atau kontribusi yang menunggu, membaca versi yang
+diizinkan, lalu memutuskan dengan alasan. Draft privat dan kontribusi sendiri
+tidak dapat ditinjau. Keputusan tim tetap milik pemilik proyek; izin portofolio
+tetap milik mahasiswa. Bantuan kesempatan hanya dibaca oleh peninjau yang
+ditunjuk dengan consent dan gate, bukan semua admin secara otomatis.
+
+Menu target adalah Ringkasan, Mahasiswa, Roster mahasiswa, Validasi kontribusi,
+Bantuan kesempatan dan Pengaturan. Landing serta tur memakai dua label role
+inti setelah runtime sesuai; modul lanjutan tetap mengikuti status dan gate.
+Jalur lama dialihkan dengan izin yang sah atau ditolak secara jelas. Keputusan
+usang, dua admin bersamaan dan jaringan gagal tidak menimpa riwayat atau
+menyatakan mutasi telah berhasil tanpa konfirmasi server.
+
+## Ruang Admin Universitas U05
+
+Semua menu admin menampilkan kepala operasi formal tanpa maskot. Motif latar
+sesuai pekerjaan membedakan menu tanpa menjadi data atau kontrol. Peringkat
+dan Pengaturan akun memakai versi admin; mahasiswa mempertahankan hero lama.
+Nama universitas, tombol, alur filter, keputusan dan konfirmasi sandi tetap
+berasal dari izin serta state existing. Tidak ada langkah atau command baru.
+
+`Ringkasan -> Mahasiswa -> cari nama atau status -> Tinjau afiliasi -> kunci dan keputusan existing`
+
+Daftar Mahasiswa hanya memuat identitas tampilan, program studi bila tersedia dan status afiliasi. Tidak membuka bukti profil atau kontak. Bantuan kesempatan membaca gate serta penunjukan peninjau sebelum menawarkan antrean, bukan otomatis memberi semua admin akses berkas.
+
+`Pengaturan -> Profil universitas, Semester, Katalog keahlian atau Akun admin`
+
+Profil universitas berasal dari konfigurasi deployment. Semester membaca roster aktif serta riwayat; perubahan melalui impor baru. Katalog memakai operasi existing tanpa mengklaim skill mahasiswa tervalidasi. Secret/provider dan pemilihan universitas tidak tersedia.
+
+`Akun admin -> pilih tindakan -> baca konsekuensi -> konfirmasi sandi -> konfirmasi command -> respons server -> periksa daftar terbaru`
+
+Konfirmasi sandi sendiri tidak mengirim undangan atau mengubah akses. Alasan serta revision keputusan dipertahankan ketika daftar berubah; konflik meminta menutup keputusan dan memilih sumber terbaru. Hasil belum pasti menahan command berikutnya sampai GET sukses. Tidak ada retry otomatis. Admin terakhir tetap terlindungi; pencabutan akses menyembunyikan data sebelumnya. Undangan lewat WhatsApp mempunyai status antrean/delivery dan expiry, tanpa token yang ditampilkan di daftar.
+
+Landing, label role, bantuan mahasiswa dan undangan memakai Mahasiswa serta Admin Universitas. Nama UTY berasal dari server. Registrasi publik tetap mahasiswa; konfigurasi tidak tersedia dijelaskan tanpa kampus pengganti. Panduan existing tidak membuka gate atau menjalankan command.
+
 ## Pengenalan dari Landing Publik
 
 Navbar dan footer menampilkan simbol logo konsep kedua beserta nama SATU.
@@ -8,54 +94,194 @@ keyboard. Simbol yang sama dipakai auth, sidebar seluruh role, portofolio
 publik, serta favicon. Pergantian identitas bukan langkah alur baru dan tidak
 mengubah tujuan tautan atau kewenangan pengguna.
 
-Pengunjung membaca nilai SATU pada hero, memilih tahap perjalanan untuk
-memahami konteksnya, melihat pratinjau baca-saja berlabel Data synthetic,
-kemudian mengikuti demo perjalanan mahasiswa tanpa karya terdahulu. Graf dan tabel hubungan tersedia sebagai pelengkap, bukan perjalanan utama. Pilihan peran menjelaskan pekerjaan
+Pengunjung membaca nilai SATU pada hero terbuka, mengenali tiga hasil utama
+melalui lembar ilustratif dengan tautan demo,
+lalu mengikuti satu demo perjalanan mahasiswa tanpa karya terdahulu yang
+berlabel Data synthetic, tanpa graf atau tabel hubungan pelengkap. Pilihan peran menjelaskan pekerjaan
 serta batas akses, bukan mengubah jenis akun registrasi. Bagian privasi
 membedakan portofolio yang diizinkan dari bukti dan diskusi privat.
 
-Sapa aku membuka sapaan maskot yang tidak memiliki batas waktu. Pengunjung
-dapat memilih Lihat cara kerja atau menutup sapaan. Tidak ada navigasi otomatis
-atau overlay yang menutupi aksi utama. Menu mobile adalah disclosure navigasi,
-bukan modal. Tab memiliki kontrol panah, Home, dan End; tahap sebelumnya dan
-selanjutnya hanya mengganti penjelasan lokal. Pengunjung baru menuju registrasi
-mahasiswa, sementara akun masuk menuju dashboard melalui route yang sama.
-Graf memiliki loading, error, coba lagi, filter, reset, dan tabel alternatif.
-Reduced motion mempertahankan isi serta tindakan tanpa entrance atau tilt.
+Hero mengikuti contoh `satu-hero.png` dari pemilik produk. Label universitas,
+judul dua baris beraksen garis lengkung, paragraf dan dua aksi berada di kiri.
+Di kanan, burung SATU didampingi dua kartu konsep Proyek Kampus dan Bangun
+portofolio, satu orbit tipis dengan dua titik biru serta landasan elips.
+Ikon berlebih, avatar, kilau dan pita cahaya tebal dihapus. Latar gambar
+terpisah mengikuti warna dan bentuk gelombang pada revisi terbaru referensi.
+Dekorasi menjelaskan suasana kolaborasi dan bukan data akun.
+Garis bawah judul serta detail ikon membawa aksen jingga dari bulu maskot,
+diimbangi bidang ivory dan cahaya hangat transparan di belakang ilustrasi.
+CTA utama dan navigasi tetap biru. Polesan warna tidak menambah langkah,
+kontrol, klaim hasil atau gerakan maskot.
+Saat beralih dari hero ke Cara kerja, gelombang latar memudar ke canvas biru
+yang sama. Cara kerja meneruskan nuansa langit dengan cahaya biru lembut yang
+transparan di kedua ujungnya, tanpa garis potong, gerak tambahan atau
+perubahan tinggi hero. Teks, kartu dan tautan tetap berada pada alur semula.
+Tiga pilihan penjelasan berikon berada di tengah di bawah kedua kolom.
+Pada mobile, copy mendahului ilustrasi dan pilihan fitur. Teks serta semua
+kontrol tetap HTML yang dapat diakses keyboard dan pembaca layar.
 
-Di sekitar maskot, kartu Temukan proyek, Berkarya bersama, dan Susun portofolio
-membuka penjelasan konsep di area sapaan yang sama. Pilihan tidak mengubah
-akun, mengirim permintaan backend, atau menggulir halaman otomatis. Pengunjung
-dapat mengikuti tautan section secara eksplisit atau menutup penjelasan untuk
-kembali ke kartu pemicu. Kartu terpilih memakai teks Dipilih dan aria-pressed.
-Halo, orbit, serta lembar arsip bersifat dekoratif. Penjelasan berbentuk balon
-percakapan berlabel Pesan dari maskot. Desktop menempatkannya di lajur kiri
-gambar burung dalam panggung yang sama, sejajar tubuh burung. Pada mobile,
-balon muncul langsung setelah burung dan sebelum kartu portofolio. Ekor balon
-mengarah ke maskot dan tidak menjadi kontrol. Penjelasan bukan chat, pesan
-akun, atau fitur AI. Tidak ada cadangan tinggi di bawah hero saat ditutup;
-isi yang melebihi 20rem bisa digulir tanpa menimpa elemen lain. Tidak ada
-scroll halaman otomatis saat memilih kartu.
+Panggung ilustrasi memakai versi HD dengan margin transparan yang lebih
+rapat agar maskot tampak lebih besar. Sumber gambar mengikuti ukuran layar.
+Seluruh artwork tetap utuh tanpa menghalangi teks, tombol atau navigasi;
+pada laptop pendek, tingginya menyesuaikan ruang pembuka.
 
-Pada demo, pengunjung memilih lembar proyek, tim, kontribusi, validasi,
-portofolio, atau anggota tim. Pilihan menyorot hubungan terdekat dan memperbarui
-panel rincian tanpa scroll otomatis. Rincian membuka panel melalui anchor
-eksplisit; tombol objek terkait melanjutkan penjelasan di panel yang sama.
-Fokus tahap mempertahankan semua simpul peta untuk konteks, tetapi menyaring
-Daftar hubungan. Tab mempertahankan pilihan yang sama dan bisa dipakai dengan
-panah, Home, dan End. Reset kembali ke peta semua tahap tanpa pilihan.
-Seluruh contoh synthetic mengikuti kontribusi Budi hingga portofolio Budi;
-Siti hanya ditampilkan sebagai rekan tim, bukan sumber karya Budi.
+Navbar dan hero mengisi minimal satu layar pertama (100svh). Pada laptop
+zoom 100%, seluruh isi hero terlihat, tetapi bagian manfaat belum muncul
+sampai pengguna menggulir atau memilih Gulir untuk mengenal SATU. Tidak ada
+scroll hijack, tinggi terkunci atau clipping. Mobile, teks panjang dan zoom
+200% tetap mengalir vertikal. Navbar mempertahankan bentuk `navbar.png` dengan panel yang dipadatkan dan
+batas samping sejajar konten landing. Tinggi panel desktop 76px, logo 36px,
+judul merek 20px dan target tombol minimal 44px. Navbar memakai
+pil menu dengan penanda section aktif, Masuk putih, dan Daftar mahasiswa biru dengan
+panah miring melingkar serta bayangan lembut. Beranda kembali ke awal
+landing; menu lain tetap menuju section SATU. Navigasi penuh mulai container
+72rem, kemudian disclosure untuk layar sempit dan zoom. CTA hero tetap tanpa
+bayangan. Fokus keyboard dan batas konten landing dipertahankan.
+
+Penanda menu mengikuti section yang terlihat di bawah navbar, bukan selalu
+Beranda. Klik menu atau tautan section lain, scroll manual, hash awal,
+back/forward dan perubahan layout memperbarui pilihan yang sama pada desktop
+dan mobile. Satu pilihan per navigasi memakai aria-current=location; section
+tanpa menu mengikuti pilihan sebelumnya. Scroll manual tidak menulis hash
+atau menambah riwayat. Perubahan penanda tidak memindahkan fokus.
+
+Jika section atau pembungkusnya diganti ketika halaman terbuka, penanda
+membaca ulang elemen aktual dan mengamati layout penggantinya. Elemen lama
+yang sudah terlepas atau tidak ditampilkan tidak boleh mengaktifkan menu.
+Perubahan tinggi isi tetap memperbarui posisi tanpa perlu memuat ulang halaman.
+
+Memilih menu langsung memindahkan penanda ke tujuan dan menahannya selama
+scroll otomatis melewati section lain. Pilihan menu berikutnya mengganti
+tujuan segera. Setelah tujuan tercapai atau scroll berhenti, penanda kembali
+mengikuti posisi. Wheel, sentuhan untuk menggulir dan tombol scroll keyboard
+membatalkan penahanan agar navigasi manual tidak tertahan pada tujuan lama.
+Pengurangan gerakan tetap dihormati dan anchor native tetap dipakai.
+Pil putih desktop bergeser halus ke menu yang langsung diaktifkan, dengan
+durasi 280ms dan lebar mengikuti label. Klik beruntun mengarahkan pil dari
+posisi saat ini ke pilihan terbaru. Pengukuran awal dan reduced motion tidak
+memainkan transisi. Dekorasi tidak mengambil fokus atau menerima klik;
+penanda semantik tetap satu per navigasi. Disclosure mobile tetap menutup
+setelah memilih menu.
+
+Temukan proyek, Berkarya bersama dan Susun portofolio membuka dialog
+penjelasan konsep melalui tap, Enter atau Space. Dialog hanya terbuka atas
+tindakan eksplisit, tidak mengirim request atau mengubah akun. Fokus masuk
+dan tetap berada di dialog; tombol Mengerti, Tutup atau Escape menutupnya
+dan mengembalikan fokus ke pemicu terakhir. Penjelasan bukan chat atau fitur
+AI. Tombol Sapa aku tidak tersedia. Gambar burung tidak berubah posisi,
+ukuran atau transform ketika kursor melintas maupun dialog dibuka/ditutup.
+
+Menu mobile tetap disclosure navigasi, bukan modal. Tab memiliki kontrol
+panah, Home dan End. Pengunjung baru menuju registrasi mahasiswa, sementara
+akun masuk menuju dashboard lewat Wayfinder. Demo perjalanan lokal tidak
+memuat modul peta pelengkap. Reduced motion mempertahankan
+isi serta tindakan tanpa entrance atau tilt.
+
+Sejak 19 Oktober 2026, dropdown peta dan daftar hubungan pelengkap dihapus dari
+landing. Pengunjung mengikuti satu simulasi perjalanan, lalu membaca penjelasan
+peran. Tidak ada pemuatan graf, filter peta atau daftar hubungan tambahan.
+Modul analitik dan izin aplikasi tidak berubah.
+
+Bagian 03 sampai footer memakai canvas langit yang tersambung dengan demo.
+Pengunjung memilih peran pada tab terang dan membaca penjelasan serta tiga
+langkah pada lembar arsip. Ilustrasi hubungan mahasiswa dan Admin Universitas
+hanya memperjelas konteks, bukan daftar pengguna atau statistik.
+
+Privasi membedakan ringkasan karya dari bukti dan percakapan tim. Pilihan
+berikon Hanya saya dan Publik mengubah label serta penjelasan contoh yang
+sama, bukan izin akun. FAQ bernomor mempertahankan disclosure native dan
+tautan kembali ke demo. Penutup ink memakai maskot dan sapaan statis,
+bukan chat. Footer menampilkan identitas, navigasi dan nama universitas dari
+server; informasi belum tersedia dinyatakan bila konteks hilang.
+
+Tab keyboard, live region, fokus, anchor serta rute akun existing tetap
+dipertahankan. Dekorasi tidak menangkap input. Mobile menumpuk konten dan
+menyederhanakan panggung; layar besar tetap membatasi panjang paragraf.
+Tidak ada animasi berulang, scroll hijack, command baru atau penyimpanan
+simulasi. Reduced motion mempertahankan semua informasi.
 
 ### Demo Perjalanan T10
 
+Landing memusatkan penjelasan pada satu demo. Hero mengenalkan kebutuhan mahasiswa, tiga ringkasan menjelaskan hasil yang dituju, lalu pengunjung mengikuti contoh Budi. Tidak ada perjalanan kedua atau tiga pratinjau panjang yang mengulang cerita. Pilihan peran berfokus pada mahasiswa dan operator kampus; modul lanjutan tidak menjadi ajakan utama. Tanya-jawab menjelaskan jalur pemula, keputusan tim, tinjauan dan izin berbagi sebelum ajakan membuat akun.
+
+Bagian privasi menyediakan pilihan contoh Hanya saya dan Publik. Pilihan hanya mengganti pratinjau berlabel Data synthetic, tanpa menyimpan consent atau memublikasikan data. Ringkasan karya dibedakan dari berkas bukti dan percakapan tim. Penjelasan pilihan selalu tersedia dalam live region yang hemat.
+
+Navigasi tahap demo berupa indeks vertikal terang mulai 1280px dan grid empat/dua kolom pada tablet/mobile. Nomor melingkar, bidang biru dan aria-current menjelaskan satu tahap aktif, bukan aktivitas akun yang sudah selesai. Kepala buku perjalanan memuat identitas Budi, Data synthetic dan Reset. Pilihan skenario beruraian pendek menjelaskan jalan utama, kapasitas penuh dan revisi. Panggung biru bergrid arsip serta kertas berlapis membedakan pratinjau dari cerita tanpa membuat kontrol palsu. Reveal sekali, fade pergantian 220ms dan respons kontrol mengikuti reduced motion; tidak ada animasi berulang atau gerak kartu saat hover. Panel peran dan izin berbagi tetap memakai lapisan arsip existing.
+
+Demo menempatkan cerita singkat berdampingan dengan pratinjau yang berubah mengikuti tahap: profil Budi, peluang, pengajuan, peran tim, rancangan pekerjaan, kontribusi, keputusan kampus dan karya privat. Identitas aktor, status dan sumber tetap terbaca. Berikutnya menjadi satu tindakan lanjut di footer, bukan mengirim pengajuan atau keputusan nyata. Reset tersedia pada kepala; skenario penuh/revisi dan kembali tetap tersedia. Batas tiap tahap dapat dibaca pada disclosure. Panel mengikuti tinggi isinya. Tidak ada loop animasi, penyimpanan data demo, formulir palsu, atau kewajiban menuntaskan demo sebelum mendaftar.
+
 `Profil tanpa karya -> peluang pemula -> pengajuan singkat -> keputusan pemilik -> tugas nyata -> kontribusi individual -> validasi/revisi -> karya privat -> pilihan berbagi`
 
-Pengunjung mengikuti contoh Budi dengan Sebelumnya/Berikutnya atau memilih tahap. Skenario Kapasitas penuh menjelaskan bahwa pengajuan tidak memesan tempat dan keputusan perlu diperiksa ulang. Skenario Perlu revisi mempertahankan pengakuan sebagai hasil setelah bukti diperbaiki, bukan otomatis setelah mengirim. Reset kembali ke awal tanpa mengubah akun, consent atau data aplikasi. Semua keadaan merupakan simulasi lokal berlabel Data synthetic, bukan hasil pilot atau command nyata. Judul tahap menerima fokus saat tahap atau skenario berubah; tidak ada autoplay. Graf existing hanya dibuka bila pengunjung memilih disclosure pelengkap.
+Pengunjung mengikuti contoh Budi dengan Sebelumnya/Berikutnya atau memilih tahap. Skenario Kapasitas penuh menjelaskan bahwa pengajuan tidak memesan tempat dan keputusan perlu diperiksa ulang. Skenario Perlu revisi mempertahankan pengakuan sebagai hasil setelah bukti diperbaiki, bukan otomatis setelah mengirim. Reset kembali ke awal tanpa mengubah akun, consent atau data aplikasi. Semua keadaan merupakan simulasi lokal berlabel Data synthetic, bukan hasil pilot atau command nyata. Judul tahap menerima fokus saat tahap atau skenario berubah; tidak ada autoplay atau peta pelengkap.
 
 ## 1. Student Activation
 
-`Nomor WhatsApp -> OTP -> private username dan password -> consent -> institution dan NIM -> roster match -> profile minimum -> dashboard`
+`Nomor WhatsApp -> OTP -> username privat dan password -> consent -> pengajuan afiliasi wajib -> status peninjauan atau verifikasi -> afiliasi terverifikasi -> bekal kemampuan dan cara berkolaborasi -> Beranda`
+
+### Aktivasi Satu Universitas U04
+
+Mahasiswa membaca nama UTY tanpa memilih kampus. Pop-up pertama hanya memuat
+NIM, fakultas, program studi dan angkatan masuk. Keempatnya wajib pada UI dan
+server. Bekal kemampuan, cara berkolaborasi serta indikator tahapan profil belum
+ditampilkan. Tombol tutup, Escape dan klik luar tidak menutup form wajib.
+Keluar akun tersedia tanpa melewati pengajuan. Kewajiban pengajuan tetap
+berlaku jika mahasiswa membuka editor profil melalui URL.
+Ajukan afiliasi mengirim permintaan eksplisit, bukan membuat profil. Exact match roster
+mengaktifkan afiliasi; roster belum tersedia atau mismatch membuka status
+peninjauan. Periksa status afiliasi hanya membaca server. Keahlian, jadwal,
+karya dan riwayat tim bukan syarat afiliasi atau penelusuran peluang setelah
+akses terverifikasi. Profil existing dibuka melalui editor tanpa ditimpa.
+
+Pengajuan tampil dalam dialog tengah dengan pengantar langit serta pose
+maskot clipboard khusus afiliasi. Universitas read-only berada di atas empat
+isian yang berpasangan pada desktop dan menumpuk pada mobile. Petunjuk
+dipadatkan, tetapi peringatan bahwa data akademik tidak dapat diubah setelah
+dikirim tetap jelas. Pengantar mobile ringkas; header dan form ikut digulir
+pada layar pendek, sehingga Keluar akun, error serta Ajukan afiliasi dapat
+dicapai. Ilustrasi bukan hasil verifikasi dan tidak menambah langkah.
+
+Konfigurasi tidak tersedia, nomor belum verified atau akses suspended mempunyai
+penjelasan terkunci. Tidak ada pilihan kampus lain atau retry POST otomatis.
+Akun lama mengajukan afiliasi UTY dengan bukti yang sama; profil serta riwayat
+kampus lama tidak dipindahkan. Bila konfigurasi berubah saat mengisi, draft
+lama ditahan agar tidak dikirim sebagai profil kampus baru.
+
+Setelah pengajuan pending dikonfirmasi tersimpan, modal menutup otomatis,
+notifikasi pengajuan ditampilkan dan mahasiswa membaca status di Beranda.
+Pemeriksaan status tetap dapat dibuka kembali; panel status ini dapat ditutup
+karena pengajuan sudah tercatat. Setelah afiliasi verified, mahasiswa tanpa
+profil melengkapi Bekal kemampuan dan Cara berkolaborasi dalam dua langkah.
+Data akademik tidak diminta ulang. Editor Profil kemampuan juga dapat
+menyelesaikan pelengkapan sehingga modal tidak menutupi editor yang sudah
+berotorisasi. Form pelengkapan menutup setelah simpan dikonfirmasi, bukan
+melalui Escape atau klik luar. Keahlian, karya dan jadwal tetap boleh kosong.
+
+Saat pending_review biasa, Beranda menyapa mahasiswa lewat hero khusus dengan
+maskot menunggu. Lihat status afiliasi menuju judul kartu informasi; kartu
+tindakan Periksa afiliasi membuka panel status existing. Nama universitas,
+status server serta batas penyimpanan profil dibaca bersama tanpa membuat
+pengajuan baru. Roster yang berubah, revisi, penolakan atau keadaan terkunci
+tetap mengikuti pemulihan masing-masing, bukan disamarkan sebagai menunggu.
+Komposisi mengikuti banner panorama pada `beranda-verif.png`, dengan maskot
+menunggu sambil memangku buku dengan kedua sayap dan duduk langsung pada batu,
+selaras dengan lengkung satu pita putih/jingga di sekitar 83%
+lebar desktop lapang, serta teks/tindakan HTML di kiri. Ilustrasi bukan foto kampus
+atau hasil peninjauan. Kartu di bawah banner mengikuti referensi yang sama:
+aksen ivory pada pengajuan, bidang putih tanpa gambar latar pada afiliasi, dokumen 3D
+pada Langkah utama, folder 3D pada proyek, serta panel pendukung dan strip
+alur terstruktur. Ilustrasi bukan hasil persetujuan dan nomor alur bukan
+tahap pengguna yang sudah selesai. Perubahan visual tidak mengubah
+transisi aktivasi, draft, keputusan admin atau pembatasan akses.
+Navigasi Inertia, pending dan jaringan gagal
+mempertahankan draft dalam memori sesi akun. Fakultas, program studi dan
+angkatan masuk yang dikirim bersama permohonan afiliasi tersimpan terenkripsi
+sebagai draft server yang hanya dibaca mahasiswa pemilik. Nilai itu bukan profil
+aktif dan tidak tampil di antrean admin. Setelah afiliasi disetujui, nilai
+tersebut mengisi form Profil kemampuan dan draft dihapus ketika profil berhasil
+disimpan. NIM yang belum diajukan serta isian lain tidak disimpan ke storage
+browser persisten. Hasil pengiriman yang belum pasti menahan command sampai
+pemeriksaan status terbaru. Revisi/penolakan menawarkan periksa isian dan
+pengajuan eksplisit, suspended tidak dapat dipulihkan melalui pengajuan ulang.
 
 Recovery:
 
@@ -69,20 +295,63 @@ Recovery:
 
 Sebelum masuk atau registrasi, panel kiri menjadi pengantar visual kolaborasi
 dengan maskot dan balon sapaan. Kartu fitur tidak diulang dari hero landing.
+Login menampilkan burung yang menyapa kembali dengan sedikit membungkuk,
+sedangkan registrasi menampilkan ajakan mulai sambil membawa jurnal kosong.
+Pose registrasi tetap sama pada tahap OTP. Variasi ini hanya ilustrasi,
+bukan respons terhadap sandi, status pengiriman atau keberhasilan verifikasi.
+Identitas burung dan tas SATU, balon HTML, serta interaksi sapaan tetap sama;
+halaman lain mempertahankan pose existing.
+Sapaan tekan memakai teks ringkas Halo lagi! pada login dan Ayo mulai! pada
+register agar tidak menutupi wajah pada slot mobile.
 Motif arsip, halo, dan aksen kecil hanya dekorasi. Pengantar tidak menjadi langkah
 tambahan dan tidak mengubah login, pengiriman OTP, verifikasi WhatsApp,
 pemulihan akun, maupun afiliasi. Pada mobile, pengantar diringkas agar form
-cepat terlihat. Pada layar besar, dua kolom berkembang secara proporsional;
-isinya rata atas agar formulir tidak turun akibat centering vertikal. Ukuran
-container, form, maskot, bubble, dan tipografi bertambah terbatas sesuai lebar
-serta tinggi layar pada login, register, dan OTP. Layar lebar pendek tetap
-ringkas; mobile tidak ikut dibesarkan. Header dan pengantar tetap ringkas.
+cepat terlihat. Login dan register mengikuti referensi `public/referensi/login.png`:
+latar lengkung biru-putih, panggung orbit dan landasan, balon di kiri burung,
+form putih berikon serta tombol pil bergradasi. Pada layar besar, dua kolom
+berkembang proporsional dan komposisi dipusatkan di ruang bawah header.
+Pemusatan hanya memakai ruang yang tersedia, bukan offset negatif: form
+register, OTP dan error panjang tetap dimulai di bawah header dan dapat
+digulir seluruhnya. Satu kolom mobile juga terpusat jika muat, dengan form
+sebagai prioritas dan dekorasi yang diringkas. Ukuran container, form, maskot,
+balon dan tipografi tumbuh terbatas; layar lebar pendek tetap lebih ringkas.
 Tepi kanan tautan beranda sejajar dengan kartu form.
 Login diberi jarak antarisian lebih lega daripada register; bantuan tetap terlihat,
 input 16px, serta kontrol minimal 44px. Form panjang, error, dan tahap OTP
 tetap memakai scroll halaman native tanpa footer terkunci atau konten dipotong.
 
 ### Profil Kemampuan T03
+
+Profil akademik pada aktivasi dan editor memakai angkatan masuk empat digit,
+fakultas, lalu program yang tersedia dalam fakultas tersebut. Tahun masuk
+bukan tingkat studi. Mengganti fakultas mengharuskan pemilihan program baru,
+tanpa mengubah NIM, keahlian, jadwal atau izin berbagi. Nilai kosong pada profil
+legacy dapat dilengkapi satu kali. Pengajuan afiliasi baru mewajibkan seluruh
+data akademik tersebut. Nilai akademik nonkosong menjadi tetap setelah dikirim bersama
+pengajuan afiliasi atau disimpan pada profil; mahasiswa tidak dapat mengganti
+atau mengosongkannya dari modal maupun editor. Field yang kosong dapat diisi
+satu kali. Server menolak perubahan nilai pada pengajuan ulang dan update
+profil. Data lama yang tidak sesuai tetap ditampilkan tanpa menyiratkan bahwa
+mahasiswa dapat mengubahnya.
+Status menunggu afiliasi bukan kegagalan pendaftaran atau penilaian kemampuan.
+Pengajuan yang belum dapat diverifikasi otomatis menunggu Admin Universitas;
+mahasiswa cukup memeriksa status, kecuali daftar mahasiswa telah diperbarui
+dan sistem meminta pengajuan ulang. Fakultas, program studi, dan angkatan masuk
+yang dikirim bersama pengajuan menjadi draft terenkripsi privat. Nilai nonkosong
+di draft tidak dapat diubah mahasiswa saat pengajuan ulang. Setelah afiliasi
+terverifikasi, nilai itu mengisi form Profil kemampuan tanpa input ulang dan
+ditampilkan hanya-baca. Nilai akademik nonkosong pada profil juga tetap
+hanya-baca; nilai kosong dapat dilengkapi satu kali. Profil baru tetap disimpan
+setelah afiliasi terverifikasi dan mahasiswa menyimpan
+pelengkapannya. Isian profil lain yang belum dikirim tetap lokal dan dapat hilang
+saat halaman dimuat ulang atau ditutup.
+
+Pop-up pelengkapan tidak menampilkan akhiran `(opsional)` pada label Angkatan
+masuk, Fakultas, Program studi, dan Tentang dirimu. Bagian Tentang dirimu pada
+Profil kemampuan juga menghilangkan akhiran itu dari label Angkatan masuk,
+Fakultas, Program studi, dan Cerita singkat. Penyederhanaan ini tidak mengubah
+fakta bahwa kolom profil legacy boleh kosong. Pengajuan afiliasi baru wajib
+memuat NIM, fakultas, program studi dan angkatan masuk.
 
 `Afiliasi terverifikasi -> Profil kemampuan -> kemampuan atau minat -> jadwal opsional -> bukti awal opsional -> simpan -> jelajahi peluang`
 
@@ -93,14 +362,25 @@ tanpa karya dan tanpa jadwal; label tersimpan tidak sama dengan siap untuk
 pencocokan. Keahlian dan jadwal diperlukan untuk kesiapan pencocokan, tetapi
 penelusuran peluang tetap mengikuti afiliasi, bukan riwayat kontribusi.
 
-Pada pelengkapan afiliasi, keahlian dan jadwal dapat dilewati. Sesudah kampus
-terkonfirmasi, profil yang sudah ada dibuka lewat editor, bukan ditimpa dengan
-draft modal. Menutup dan membuka kembali modal mempertahankan draft dalam sesi.
+Pada pelengkapan afiliasi, keahlian dan jadwal dapat dilewati. Jika peninjauan
+manual menunda afiliasi, fakultas, program studi dan angkatan masuk yang sudah
+dikirim mengisi otomatis editor setelah kampus mengonfirmasi afiliasi. Mahasiswa
+tidak perlu mengetik ulang. Profil yang sudah ada dibuka lewat editor, bukan
+ditimpa dengan draft modal. Menutup dan membuka kembali modal mempertahankan
+isian lokal dalam sesi.
 
 Jadwal existing dipertahankan per baris, termasuk jam dan zona waktu berbeda.
 Simpan profil dan jadwal atomik. Kegagalan validasi atau jaringan mempertahankan
 draft. Snapshot yang berubah meminta muat ulang, dengan konfirmasi sebelum
-mengganti draft. Izin portofolio/perekrut tidak diubah oleh simpan kemampuan.
+mengganti draft. Penyimpanan profil pada editor yang dikonfirmasi server
+menampilkan notifikasi `Data profil berhasil tersimpan.` lalu mengarahkan
+mahasiswa ke Beranda, baik saat membuat maupun memperbarui profil yang sudah
+ada sejak onboarding. Penyelesaian pop-up pelengkapan juga menampilkan
+notifikasi dan menuju Beranda setelah hasil simpan dikonfirmasi. Validasi atau
+jaringan gagal mempertahankan halaman serta draft tanpa notifikasi sukses.
+Jika validasi konteks kampus tidak memastikan apakah profil sudah ada,
+mahasiswa memuat data tersimpan sebelum mengulang tindakan. Izin
+portofolio/perekrut tidak diubah oleh simpan kemampuan.
 
 Bukti awal hanya tautan HTTPS privat berlabel Belum ditinjau. Kampus menerima
 berkas dan bukti melalui pengajuan Kontribusi existing, bukan otomatis melalui
@@ -108,12 +388,30 @@ profil. Sumber disetujui dibaca dari keputusan kampus pada kontribusi pemilik;
 persetujuan itu tidak menyatakan seluruh keahlian pemilik telah diuji.
 Tautan awal tidak masuk proyeksi publik/perekrut dan tidak diambil server.
 
-Modal afiliasi dapat ditutup saat tidak processing. Pending atau suspended
-tidak memaksa modal berulang; Beranda tetap menawarkan tindakan pemulihan.
-Profil kosong atau belum lengkap pada afiliasi terverifikasi mengarah ke
-Profil kemampuan, bukan membuat data default ataupun menahan navigasi.
+Form afiliasi wajib dan pelengkapan profil belum tersimpan tidak dapat ditutup
+secara manual. Panel pending yang sudah tercatat boleh ditutup; suspended dan
+konfigurasi terkunci menyediakan penjelasan, Periksa status serta Keluar akun.
+Profil yang belum ada setelah verifikasi membuka pelengkapan dua langkah
+atau editor Profil kemampuan. Profil yang sudah ada tidak dipaksa mengulang
+pelengkapan hanya karena keahlian atau jadwal masih kosong.
 
 ### Pengenalan Beranda Mahasiswa
+
+Maskot pada kelima hero memakai ukuran dan penempatan Beranda yang sama melalui
+StudentHeroMascot. Kanvas 208px pada mobile berada di bawah teks; layar lebih
+lebar memakai 39%/36% lebar hero dengan batas 320px/384px. Tepi bawah keluar
+28px, disertai jarak aman ke bagian berikutnya dan navbar. Pose tiap menu serta
+latar yang berbeda tetap. Ini perubahan presentasi, bukan tindakan, izin atau
+tahap baru. Pending dan forbidden mempertahankan pemulihan existing.
+
+Latar hero tiap menu membantu mengenali konteks tanpa menambah langkah:
+halaman kampus untuk Beranda, rancangan untuk Proyek, jurnal untuk Kontribusi,
+galeri bingkai kosong untuk Portofolio, dan skala ukur tanpa angka untuk
+Peringkat. Seluruhnya dekoratif, bukan data, karya atau tanda selesai.
+Area teks tetap terang dan gambar memudar pada ruang sempit. Fallback gradasi
+menjaga fungsi ketika gambar gagal. Pose, ukuran, animasi masuk satu kali,
+izin, tindakan dan state tidak berubah. Beranda pending tetap memakai panorama
+referensi yang disetujui; halaman detail serta editor tidak berubah.
 
 Setelah pelengkapan profil ditutup, beranda memprioritaskan status penting,
 langkah utama dari server, dan proyek aktif. Jika afiliasi belum terverifikasi
@@ -134,12 +432,20 @@ serta tindakan aktual sesuai respons server.
 Beranda membedakan lembar langkah utama yang paling menonjol, daftar pekerjaan
 aktif yang mudah dipindai, dan rekomendasi peluang dengan peran aktual.
 Bekal profil serta informasi validasi lebih tenang, sementara ringkasan alur
-berupa empat penjelasan terbuka, bukan status perjalanan mahasiswa. Aksen
+berupa empat penjelasan bernomor terhubung, bukan status perjalanan mahasiswa. Aksen
 lembar arsip mendampingi maskot pada hero dan kondisi proyek kosong. Respons
 hover, tekan, dan fokus tidak mengubah data atau memindahkan susunan halaman.
 Masukan rekomendasi yang sedang dikirim memiliki label processing yang terlihat;
 hasilnya tetap mengikuti server. Reduced motion mempertahankan semua kontrol
 dan informasi tanpa gerak tambahan.
+
+Pada afiliasi terverifikasi, kartu mengikuti bahasa visual beranda-verif.png:
+Langkah utama berilustrasi dokumen, lembar proyek ringkas, rekomendasi biru
+beraksen jingga, serta Bekal kolaborasi dan Validasi dalam satu panel. Alasan,
+batas kecocokan, versi serta masukan rekomendasi tidak disembunyikan. Hero
+welcome tetap dengan margin atas 16px mulai sm dan 24px mulai lg. Pemilihan
+presentasi tidak memakai status pending untuk mahasiswa verified dan tidak
+mengubah prioritas tindakan, pemeriksaan akses atau transisi aktivasi.
 
 Panduan singkat menjelaskan `Proyek -> Kontribusi -> Validasi kampus -> Portofolio`.
 Tugas yang selesai belum otomatis menjadi kontribusi terverifikasi. Kontribusi
@@ -179,6 +485,12 @@ Beranda jika tur versi ini belum selesai atau dilewati.
 
 ### Navigasi Aplikasi
 
+Hero Proyek, Kontribusi, Portofolio dan Peringkat menempatkan baris tombol
+lebih rendah, dengan jarak yang sama dari deskripsi: 36px pada mobile dan
+48px mulai 640px. Konteks universitas serta catatan sesudah tombol ikut turun.
+Perubahan hanya ritme ruang, bukan tujuan tautan, command, status atau urutan
+kerja. Konten membungkus secara alami; hero Beranda dan Pengaturan akun tetap.
+
 Navigasi inti mahasiswa berisi Beranda, Proyek, Kontribusi dan Portofolio.
 Operator mengutamakan Ringkasan, Afiliasi kampus, Roster mahasiswa dan Validasi
 kontribusi. Fitur lanjutan memakai disclosure terpisah, tertutup pada halaman
@@ -201,6 +513,13 @@ pilih menu atau tutup melalui tombol tutup, Escape, atau backdrop. Fokus kembali
 ke toggle pada halaman yang aktif. Pada desktop, sidebar dapat ditutup tanpa
 mengubah data atau izin akun. Menu akun hanya menampilkan nama dan role;
 private username tidak tampil di kerangka aplikasi.
+
+Toggle header dan tutup drawer kini memakai ikon tiga garis yang sama; nama
+aksesibel tetap menjelaskan Buka navigasi atau Tutup navigasi. Ikon menu memakai
+outline seragam dengan penanda aktif yang tenang dan border oranye selektif.
+Kartu identitas universitas menampilkan logo UTY dari pemilik produk, dengan
+nama serta status afiliasi existing. Logo bukan tanda persetujuan dan tidak
+mengganti identitas SATU. Tidak mengubah menu tersedia atau tujuan tautannya.
 
 Identitas SATU menjadi kepala sidebar yang lebih dominan: simbol burung-buku pada bidang
 putih, wordmark yang lebih besar, kepanjangan nama dalam font body, serta label
@@ -239,7 +558,7 @@ keanggotaan dibentuk melalui jalur lain, bukan penolakan kemampuan atau
 penarikan oleh pemohon. Tidak menyisakan tawaran aktif kepada anggota aktif.
 
 Pemilik dapat membaca maksimal tiga ringkasan karya terkini per pemohon, hanya
-jika entry portofolio dibagikan untuk kampus/publik, tidak ditarik, bersumber
+jika profil dan entry portofolio sama-sama Publik, tidak ditarik, bersumber
 pada kontribusi approved versi saat ini, dan identitas/institusi sumber konsisten.
 Tautan detail existing memeriksa ulang Policy. Bukti privat dan catatan reviewer
 tidak ikut diproyeksikan. Tidak ada karya yang dibagikan bukan tanda kurang
@@ -253,6 +572,24 @@ proyek privat kepada nonanggota. Penerimaan revalidasi keanggotaan, tenant,
 kapasitas serta lifecycle dalam transaksi existing.
 
 ### Penemuan, Detail, dan Penyusunan Proyek
+
+Daftar Peluang dan Proyek saya memakai kepala ringkas dengan pose burung
+project-plan membawa rancangan proyek, bukan ilustrasi pada tiap kartu.
+Latar hero memakai plate rancangan kertas yang memudar
+ke area teks, dengan cahaya hangat serta margin oranye. Motif hanya dekorasi
+statis; bidang baca diperkuat pada mobile agar teks tetap tenang.
+Maskot memakai ukuran dan posisi Beranda melalui StudentHeroMascot, termasuk
+ruang ilustrasi mobile serta siluet yang melewati tepi bawah tanpa menutupi teks.
+Saat menu dibuka, maskot masuk sekali dengan fade dan gerak naik 420ms seperti
+Beranda. Filter, pagination dan pergantian tampilan tidak mengulang animasi;
+reduced motion langsung menampilkan pose akhir tanpa menahan akses ke kontrol.
+Navigasi dua tampilan, pencarian dan pintasan pemula tampil sebelum hasil.
+Baris peran memperjelas penerimaan pemula serta tempat aktual, sementara
+keahlian, deadline dan pemilik tetap tersedia. Biru-putih dominan dengan
+aksen oranye selektif mengikuti Beranda. Bantuan kesempatan tetap pilihan
+setelah hasil, bukan langkah wajib sebelum menelusuri. Hero dan kartu tidak
+bereaksi terhadap hover; fokus keyboard tetap jelas. Penyelarasan ini hanya
+mengubah presentasi daftar, bukan alur detail, editor atau ruang kerja.
 
 T05: simpan perubahan profil/peran/tim -> commit -> permintaan pembaruan
 institution-scoped -> job membaca sumber dan izin terbaru -> hasil batch atomik
@@ -379,6 +716,13 @@ konfirmasi ketika perubahan belum tersimpan.
 
 ### Pengajuan dan Revisi Mahasiswa
 
+Hero Kontribusi memakai komponen bersama dengan Proyek, dengan maskot khusus
+menyusun jurnal dan pensil. Latar jurnal berlapis, aksen oranye dan animasi masuk tetap
+selaras, tanpa cap atau tanda persetujuan. Hero tidak mengganti status catatan
+dan tidak menyatakan bukti sudah disetujui. Susun kontribusi tetap mengikuti
+izin; Muat ulang mempertahankan status pemrosesan dan pemulihan existing.
+Pencarian, filter, daftar, detail serta pengiriman tidak berubah.
+
 `Kontribusi -> pilih proyek dan tugas -> jelaskan pekerjaan -> pilih bukti privat dan pernyataan -> simpan draft -> periksa versi tersimpan -> kirim untuk validasi kampus`
 
 Daftar menyediakan pencarian dan filter status lokal, bukan statistik seluruh
@@ -414,10 +758,20 @@ server dan memindahkan fokus ke ringkasan error, termasuk saat versi belum ada.
 
 ### Pengelolaan Portofolio
 
+Hero daftar memakai StudentMenuHero dan pose memperlihatkan map karya terbuka,
+dengan latar galeri bingkai kosong serta aksen oranye yang selaras dengan Proyek/Kontribusi.
+Ilustrasi bukan karya pengguna atau bukti verifikasi. Kendali profil, tautan
+Kontribusi dan Muat ulang tetap mengikuti izin; tidak mengubah pilihan berbagi.
+Proporsi mengikuti lebar region, animasi masuk satu kali dan reduced motion
+statis. Detail dan portofolio publik tetap pada desain serta batas existing.
+
 `Kontribusi disetujui -> karya tersimpan -> buka Portofolio -> periksa sumber dan status -> pilih jangkauan karya -> simpan jangkauan`
 
 Koleksi menyediakan pencarian dan filter lokal terhadap karya yang sudah dimuat.
-Pengaturan karya, pengaturan profil, dan izin ditemukan perekrut dipisahkan.
+Pengaturan profil dan karya hanya Hanya saya serta Publik. Profil Hanya saya
+menutup seluruh karya bagi non-pemilik, termasuk admin. Profil Publik hanya
+membuka karya yang juga Publik. Jangkauan lama diperlakukan privat tanpa
+perubahan data otomatis. Izin peninjauan kontribusi bukan izin portofolio privat.
 Atur jangkauan membuka formulir per kartu tanpa mengubah pilihan tersimpan.
 Tautan kendali profil pada hero membantu menjangkau pengaturan pada mobile.
 Pilihan formulir yang belum disimpan tidak dinyatakan sebagai visibilitas aktif.
@@ -437,11 +791,14 @@ privat atau pengaturan pemilik.
 Untuk halaman publik, profil dan karya sama-sama dipilih Publik. Tidak membuat
 tautan berbagi dari ID profil privat bila server belum menyediakan identifier.
 
-`Buka kendali profil -> pilih jangkauan profil -> pilih izin ditemukan perekrut bila diinginkan -> simpan pengaturan`
+`Buka kendali profil -> pilih Hanya saya atau Publik -> simpan pengaturan`
 
-Menyimpan pilihan tidak menjamin dilihat atau dihubungi perekrut. Bukti privat
+Bukti privat
 dan catatan kampus tidak masuk halaman publik. Refresh mempertahankan filter
-dan mengambil karya terkini. Perubahan server yang berbeda dari token formulir
+dan mengambil karya terkini. Simpan membawa revisi privasi wajib yang mencakup
+state dan jejak audit, termasuk perubahan bolak-balik pada detik sama.
+Hasil jaringan belum pasti/5xx/konflik menahan pengiriman sampai pemeriksaan
+GET berhasil. GET gagal tidak membuka retry mutasi. Perubahan server yang berbeda dari token formulir
 ditampilkan sebagai stale; mengambil pengaturan terbaru adalah tindakan
 eksplisit, bukan overwrite otomatis. Validasi atau kegagalan koneksi tidak
 menghapus pilihan lokal, dan error menerima fokus.
@@ -450,7 +807,51 @@ Pada detail mobile, pengaturan karya tersedia sebelum ringkasan panjang.
 Pengunjung halaman publik hanya membaca identitas dan karya yang diproyeksikan
 server. Saat publikasi tidak tersedia, identitas serta karya tidak ditampilkan.
 
+## Penguatan Kesempatan, Kerja Bersama dan Peninjauan
+
+`Peluang -> Peran pemula -> peran menerima pemula dengan tempat tersedia -> baca hasil dan kriteria -> ajukan minat tertulis -> keputusan pemilik beralasan`.
+Pintasan memakai filter server existing. Membuka pintasan tidak mengajukan atau menerima otomatis. Editor peran memberi bantuan menyatakan pekerjaan awal yang terukur serta pendampingan; contoh hanya mengisi kolom kosong atas pilihan pemilik.
+
+`Tim aktif -> sepakati hasil -> bagi bagian pekerjaan -> tentukan pemeriksaan oleh rekan -> simpan tugas -> kerjakan dan unggah bukti -> ajukan kontribusi individual`.
+Contoh deskripsi membantu menuliskan hasil, bagian sendiri dan koordinasi tanpa menambahkan kewajiban chat atau konfirmasi tim. Catatan tetap draft sampai disimpan dan tidak otomatis menugaskan anggota. Keanggotaan atau banyaknya percakapan bukan pembuktian hubungan kerja baru.
+
+`Validasi kontribusi -> Pengajuan menunggu atau Hasil disetujui -> cari nama tampilan, proyek atau isi karya -> pilih berkas -> baca versi serta keputusan yang diizinkan`.
+Pencarian, status dan urutan diperiksa server, tersimpan pada URL dan dibawa pada pagination. Ringkasan hasil disetujui memakai klaim serta ringkasan versi yang telah dikirim; tidak membuka draft, bukti profil atau izin portofolio baru. Detail peninjauan tetap mengikuti Policy existing.
+
+Urutan pengajuan memakai audit pengiriman versi aktual dengan pemilik serta universitas yang konsisten. Sumber waktu yang belum tersedia ditampilkan apa adanya dan berada setelah waktu yang diketahui. Tim menetapkan peninjau utama/cadangan dan jadwal pemeriksaan di luar aplikasi sesuai panduan operasi; UI tidak menjanjikan batas waktu. Filter dan pemeriksaan GET tidak mencatat keputusan atau mengirim ulang notifikasi. Pergantian yang membuang catatan keputusan memerlukan konfirmasi existing.
+
 ## 5. Leaderboard
+
+Refresh awal menampilkan shell dan skeleton hasil, lalu data atau keadaan gagal
+yang dapat dipulihkan. Resolver deferred yang gagal tidak meninggalkan skeleton
+tanpa akhir. Muat ulang hasil hanya membaca GET dengan semester/kategori yang
+sama. Jaringan/HTTP gagal menyediakan retry; 401/403 tetap menyembunyikan data
+lama. Tidak ada pengiriman consent, award atau rebuild karena refresh.
+
+Persetujuan membawa versi tersimpan. Halaman lama ditolak tanpa menimpa pilihan
+baru; mahasiswa membaca error dan memeriksa status melalui GET sebelum mencoba
+lagi. Nomor individual disesuaikan setelah izin aktual disaring. Approved tanpa
+award dijelaskan pada panel XP pribadi tanpa estimasi. Rekonsiliasi terjadwal
+mencoba lagi setelah sumber semester historis valid, tanpa mengulang approval
+atau membuat karya. Muat ulang tetap hanya membaca. Jumlah XP serta izin melihat
+daftar individual tidak berubah.
+
+Hero tersedia memakai komponen bersama dan maskot membaca laporan dengan kaca
+pembesar, bukan perayaan juara. Pahami perhitungan menuju penjelasan existing;
+Kontribusi saya hanya tersedia bagi mahasiswa. Latar skala ukur, oranye sekunder,
+proporsi dan motion mengikuti menu inti. Pergantian kategori/semester tidak
+mengulang animasi atau mengirim consent. Forbidden tetap pada pemulihan
+existing tanpa hasil lama, dan izin operator tidak berubah.
+
+Peringkat dibuka langsung setelah Portofolio pada navigasi mahasiswa, serta
+melalui menu pembacaan kelompok Admin Universitas. Kontribusi approved
+memicu ledger XP, kemudian perhitungan ulang setelah commit. Reversal serta
+perubahan persetujuan juga meminta pembaruan. Queue worker memprosesnya;
+refresh halaman hanya membaca hasil, tidak menjalankan award atau rebuild.
+Ringkasan XP pribadi berasal dari ledger semester terpilih dan tersedia tanpa
+opt-in. Tidak ada XP dari membuat akun, pesan, profil atau bergabung tim.
+Semester roster terbaru tetap ditawarkan walaupun belum ada snapshot.
+Ketika jumlah anggota contoh di bawah lima, perlindungan kelompok tetap aktif.
 
 `Pilih semester dan kategori -> baca aturan serta jumlah anggota -> lihat peringkat -> buka penjelasan perhitungan`
 
@@ -530,7 +931,7 @@ data inclusion atau menganggap tautan modul sebagai izin aktivasi.
 
 ## Peninjauan Afiliasi Kampus
 
-`Kampus aktif -> filter antrean -> Tinjau berkas -> ambil kunci -> periksa data masked dan hasil roster -> pilih keputusan serta alasan -> simpan atau lepas kunci`
+`Ruang Admin Universitas -> filter antrean -> baca NIM dan WhatsApp lengkap -> Tinjau berkas -> ambil kunci -> cocokkan identitas dan hasil roster -> pilih keputusan serta alasan -> simpan atau lepas kunci`
 
 Header putih ringkas memakai identitas kampus aktual, bukan hero promosi kedua.
 Berkas memakai referensi AF-id tanpa username privat. Filter berlaku langsung;
@@ -548,8 +949,13 @@ mendahului antrean di mobile agar tindakan tidak tenggelam di bawah daftar.
 Loading awal memakai skeleton region; refresh mempertahankan berkas dan
 menonaktifkan tindakan yang belum aman. Error jaringan mempertahankan konteks
 dan menawarkan pemulihan. Akses ditolak menyembunyikan data antrean sebelumnya.
-NIM serta WhatsApp tidak diperluas di frontend; tidak ada identitas rekaan,
-tautan bukti baru, inclusion signal, atau perubahan workflow backend.
+NIM serta WhatsApp lengkap berasal dari allowlist server khusus peninjau
+afiliasi UTY berwenang, bukan direkonstruksi dari data tersamar. Gunakan hanya
+untuk mencocokkan identitas mahasiswa. Nomor yang tidak tersedia ditandai
+Belum tersedia. Daftar Mahasiswa dan undangan tidak membuka data tambahan.
+Tidak ada username privat, identitas rekaan, tautan bukti baru, inclusion
+signal, atau perubahan alur kunci dan keputusan. Akses ditolak menyembunyikan
+antrean dan panel yang sebelumnya terbuka.
 
 ## 6. Inclusion Review
 
@@ -636,7 +1042,15 @@ Sandbox harus dapat memicu success, validation error, timeout, duplicate, dan re
 
 ### Pengaturan Akun Aktual
 
-`Menu akun -> Pengaturan -> Profil, Keamanan, atau Tampilan`
+`Menu akun -> Pengaturan -> Profil, Keamanan, Tampilan, atau Hak Data`
+
+Keempat kategori selalu dapat dipilih melalui navigasi bernama. Pilihan aktif
+memiliki label Aktif dan aria-current; dua kolom mobile menjadi empat kolom
+pada layar lebar. Hero bersama memakai maskot account-care yang memegang kunci
+dan latar arsip pribadi. Ilustrasi bersifat dekoratif, tidak menyatakan akun
+sudah aman, terverifikasi, atau permintaan data telah dipenuhi. Teks, status
+dan kontrol tetap HTML. Ukuran maskot mengikuti hero menu Beranda, tanpa hover
+atau animasi berulang; reduced motion menampilkan pose statis.
 
 Profil mengubah nama akun dan private username untuk masuk. Username tidak
 ditampilkan pada hero atau halaman publik. Isian dipertahankan ketika request
@@ -644,6 +1058,15 @@ gagal dan penyimpanan memerlukan tindakan eksplisit. Afiliasi kampus dan
 jangkauan Portofolio bukan pengaturan identitas akun ini.
 
 `Keamanan -> password saat ini -> password baru -> konfirmasi -> perbarui -> respons server`
+
+Jika halaman terlindungi meminta konfirmasi ulang, alurnya adalah
+`halaman tujuan -> Konfirmasi password -> password saat ini -> konfirmasi -> tujuan server`.
+Halaman konfirmasi memakai latar login/register dan maskot confirm-access
+statis dengan gembok. Konfirmasi tidak mengubah password atau mengeksekusi
+tindakan sensitif lain. Tombol kembali ke Pengaturan akun tidak mengirim form.
+Password yang gagal validasi dikosongkan; error summary menerima fokus.
+Gangguan jaringan atau sesi kedaluwarsa tidak dianggap konfirmasi berhasil.
+Tujuan sesudah sukses tetap milik server, bukan parameter redirect baru di UI.
 
 Validasi server dan konfirmasi autentikasi yang sudah tersedia tetap berlaku.
 Saat validasi gagal, kolom password dikosongkan dan error summary menerima

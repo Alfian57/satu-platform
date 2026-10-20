@@ -33,6 +33,7 @@ final class ReviewContribution
         private readonly RebuildTalentCandidateProjection $rebuildProjection,
         private readonly SyncApprovedPortfolioEntry $syncEntry,
         private readonly ContributionRequirements $requirements,
+        private readonly EnsureUniqueContributionWork $uniqueWork,
     ) {}
 
     public function handle(
@@ -99,6 +100,15 @@ final class ReviewContribution
 
             if ($decision === ContributionReviewDecision::Approved) {
                 $this->requirements->ensureAvailableEvidence($version, $lockedContribution->project);
+                $this->uniqueWork->handle(
+                    project: $lockedContribution->project,
+                    ownerId: $lockedContribution->owner_id,
+                    taskId: $version->task_id,
+                    claim: $version->claim,
+                    summary: $version->summary,
+                    exceptId: $lockedContribution->getKey(),
+                    approvedOnly: true,
+                );
             }
 
             $newStatus = $decision->contributionStatus();

@@ -1,0 +1,68 @@
+{
+    "description": "Dua ilustrasi kartu Beranda pending dan terverifikasi dengan bahasa visual beranda-verif.png.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan, satu panggilan per asset",
+    "reference": {
+        "file": "beranda-verif.png",
+        "sha256": "254D3B51B4388669C97794B3D3DA172A21EED9DBFDD849FAF02DE1B369781A1F"
+    },
+    "assets": [
+        {
+            "key": "review-document",
+            "generation_id": "exec-c350a75c-1ad9-45e9-8358-baf5b22a092d",
+            "file": "resources/images/mascot/dashboard-review-document.png",
+            "width": 1254,
+            "height": 1254,
+            "bytes": 691138,
+            "sha256": "a9c69da311e907548d416c8bf2657953d7951cf0716264315144856fd3cf9963",
+            "variants": [
+                {
+                    "file": "public/images/dashboard-review-document-256.webp",
+                    "width": 256,
+                    "height": 256,
+                    "bytes": 8138,
+                    "sha256": "c65915b177d52651ba198a1fe2387c551a73afadc4aeba2619e43af33cb5913c"
+                },
+                {
+                    "file": "public/images/dashboard-review-document.webp",
+                    "width": 512,
+                    "height": 512,
+                    "bytes": 18596,
+                    "sha256": "89d18a601f3aa69ccd3d2c17ff75867ad99badb83d3615167365bce17409df58"
+                }
+            ],
+            "mode": "RGBA",
+            "prompt": "Use case: stylized-concept. Asset type: transparent 3D decorative document illustration for SATU's pending-affiliation dashboard. Input image 1 is the approved style reference. Match ONLY the pale blue and white 3D clipboard/document at the lower right of the large 'Langkah utama' card, not the screenshot or its UI. Create a single isolated softly rounded white clipboard with a pale azure-blue backing, small blue top clip, three shallow light-blue horizontal placeholder grooves on the front sheet, and one smaller pale-blue sheet behind it, in the same gentle three-quarter view leaning slightly clockwise as the reference. Polished soft 3D editorial illustration, subtle frosted material, diffused daylight, cool azure and ivory highlights, restrained depth and clean silhouette, not photorealistic office equipment. Important: leave the upper sheet plain without a check mark, seal or approval badge; the student's request is still pending, so the artwork must not claim approval. No text, letters, numbers, UI, real data, tick, checkmark, verified symbol, shield, clock, orange shapes, stars, sparkles, mascot, people, background, platform, ground, border or watermark. Square HD composition, whole clipboard and all paper corners visible with generous transparent margin. True transparent alpha background and minimal local contact shading only. It will be displayed at 160-190px as quiet decoration, with waves and one tiny gold sparkle added in CSS."
+        },
+        {
+            "key": "project-folder",
+            "generation_id": "exec-4a347c7a-2c4c-4110-85fc-ad97a7b34334",
+            "file": "resources/images/mascot/dashboard-project-folder.png",
+            "width": 1254,
+            "height": 1254,
+            "bytes": 953962,
+            "sha256": "0dbb6e781702a8458622511ce1ff7dc23eef7636317baf96ecc5f593e009c3f6",
+            "variants": [
+                {
+                    "file": "public/images/dashboard-project-folder-128.webp",
+                    "width": 128,
+                    "height": 128,
+                    "bytes": 4570,
+                    "sha256": "e377e5ac45332b0e0d214e138ed27575ac5699c95757aefc873c3fe0e6d9f9af"
+                },
+                {
+                    "file": "public/images/dashboard-project-folder.webp",
+                    "width": 256,
+                    "height": 256,
+                    "bytes": 10046,
+                    "sha256": "50e9356b5f92f1234fabe6fd3761bd154f0f1e38ea99e8babac85e4cb4841454"
+                }
+            ],
+            "mode": "RGBA",
+            "prompt": "Use case: stylized-concept. Asset type: transparent 3D decorative folder illustration for SATU's pending-affiliation dashboard. Input image 1 is the approved style reference. Match ONLY the small light-blue floating folder at the far right inside the 'Proyek aktif' empty-state panel near the bottom, not the dashboard screenshot itself. Create ONE softly rounded blue document folder with a front panel of powder blue, a slightly darker azure rear tab, and two blank ivory pages visible at the top, in the same soft three-quarter perspective with a slight clockwise tilt. Polished simple 3D editorial illustration, frosted satin material, soft daylight, pale sky-blue and white palette with controlled gentle shadows, no thick black outlines. Whole object centered occupying about 75 percent of a square HD canvas, all folder and paper edges visible. Genuine transparent alpha background, no background or floor. No checkmarks, badges, status, progress, approval symbol, icons, text, letters, numbers, watermark, mascot, people, ribbons, sparkles, additional folders, big cast shadow, UI, border or scene. A decorative folder, not a clickable control or a claim of an existing student project."
+        }
+    ],
+    "optimization": "Resize mekanis Lanczos, WebP kualitas 90 method 6. Alpha hasil generasi dipertahankan, tanpa retouch kreatif atau penghapusan latar manual.",
+    "alt_purpose": "Ilustrasi dekoratif statis dengan alt kosong. Dokumen tanpa tanda persetujuan; folder bukan proyek atau berkas mahasiswa nyata. Semua data, label dan tindakan tetap HTML.",
+    "scope": "Kartu Beranda mahasiswa pending_review biasa dan afiliasi terverifikasi. Dokumen disembunyikan bila ruang tidak cukup agar tidak menimpa fakta atau tindakan. Folder dekoratif tidak mengubah state kosong atau akses. Hero dan pose maskot tidak diubah."
+}

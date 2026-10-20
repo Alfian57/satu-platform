@@ -12,6 +12,7 @@ import {
     Lightbulb,
     Info,
     RefreshCw,
+    Rocket,
     SearchX,
     ShieldAlert,
     Sparkles,
@@ -36,6 +37,8 @@ export type DashboardRecommendationFeedback =
 
 type Props = {
     reviewQueue: DashboardReviewQueue;
+    pendingAffiliation?: boolean;
+    referenceLayout?: boolean;
     recommendationRegion: DashboardRecommendationRegion;
     getActionHref: (action: DashboardAction) => ActionHref | null;
     onAction: (action: DashboardAction) => void;
@@ -108,6 +111,7 @@ function RecommendationState({
     region,
     getActionHref,
     onAction,
+    pendingAffiliation = false,
 }: {
     region: Extract<
         DashboardRecommendationRegion,
@@ -123,19 +127,22 @@ function RecommendationState({
     >;
     getActionHref: Props['getActionHref'];
     onAction: Props['onAction'];
+    pendingAffiliation?: boolean;
 }) {
     const Icon =
         region.state === 'error'
             ? RefreshCw
             : region.state === 'forbidden'
-              ? ShieldAlert
+              ? pendingAffiliation
+                  ? Compass
+                  : ShieldAlert
               : region.state === 'processing'
                 ? Clock3
                 : SearchX;
 
     return (
         <div
-            className="mt-4 border-t border-border/50 pt-4"
+            className="dashboard-recommendation-state mt-4 border-t border-border/50 pt-4"
             data-test={`dashboard-recommendation-${region.state}`}
             role={region.state === 'error' ? 'alert' : 'status'}
         >
@@ -242,7 +249,7 @@ function RecommendationReady({
     const isStale = recommendation.isStale;
 
     return (
-        <div className="mt-5 overflow-hidden rounded-2xl border border-white bg-card shadow-sm">
+        <div className="dashboard-recommendation-card mt-5 overflow-hidden rounded-2xl border border-white bg-card shadow-sm">
             <div className="border-b border-border/60 p-4">
                 <div className="min-w-0 flex-1">
                     <p className="text-lg leading-snug font-bold tracking-tight wrap-anywhere text-foreground">
@@ -441,9 +448,11 @@ function RecommendationReady({
 function ProfileReadinessCard({
     profileReadiness,
     institution,
+    referenceLayout = false,
 }: {
     profileReadiness: DashboardProfileReadiness;
     institution: DashboardInstitution | null;
+    referenceLayout?: boolean;
 }) {
     const readinessCopy: Record<DashboardProfileReadiness['state'], string> = {
         unavailable:
@@ -463,7 +472,11 @@ function ProfileReadinessCard({
         >
             <div className="flex items-center gap-2.5">
                 <span className="flex size-8 shrink-0 items-center justify-center text-primary">
-                    <Sparkles aria-hidden="true" className="size-4" />
+                    {referenceLayout ? (
+                        <Rocket aria-hidden="true" className="size-4" />
+                    ) : (
+                        <Sparkles aria-hidden="true" className="size-4" />
+                    )}
                 </span>
                 <h2
                     id="dashboard-readiness-heading"
@@ -514,6 +527,8 @@ function ProfileReadinessCard({
 
 export function DashboardContextRail({
     reviewQueue,
+    pendingAffiliation = false,
+    referenceLayout = false,
     recommendationRegion,
     getActionHref,
     onAction,
@@ -565,6 +580,7 @@ export function DashboardContextRail({
                     recommendationRegion.state === 'forbidden') && (
                     <RecommendationState
                         region={recommendationRegion}
+                        pendingAffiliation={pendingAffiliation}
                         getActionHref={getActionHref}
                         onAction={onAction}
                     />
@@ -622,41 +638,53 @@ export function DashboardContextRail({
                 )}
             </section>
 
-            <ProfileReadinessCard
-                profileReadiness={profileReadiness}
-                institution={institution}
-            />
-
-            <section
-                aria-labelledby="review-queue-heading"
-                className="min-w-0 border-t border-border px-1 pt-5"
+            <div
+                className={
+                    referenceLayout
+                        ? 'dashboard-support-card lg:col-span-2 xl:col-span-1'
+                        : 'contents'
+                }
             >
-                <div className="flex items-center gap-2.5">
-                    <span className="flex size-8 shrink-0 items-center justify-center text-primary">
-                        <ClipboardCheck aria-hidden="true" className="size-4" />
-                    </span>
-                    <h2
-                        id="review-queue-heading"
-                        className="text-sm font-semibold text-foreground"
-                    >
-                        Validasi kontribusi
-                    </h2>
-                </div>
-                <div className="mt-3 flex items-start gap-3">
-                    <Clock3
-                        aria-hidden="true"
-                        className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-                    />
-                    <div className="min-w-0">
-                        <p className="text-sm leading-snug font-semibold text-foreground">
-                            {reviewQueue.title}
-                        </p>
-                        <p className="mt-1 text-sm leading-6 wrap-anywhere text-muted-foreground">
-                            {reviewQueue.description}
-                        </p>
+                <ProfileReadinessCard
+                    profileReadiness={profileReadiness}
+                    institution={institution}
+                    referenceLayout={referenceLayout}
+                />
+
+                <section
+                    aria-labelledby="review-queue-heading"
+                    className="min-w-0 border-t border-border px-1 pt-5"
+                >
+                    <div className="flex items-center gap-2.5">
+                        <span className="flex size-8 shrink-0 items-center justify-center text-primary">
+                            <ClipboardCheck
+                                aria-hidden="true"
+                                className="size-4"
+                            />
+                        </span>
+                        <h2
+                            id="review-queue-heading"
+                            className="text-sm font-semibold text-foreground"
+                        >
+                            Validasi kontribusi
+                        </h2>
                     </div>
-                </div>
-            </section>
+                    <div className="mt-3 flex items-start gap-3">
+                        <Clock3
+                            aria-hidden="true"
+                            className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                        />
+                        <div className="min-w-0">
+                            <p className="text-sm leading-snug font-semibold text-foreground">
+                                {reviewQueue.title}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 wrap-anywhere text-muted-foreground">
+                                {reviewQueue.description}
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </div>
     );
 }

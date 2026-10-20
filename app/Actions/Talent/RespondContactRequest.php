@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use InvalidArgumentException;
 
 final class RespondContactRequest
@@ -38,6 +39,9 @@ final class RespondContactRequest
         if ($contactRequest === null) {
             throw new InvalidArgumentException('Permintaan kontak tidak ditemukan.');
         }
+
+        $contactRequest->loadMissing('organization');
+        Gate::forUser($candidateUser)->authorize('view', $contactRequest->organization);
 
         if ($contactRequest->candidate_user_id !== $candidateUser->id) {
             throw new AuthorizationException('Anda tidak berwenang menanggapi permintaan kontak ini.');

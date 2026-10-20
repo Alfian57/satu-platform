@@ -51,9 +51,9 @@ class StoreStudentProfileRequest extends FormRequest
             ],
             'portfolio_visibility' => [
                 'sometimes',
-                Rule::enum(PortfolioVisibility::class),
+                Rule::enum(PortfolioVisibility::class)->only([PortfolioVisibility::Private, PortfolioVisibility::Public]),
             ],
-            'recruiter_discoverable' => ['sometimes', 'boolean'],
+            'recruiter_discoverable' => ['sometimes', 'boolean', 'declined'],
         ], $this->studentProfileRules(), $this->profileAvailabilityRules());
     }
 }

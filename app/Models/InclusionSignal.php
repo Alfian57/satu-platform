@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\InstitutionOwned;
 use Database\Factories\InclusionSignalFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,12 +10,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class InclusionSignal extends Model
+class InclusionSignal extends Model implements InstitutionOwned
 {
     /** @use HasFactory<InclusionSignalFactory> */
     use HasFactory;
 
     protected $guarded = [];
+
+    public function institutionId(): int
+    {
+        return $this->institution_id;
+    }
 
     protected $casts = [
         'evidence_summary' => 'array',

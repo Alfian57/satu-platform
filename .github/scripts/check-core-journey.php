@@ -14,6 +14,7 @@ use App\Actions\Institution\ApproveInstitution;
 use App\Actions\Matching\CreateMatchScoreVersion;
 use App\Actions\Matching\RebuildCandidateRecommendations;
 use App\Actions\Matching\RequestMatchingRefresh;
+use App\Actions\OpportunitySupport\ManageOpportunitySupport;
 use App\Actions\Portfolio\BuildPublicPortfolioProjection;
 use App\Actions\Portfolio\UpdatePortfolioEntryVisibility;
 use App\Actions\Profile\CreateStudentProfile;
@@ -44,7 +45,9 @@ use App\Models\AuditLog;
 use App\Models\Contribution;
 use App\Models\ContributionReview;
 use App\Models\Institution;
+use App\Models\InstitutionMembership;
 use App\Models\Message;
+use App\Models\OpportunitySupportRequest;
 use App\Models\PhoneNumber;
 use App\Models\PortfolioEntry;
 use App\Models\Project;
@@ -148,18 +151,22 @@ for ($round = 1; $round <= 2; $round++) {
     Event::fake([MatchingInputsChanged::class, WorkspaceTaskChanged::class, ContributionApproved::class, InstitutionMembershipRequested::class, InstitutionMembershipReviewed::class]);
     app(CoreJourneyDemoSeeder::class)->run();
     rejectsJourney(fn () => app(CoreJourneyDemoSeeder::class)->run(), RuntimeException::class, "Putaran {$round}: seed ulang menolak database berisi data, tanpa penghapusan.");
-    $campus = Institution::query()->where('status', InstitutionStatus::Pending)->firstOrFail();
+    $campus = Institution::query()->where('slug', 'universitas-teknologi-yogyakarta')->firstOrFail();
     $other = Institution::query()->whereKeyNot($campus->getKey())->firstOrFail();
     $platform = journeyUser('platform');
     $reviewer = journeyUser('reviewer');
+    $secondReviewer = journeyUser('second_reviewer');
     $owner = journeyUser('owner');
     $student = journeyUser('student');
     $peer = journeyUser('peer');
     $outsider = journeyUser('outsider');
+    expectJourney($reviewer->isUniversityAdmin() && $secondReviewer->isUniversityAdmin()
+        && InstitutionMembership::query()->where('institution_id', $campus->id)->where('role', 'campus_admin')->count() === 2,
+        'Dataset terisolasi menyediakan dua Admin Universitas UTY tanpa memberi akses institusi lain.');
     expectJourney(Project::count() === 0 && Task::count() === 0 && Contribution::count() === 0 && PortfolioEntry::count() === 0, "Putaran {$round}: dataset awal tidak menanam hasil perjalanan.");
     rejectsJourney(fn () => app(ApproveInstitution::class)->handle($student, $campus, 'Contoh'), AuthorizationException::class, 'Mahasiswa tidak menyetujui institusi.');
-    app(ApproveInstitution::class)->handle($platform, $campus, 'Persetujuan institusi synthetic untuk pengujian, bukan pilot.');
-    expectJourney($campus->fresh()->status === InstitutionStatus::Active && AuditLog::where('operation', 'institution.approved')->exists(), 'Admin platform mengaktifkan institusi melalui command beralasan dan audit.');
+    rejectsJourney(fn () => app(ApproveInstitution::class)->handle($platform, $campus, 'Uji flag platform lama.'), AuthorizationException::class, 'Flag platform lama tidak mengaktifkan atau menyetujui institusi.');
+    expectJourney($campus->fresh()->status === InstitutionStatus::Active && ! AuditLog::where('operation', 'institution.approved')->exists(), 'Universitas fixture telah dikonfigurasi aktif, tanpa persetujuan institusi baru dalam alur inti.');
     Storage::disk('local')->put('demo-roster.csv', "nim,nama,program_studi,angkatan,semester,nomor_whatsapp\n".CoreJourneyDemoSeeder::NIM.',Budi Data synthetic,Informatika,2026,2026-Synthetic,'.CoreJourneyDemoSeeder::PHONE."\n");
     $importer = app(ImportRoster::class);
     $preview = $importer->preview($campus, 'demo-roster.csv', '2026-Synthetic');
@@ -188,11 +195,31 @@ for ($round = 1; $round <= 2; $round++) {
     ]);
     $project = app(OpenProject::class)->handle($owner, $project, reason: 'Peluang belajar synthetic.');
     $role = $project->roles()->firstOrFail();
+    $support = app(ManageOpportunitySupport::class);
+    rejectsJourney(fn () => $support->create($student, $campus, []), AuthorizationException::class, 'Alur lengkap tidak membuka gate bantuan secara otomatis.');
+    config()->set('opportunity_support.enabled', true);
+    config()->set('opportunity_support.institutions.'.$campus->id, [
+        'purpose' => 'Menemukan peran pemula. Data synthetic.', 'notice_version' => 'u06-support-v1',
+        'approval_reference' => 'SYNTHETIC-U06-ONLY', 'dataset_kind' => 'synthetic',
+        'dataset_manifest' => 'sqlite-memory-u06-fixture', 'access_days' => 7, 'reviewer_ids' => [$reviewer->id],
+    ]);
+    $supportRequest = $support->create($student, $campus, [
+        'command_key' => (string) Str::uuid(), 'need' => 'beginner_path',
+        'explanation' => 'Ingin belajar desain. Data synthetic.', 'consent' => true, 'notice_version' => 'u06-support-v1',
+    ]);
+    expectJourney(! Gate::forUser($secondReviewer)->allows('view', $supportRequest), 'Admin kedua tidak otomatis menjadi peninjau bantuan privat.');
+    $supportRequest = $support->transition($reviewer, $supportRequest, [
+        'action' => 'offer', 'expected_revision' => $supportRequest->revision,
+        'project_role_id' => $role->id, 'reason' => 'Peran menerima pemula sesuai minat yang disampaikan.',
+    ]);
+    $supportRequest = $support->transition($student, $supportRequest, ['action' => 'accept', 'expected_revision' => $supportRequest->revision]);
+    expectJourney($supportRequest->status === 'accepted' && TeamJoinRequest::count() === 0 && TeamMembership::count() === 0,
+        'Tawaran bantuan berizin menunjuk peluang, bukan bergabung atau mengajukan otomatis.');
     $filters = ProjectDiscoveryFilters::fromValidated(['institution_id' => $campus->getKey(), 'beginner' => 'accepting', 'availability' => 'available']);
     $found = app(ProjectDiscoveryQuery::class)->execute($student, $filters);
     expectJourney($found->paginator->total() === 1, 'Peluang pemula terbuka ditemukan melalui query server, tanpa undangan personal.');
     rejectsJourney(fn () => app(ProjectDiscoveryQuery::class)->execute($outsider, $filters), AuthorizationException::class, 'Penelusuran tenant lain ditolak.');
-    $version = app(CreateMatchScoreVersion::class)->execute($platform, 'demo-t10-v1', ['skill_fit' => .35, 'project_need' => .3, 'availability' => .2, 'connectivity_opportunity' => .15], ['policy' => MatchingAvailability::POLICY, 'availability_target_minutes' => 1, 'connectivity_cap' => 1], now());
+    $version = app(CreateMatchScoreVersion::class)->execute($reviewer, 'demo-t10-v1', ['skill_fit' => .35, 'project_need' => .3, 'availability' => .2, 'connectivity_opportunity' => .15], ['policy' => MatchingAvailability::POLICY, 'availability_target_minutes' => 1, 'connectivity_cap' => 1], now());
     config()->set('matching.enabled', true);
     $refresh = app(RequestMatchingRefresh::class)->handle($campus->getKey(), $student->getKey());
     app(RebuildCandidateRecommendations::class)->handle($refresh->getKey(), $campus->getKey(), $student->getKey(), $refresh->revision);
@@ -223,17 +250,21 @@ for ($round = 1; $round <= 2; $round++) {
     $contribution = app(ReviseContribution::class)->handle($student, $contribution->fresh(), ['summary' => 'Rancangan dengan penjelasan keputusan. Data synthetic.', 'expected_revision' => $oldSnapshot, 'evidence' => [$proof->getKey()]]);
     rejectsJourney(fn () => app(SubmitContribution::class)->handle($student, $contribution, $oldSnapshot), ConflictHttpException::class, 'Versi lama tidak mengirim revisi terbaru secara diam-diam.');
     $contribution = app(SubmitContribution::class)->handle($student, $contribution, ContributionSnapshot::revision($contribution->fresh()));
-    app(ReviewContribution::class)->handle($contribution, $reviewer, ContributionReviewDecision::Approved, 2, ContributionSnapshot::revision($contribution->fresh()));
+    app(ReviewContribution::class)->handle($contribution, $secondReviewer, ContributionReviewDecision::Approved, 2, ContributionSnapshot::revision($contribution->fresh()));
     $entry = PortfolioEntry::query()->sole();
     expectJourney($contribution->fresh()->status === ContributionStatus::Approved && $entry->visibility->value === 'private' && ContributionReview::count() === 2 && $entry->contribution_version_id === $contribution->current_version_id, 'Approval dan karya privat berasal dari versi actual; riwayat revisi utuh.');
-    app(UpdateStudentProfileVisibility::class)->handle($student, $profile->fresh(), ['portfolio_visibility' => 'public']);
+    app(UpdateStudentProfileVisibility::class)->handle($student, $profile->fresh(), ['portfolio_visibility' => 'public', 'expected_privacy_revision' => \App\Support\Portfolio\PortfolioPrivacyRevision::for($profile->fresh())]);
     expectJourney(app(BuildPublicPortfolioProjection::class)->handle($profile->fresh()->public_identifier)['state'] === 'unavailable', 'Profil publik saja tidak membagikan karya privat.');
-    app(UpdatePortfolioEntryVisibility::class)->handle($student, $entry, ['visibility' => 'public']);
+    app(UpdatePortfolioEntryVisibility::class)->handle($student, $entry, ['visibility' => 'public', 'expected_privacy_revision' => \App\Support\Portfolio\PortfolioPrivacyRevision::for($entry)]);
     $public = app(BuildPublicPortfolioProjection::class)->handle($profile->fresh()->public_identifier);
     $publicJson = json_encode($public, JSON_THROW_ON_ERROR);
     expectJourney($public['state'] === 'published' && ! str_contains($publicJson, $proof->path) && ! str_contains($publicJson, 'Pernyataan privat contoh.') && ! str_contains($publicJson, $student->username), 'Berbagi eksplisit hanya memproyeksikan ringkasan yang diizinkan.');
-    app(UpdatePortfolioEntryVisibility::class)->handle($student, $entry->fresh(), ['visibility' => 'private']);
+    app(UpdatePortfolioEntryVisibility::class)->handle($student, $entry->fresh(), ['visibility' => 'private', 'expected_privacy_revision' => \App\Support\Portfolio\PortfolioPrivacyRevision::for($entry->fresh())]);
     expectJourney(app(BuildPublicPortfolioProjection::class)->handle($profile->fresh()->public_identifier)['state'] === 'unavailable', 'Pencabutan berbagi menghentikan exposure berikutnya.');
+    config()->set('opportunity_support.enabled', false);
+    $supportRequest = $support->transition($student, $supportRequest->fresh(), ['action' => 'withdraw', 'expected_revision' => $supportRequest->revision]);
+    expectJourney($supportRequest->status === 'withdrawn' && ! Gate::forUser($reviewer)->allows('view', $supportRequest)
+        && OpportunitySupportRequest::count() === 1, 'Pencabutan bantuan tetap tersedia saat gate ditutup dan riwayat tidak dihapus.');
     Artisan::call('queue:work', ['connection' => 'database', '--stop-when-empty' => true, '--sleep' => 0, '--tries' => 1, '--max-jobs' => 30]);
     expectJourney(DB::table('jobs')->count() === 0 && $student->notifications()->count() >= 2 && $owner->notifications()->count() >= 1, 'Worker isolated memproses notifikasi database, bukan hanya fake pengiriman.');
 

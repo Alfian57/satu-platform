@@ -30,7 +30,8 @@ final class UpdatePortfolioEntryVisibilityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'visibility' => ['required', Rule::enum(PortfolioVisibility::class)],
+            'visibility' => ['required', Rule::enum(PortfolioVisibility::class)->only([PortfolioVisibility::Private, PortfolioVisibility::Public])],
+            'expected_privacy_revision' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/'],
             'expected_updated_at' => ['sometimes', 'nullable', 'date'],
         ];
     }

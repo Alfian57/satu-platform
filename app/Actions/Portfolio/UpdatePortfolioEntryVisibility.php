@@ -9,6 +9,7 @@ use App\Enums\PortfolioVisibility;
 use App\Models\Institution;
 use App\Models\PortfolioEntry;
 use App\Models\User;
+use App\Support\Portfolio\PortfolioPrivacyRevision;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -37,14 +38,19 @@ final class UpdatePortfolioEntryVisibility
                 ->with(['owner', 'institution'])
                 ->firstOrFail();
             Gate::forUser($actor)->authorize('update', $entry);
+            PortfolioPrivacyRevision::ensureFresh($entry, $data['expected_privacy_revision'] ?? null);
             $this->ensureFresh->handle($entry, $data['expected_updated_at'] ?? null);
 
             $visibility = PortfolioVisibility::tryFrom((string) ($data['visibility'] ?? ''));
 
-            if ($visibility === null) {
+            if ($visibility === null || ! $visibility->isSelectable()) {
                 throw ValidationException::withMessages([
-                    'visibility' => 'Visibility portfolio tidak valid.',
+                    'visibility' => 'Pilih Hanya saya atau Publik.',
                 ]);
+            }
+
+            if ($visibility === PortfolioVisibility::Public && ! PortfolioEntry::query()->whereKey($entry->getKey())->approvedCurrent()->exists()) {
+                throw ValidationException::withMessages(['visibility' => 'Sumber karya belum dapat dibagikan. Periksa kontribusi yang disetujui.']);
             }
 
             $previousVisibility = $entry->visibility;

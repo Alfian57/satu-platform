@@ -18,10 +18,13 @@ final class NotifyContributionReviewers
             ->where('institution_id', $contribution->institution_id)
             ->where('role', InstitutionMembershipRole::CampusAdmin)
             ->where('status', InstitutionMembershipStatus::Verified)
-            ->with('user')
+            ->whereNotNull('verified_at')
+            ->with(['user', 'institution'])
             ->get()
             ->each(function (InstitutionMembership $membership) use ($contribution): void {
-                $membership->user->notify(new ContributionSubmittedNotification($contribution));
+                if ($membership->user->isUniversityAdmin($membership->institution)) {
+                    $membership->user->notify(new ContributionSubmittedNotification($contribution));
+                }
             });
     }
 }

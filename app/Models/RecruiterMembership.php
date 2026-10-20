@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\RecruiterMembershipRole;
 use App\Enums\RecruiterMembershipStatus;
 use Database\Factories\RecruiterMembershipFactory;
 use Illuminate\Database\Eloquent\Attributes\Guarded;
@@ -12,12 +11,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * Associates a user with a recruiter organization.
+ * Arsip hubungan organisasi lama, bukan sumber role atau izin runtime.
  *
  * @property int $id
  * @property int $recruiter_organization_id
  * @property int $user_id
- * @property RecruiterMembershipRole $role
+ * @property string $role
  * @property RecruiterMembershipStatus $status
  * @property Carbon $created_at
  * @property Carbon $updated_at
@@ -57,7 +56,6 @@ class RecruiterMembership extends Model
     protected function casts(): array
     {
         return [
-            'role' => RecruiterMembershipRole::class,
             'status' => RecruiterMembershipStatus::class,
         ];
     }

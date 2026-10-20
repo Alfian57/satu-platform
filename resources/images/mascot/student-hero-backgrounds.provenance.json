@@ -1,0 +1,194 @@
+{
+    "description": "Lima latar hero mahasiswa SATU dalam satu keluarga visual biru, ivory dan oranye.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan, satu pemanggilan per latar, stylized-concept",
+    "alt_purpose": "Dekoratif. Alt kosong, aria-hidden, tidak memuat teks, kontrol, data atau maskot.",
+    "scope": "Hero daftar menu mahasiswa. Beranda pending mempertahankan panorama sebelumnya. Latar Peringkat tersedia juga untuk pembacaan kelompok admin tanpa perubahan izin.",
+    "optimization": {
+        "method": "Pillow, resize LANCZOS dan konversi RGB WebP quality 88 method 6",
+        "widths": [768, 1280, 2048],
+        "note": "Master tidak diedit; hanya resize dan kompresi runtime."
+    },
+    "assets": [
+        {
+            "theme": "home",
+            "purpose": "Halaman kampus ilustratif untuk Beranda, bukan foto UTY.",
+            "generation_id": "exec-6f3177db-a20b-4525-9189-420d742e620f",
+            "source": {
+                "file": "resources/images/mascot/student-hero-home.png",
+                "width": 2172,
+                "height": 724,
+                "bytes": 1483633,
+                "sha256": "9c83e3bc2268827bc7abac5b5b06b64c688dd762e3a45590ad0124a51841dd56"
+            },
+            "runtime_variants": [
+                {
+                    "file": "public/images/student-hero-home-768.webp",
+                    "width": 768,
+                    "height": 256,
+                    "bytes": 13324,
+                    "sha256": "b851f6f9d7d42e0d8886f31d7163f960a3ddffb5620095e8d8128fa6f02209da"
+                },
+                {
+                    "file": "public/images/student-hero-home-1280.webp",
+                    "width": 1280,
+                    "height": 427,
+                    "bytes": 27480,
+                    "sha256": "2071de304a1332089e500251ac9892ac698d350dce797401ff825adf9444fed5"
+                },
+                {
+                    "file": "public/images/student-hero-home.webp",
+                    "width": 2048,
+                    "height": 683,
+                    "bytes": 51550,
+                    "sha256": "195a5a5d29243b3a4aa4a8452ae8287c9eef9ae06994906d5b01acd917a75648"
+                }
+            ],
+            "prompt": "Use case: stylized-concept.\nAsset type: Decorative panoramic background plate for an existing compact SATU student dashboard hero, NOT a website mockup.\nStyle: refined softly dimensional paper architecture, matte ivory and pale sky-blue material, delicate bevels, convincing soft ambient light, elegant and restrained editorial art. SATU palette white #FFFFFF, sky #E7F2FF, blue #1764E8 used sparingly, small warm orange #FFB85C details. Crisp high-resolution landscape approximately 3:1, 2400 by 800.\nComposition: the LEFT 58 percent is nearly white/pale icy blue and intentionally empty for real HTML text and buttons. All architectural detail occupies the RIGHT 42 percent and outer lower edge, with low contrast in its central-right area because an existing separate bird mascot will be composited there by the app. Soft continuous transition, not a hard rectangle. No artificial vignette.\nAbsolutely NO bird, mascot, character, people, text, letters, numerals, watermark, logo, badges, checkmarks, progress indicator, statistics, charts, app UI, floating interface cards, user work or trophies. Do not draw a mascot platform or a central pedestal. This is only an atmospheric backdrop, not information. Use a SMALL number of large meaningful forms, no clutter, no confetti, no sparkles, no noisy small decorative items.\nScene: An open university courtyard in a contemporary Indonesian campus, abstract and fictional rather than a particular real building. On the far right, pale-blue colonnades, a broad curved ivory arch, low distant academic facade and one very soft tree silhouette. Airy morning sky, flowing sunlit courtyard lines across the lower-right, and a subtle warm orange sunlit edge. Architecture reads as campus at a glance but stays secondary. The left side is a clean sunlit ivory wall dissolving into the sky."
+        },
+        {
+            "theme": "projects",
+            "purpose": "Lembar rancangan untuk penemuan proyek.",
+            "generation_id": "exec-d358f2d4-f188-4bd9-b06f-15a4804ec571",
+            "source": {
+                "file": "resources/images/mascot/student-hero-projects.png",
+                "width": 2172,
+                "height": 724,
+                "bytes": 1699398,
+                "sha256": "ab7aadde780e1662c71ba8ecdbcbc42a8444da740e954013ca12a0d630d025a4"
+            },
+            "runtime_variants": [
+                {
+                    "file": "public/images/student-hero-projects-768.webp",
+                    "width": 768,
+                    "height": 256,
+                    "bytes": 8752,
+                    "sha256": "4ee92db74e2aaf8d18e0f4626b88e6a6296ccbaa3236d3dd0f37157d0ebf06c4"
+                },
+                {
+                    "file": "public/images/student-hero-projects-1280.webp",
+                    "width": 1280,
+                    "height": 427,
+                    "bytes": 21018,
+                    "sha256": "cb4263fbeaa27d30ce47abf212504bb5926808affbd7851d15b4c5d9d8afb77d"
+                },
+                {
+                    "file": "public/images/student-hero-projects.webp",
+                    "width": 2048,
+                    "height": 683,
+                    "bytes": 46022,
+                    "sha256": "697f3552911ccbf96dc1c5e5d1c6a76b22ce2cc8e8e9b0c23b69438db5f565c2"
+                }
+            ],
+            "prompt": "Use case: stylized-concept.\nAsset type: Decorative panoramic background plate for an existing compact SATU student dashboard hero, NOT a website mockup.\nStyle: refined softly dimensional paper architecture, matte ivory and pale sky-blue material, delicate bevels, convincing soft ambient light, elegant and restrained editorial art. SATU palette white #FFFFFF, sky #E7F2FF, blue #1764E8 used sparingly, small warm orange #FFB85C details. Crisp high-resolution landscape approximately 3:1, 2400 by 800.\nComposition: the LEFT 58 percent is nearly white/pale icy blue and intentionally empty for real HTML text and buttons. All architectural detail occupies the RIGHT 42 percent and outer lower edge, with low contrast in its central-right area because an existing separate bird mascot will be composited there by the app. Soft continuous transition, not a hard rectangle. No artificial vignette.\nAbsolutely NO bird, mascot, character, people, text, letters, numerals, watermark, logo, badges, checkmarks, progress indicator, statistics, charts, app UI, floating interface cards, user work or trophies. Do not draw a mascot platform or a central pedestal. This is only an atmospheric backdrop, not information. Use a SMALL number of large meaningful forms, no clutter, no confetti, no sparkles, no noisy small decorative items.\nScene: A beautiful architectural drafting sheet made of layered matte paper on the right, with a pale blue fine construction grid, two oversized folded drafting planes, several delicate blueprint strokes and a single slender orange drafting edge. A broad diagonal sheet corner and understated geometric planning lines suggest planning a collaboration. No real diagram, no node network, no fake tasks or UI. Do not make ruled notebook paper. Left side fades to unmarked nearly white paper."
+        },
+        {
+            "theme": "contributions",
+            "purpose": "Jurnal berlapis untuk pencatatan kontribusi.",
+            "generation_id": "exec-04c68646-ba7f-49f2-9e0c-c9a30f3ba0df",
+            "source": {
+                "file": "resources/images/mascot/student-hero-contributions.png",
+                "width": 2172,
+                "height": 724,
+                "bytes": 1568777,
+                "sha256": "070b69f5f072157ee06d5d8c80a1d464d107cf3e33ef786c3a4812dc56c90918"
+            },
+            "runtime_variants": [
+                {
+                    "file": "public/images/student-hero-contributions-768.webp",
+                    "width": 768,
+                    "height": 256,
+                    "bytes": 10058,
+                    "sha256": "054f213e2c7959f349df75d451e6d181957705c206b4e2b15e9a37a89fc8e310"
+                },
+                {
+                    "file": "public/images/student-hero-contributions-1280.webp",
+                    "width": 1280,
+                    "height": 427,
+                    "bytes": 22490,
+                    "sha256": "f551533db05b75eb2147edbcad343111e46358604b9fbdfe871c15c1429f2c15"
+                },
+                {
+                    "file": "public/images/student-hero-contributions.webp",
+                    "width": 2048,
+                    "height": 683,
+                    "bytes": 44646,
+                    "sha256": "02175df38bec2cb29860d906105e3598c08d55bd440d8c93bdb121ea1a874d50"
+                }
+            ],
+            "prompt": "Use case: stylized-concept.\nAsset type: Decorative panoramic background plate for an existing compact SATU student dashboard hero, NOT a website mockup.\nStyle: refined softly dimensional paper architecture, matte ivory and pale sky-blue material, delicate bevels, convincing soft ambient light, elegant and restrained editorial art. SATU palette white #FFFFFF, sky #E7F2FF, blue #1764E8 used sparingly, small warm orange #FFB85C details. Crisp high-resolution landscape approximately 3:1, 2400 by 800.\nComposition: the LEFT 58 percent is nearly white/pale icy blue and intentionally empty for real HTML text and buttons. All architectural detail occupies the RIGHT 42 percent and outer lower edge, with low contrast in its central-right area because an existing separate bird mascot will be composited there by the app. Soft continuous transition, not a hard rectangle. No artificial vignette.\nAbsolutely NO bird, mascot, character, people, text, letters, numerals, watermark, logo, badges, checkmarks, progress indicator, statistics, charts, app UI, floating interface cards, user work or trophies. Do not draw a mascot platform or a central pedestal. This is only an atmospheric backdrop, not information. Use a SMALL number of large meaningful forms, no clutter, no confetti, no sparkles, no noisy small decorative items.\nScene: An oversized open journal suggested by three wide curved layered ivory paper edges on the right, delicate horizontal blue writing guides with no actual writing, one narrow warm orange fabric bookmark, and a quiet blue binding crease. Macro editorial paper sculpture rather than a whole book floating in the air. Rich but subtle paper depth and soft side light; bottom-right layered page edges suggest documenting individual work. Left is flat unmarked warm white with a hint of sky."
+        },
+        {
+            "theme": "portfolio",
+            "purpose": "Galeri bingkai kosong untuk koleksi karya, bukan karya mahasiswa.",
+            "generation_id": "exec-2f8eca68-db36-437b-8e38-979257fe0263",
+            "source": {
+                "file": "resources/images/mascot/student-hero-portfolio.png",
+                "width": 2172,
+                "height": 724,
+                "bytes": 1528459,
+                "sha256": "7447e82d30202364debd77ba173525b9044273db1bf84dcec2dc0b7ed4f1d1db"
+            },
+            "runtime_variants": [
+                {
+                    "file": "public/images/student-hero-portfolio-768.webp",
+                    "width": 768,
+                    "height": 256,
+                    "bytes": 11008,
+                    "sha256": "fef0e84729f478661e0c616a691387ced68bcc252c9e117304dfb7b885462762"
+                },
+                {
+                    "file": "public/images/student-hero-portfolio-1280.webp",
+                    "width": 1280,
+                    "height": 427,
+                    "bytes": 21348,
+                    "sha256": "7c9f1e649fcbb8a9981512af6f36bbb63db035ff8368fd6071155224e4f237ba"
+                },
+                {
+                    "file": "public/images/student-hero-portfolio.webp",
+                    "width": 2048,
+                    "height": 683,
+                    "bytes": 40790,
+                    "sha256": "65a09e152fd8fb030b8ee2cd6d263feef0f8f0899f92f9bf5d2c9e7be90980a5"
+                }
+            ],
+            "prompt": "Use case: stylized-concept.\nAsset type: Decorative panoramic background plate for an existing compact SATU student dashboard hero, NOT a website mockup.\nStyle: refined softly dimensional paper architecture, matte ivory and pale sky-blue material, delicate bevels, convincing soft ambient light, elegant and restrained editorial art. SATU palette white #FFFFFF, sky #E7F2FF, blue #1764E8 used sparingly, small warm orange #FFB85C details. Crisp high-resolution landscape approximately 3:1, 2400 by 800.\nComposition: the LEFT 58 percent is nearly white/pale icy blue and intentionally empty for real HTML text and buttons. All architectural detail occupies the RIGHT 42 percent and outer lower edge, with low contrast in its central-right area because an existing separate bird mascot will be composited there by the app. Soft continuous transition, not a hard rectangle. No artificial vignette.\nAbsolutely NO bird, mascot, character, people, text, letters, numerals, watermark, logo, badges, checkmarks, progress indicator, statistics, charts, app UI, floating interface cards, user work or trophies. Do not draw a mascot platform or a central pedestal. This is only an atmospheric backdrop, not information. Use a SMALL number of large meaningful forms, no clutter, no confetti, no sparkles, no noisy small decorative items.\nScene: A refined small exhibition-gallery alcove on the right, with a broad ivory architectural arch, two very subtle recessed rectangular blue mat-board frames integrated into the wall at the far edge and one thin orange frame accent. The frames are empty and abstract, not supposed student artwork. Soft blue light over layered gallery walls, generous airy space, museum-like sophistication, no pedestals. Left side clean sunlit white gallery wall."
+        },
+        {
+            "theme": "rankings",
+            "purpose": "Skala ukur tanpa angka untuk konteks peringkat, bukan data hasil.",
+            "generation_id": "exec-a520786a-c4b1-4767-86a5-8089f6291d29",
+            "source": {
+                "file": "resources/images/mascot/student-hero-rankings.png",
+                "width": 2172,
+                "height": 724,
+                "bytes": 1766089,
+                "sha256": "51a5a376b7e45700943cad99c01efe9e4dd8dc8f895cb5c742bd4bd6d9a9b370"
+            },
+            "runtime_variants": [
+                {
+                    "file": "public/images/student-hero-rankings-768.webp",
+                    "width": 768,
+                    "height": 256,
+                    "bytes": 9266,
+                    "sha256": "8b23dc27a81eff9bb39bdcc654cb8e21a166e37ab967f850108d0dfc746c60e2"
+                },
+                {
+                    "file": "public/images/student-hero-rankings-1280.webp",
+                    "width": 1280,
+                    "height": 427,
+                    "bytes": 20726,
+                    "sha256": "f043eec3bc3188d341373185b4ae23b33b326021adb75e38c5bc89dcc6f8ed1e"
+                },
+                {
+                    "file": "public/images/student-hero-rankings.webp",
+                    "width": 2048,
+                    "height": 683,
+                    "bytes": 46162,
+                    "sha256": "5cdd356ca22ffbef67cde56a366ce713a150edf5b69a45cace025be74bc19f50"
+                }
+            ],
+            "prompt": "Use case: stylized-concept.\nAsset type: Decorative panoramic background plate for an existing compact SATU student dashboard hero, NOT a website mockup.\nStyle: refined softly dimensional paper architecture, matte ivory and pale sky-blue material, delicate bevels, convincing soft ambient light, elegant and restrained editorial art. SATU palette white #FFFFFF, sky #E7F2FF, blue #1764E8 used sparingly, small warm orange #FFB85C details. Crisp high-resolution landscape approximately 3:1, 2400 by 800.\nComposition: the LEFT 58 percent is nearly white/pale icy blue and intentionally empty for real HTML text and buttons. All architectural detail occupies the RIGHT 42 percent and outer lower edge, with low contrast in its central-right area because an existing separate bird mascot will be composited there by the app. Soft continuous transition, not a hard rectangle. No artificial vignette.\nAbsolutely NO bird, mascot, character, people, text, letters, numerals, watermark, logo, badges, checkmarks, progress indicator, statistics, charts, app UI, floating interface cards, user work or trophies. Do not draw a mascot platform or a central pedestal. This is only an atmospheric backdrop, not information. Use a SMALL number of large meaningful forms, no clutter, no confetti, no sparkles, no noisy small decorative items.\nScene: An elegant precision-measurement workspace in macro, with a large debossed circular drafting scale only on the far right, fine short radial tick marks with NO numbers, a second faint off-center concentric arc, and a thin orange needle-like paper accent along the lower-right. Very light blue translucent drafting material and ivory report-paper layers. Measured, calm, analytical and noncompetitive. Absolutely no chart axes, bars, trend arrows, scoreboard, award or ranks. Left side unmarked near-white."
+        }
+    ]
+}

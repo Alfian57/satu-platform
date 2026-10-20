@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\Auth\ResolveUserWorkspace;
 use App\Actions\Matching\RecommendationQuery;
 use App\Actions\Profile\ResolveStudentMembership;
+use App\Actions\Profile\StudentActivationSummary;
 use App\Enums\ContributionStatus;
 use App\Enums\InstitutionMembershipStatus;
 use App\Enums\ProjectStatus;
@@ -43,6 +44,7 @@ final class DashboardController extends Controller
         private readonly ResolveUserWorkspace $resolveUserWorkspace,
         private readonly ResolveStudentMembership $resolveStudentMembership,
         private readonly MatchingAvailability $matchingAvailability,
+        private readonly StudentActivationSummary $activationSummary,
     ) {}
 
     public function __invoke(Request $request): Response|RedirectResponse
@@ -60,6 +62,7 @@ final class DashboardController extends Controller
         }
 
         $membership = $this->activeMembership($user);
+        $activation = $this->activationSummary->handle($user);
         $institution = $membership?->institution;
         $hasVerifiedMembership = $membership?->status === InstitutionMembershipStatus::Verified;
         $profile = $hasVerifiedMembership && $institution !== null
@@ -81,7 +84,16 @@ final class DashboardController extends Controller
                 'name' => $institution->name,
             ],
             'profileReadiness' => $this->profileReadiness($profile, $hasVerifiedMembership),
-            'nextAction' => $this->nextAction(
+            'nextAction' => $activation['universityState'] !== 'ready' ? $this->action(
+                reference: 'ACTIVATION-LOCKED', category: 'Pemulihan aktivasi', statusLabel: 'Belum tersedia', statusTone: 'correction',
+                title: 'Aktivasi universitas belum tersedia',
+                facts: [
+                    ['label' => 'Keadaan', 'value' => 'Universitas belum tersedia atau belum aktif', 'icon' => 'file'],
+                    ['label' => 'Data', 'value' => 'Akun dan riwayat tersimpan tidak diubah', 'icon' => 'profile'],
+                    ['label' => 'Berikutnya', 'value' => 'Hubungi pengelola SATU, lalu periksa status kembali', 'icon' => 'calendar'],
+                ],
+                primaryAction: ['key' => 'onboarding', 'label' => 'Periksa status aktivasi'],
+            ) : $this->nextAction(
                 $membership,
                 $profile,
                 $previewRecommendation,

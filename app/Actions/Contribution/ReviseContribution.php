@@ -29,6 +29,7 @@ final class ReviseContribution
     public function __construct(
         private readonly AuditRecorder $audit,
         private readonly ContributionRequirements $requirements,
+        private readonly EnsureUniqueContributionWork $uniqueWork,
         private readonly RebuildTalentCandidateProjection $rebuildProjection,
     ) {}
 
@@ -117,6 +118,15 @@ final class ReviseContribution
                     'evidence' => 'Maksimal 20 evidence dapat dilampirkan pada satu versi.',
                 ]);
             }
+
+            $this->uniqueWork->handle(
+                project: $lockedProject,
+                ownerId: $actor->getKey(),
+                taskId: $task->getKey(),
+                claim: $claim,
+                summary: $summary,
+                exceptId: $lockedContribution->getKey(),
+            );
 
             $versionNumber = ((int) ContributionVersion::query()
                 ->where('contribution_id', $lockedContribution->getKey())

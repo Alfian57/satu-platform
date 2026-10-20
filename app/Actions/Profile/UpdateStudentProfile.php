@@ -14,6 +14,7 @@ use App\Models\StudentProfile;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 final class UpdateStudentProfile
 {
@@ -43,7 +44,7 @@ final class UpdateStudentProfile
             $before = $this->summary($profile);
             $changedFields = [];
 
-            foreach (['bio', 'study_program', 'study_year'] as $field) {
+            foreach (['bio', 'study_year'] as $field) {
                 if (! array_key_exists($field, $data)) {
                     continue;
                 }
@@ -53,6 +54,30 @@ final class UpdateStudentProfile
                     ? ($value === '' ? null : trim($value))
                     : $value;
                 $changedFields[] = $field;
+            }
+
+            foreach (['faculty', 'study_program', 'admission_year'] as $field) {
+                if (! array_key_exists($field, $data)) {
+                    continue;
+                }
+
+                $current = $this->normalizeAcademicValue($field, $profile->{$field});
+                $value = $this->normalizeAcademicValue($field, $data[$field]);
+
+                if ($this->isAcademicValueSet($current)) {
+                    if ($value !== $current) {
+                        throw ValidationException::withMessages([
+                            $field => 'Data yang sudah tercatat tidak dapat diubah dari menu mahasiswa.',
+                        ]);
+                    }
+
+                    continue;
+                }
+
+                if ($value !== $current) {
+                    $profile->{$field} = $value;
+                    $changedFields[] = $field;
+                }
             }
 
             if ($profile->isDirty()) {
@@ -128,5 +153,29 @@ final class UpdateStudentProfile
                 ->whereBelongsTo($profile, 'studentProfile')
                 ->count(),
         ];
+    }
+
+    private function normalizeAcademicValue(string $field, mixed $value): mixed
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($field === 'admission_year') {
+            return is_numeric($value) ? (int) $value : $value;
+        }
+
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
+    }
+
+    private function isAcademicValueSet(mixed $value): bool
+    {
+        return $value !== null && $value !== '';
     }
 }

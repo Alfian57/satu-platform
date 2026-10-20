@@ -29,7 +29,7 @@ final class RevokeRecruiterEntitlement
         RecruiterEntitlement $entitlement,
         ?string $reason = null,
     ): RecruiterEntitlement {
-        if (! $actor->is_platform_admin) {
+        if (! $actor->canAdministerAdvancedModule('recruiter')) {
             throw new AuthorizationException('Only platform administrators can revoke recruiter entitlements.');
         }
 

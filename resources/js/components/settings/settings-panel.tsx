@@ -25,7 +25,7 @@ export function SettingsCardHeading({
 }) {
     return (
         <header className="flex min-w-0 items-start gap-3">
-            <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent text-primary">
+            <span className="grid size-11 shrink-0 place-items-center rounded-2xl border border-satu-orange-border bg-satu-orange-soft text-satu-orange-ink">
                 <Icon aria-hidden="true" className="size-5" />
             </span>
             <div className="min-w-0">
@@ -49,14 +49,14 @@ export function SettingsHelpCard({
     return (
         <aside
             aria-label={title}
-            className="grid min-w-0 content-start gap-5 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"
+            className="settings-help grid min-w-0 content-start gap-5 rounded-2xl border border-satu-orange-border/80 p-5 sm:p-6"
         >
             <div className="flex items-start gap-3">
-                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent text-primary">
+                <span className="grid size-11 shrink-0 place-items-center rounded-2xl border border-satu-orange-border bg-white text-satu-orange-ink">
                     <Icon aria-hidden="true" className="size-5" />
                 </span>
                 <div className="min-w-0">
-                    <p className="font-label text-label text-primary">
+                    <p className="text-xs font-semibold text-satu-orange-ink">
                         {eyebrow}
                     </p>
                     <h2 className="mt-1 text-title font-semibold">{title}</h2>

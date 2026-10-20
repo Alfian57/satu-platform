@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Profile\ResolveStudentMembership;
 use App\Actions\Project\ArchiveProject;
 use App\Actions\Project\CancelProject;
 use App\Actions\Project\CreateProject;
 use App\Actions\Project\OpenProject;
 use App\Actions\Project\ProjectDiscoveryQuery;
 use App\Actions\Project\UpdateProject;
-use App\Enums\InstitutionMembershipRole;
 use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionStatus;
 use App\Enums\ProjectStatus;
 use App\Exceptions\InvalidProjectTransition;
 use App\Http\Requests\Project\ListProjectsRequest;
@@ -20,7 +19,6 @@ use App\Http\Requests\Project\ProjectTransitionRequest;
 use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Models\Institution;
-use App\Models\InstitutionMembership;
 use App\Models\Project;
 use App\Models\ProjectRole;
 use App\Models\ProjectRoleSkill;
@@ -30,7 +28,6 @@ use App\Support\Project\ProjectDiscoveryFilters;
 use App\Support\Project\ProjectDiscoverySerializer;
 use App\Support\Project\ProjectOpportunityCapacity;
 use App\Support\Team\TeamFormationSerializer;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -42,6 +39,7 @@ final class ProjectController extends Controller
 {
     public function __construct(
         private readonly TeamFormationSerializer $teamFormationSerializer,
+        private readonly ResolveStudentMembership $resolveStudentMembership,
     ) {}
 
     public function index(
@@ -288,21 +286,8 @@ final class ProjectController extends Controller
 
     private function institutionForCreation(User $user, ?int $institutionId): Institution
     {
-        $membership = InstitutionMembership::query()
-            ->with('institution:id,name,status')
-            ->whereBelongsTo($user)
-            ->where('status', InstitutionMembershipStatus::Verified)
-            ->where('role', InstitutionMembershipRole::Student)
-            ->whereRelation('institution', 'status', InstitutionStatus::Active)
-            ->when(
-                $institutionId !== null,
-                fn (Builder $query): Builder => $query->where('institution_id', $institutionId),
-            )
-            ->latest('requested_at')
-            ->latest('id')
-            ->first();
-
-        if ($membership?->institution === null) {
+        $membership = $this->resolveStudentMembership->handle($user, $institutionId);
+        if ($membership?->status !== InstitutionMembershipStatus::Verified) {
             abort(403, 'Tidak ada konteks kampus yang dapat dipakai untuk membuat project.');
         }
 

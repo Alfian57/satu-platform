@@ -8,6 +8,7 @@ use App\Models\Contribution;
 use App\Models\ContributionEvidence;
 use App\Models\ContributionReview;
 use App\Models\ContributionVersion;
+use Carbon\CarbonInterface;
 
 final class ContributionReviewQueueSerializer
 {
@@ -19,6 +20,8 @@ final class ContributionReviewQueueSerializer
      */
     public function item(Contribution $contribution): array
     {
+        $submittedAt = $contribution->getAttribute('submitted_at');
+
         return [
             'id' => $contribution->getKey(),
             'revision' => ContributionSnapshot::revision($contribution),
@@ -33,6 +36,7 @@ final class ContributionReviewQueueSerializer
             ],
             'status' => $contribution->status->value,
             'updated_at' => $contribution->updated_at->toIso8601String(),
+            'submitted_at' => $submittedAt instanceof CarbonInterface ? $submittedAt->toIso8601String() : null,
             'current_version' => $contribution->currentVersion === null
                 ? null
                 : $this->version($contribution->currentVersion),

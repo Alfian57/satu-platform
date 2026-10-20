@@ -25,7 +25,8 @@ export function NavMain({
         <>
             <ul className="mt-3 grid gap-1.5">
                 {items.map((item) => {
-                    const isActive = isCurrentOrParentUrl(item.href);
+                    const isActive =
+                        item.isActive ?? isCurrentOrParentUrl(item.href);
                     const Icon = item.icon;
 
                     return (
@@ -52,13 +53,14 @@ export function NavMain({
                                         className={cn(
                                             'flex size-9 shrink-0 items-center justify-center rounded-xl border transition-colors duration-standard motion-reduce:transition-none',
                                             isActive
-                                                ? 'border-white bg-card text-primary shadow-xs'
-                                                : 'border-border/60 bg-background/80 text-muted-foreground group-hover/nav-item:border-primary/10 group-hover/nav-item:bg-card group-hover/nav-item:text-primary',
+                                                ? 'border-satu-orange-border/70 bg-card text-primary'
+                                                : 'border-transparent bg-transparent text-muted-foreground group-hover/nav-item:bg-card group-hover/nav-item:text-primary',
                                         )}
                                     >
                                         <Icon
                                             aria-hidden="true"
-                                            className="size-[1.125rem]"
+                                            className="size-5"
+                                            strokeWidth={1.75}
                                         />
                                     </span>
                                 )}
@@ -84,8 +86,11 @@ export function NavMain({
                 <details
                     className="group/advanced border-t border-border pt-3"
                     open={
-                        items.some((item) => isCurrentOrParentUrl(item.href)) ||
-                        undefined
+                        items.some(
+                            (item) =>
+                                item.isActive ??
+                                isCurrentOrParentUrl(item.href),
+                        ) || undefined
                     }
                     data-test="advanced-navigation"
                 >

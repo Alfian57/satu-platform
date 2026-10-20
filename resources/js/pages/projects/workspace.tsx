@@ -421,7 +421,7 @@ function WorkspaceContextRail({
 
             <p className="border-t border-border pt-4 text-xs leading-5 text-muted-foreground">
                 Pemilik dan anggota aktif berizin bekerja di sini. Bukti dan
-                diskusi privat tidak otomatis dibagikan ke publik atau perekrut.
+                diskusi privat tidak otomatis dibagikan ke publik.
             </p>
         </div>
     );
@@ -489,13 +489,71 @@ function TaskFormFields({
                     maxLength={5000}
                     disabled={processing}
                     aria-invalid={Boolean(descriptionError)}
-                    aria-describedby={`${idPrefix}-description-error`}
+                    aria-describedby={`${idPrefix}-description-help ${idPrefix}-description-error`}
                     placeholder="Konteks singkat, hasil yang diharapkan, atau catatan handoff"
                 />
                 <InputError
                     id={`${idPrefix}-description-error`}
                     message={descriptionError}
                 />
+                <p
+                    id={`${idPrefix}-description-help`}
+                    className="text-sm leading-6 text-muted-foreground"
+                >
+                    Jelaskan hasil, bagian pekerjaanmu dan koordinasi dengan
+                    rekan. Bukti serta pengakuan individual tetap diajukan
+                    melalui Kontribusi.
+                </p>
+                <details
+                    className="rounded-2xl border border-primary/15 bg-accent/40 p-3"
+                    data-test={`${idPrefix}-collaboration-guidance`}
+                >
+                    <summary className="min-h-11 cursor-pointer rounded-xl px-2 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+                        Contoh pembagian pekerjaan
+                    </summary>
+                    <p className="px-2 text-sm leading-6 text-muted-foreground">
+                        Satu anggota menyusun hasil, anggota lain memeriksanya
+                        melalui tugas terpisah. Tentukan penanggung jawab
+                        setelah tugas tersimpan. Contoh hanya mengisi catatan
+                        yang kosong dan tidak membuat tugas lain otomatis.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2 px-2 pb-1">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="min-h-11 max-w-full bg-white whitespace-normal"
+                            disabled={
+                                processing || Boolean(data.description.trim())
+                            }
+                            onClick={() =>
+                                onChange(
+                                    'description',
+                                    'Hasil yang diharapkan: rancangan satu halaman panduan.\nBagian saya: menyusun alur dan isi awal.\nKoordinasi dengan rekan: sepakati anggota yang memeriksa kejelasan melalui tugas pemeriksaan terpisah.\nBukti hasil: unggah rancangan dan jelaskan bagian individual pada Kontribusi.',
+                                )
+                            }
+                            data-test={`${idPrefix}-example-create`}
+                        >
+                            Contoh penyusunan hasil
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="min-h-11 max-w-full bg-white whitespace-normal"
+                            disabled={
+                                processing || Boolean(data.description.trim())
+                            }
+                            onClick={() =>
+                                onChange(
+                                    'description',
+                                    'Hasil yang diharapkan: catatan pemeriksaan panduan.\nBagian saya: memeriksa kejelasan informasi dan menuliskan usulan perbaikan.\nKoordinasi dengan rekan: baca hasil penyusun dan sepakati perbaikan yang diperlukan.\nBukti hasil: unggah catatan pemeriksaan dan jelaskan bagian individual pada Kontribusi.',
+                                )
+                            }
+                            data-test={`${idPrefix}-example-review`}
+                        >
+                            Contoh pemeriksaan rekan
+                        </Button>
+                    </div>
+                </details>
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
@@ -2052,6 +2110,14 @@ export default function ProjectWorkspace({
                                     {tasks.meta.total === 0
                                         ? 'Belum ada hasil pada filter ini.'
                                         : `${tasks.meta.total} tugas dalam konteks workspace ini.`}
+                                </p>
+                                <p
+                                    className="max-w-prose text-sm leading-6 text-muted-foreground"
+                                    data-test="workspace-collaboration-guidance"
+                                >
+                                    Sepakati hasil bersama, bagi bagian
+                                    pekerjaan dan tentukan siapa yang memeriksa
+                                    hasil rekan. Percakapan bersifat opsional.
                                 </p>
                             </div>
                             <span className="font-label text-label text-muted-foreground">

@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -90,6 +91,12 @@ class PortfolioEntry extends Model implements InstitutionOwned
         return $this->institution_id;
     }
 
+    /** @return MorphMany<AuditLog, $this> */
+    public function privacyChanges(): MorphMany
+    {
+        return $this->morphMany(AuditLog::class, 'auditable')->where('operation', 'portfolio_entry.visibility_updated');
+    }
+
     public function isWithdrawn(): bool
     {
         return $this->withdrawn_at !== null;
@@ -128,6 +135,7 @@ class PortfolioEntry extends Model implements InstitutionOwned
     {
         $contributionTable = (new Contribution)->getTable();
         $entryTable = $query->getModel()->getTable();
+        $versionTable = (new ContributionVersion)->getTable();
 
         $query->whereHas('contribution', function (Builder $contributionQuery) use (
             $contributionTable,
@@ -138,7 +146,14 @@ class PortfolioEntry extends Model implements InstitutionOwned
                 ->whereColumn(
                     "{$contributionTable}.current_version_id",
                     "{$entryTable}.contribution_version_id",
-                );
+                )
+                ->whereColumn("{$contributionTable}.institution_id", "{$entryTable}.institution_id")
+                ->whereColumn("{$contributionTable}.owner_id", "{$entryTable}.user_id");
+        });
+        $query->whereHas('sourceVersion', function (Builder $versionQuery) use ($versionTable, $entryTable): void {
+            $versionQuery->whereColumn("{$versionTable}.contribution_id", "{$entryTable}.contribution_id")
+                ->whereColumn("{$versionTable}.created_by_id", "{$entryTable}.user_id")
+                ->whereHas('reviews', fn (Builder $reviews) => $reviews->where('decision', 'approved'));
         });
     }
 
@@ -167,10 +182,16 @@ class PortfolioEntry extends Model implements InstitutionOwned
     #[Scope]
     protected function visibleToPublic(Builder $query): void
     {
+        $entryTable = $query->getModel()->getTable();
+        $profileTable = (new StudentProfile)->getTable();
         $query
             ->approvedCurrent()
             ->whereNull('withdrawn_at')
-            ->where('visibility', PortfolioVisibility::Public->value);
+            ->where('visibility', PortfolioVisibility::Public->value)
+            ->whereHas('owner.studentProfiles', function (Builder $profiles) use ($entryTable, $profileTable): void {
+                $profiles->whereColumn("{$profileTable}.institution_id", "{$entryTable}.institution_id")
+                    ->where('portfolio_visibility', PortfolioVisibility::Public->value);
+            });
     }
 
     /**
@@ -181,13 +202,7 @@ class PortfolioEntry extends Model implements InstitutionOwned
     #[Scope]
     protected function visibleToInstitution(Builder $query): void
     {
-        $query
-            ->approvedCurrent()
-            ->whereNull('withdrawn_at')
-            ->whereIn('visibility', [
-                PortfolioVisibility::Institution->value,
-                PortfolioVisibility::Public->value,
-            ]);
+        $query->visibleToPublic();
     }
 
     /**

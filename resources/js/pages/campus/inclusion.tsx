@@ -281,6 +281,7 @@ export default function CampusInclusion({
             <AppPage>
                 <div className="space-y-6" data-test="campus-inclusion-root">
                     <CampusOperationHeader
+                        theme="inclusion"
                         title="Peninjauan inklusi"
                         description="Tinjau kesempatan kolaborasi dengan konteks yang memadai. Catat kesimpulan manusia, bukan diagnosis atau penilaian pribadi."
                         institution={institution.name}
@@ -295,7 +296,7 @@ export default function CampusInclusion({
                         <p>
                             Hanya peninjau kampus berotorisasi. Sinyal dan
                             catatan ini tidak ditampilkan kepada mahasiswa,
-                            rekan tim, atau perekrut.
+                            rekan tim, atau publik.
                         </p>
                     </div>
                     {feedback && (
@@ -339,7 +340,7 @@ export default function CampusInclusion({
                                 </h2>
                                 <p className="mt-2 max-w-[65ch] text-sm leading-6 text-muted-foreground">
                                     {accessUnavailable
-                                        ? 'Data sebelumnya disembunyikan. Periksa otorisasi institusi sebelum memuat ulang.'
+                                        ? 'Data sebelumnya disembunyikan. Periksa izin peninjauan sebelum memuat ulang.'
                                         : 'Antrean dan keputusan tidak tersedia saat fitur nonaktif. Penggunaan data nyata memerlukan persetujuan tata kelola dan otorisasi. Demonstrasi sintetis tidak menggantikan persetujuan tersebut.'}
                                 </p>
                             </section>

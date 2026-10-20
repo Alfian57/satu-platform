@@ -11,6 +11,7 @@ const palette = [
     { name: 'Langit', color: '#F3F9FF' },
     { name: 'Permukaan', color: '#FFFFFF' },
     { name: 'Biru SATU', color: '#1764E8' },
+    { name: 'Oranye SATU', color: '#FFB85C' },
     { name: 'Teks', color: '#17345A' },
 ];
 
@@ -28,7 +29,7 @@ export default function Appearance() {
                         id="appearance-settings-title"
                         icon={Sun}
                         title="Tampilan ruang kerja"
-                        description="Langit yang terang, informasi yang tertata, dan aksen biru yang menemani aktivitasmu."
+                        description="Biru yang tenang, putih yang lapang, dan oranye hangat. Satu identitas untuk ruang kolaborasimu."
                     />
                     <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/10 bg-accent/60 p-4">
                         <div className="flex items-center gap-3">
@@ -69,7 +70,8 @@ export default function Appearance() {
                                     Ruang kerja
                                 </span>
                             </div>
-                            <div className="rounded-2xl border border-primary/10 bg-gradient-to-br from-accent to-white p-5">
+                            <div className="relative overflow-hidden rounded-2xl border border-primary/10 bg-gradient-to-br from-accent to-white p-5">
+                                <span className="absolute -top-5 -right-5 size-20 rounded-full border-[12px] border-satu-orange/25" />
                                 <p className="text-xs font-medium text-primary">
                                     Buku Besar Kolaborasi
                                 </p>
@@ -83,7 +85,7 @@ export default function Appearance() {
                             </div>
                             <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                                 <div className="rounded-2xl border border-border bg-card p-4">
-                                    <Eye className="size-5 text-primary" />
+                                    <Eye className="size-5 text-satu-orange-ink" />
                                     <p className="mt-3 text-sm font-semibold">
                                         Hierarki yang jelas
                                     </p>
@@ -108,7 +110,7 @@ export default function Appearance() {
                         </figcaption>
                     </figure>
                     <div
-                        className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-4"
+                        className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-5"
                         aria-label="Palet warna SATU"
                     >
                         {palette.map((item) => (
@@ -144,9 +146,9 @@ export default function Appearance() {
                                 className="mt-1 size-4 shrink-0 text-primary"
                             />
                             <span>
-                                Warna langit, permukaan putih, dan aksen biru
-                                digunakan secara konsisten di seluruh ruang
-                                kerja.
+                                Warna langit, permukaan putih, serta aksen biru
+                                dan oranye digunakan secara konsisten di seluruh
+                                ruang kerja.
                             </span>
                         </li>
                         <li className="flex items-start gap-3">

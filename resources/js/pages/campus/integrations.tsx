@@ -566,6 +566,7 @@ export default function AcademicIntegrations({
             <AppPage>
                 <div className="space-y-6" data-test="campus-integrations-root">
                     <CampusOperationHeader
+                        theme="integrations"
                         title="Sinkronisasi akademik"
                         description="Pantau hasil pengiriman aktivitas dan versi kredit. Bedakan percobaan ulang dari pencatatan penyelesaian manual."
                         institution={
@@ -615,9 +616,8 @@ export default function AcademicIntegrations({
                                 Akses integrasi akademik tidak tersedia
                             </h2>
                             <p className="mt-2 text-sm leading-6 text-correction-subtle-foreground">
-                                Periksa izin operator dan institusi aktif. Data
-                                sebelumnya tidak ditampilkan selama akses tidak
-                                tersedia.
+                                Periksa akses Admin Universitas. Data sebelumnya
+                                tidak ditampilkan selama akses tidak tersedia.
                             </p>
                         </section>
                     ) : (

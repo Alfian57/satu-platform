@@ -16,7 +16,7 @@ final class ProfileRevision
         $profile->loadMissing(['skills', 'interests', 'availabilityWindows']);
 
         return hash('sha256', json_encode([
-            'profile' => $profile->only(['id', 'institution_id', 'user_id', 'bio', 'study_program', 'study_year', 'portfolio_visibility', 'recruiter_discoverable', 'updated_at']),
+            'profile' => $profile->only(['id', 'institution_id', 'user_id', 'bio', 'study_program', 'study_year', 'faculty', 'admission_year', 'portfolio_visibility', 'recruiter_discoverable', 'updated_at']),
             'skills' => $profile->skills->sortBy('skill_taxonomy_id')->map(static fn (ProfileSkill $skill): array => [
                 $skill->skill_taxonomy_id, $skill->proficiency->value, $skill->evidence_metadata,
             ])->values()->all(),

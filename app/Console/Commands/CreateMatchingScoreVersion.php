@@ -15,7 +15,7 @@ use JsonException;
 
 final class CreateMatchingScoreVersion extends Command
 {
-    protected $signature = 'matching:create-score-version {--actor= : ID admin platform} {--score-version= : Identifier versi baru} {--weights= : JSON empat bobot eksplisit} {--activate : Aktifkan setelah persetujuan kebijakan}';
+    protected $signature = 'matching:create-score-version {--actor= : ID Admin Universitas} {--score-version= : Identifier versi baru} {--weights= : JSON empat bobot eksplisit} {--activate : Aktifkan setelah persetujuan kebijakan}';
 
     protected $description = 'Buat versi immutable kebijakan v2 tanpa mengubah bobot/versi existing';
 

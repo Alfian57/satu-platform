@@ -7,6 +7,8 @@ namespace App\Actions\Gamification;
 use App\Actions\Audit\AuditRecorder;
 use App\Enums\ContributionReviewDecision;
 use App\Enums\ContributionStatus;
+use App\Exceptions\MissingXpSemester;
+use App\Jobs\RebuildLeaderboardProjections;
 use App\Models\Contribution;
 use App\Models\ContributionReview;
 use App\Models\Institution;
@@ -43,6 +45,9 @@ final class AwardVerifiedContributionXp
         ?User $actor = null,
         ?string $reason = null,
     ): XpLedgerEntry {
+        $hasExplicitAmount = $amount !== null;
+        $hasExplicitSemester = $semester !== null;
+        $hasExplicitReason = $reason !== null;
         $amount = $this->validatedAmount(
             $amount ?? (int) config('gamification.verified_contribution_amount', 1),
         );
@@ -57,6 +62,9 @@ final class AwardVerifiedContributionXp
             $actor,
             $reason,
             $policyVersion,
+            $hasExplicitAmount,
+            $hasExplicitSemester,
+            $hasExplicitReason,
         ): XpLedgerEntry {
             $lockedContribution = Contribution::query()
                 ->lockForUpdate()
@@ -81,7 +89,9 @@ final class AwardVerifiedContributionXp
 
             $version = $lockedContribution->currentVersion;
 
-            if ($version === null) {
+            if ($version === null
+                || $version->contribution_id !== $lockedContribution->getKey()
+                || $version->created_by_id !== $lockedContribution->owner_id) {
                 throw new InvalidArgumentException(
                     'Contribution approved harus memiliki current version.',
                 );
@@ -90,6 +100,7 @@ final class AwardVerifiedContributionXp
             $approvedReview = ContributionReview::query()
                 ->where('contribution_version_id', $version->getKey())
                 ->where('decision', ContributionReviewDecision::Approved)
+                ->where('reviewer_id', '!=', $lockedContribution->owner_id)
                 ->first();
 
             if ($approvedReview === null) {
@@ -101,7 +112,6 @@ final class AwardVerifiedContributionXp
             $institution = Institution::query()
                 ->whereKey($lockedContribution->institution_id)
                 ->firstOrFail();
-            $resolvedSemester = $semester ?? $this->activeSemester($institution);
             $idempotencyKey = $this->idempotencyKey(
                 $lockedContribution,
                 $version->version_number,
@@ -116,14 +126,18 @@ final class AwardVerifiedContributionXp
                 $this->assertMatchingExistingEntry(
                     $existing,
                     contribution: $lockedContribution,
-                    semester: $resolvedSemester,
-                    amount: $amount,
-                    reason: $reason,
-                    policyVersion: $policyVersion,
+                    semester: $hasExplicitSemester ? (string) $semester : $existing->semester,
+                    amount: $hasExplicitAmount ? $amount : $existing->amount,
+                    reason: $hasExplicitReason ? $reason : $existing->reason,
+                    policyVersion: $existing->policy_version,
                 );
+
+                $this->requestRebuild($existing);
 
                 return $existing->load(['user', 'institution', 'source']);
             }
+
+            $resolvedSemester = $semester ?? $this->reviewSemester($institution, $approvedReview);
 
             $entry = XpLedgerEntry::query()->forceCreate([
                 'user_id' => $lockedContribution->owner_id,
@@ -158,6 +172,8 @@ final class AwardVerifiedContributionXp
                 reason: $reason,
             );
 
+            $this->requestRebuild($entry);
+
             return $entry->refresh()->load(['user', 'institution', 'source']);
         }, attempts: 3);
     }
@@ -188,17 +204,25 @@ final class AwardVerifiedContributionXp
         return $this->handle($contribution, $amount, $semester, $actor, $reason);
     }
 
-    private function activeSemester(Institution $institution): string
+    private function requestRebuild(XpLedgerEntry $entry): void
+    {
+        DB::afterCommit(static function () use ($entry): void {
+            RebuildLeaderboardProjections::dispatch($entry->institution_id, $entry->semester);
+        });
+    }
+
+    private function reviewSemester(Institution $institution, ContributionReview $review): string
     {
         $semester = InstitutionRoster::query()
             ->whereBelongsTo($institution)
-            ->active()
+            ->where('activated_at', '<=', $review->reviewed_at)
             ->latest('activated_at')
+            ->latest('id')
             ->value('semester');
 
         if (! is_string($semester) || trim($semester) === '') {
-            throw new InvalidArgumentException(
-                'XP award membutuhkan active institution roster untuk menentukan semester.',
+            throw new MissingXpSemester(
+                'XP award membutuhkan roster yang berlaku ketika kontribusi disetujui.',
             );
         }
 

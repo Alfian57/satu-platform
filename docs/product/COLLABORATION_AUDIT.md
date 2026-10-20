@@ -70,12 +70,18 @@ Prioritas P1 di sini berarti perlu dipenuhi untuk membuktikan alur inti, bukan k
 - GAP-01: [app-sidebar](../../resources/js/components/app-sidebar.tsx) dan kontrak penundaan pada [PRODUCT](../../PRODUCT.md).
 - GAP-02 dan GAP-08: [onboarding-modal](../../resources/js/components/onboarding-modal.tsx), [StudentProfileValidationRules](../../app/Concerns/StudentProfileValidationRules.php), serta `profileIsReady`, `nextAction`, dan `activeProjectsQuery` pada [DashboardController](../../app/Http/Controllers/DashboardController.php).
 - GAP-03 dan GAP-04: [ProjectDiscoverySerializer](../../app/Support/Project/ProjectDiscoverySerializer.php), [ProjectRequirements](../../app/Actions/Project/ProjectRequirements.php), [UpdateProject](../../app/Actions/Project/UpdateProject.php), [migration proyek](../../database/migrations/2026_08_11_151844_create_project_tables.php), dan [migration tim](../../database/migrations/2026_08_12_041305_create_team_transition_tables.php). Risiko penggantian peran disimpulkan dari delete/create dan `nullOnDelete`, belum direproduksi lewat mutasi database.
-- GAP-05 dan GAP-06: [GenerateRecommendation](../../app/Actions/Matching/GenerateRecommendation.php), [MatchingScorer](../../app/Support/Matching/MatchingScorer.php), [Recommendation](../../app/Models/Recommendation.php), dan `ensureMatchRunAndRecommendation` pada [DemoSeeder](../../database/seeders/DemoSeeder.php). Scorer mempunyai fallback connectivity netral ketika total event nol; adanya fallback ini belum membuktikan kebijakan tanpa riwayat atau kualitas data produksi telah disetujui.
+- GAP-05 dan GAP-06: [GenerateRecommendation](../../app/Actions/Matching/GenerateRecommendation.php), [MatchingScorer](../../app/Support/Matching/MatchingScorer.php), [Recommendation](../../app/Models/Recommendation.php), dan `ensureMatchRunAndRecommendation` pada `DemoSeeder` historis. Scorer mempunyai fallback connectivity netral ketika total event nol; adanya fallback ini belum membuktikan kebijakan tanpa riwayat atau kualitas data produksi telah disetujui.
 - GAP-07: [AcceptTeamJoinRequest](../../app/Actions/Team/AcceptTeamJoinRequest.php), [RejectTeamJoinRequest](../../app/Actions/Team/RejectTeamJoinRequest.php), [TeamDecisionRequest](../../app/Http/Requests/Team/TeamDecisionRequest.php), [TeamFormationSerializer](../../app/Support/Team/TeamFormationSerializer.php), [TeamJoinRequestPolicy](../../app/Policies/TeamJoinRequestPolicy.php), dan [panel tim](../../resources/js/components/projects/team-formation-panel.tsx).
 - GAP-09: [ReviewContribution](../../app/Actions/Contribution/ReviewContribution.php), [consumer portofolio](../../app/Listeners/SyncApprovedContributionPortfolio.php), serta [SyncApprovedPortfolioEntry](../../app/Actions/Portfolio/SyncApprovedPortfolioEntry.php). Approval bukan bukti bahwa seluruh skill pemilik telah diuji.
 - GAP-10: `queryContributionStats`, `queryReviewTurnaround`, dan `paginateMembers` pada [FetchCampusOverviewMetrics](../../app/Actions/Campus/FetchCampusOverviewMetrics.php); minimisasi payload tetap diperlukan meski field tidak dirender [UI ringkasan](../../resources/js/pages/campus/overview.tsx).
-- GAP-11 dan GAP-12: [RecordInclusionReview](../../app/Actions/Inclusion/RecordInclusionReview.php), [TeamMembershipTransition](../../app/Actions/Team/TeamMembershipTransition.php), dan hasil pencarian writer `CollaborationEvent` pada aplikasi dibandingkan [DemoSeeder](../../database/seeders/DemoSeeder.php).
-- GAP-13 dan GAP-14: [landing-demo](../../resources/js/lib/landing-demo.ts), [DemoSeeder](../../database/seeders/DemoSeeder.php), serta [workflow tests](../../.github/workflows/tests.yml) dan `ci:check` pada [composer.json](../../composer.json).
+- GAP-11 dan GAP-12: [RecordInclusionReview](../../app/Actions/Inclusion/RecordInclusionReview.php), [TeamMembershipTransition](../../app/Actions/Team/TeamMembershipTransition.php), dan hasil pencarian writer `CollaborationEvent` pada aplikasi dibandingkan `DemoSeeder` historis.
+- GAP-13 dan GAP-14: [landing-demo](../../resources/js/lib/landing-demo.ts), `DemoSeeder` historis, serta [workflow tests](../../.github/workflows/tests.yml) dan `ci:check` pada [composer.json](../../composer.json).
+
+`DemoSeeder` adalah sumber temuan audit lama, telah dihapus saat pembersihan
+seeder pada 15 Oktober 2026. Pengujian lokal alur UTY sekarang memakai
+[UtyJourneySeeder](../../database/seeders/UtyJourneySeeder.php); sumber uji
+perjalanan terisolasi tetap [CoreJourneyDemoSeeder](../../database/seeders/CoreJourneyDemoSeeder.php).
+Pergantian fixture tidak menghapus temuan historis atau membuktikan dampak pilot.
 
 ### Traceability Requirement
 
@@ -257,3 +263,38 @@ Runner `composer test:core` membuat GAP-14 mempunyai tes bisnis reproduktif,
 tetapi tidak menutup seluruh release gate atau GAP-13 sebagai bukti dampak.
 Temuan audit historis tetap dipertahankan; kemajuan teknis bukan penghapusan
 keterbatasan sumber, fairness atau gate manusia.
+
+## UAT Transisi Universitas U06
+
+Status: belum dilaksanakan oleh peserta/pemilik yang berwenang. Pemeriksaan
+otomatis U06 menyediakan perjalanan dua admin dan konflik MySQL lokal, bukan
+hasil wawancara, sertifikasi aksesibilitas atau persetujuan visual. Gunakan
+data synthetic sebelum gate data nyata disepakati, tanpa merekam kontak atau
+bukti privat di repository.
+
+Urutan tinjauan manusia yang disiapkan:
+
+1. Mahasiswa baru menjelaskan UTY sebagai universitas sasaran, mengisi NIM,
+   memahami mismatch/pending dan melanjutkan profil tanpa karya sebelumnya.
+2. Mahasiswa menemukan peran menerima pemula, memahami syarat/kapasitas,
+   mengajukan dan membaca alasan. Pemilik memutuskan lalu membagi tugas.
+3. Mahasiswa mengerjakan tugas, melampirkan bukti individual, mengirim dan
+   merevisi. Admin pertama meminta revisi; admin kedua membaca versi aktual
+   dan menyetujui tanpa membuka draft atau memvalidasi kontribusi sendiri.
+4. Mahasiswa menjelaskan mengapa karya baru tetap privat, memilih berbagi,
+   lalu mencabut dan memeriksa bahwa proyeksi berikutnya tidak tersedia.
+5. Pada fixture bantuan berizin, peninjau yang ditunjuk menawarkan peran.
+   Mahasiswa memilih menerima/menolak/mencabut. Pastikan peserta memahami
+   bahwa tawaran tidak otomatis memasukkan ke tim atau menjanjikan hasil.
+6. Dua admin memeriksa status/undangan, membedakan konfirmasi sandi dari
+   konfirmasi tindakan, menangani konflik serta izin hilang tanpa retry
+   command otomatis. Jangan menguji penangguhan pada akun kerja nyata.
+7. Ulangi alur berisiko pada mobile/desktop, keyboard, zoom dan reduced motion;
+   sertakan jaringan gagal, hasil belum pasti, reconnect dan akses dicabut.
+
+Catat per skenario: peninjau/tanggal, lingkungan dan manifest, hasil yang
+diharapkan/diamati, lulus atau gagal, bantuan yang diperlukan, bukti nonpribadi,
+temuan serta pemilik tindak lanjut. Semua hasil masih kosong sampai diuji.
+Pemilik produk memberi persetujuan visual/UAT eksplisit setelah temuan
+ditinjau; kampus memutuskan standar bukti, retensi, peninjau dan operasional.
+Tidak ada gate DECISIONS yang ditutup oleh penambahan checklist ini.

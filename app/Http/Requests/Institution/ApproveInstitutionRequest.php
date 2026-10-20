@@ -2,14 +2,13 @@
 
 namespace App\Http\Requests\Institution;
 
-use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class ApproveInstitutionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() instanceof User && $this->user()->is_platform_admin;
+        return false;
     }
 
     /**

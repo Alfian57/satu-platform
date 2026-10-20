@@ -52,7 +52,7 @@ const journeySteps = [
         icon: ShieldCheck,
         summary: 'Kampus meninjau kontribusi yang diajukan.',
         explanation:
-            'Peninjau kampus dapat menyetujui, meminta revisi, atau menolak kontribusi. Jika diminta revisi, perbaiki pengajuan sesuai alasan yang diberikan.',
+            'Admin Universitas dapat menyetujui, meminta revisi, atau menolak versi yang kamu ajukan. Jika diminta revisi, perbaiki pengajuan sesuai alasan. Draft privat tidak ikut dibuka.',
     },
     {
         title: 'Portofolio',
@@ -63,7 +63,13 @@ const journeySteps = [
     },
 ];
 
-export function StudentJourneySummary({ userId }: { userId: number }) {
+export function StudentJourneySummary({
+    userId,
+    referenceLayout = false,
+}: {
+    userId: number;
+    referenceLayout?: boolean;
+}) {
     const onboardingOpen = useStudentOnboardingOpen();
     const [open, setOpen] = useState(false);
     const [handingOff, setHandingOff] = useState(false);
@@ -139,8 +145,8 @@ export function StudentJourneySummary({ userId }: { userId: number }) {
                 className="min-w-0 border-t border-border px-1 pt-7 pb-2 sm:pt-8"
                 data-test="student-journey-summary"
             >
-                <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-                    <div className="min-w-0">
+                <div className="student-journey-summary__header flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                    <div className="student-journey-summary__intro min-w-0">
                         <p className="text-xs font-semibold text-primary">
                             Kenali cara kerja SATU
                         </p>
@@ -166,7 +172,7 @@ export function StudentJourneySummary({ userId }: { userId: number }) {
                     </DialogTrigger>
                 </div>
 
-                <ol className="mt-6 grid gap-x-6 gap-y-5 sm:grid-cols-2 xl:grid-cols-4">
+                <ol className="student-journey-summary__steps mt-6 grid gap-x-6 gap-y-5 sm:grid-cols-2 xl:grid-cols-4">
                     {journeySteps.map((step, index) => {
                         const Icon = step.icon;
 
@@ -176,16 +182,27 @@ export function StudentJourneySummary({ userId }: { userId: number }) {
                                 className="min-w-0 border-t border-border/80 pt-4"
                             >
                                 <div className="flex items-center gap-2.5">
-                                    <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-border bg-card text-primary shadow-xs">
-                                        <Icon
-                                            aria-hidden="true"
-                                            className="size-4"
-                                        />
+                                    <span
+                                        className="student-journey-summary__icon flex size-10 shrink-0 items-center justify-center rounded-2xl border border-border bg-card text-primary shadow-xs"
+                                        aria-hidden={
+                                            referenceLayout || undefined
+                                        }
+                                    >
+                                        {referenceLayout ? (
+                                            index + 1
+                                        ) : (
+                                            <Icon
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                        )}
                                     </span>
                                     <h3 className="text-sm font-semibold text-foreground">
-                                        <span className="text-muted-foreground">
-                                            {index + 1}.{' '}
-                                        </span>
+                                        {!referenceLayout && (
+                                            <span className="text-muted-foreground">
+                                                {index + 1}.{' '}
+                                            </span>
+                                        )}
                                         {step.title}
                                     </h3>
                                 </div>
@@ -196,7 +213,7 @@ export function StudentJourneySummary({ userId }: { userId: number }) {
                         );
                     })}
                 </ol>
-                <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                <p className="student-journey-summary__note mt-4 text-sm leading-6 text-muted-foreground">
                     Tugas yang selesai belum otomatis menjadi kontribusi
                     terverifikasi. Ajukan kontribusimu untuk ditinjau kampus.
                 </p>
@@ -264,10 +281,9 @@ export function StudentJourneySummary({ userId }: { userId: number }) {
                             className="mt-0.5 size-4 shrink-0 text-primary"
                         />
                         <p className="text-sm leading-6 text-muted-foreground">
-                            Portofolio publik dan izin ditemukan perekrut
-                            merupakan pilihan terpisah. Kamu mengendalikan
-                            visibilitas melalui pengaturan profil dan
-                            portofolio.
+                            Kamu mengendalikan visibilitas melalui pengaturan
+                            profil dan setiap karya pada portofolio. Persetujuan
+                            kontribusi tidak otomatis memublikasikan karya.
                         </p>
                     </div>
                 </div>

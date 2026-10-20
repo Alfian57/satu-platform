@@ -1,6 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    Building2,
     CheckCircle2,
     ChevronLeft,
     ChevronRight,
@@ -12,6 +11,7 @@ import {
     FolderKanban,
     GraduationCap,
     Info,
+    LayoutPanelTop,
     Network,
     RefreshCw,
     RotateCcw,
@@ -22,8 +22,8 @@ import {
 import type { FormEvent, ReactNode } from 'react';
 import { useRef, useState } from 'react';
 import { AppPage } from '@/components/app-page';
+import { CampusOperationHeader } from '@/components/campus-operation-layout';
 import { DashboardArchiveArt } from '@/components/dashboard-archive-art';
-import Mascot from '@/components/mascot';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -113,7 +113,7 @@ function formatDate(value: string | null): string {
 
 function roleLabel(role: string): string {
     if (role === 'campus_admin') {
-        return 'Operator kampus';
+        return 'Admin Universitas';
     }
 
     if (role === 'student') {
@@ -677,8 +677,8 @@ function OverviewContextRail({
                     Data kampus
                 </h2>
                 <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                    Pintasan memakai kampus aktif yang sama. Keputusan dilakukan
-                    pada antrean masing-masing.
+                    Buka antrean afiliasi atau kontribusi untuk meninjau
+                    pengajuan mahasiswa.
                 </p>
                 <Button
                     asChild
@@ -848,48 +848,14 @@ function CampusOverviewContent({
                     className="space-y-4 sm:space-y-5"
                     data-test="campus-overview-root"
                 >
-                    <header className="relative isolate overflow-hidden rounded-[2rem] border border-primary/10 bg-gradient-to-br from-[#dff1ff] via-[#edf6ff] to-white p-6 shadow-md sm:p-8 lg:p-10">
-                        <div
-                            aria-hidden="true"
-                            className="pointer-events-none absolute inset-0"
-                        >
-                            <DashboardArchiveArt className="absolute top-4 right-24 hidden w-36 -rotate-6 opacity-50 sm:block lg:right-48 lg:w-44" />
-                            <span className="absolute top-10 right-8 h-10 w-2 rotate-12 rounded-full bg-[#ffb85c]/75" />
-                        </div>
-                        <div className="relative grid items-center gap-5 sm:grid-cols-[minmax(0,1fr)_9rem] lg:grid-cols-[minmax(0,1fr)_13rem] 2xl:grid-cols-[minmax(0,1fr)_16rem]">
-                            <div className="min-w-0">
-                                <p className="text-xs font-semibold tracking-[0.14em] text-primary uppercase">
-                                    Ruang operator kampus
-                                </p>
-                                <h1 className="mt-3 text-3xl leading-tight font-bold tracking-[-0.035em] sm:text-4xl 2xl:text-5xl">
-                                    Ringkasan kampus.
-                                    <br />
-                                    <span className="text-primary">
-                                        Pahami data. Tentukan langkah.
-                                    </span>
-                                </h1>
-                                <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-                                    Pantau keanggotaan dan proyek kampus, lalu
-                                    lanjutkan ke antrean afiliasi atau validasi
-                                    kontribusi yang perlu ditinjau.
-                                </p>
-                                <p className="mt-5 inline-flex max-w-full items-center gap-2 rounded-full border border-primary/15 bg-white/80 px-3 py-2 text-sm font-semibold">
-                                    <Building2
-                                        aria-hidden="true"
-                                        className="size-4 shrink-0 text-primary"
-                                    />
-                                    <span className="min-w-0 break-words">
-                                        {institution.name}
-                                    </span>
-                                </p>
-                            </div>
-                            <Mascot
-                                pose="guide"
-                                priority
-                                className="mx-auto w-28 sm:w-full"
-                            />
-                        </div>
-                    </header>
+                    <CampusOperationHeader
+                        theme="overview"
+                        icon={LayoutPanelTop}
+                        title="Ringkasan kampus"
+                        description="Pantau keanggotaan dan proyek kampus, lalu lanjutkan ke antrean afiliasi atau validasi kontribusi yang perlu ditinjau."
+                        institution={institution.name}
+                        testId="campus-overview-header"
+                    />
                     <Button variant="outline" asChild className="min-h-11">
                         <Link href={opportunitySupport(institution.id)}>
                             Tindak lanjut kesempatan

@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 export function SettingsFormFeedback({
     errors,
     actionError,
+    actionErrorTitle = 'Hasil perubahan belum dapat dikonfirmasi.',
     processing,
     success,
     prefix,
@@ -11,6 +12,7 @@ export function SettingsFormFeedback({
 }: {
     errors: Record<string, string>;
     actionError: string | null;
+    actionErrorTitle?: string;
     processing: boolean;
     success?: string | null;
     prefix: string;
@@ -49,7 +51,7 @@ export function SettingsFormFeedback({
                     <div className="min-w-0">
                         <p className="font-semibold">
                             {actionError
-                                ? 'Hasil perubahan belum dapat dikonfirmasi.'
+                                ? actionErrorTitle
                                 : 'Ada isian yang perlu diperiksa.'}
                         </p>
                         {actionError ? (

@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace App\Actions\Project;
 
-use App\Enums\InstitutionMembershipRole;
-use App\Enums\InstitutionMembershipStatus;
-use App\Enums\InstitutionStatus;
+use App\Actions\Institution\ResolveConfiguredUniversity;
 use App\Enums\ProjectStatus;
 use App\Enums\ProjectVisibility;
 use App\Enums\TeamMembershipStatus;
+use App\Exceptions\InvalidUniversityConfiguration;
 use App\Models\Institution;
-use App\Models\InstitutionMembership;
 use App\Models\Project;
 use App\Models\ProjectRole;
 use App\Models\TeamMembership;
@@ -27,9 +25,11 @@ use Illuminate\Support\Facades\Gate;
 
 final class ProjectDiscoveryQuery
 {
+    public function __construct(private readonly ResolveConfiguredUniversity $resolveUniversity) {}
+
     public function execute(User $user, ProjectDiscoveryFilters $filters): ProjectDiscoveryResult
     {
-        $institution = $this->resolveInstitution($user, $filters->institutionId);
+        $institution = $this->resolveInstitution($filters->institutionId);
         Gate::forUser($user)->authorize('viewAny', [Project::class, $institution]);
 
         $effectiveFilters = $filters->forInstitution($institution->getKey());
@@ -84,30 +84,18 @@ final class ProjectDiscoveryQuery
         return new ProjectDiscoveryResult($institution, $effectiveFilters, $paginator);
     }
 
-    private function resolveInstitution(User $user, ?int $institutionId): Institution
+    private function resolveInstitution(?int $institutionId): Institution
     {
-        $membership = InstitutionMembership::query()
-            ->with('institution:id,name,status')
-            ->whereBelongsTo($user)
-            ->where('status', InstitutionMembershipStatus::Verified)
-            ->whereIn('role', [
-                InstitutionMembershipRole::Student,
-                InstitutionMembershipRole::CampusAdmin,
-            ])
-            ->whereRelation('institution', 'status', InstitutionStatus::Active)
-            ->when(
-                $institutionId !== null,
-                fn (Builder $query): Builder => $query->where('institution_id', $institutionId),
-            )
-            ->latest('requested_at')
-            ->latest('id')
-            ->first();
-
-        if ($membership?->institution === null) {
-            throw new AuthorizationException('Tidak ada konteks institution yang terverifikasi.');
+        try {
+            $university = $this->resolveUniversity->handle();
+        } catch (InvalidUniversityConfiguration) {
+            throw new AuthorizationException('Konteks universitas belum tersedia.');
+        }
+        if ($institutionId !== null && $institutionId !== $university->getKey()) {
+            throw new AuthorizationException('Konteks universitas tidak sesuai.');
         }
 
-        return $membership->institution;
+        return $university;
     }
 
     /** @param  Builder<Project>  $query */

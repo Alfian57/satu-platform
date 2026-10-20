@@ -22,6 +22,7 @@ final class UpdateLeaderboardPreferenceRequest extends FormRequest
     {
         return [
             'is_opted_in' => ['required', 'boolean'],
+            'expected_version' => ['required', 'integer', 'min:0'],
             'semester' => ['nullable', 'string', 'max:100'],
             'scope' => [
                 'nullable',

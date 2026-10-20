@@ -1,0 +1,19 @@
+{
+    "description": "Ilustrasi dekoratif hero SATU yang mengikuti referensi pemilik produk. Bukan data akun, testimoni atau status validasi.",
+    "method": "imagegen bawaan",
+    "date": "2026-10-18",
+    "references": [
+        "satu-hero.png",
+        "resources/images/mascot/reference/maskot-01-burung-arsip-turnaround.png",
+        "resources/images/mascot/reference/maskot-01-burung-arsip.png"
+    ],
+    "source": "resources/images/mascot/landing-hero-campus.png",
+    "runtime": "public/images/landing-hero-campus.webp",
+    "dimensions": {
+        "width": 1254,
+        "height": 1254
+    },
+    "optimization": "WebP kualitas 88, alpha dipertahankan. Ukuran runtime 282722 byte.",
+    "alt_purpose": "Dekoratif, alt kosong. Tujuan serta pilihan fitur tersedia sebagai HTML.",
+    "prompt": "Use case: compositing. Asset type: transparent website hero illustration, NOT a full webpage. Input 1 is the user's approved website hero composition. Inputs 2 and 3 are identity and material references for SATU's blue kingfisher bird mascot. Recreate and isolate ONLY the right-side illustrated scene from input 1, on a genuinely transparent alpha background, square canvas with the entire scene comfortably inside the edges. Keep the composition and scene very close to input 1: the large friendly blue bird in three-quarter view facing right, waving its left wing, ivory chest, orange eyebrow and cheek markings, graphite beak and feet, blue leather cross-body book bag; a luminous translucent blue elliptical platform below its feet, flowing translucent blue-white ribbons looping behind the body, pale sky-blue airy shapes; small polished 3D graduation-cap tile above-left, purple teamwork tile to the right, paper airplane, a few small warm golden sparkles. Retain the floating white concept cards around the bird as in reference, with simple 3D folder, portfolio bars, and light bulb details. Exact short text on cards, if present: 'Proyek kampus', 'Bangun portofolio', 'Berkarya bersama', 'Kembangkan kemampuan'. The small teamwork bubble should use three generic stylized 3D student portraits, not actual photos or testimonials. Maintain the original bird's appearance and proportions. High quality soft 3D render, fine layered feathers and warm expressive eyes, elegant blue/cobalt/ivory palette, soft light and gentle contact shadows. Center the whole scene as a single reusable illustration, no page background, no header, no SATU logo, no title, no CTAs, no navigation, no footer, no crop of any object. Keep all outer pixels transparent. Do not generate the left half or the full website. This illustration will sit next to live HTML copy and buttons."
+}

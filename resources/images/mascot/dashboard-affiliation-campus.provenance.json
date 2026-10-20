@@ -1,0 +1,46 @@
+{
+    "description": "Panorama kampus dekoratif untuk hero Beranda mahasiswa yang menunggu verifikasi afiliasi, mengikuti referensi pemilik produk.",
+    "date": "2026-10-19",
+    "method": "imagegen bawaan",
+    "generation_id": "exec-63557ff6-4ae1-47cd-bc41-84924278bd28",
+    "reference": {
+        "file": "beranda-verif.png",
+        "role": "Komposisi dan gaya panorama pada banner teratas, bukan UI yang dimasukkan ke asset",
+        "sha256": "254D3B51B4388669C97794B3D3DA172A21EED9DBFDD849FAF02DE1B369781A1F"
+    },
+    "source": {
+        "file": "resources/images/mascot/dashboard-affiliation-campus.png",
+        "width": 2172,
+        "height": 724,
+        "mode": "RGB",
+        "bytes": 1842691,
+        "sha256": "e0d6e484763d2188b0a3bafc58dcce90b6008ac46481da21e3a1ef5914fa80d4"
+    },
+    "runtime_variants": [
+        {
+            "file": "public/images/dashboard-affiliation-campus-768.webp",
+            "width": 768,
+            "height": 256,
+            "bytes": 30552,
+            "sha256": "9beefaf105029d569cbc59809779dfc2050dfe28611871c1e05b30010156ce15"
+        },
+        {
+            "file": "public/images/dashboard-affiliation-campus-1280.webp",
+            "width": 1280,
+            "height": 427,
+            "bytes": 67990,
+            "sha256": "2427aadefe70fb4f45bd1974ea151ef0769ac3c5d555cf5c3d59ab88efcbfcd7"
+        },
+        {
+            "file": "public/images/dashboard-affiliation-campus.webp",
+            "width": 2560,
+            "height": 853,
+            "bytes": 174820,
+            "sha256": "ac96bb69cf25239dd189d38c931bef947a8dde8814a2990491597d108889b394"
+        }
+    ],
+    "optimization": "Resize mekanis Lanczos proporsional pada 768, 1280 dan 2560px; varian terbesar dibesarkan dari master 2172px. WebP kualitas 88 method 6, tanpa perubahan kreatif manual.",
+    "alt_purpose": "Latar ilustratif dekoratif dengan alt kosong, bukan foto dokumentasi UTY, keadaan pengajuan, bukti identitas atau persetujuan afiliasi. Teks dan kontrol merupakan HTML; maskot memakai asset transparan terpisah.",
+    "scope": "Hanya hero Beranda saat pending_review biasa sesuai beranda-verif.png. Kartu afiliasi, halaman lain, status khusus dan navigasi tidak memakai panorama ini.",
+    "prompt": "Use case: precise-object-edit. Asset type: decorative panoramic campus background plate for a real responsive SATU dashboard hero. Input image 1 is the user's approved dashboard reference; use ONLY its very top rectangular hero banner as the exact art and composition reference, not the rest of the dashboard. Reconstruct the same blue-sky campus panorama behind that hero into a clean standalone background plate. Match the white and pale-blue university building, its front colonnade and broad glass entrance, red roof sections, central red-over-white Indonesian flag, small palms and green planted foreground, surrounding low campus wings, soft fluffy clouds, pale cyan sky, fine polished painterly 3D architectural illustration style and the same gentle sunlight. Preserve the visual identity and architecture seen in that banner, not a different generic modern office. Composition: very wide panoramic image approximately 3072 by 768 pixels. The leftmost 36 percent is quiet near-white icy blue atmospheric sky for live HTML copy. Architecture starts subtly around 38 percent, the central flag building is at about 65 percent of canvas width, and lower campus wings continue to the right edge. Buildings and landscaping occupy the bottom half; keep roofs below the upper third so a shallow 6.8:1 hero crop can still show the campus and flag. Reproduce the reference's soft natural fade into the bright left side, without a visible vertical seam. Remove ALL text, greetings, icons, buttons, dashboard cards, borders and all UI. Remove the bird mascot completely; it will be a separate existing transparent asset in code. Do not include the mascot's circular rings, arch, podium or sparkles in this plate; those small shapes will be layered in CSS. No birds, people, signs, lettering, logos, watermark, data, check marks or approval symbols. Do not output a UI screenshot or device mockup. Full-bleed background image only, richly detailed but soft enough behind live UI."
+}

@@ -10,6 +10,7 @@ import {
     Compass,
     FileText,
     Sparkles,
+    Sparkle,
     UserRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -27,6 +28,7 @@ type ActionHref = NonNullable<InertiaLinkProps['href']>;
 
 type Props = {
     action: DashboardNextAction;
+    referenceLayout?: boolean;
     getActionHref: (action: DashboardAction) => ActionHref | null;
     onAction: (action: DashboardAction) => void;
 };
@@ -73,7 +75,7 @@ function FactRow({ fact }: { fact: DashboardDocketFact }) {
     const Icon = fact.icon ? factIcons[fact.icon] : FileText;
 
     return (
-        <div className="flex min-w-0 items-start gap-3 border-t border-border/70 pt-4">
+        <div className="dashboard-docket__fact flex min-w-0 items-start gap-3 border-t border-border/70 pt-4">
             <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-accent/65 text-primary">
                 <Icon aria-hidden="true" className="size-4" />
             </span>
@@ -158,6 +160,7 @@ function ActionControl({
 
 export function DashboardNextAction({
     action,
+    referenceLayout = false,
     getActionHref,
     onAction,
 }: Props) {
@@ -167,10 +170,25 @@ export function DashboardNextAction({
     return (
         <section
             aria-labelledby="dashboard-next-action"
-            className="scroll-mt-24 overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-md"
+            className="dashboard-docket scroll-mt-24 overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-md"
             data-test="dashboard-docket"
         >
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-linear-to-r from-accent/65 to-card px-5 pt-5 pb-4 sm:px-7 sm:pt-6">
+            {referenceLayout && (
+                <div className="dashboard-docket__art" aria-hidden="true">
+                    <img
+                        src="/images/dashboard-review-document.webp"
+                        srcSet="/images/dashboard-review-document-256.webp 256w, /images/dashboard-review-document.webp 512w"
+                        sizes="192px"
+                        width={512}
+                        height={512}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                    />
+                    <Sparkle />
+                </div>
+            )}
+            <div className="dashboard-docket__header flex flex-wrap items-center justify-between gap-3 bg-linear-to-r from-accent/65 to-card px-5 pt-5 pb-4 sm:px-7 sm:pt-6">
                 <p className="flex items-center gap-2 text-sm font-semibold text-primary">
                     <span className="flex size-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
                         <Compass aria-hidden="true" className="size-5" />
@@ -188,7 +206,7 @@ export function DashboardNextAction({
                 </span>
             </div>
 
-            <div className="px-5 pt-2 pb-6 sm:px-7 sm:pb-7">
+            <div className="dashboard-docket__body px-5 pt-2 pb-6 sm:px-7 sm:pb-7">
                 <h2
                     id="dashboard-next-action"
                     className="max-w-[28ch] scroll-mt-24 text-2xl leading-tight font-bold tracking-tight wrap-anywhere text-foreground sm:text-[1.75rem]"
@@ -218,7 +236,7 @@ export function DashboardNextAction({
             </div>
 
             {(action.primaryAction || action.secondaryAction) && (
-                <div className="flex flex-col gap-2 border-t border-border/60 bg-background/50 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:px-7">
+                <div className="dashboard-docket__footer flex flex-col gap-2 border-t border-border/60 bg-background/50 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:px-7">
                     {action.primaryAction && (
                         <ActionControl
                             action={action.primaryAction}

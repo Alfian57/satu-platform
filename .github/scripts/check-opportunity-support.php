@@ -87,6 +87,7 @@ function deniesSupport(callable $operation, string $exception, string $message):
     throw new RuntimeException($message.' tidak ditolak.');
 }
 $campus = Institution::factory()->active()->create(['name' => 'Kampus A. Data synthetic']);
+config()->set('university.slug', $campus->slug);
 $other = Institution::factory()->active()->create(['name' => 'Kampus B. Data synthetic']);
 $student = User::factory()->create(['name' => 'Mahasiswa baru. Data synthetic']);
 $owner = User::factory()->create();

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Enums\InstitutionStatus;
 use App\Models\Institution;
 use App\Models\InstitutionMembership;
 use App\Models\PhoneNumber;
@@ -36,16 +35,20 @@ final class CoreJourneyDemoSeeder extends Seeder
         }
 
         DB::transaction(function (): void {
-            $campus = Institution::factory()->create(['name' => 'Kampus Pustaka. Data synthetic', 'status' => InstitutionStatus::Pending]);
+            $campus = Institution::factory()->active()->create(['name' => 'Universitas Teknologi Yogyakarta. Data synthetic', 'slug' => 'universitas-teknologi-yogyakarta']);
             $other = Institution::factory()->active()->create(['name' => 'Kampus Pembatas. Data synthetic']);
             User::factory()->create(['name' => 'Admin platform. Data synthetic', 'username' => 'demo_t10_platform', 'is_platform_admin' => true]);
             $reviewer = User::factory()->create(['name' => 'Peninjau. Data synthetic', 'username' => 'demo_t10_reviewer']);
+            $secondReviewer = User::factory()->create(['name' => 'Admin kedua. Data synthetic', 'username' => 'demo_t10_second_reviewer']);
             $owner = User::factory()->create(['name' => 'Siti. Data synthetic', 'username' => 'demo_t10_owner']);
             $student = User::factory()->create(['name' => 'Budi. Data synthetic', 'username' => 'demo_t10_student']);
             $peer = User::factory()->create(['name' => 'Rekan pemula. Data synthetic', 'username' => 'demo_t10_peer']);
             $outsider = User::factory()->create(['name' => 'Mahasiswa kampus lain. Data synthetic', 'username' => 'demo_t10_outsider']);
 
-            InstitutionMembership::factory()->campusAdmin()->verifiedByRosterExactMatch()->create(['institution_id' => $campus->getKey(), 'user_id' => $reviewer->getKey()]);
+            foreach ([$reviewer, $secondReviewer] as $admin) {
+                InstitutionMembership::factory()->campusAdmin()->verifiedByRosterExactMatch()->create(['institution_id' => $campus->getKey(), 'user_id' => $admin->getKey()]);
+                PhoneNumber::factory()->create(['user_id' => $admin->getKey()]);
+            }
             foreach ([$owner, $peer] as $user) {
                 InstitutionMembership::factory()->student()->verifiedByRosterExactMatch()->create(['institution_id' => $campus->getKey(), 'user_id' => $user->getKey()]);
             }

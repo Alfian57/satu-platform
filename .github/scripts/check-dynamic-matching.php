@@ -94,6 +94,7 @@ function matchingFailure(callable $operation, string $exception, string $message
 
 config()->set('matching.enabled', false);
 $campus = Institution::factory()->active()->create(['name' => 'Kampus pencocokan. Data synthetic']);
+config()->set('university.slug', $campus->slug);
 $otherCampus = Institution::factory()->active()->create();
 $owner = User::factory()->create();
 $candidate = User::factory()->create();
@@ -116,7 +117,8 @@ $private = Project::factory()->create(['institution_id' => $campus->id, 'owner_i
 ProjectRole::factory()->create(['project_id' => $private->id]);
 $outside = Project::factory()->create(['institution_id' => $otherCampus->id, 'owner_id' => $owner->id]);
 ProjectRole::factory()->create(['project_id' => $outside->id]);
-$admin = User::factory()->create(['is_platform_admin' => true]);
+$admin = User::factory()->create(['is_platform_admin' => false]);
+App\Models\InstitutionMembership::factory()->campusAdmin()->verifiedByCampusAdmin()->create(['user_id' => $admin->id, 'institution_id' => $campus->id]);
 $params = ['availability_target_minutes' => 1, 'connectivity_cap' => 1, 'policy' => MatchingAvailability::POLICY];
 $weights = ['skill_fit' => 0.35, 'project_need' => 0.30, 'availability' => 0.20, 'connectivity_opportunity' => 0.15];
 $version = $app->make(CreateMatchScoreVersion::class)->execute($admin, 'synthetic-v2', $weights, $params, now());

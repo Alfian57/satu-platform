@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureUniversityAdministration;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -20,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['sidebar_state']);
 
         $middleware->web(append: [
+            EnsureUniversityAdministration::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
@@ -32,6 +34,10 @@ return Application::configure(basePath: dirname(__DIR__))
             ->onOneServer();
 
         $schedule->command('gamification:rebuild-leaderboards')
+            ->hourly()
+            ->withoutOverlapping()
+            ->onOneServer();
+        $schedule->command('gamification:reconcile-xp')
             ->hourly()
             ->withoutOverlapping()
             ->onOneServer();

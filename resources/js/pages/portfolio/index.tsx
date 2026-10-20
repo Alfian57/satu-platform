@@ -17,7 +17,6 @@ import {
 import { useMemo, useState } from 'react';
 import { AppPage } from '@/components/app-page';
 import { DashboardArchiveArt as ArchiveArt } from '@/components/dashboard-archive-art';
-import Mascot from '@/components/mascot';
 import { PortfolioEntryVisibilityControl } from '@/components/portfolio/portfolio-entry-visibility-control';
 import {
     formatPortfolioDate,
@@ -28,6 +27,7 @@ import {
     portfolioVisibilityOptions,
 } from '@/components/portfolio/portfolio-presentation';
 import { PortfolioVisibilitySettings } from '@/components/portfolio/portfolio-visibility-settings';
+import StudentMenuHero from '@/components/student-menu-hero';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -188,11 +188,13 @@ function PortfolioCard({
     profileId,
     canManage,
     onUpdated,
+    onAccessRevoked,
 }: {
     entry: PortfolioEntry;
     profileId: number;
     canManage: boolean;
     onUpdated: (entry: PortfolioEntry) => void;
+    onAccessRevoked: () => void;
 }) {
     return (
         <li
@@ -277,6 +279,7 @@ function PortfolioCard({
                             entry={entry}
                             profileId={profileId}
                             onUpdated={onUpdated}
+                            onAccessRevoked={onAccessRevoked}
                         />
                     </div>
                 </details>
@@ -300,12 +303,14 @@ function PortfolioCollection({
     canManage,
     isRefreshing,
     onEntryUpdated,
+    onAccessRevoked,
 }: {
     entries: PortfolioEntry[];
     profile: PortfolioProfile;
     canManage: boolean;
     isRefreshing: boolean;
     onEntryUpdated: (entry: PortfolioEntry) => void;
+    onAccessRevoked: () => void;
 }) {
     const [query, setQuery] = useState('');
     const [status, setStatus] = useState<PortfolioEntryStatus | 'all'>('all');
@@ -469,6 +474,7 @@ function PortfolioCollection({
                             profileId={profile.id}
                             canManage={canManage}
                             onUpdated={onEntryUpdated}
+                            onAccessRevoked={onAccessRevoked}
                         />
                     ))}
                 </ol>
@@ -545,7 +551,7 @@ export default function PortfolioIndex({
                     'Koleksi belum diperbarui. Karya tersimpan tetap aman. Coba lagi.',
                 ),
             onHttpException: (response) => {
-                if (response.status === 403) {
+                if ([401, 403, 404].includes(response.status)) {
                     setIsForbidden(true);
                 }
 
@@ -573,108 +579,78 @@ export default function PortfolioIndex({
             <Head title="Portofolio" />
             <AppPage>
                 <div
-                    className="grid w-full min-w-0 gap-6"
+                    className="portfolio-discovery grid w-full min-w-0 gap-6"
                     data-test="portfolio-root"
                 >
-                    <header
-                        className="relative overflow-hidden rounded-4xl border border-white bg-linear-to-br from-accent via-sky-100 to-blue-100 p-5 shadow-md sm:p-7"
-                        data-test="portfolio-header"
-                    >
-                        <div
-                            aria-hidden="true"
-                            className="pointer-events-none absolute -top-24 -right-12 size-80 rounded-full border border-white/70 bg-white/30"
-                        />
-                        <ArchiveArt className="absolute top-5 right-28 hidden w-36 -rotate-6 opacity-55 sm:block lg:right-36 lg:w-44" />
-                        <span
-                            aria-hidden="true"
-                            className="absolute top-7 right-7 h-1.5 w-10 -rotate-12 rounded-full bg-satu-feather/70"
-                        />
-                        <div className="relative flex min-w-0 items-center justify-between gap-4">
-                            <div className="max-w-2xl min-w-0">
-                                <p className="inline-flex items-center gap-2 rounded-full border border-white bg-white/80 px-3 py-1.5 text-xs font-semibold text-primary">
-                                    <BookOpenCheck
-                                        aria-hidden="true"
-                                        className="size-3.5"
-                                    />
-                                    Portofolio mahasiswa
-                                </p>
-                                <h1 className="mt-4 text-2xl leading-snug font-bold tracking-tight sm:text-3xl">
-                                    Karya yang bercerita tentang perjalananmu.
-                                </h1>
-                                <p className="mt-3 max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">
-                                    Lihat hasil kontribusimu, kenali jejak
-                                    verifikasinya, dan tentukan siapa yang boleh
-                                    melihat karya yang kamu bangun.
-                                </p>
-                            </div>
-                            <Mascot
-                                pose="guide"
-                                priority
-                                className="hidden w-32 shrink-0 sm:block lg:w-40"
-                            />
-                        </div>
-                        <div className="relative mt-5 flex min-w-0 flex-col gap-4 border-t border-white/80 pt-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                            <p className="flex min-w-0 items-start gap-2 text-sm leading-6">
+                    <StudentMenuHero
+                        theme="portfolio"
+                        icon={BookOpenCheck}
+                        eyebrow="Portofolio mahasiswa"
+                        title="Karyamu, ceritamu."
+                        description="Karya dari kontribusi yang disetujui kampus terkumpul di sini. Kamu menentukan siapa yang boleh melihatnya."
+                        pose="portfolio-showcase"
+                        testId="portfolio-header"
+                        note={
+                            <p className="flex min-w-0 items-start gap-2">
                                 <FolderOpen
                                     aria-hidden="true"
-                                    className="mt-1 size-4 shrink-0 text-primary"
+                                    className="mt-0.5 size-4 shrink-0 text-primary"
                                 />
-                                <span className="[overflow-wrap:anywhere]">
+                                <span className="min-w-0 wrap-anywhere">
                                     {!isForbidden && resolvedProfile
                                         ? resolvedProfile.institution.name
                                         : 'Karya dari kontribusi yang disetujui kampus'}
                                 </span>
                             </p>
-                            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
-                                {!isForbidden &&
-                                    resolvedProfile &&
-                                    permissions.can_manage && (
-                                        <Button
-                                            asChild
-                                            variant="outline"
-                                            className="min-h-11 bg-card"
-                                        >
-                                            <a
-                                                href="#portfolio-profile-title"
-                                                data-test="portfolio-profile-jump"
-                                            >
-                                                <Eye aria-hidden="true" />
-                                                Kendali profil
-                                            </a>
-                                        </Button>
-                                    )}
-                                {!isForbidden && profile && (
-                                    <Button
-                                        asChild
-                                        className="min-h-11 hover:bg-primary dark:hover:bg-primary"
-                                    >
-                                        <Link href={contributionsIndex()}>
-                                            Lihat kontribusi
-                                            <ArrowRight aria-hidden="true" />
-                                        </Link>
-                                    </Button>
-                                )}
+                        }
+                    >
+                        {!isForbidden &&
+                            resolvedProfile &&
+                            permissions.can_manage && (
                                 <Button
-                                    type="button"
+                                    asChild
                                     variant="outline"
                                     className="min-h-11 bg-card"
-                                    onClick={refresh}
-                                    disabled={isRefreshing}
-                                    data-test="portfolio-refresh"
                                 >
-                                    <RefreshCw
-                                        aria-hidden="true"
-                                        className={
-                                            isRefreshing
-                                                ? 'animate-spin motion-reduce:animate-none'
-                                                : ''
-                                        }
-                                    />
-                                    Muat ulang
+                                    <a
+                                        href="#portfolio-profile-title"
+                                        data-test="portfolio-profile-jump"
+                                    >
+                                        <Eye aria-hidden="true" />
+                                        Kendali profil
+                                    </a>
                                 </Button>
-                            </div>
-                        </div>
-                    </header>
+                            )}
+                        {!isForbidden && profile && (
+                            <Button
+                                asChild
+                                className="student-menu-hero__primary min-h-11"
+                            >
+                                <Link href={contributionsIndex()}>
+                                    Lihat kontribusi
+                                    <ArrowRight aria-hidden="true" />
+                                </Link>
+                            </Button>
+                        )}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="min-h-11 bg-card"
+                            onClick={refresh}
+                            disabled={isRefreshing}
+                            data-test="portfolio-refresh"
+                        >
+                            <RefreshCw
+                                aria-hidden="true"
+                                className={
+                                    isRefreshing
+                                        ? 'animate-spin motion-reduce:animate-none'
+                                        : ''
+                                }
+                            />
+                            Muat ulang
+                        </Button>
+                    </StudentMenuHero>
                     {refreshError && (
                         <div
                             role="alert"
@@ -727,6 +703,9 @@ export default function PortfolioIndex({
                                                         }),
                                                     )
                                                 }
+                                                onAccessRevoked={() =>
+                                                    setIsForbidden(true)
+                                                }
                                             />
                                         )}
                                     </Deferred>
@@ -741,6 +720,9 @@ export default function PortfolioIndex({
                                         key={resolvedProfile.id}
                                         profile={resolvedProfile}
                                         onUpdated={setProfileOverride}
+                                        onAccessRevoked={() =>
+                                            setIsForbidden(true)
+                                        }
                                     />
                                 ) : (
                                     <PortfolioPrivacyNote />

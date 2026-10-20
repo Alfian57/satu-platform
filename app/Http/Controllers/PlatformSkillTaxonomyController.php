@@ -8,6 +8,7 @@ use App\Models\SkillTaxonomy;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,14 +21,19 @@ class PlatformSkillTaxonomyController extends Controller
     {
         $user = $request->user();
 
-        abort_unless($user instanceof User && $user->is_platform_admin, 403);
+        $membership = $user instanceof User ? $user->universityAdminMembership() : null;
+        abort_unless($membership !== null, 403);
+        $institution = $membership->institution;
 
         $search = $request->string('q')->trim()->limit(100)->toString();
         $category = $request->string('category')->trim()->toString();
         $status = $request->string('status')->trim()->toString();
 
         $query = SkillTaxonomy::query()
-            ->withCount(['profileSkills', 'projectRoleSkills'])
+            ->withCount([
+                'profileSkills' => fn ($query) => $query->whereHas('studentProfile', fn ($profiles) => $profiles->where('institution_id', $institution->id)),
+                'projectRoleSkills' => fn ($query) => $query->whereHas('projectRole.project', fn ($projects) => $projects->where('institution_id', $institution->id)),
+            ])
             ->orderBy('category')
             ->orderBy('name');
 
@@ -56,6 +62,7 @@ class PlatformSkillTaxonomyController extends Controller
             ->all();
 
         return Inertia::render('platform/skills', [
+            'institution' => $institution->only(['id', 'name']),
             'filters' => [
                 'q' => $search,
                 'category' => $category !== '' ? $category : 'all',
@@ -88,7 +95,7 @@ class PlatformSkillTaxonomyController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user instanceof User && $user->is_platform_admin, 403);
+        abort_unless($user instanceof User && $user->isUniversityAdmin(), 403);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:1', 'max:100'],
@@ -115,7 +122,7 @@ class PlatformSkillTaxonomyController extends Controller
     public function update(Request $request, SkillTaxonomy $skillTaxonomy): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user instanceof User && $user->is_platform_admin, 403);
+        abort_unless($user instanceof User && $user->isUniversityAdmin(), 403);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:1', 'max:100'],
@@ -140,7 +147,7 @@ class PlatformSkillTaxonomyController extends Controller
     public function toggleVerification(Request $request, SkillTaxonomy $skillTaxonomy): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user instanceof User && $user->is_platform_admin, 403);
+        abort_unless($user instanceof User && $user->isUniversityAdmin(), 403);
 
         $skillTaxonomy->update([
             'is_verified' => ! $skillTaxonomy->is_verified,
@@ -155,7 +162,11 @@ class PlatformSkillTaxonomyController extends Controller
     public function destroy(Request $request, SkillTaxonomy $skillTaxonomy): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user instanceof User && $user->is_platform_admin, 403);
+        abort_unless($user instanceof User && $user->isUniversityAdmin(), 403);
+
+        if ($skillTaxonomy->profileSkills()->exists() || $skillTaxonomy->profileInterests()->exists() || $skillTaxonomy->projectRoleSkills()->exists()) {
+            throw ValidationException::withMessages(['catalog' => 'Istilah masih digunakan. Ubah uraian atau kategorinya, jangan hapus riwayat kemampuan dan kebutuhan peran.']);
+        }
 
         $skillTaxonomy->delete();
 

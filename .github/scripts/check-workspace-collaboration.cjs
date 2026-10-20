@@ -861,6 +861,46 @@ const echoModule = `let listeners=new Map();window.__left=0;window.__emit=(name,
         reset();
         await load('?scope=mine');
         await page.locator('[data-test="workspace-new-task"]').click();
+        const commandsBeforeExample = mutations.length;
+        await page
+            .locator('[data-test="task-create-collaboration-guidance"] summary')
+            .click();
+        await page.locator('[data-test="task-create-example-create"]').click();
+        verify(
+            (
+                await page.locator('#task-create-description').inputValue()
+            ).includes('Koordinasi dengan rekan') &&
+                mutations.length === commandsBeforeExample &&
+                (await page.locator('#task-create-title').inputValue()) === '',
+            'Contoh kerja bersama hanya mengisi catatan draft atas pilihan pengguna.',
+        );
+        verify(
+            await page
+                .locator('[data-test="task-create-example-review"]')
+                .isDisabled(),
+            'Contoh lain tidak menimpa catatan yang sudah berisi.',
+        );
+        const viewportBeforeExample = page.viewportSize();
+
+        for (const width of [320, 1920]) {
+            await page.setViewportSize({ width, height: 900 });
+            verify(
+                await page.evaluate(
+                    () =>
+                        document.documentElement.scrollWidth <= innerWidth + 1,
+                ),
+                'Panduan contoh tugas reflow ' + width + 'px.',
+            );
+            await page.screenshot({
+                path: path.join(
+                    artifactDirectory,
+                    'contoh-tugas-' + width + '.png',
+                ),
+                fullPage: true,
+            });
+        }
+
+        await page.setViewportSize(viewportBeforeExample);
         await page
             .locator('#task-create-title')
             .fill('Pekerjaan baru. Data sintetis');
@@ -1080,7 +1120,9 @@ const echoModule = `let listeners=new Map();window.__left=0;window.__emit=(name,
             mutations.every((item) => item.path.includes('/workspace/')),
             'Semua mutasi fixture sintetis terintersepsi tanpa menulis database aplikasi.',
         );
-        console.log('PASS ' + checks + ' browser checks.');
+        console.log(
+            'PASS ' + checks + ' browser checks. Artefak: ' + artifactDirectory,
+        );
     } finally {
         await browser.close();
     }
