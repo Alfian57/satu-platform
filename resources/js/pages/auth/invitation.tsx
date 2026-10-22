@@ -33,11 +33,11 @@ export default function Invitation({ invitation }: Props) {
             />
 
             <div
-                className="grid gap-6"
+                className="grid gap-4 sm:gap-5"
                 data-test="invitation-page"
                 data-status={invitation.status}
             >
-                <div className="grid gap-3 border-y border-border py-5">
+                <div className="grid gap-2.5 border-y border-border py-3.5 sm:py-4">
                     <div className="flex items-center gap-3">
                         {isExpired ? (
                             <Clock3

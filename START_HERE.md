@@ -20,7 +20,6 @@ Dokumen Markdown menjelaskan product, UX, engineering, security, dan kontrak rep
 6. Permintaan pengguna dan, jika diberikan, GitHub issue untuk execution scope dan acceptance criteria
 7. `docs/implementation/ROADMAP.md` untuk konteks roadmap
 8. `docs/governance/DECISIONS.md`
-9. `docs/reference/proposal_lomba.md` sebagai input historis
 
 Jika terjadi konflik, sumber yang lebih tinggi menang. Perbarui owning document, jangan menambal konflik secara diam-diam di code.
 

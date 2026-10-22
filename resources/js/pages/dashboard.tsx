@@ -1,17 +1,8 @@
-import {
-    Deferred,
-    Head,
-    Link,
-    router,
-    useHttp,
-    usePage,
-} from '@inertiajs/react';
+import { Deferred, Head, Link } from '@inertiajs/react';
 import { ArrowDown, ArrowUpRight, Sparkles } from 'lucide-react';
-import { useState } from 'react';
 import { AppPage } from '@/components/app-page';
 import { DashboardAffiliationNotice } from '@/components/dashboard-affiliation-notice';
 import { DashboardContextRail } from '@/components/dashboard-context-rail';
-import type { DashboardRecommendationFeedback } from '@/components/dashboard-context-rail';
 import { DashboardNextAction } from '@/components/dashboard-next-action';
 import { DashboardPendingHero } from '@/components/dashboard-pending-hero';
 import { DashboardProjectLedger } from '@/components/dashboard-project-ledger';
@@ -19,76 +10,35 @@ import { DashboardStateNotice } from '@/components/dashboard-state-notice';
 import StudentHeroBackdrop from '@/components/student-hero-backdrop';
 import StudentHeroMascot from '@/components/student-hero-mascot';
 import { StudentJourneySummary } from '@/components/student-journey-summary';
-import { useStudentOnboardingLauncher } from '@/components/student-onboarding-context';
 import { Button } from '@/components/ui/button';
-import { isAffiliationAwaitingReview } from '@/lib/student-activation';
+import {
+    actionHref,
+    loadingProjects,
+    loadingRecommendations,
+    useDashboard,
+} from '@/hooks/use-dashboard';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { show as contributionShow } from '@/routes/contributions';
-import {
-    hide as hideRecommendation,
-    notRelevant as markRecommendationNotRelevant,
-    profileFix as markRecommendationProfileFix,
-    refresh as refreshRecommendations,
-} from '@/routes/dashboard/recommendations';
-import {
-    index as projectsIndex,
-    show as projectShow,
-    workspace as projectWorkspace,
-} from '@/routes/projects';
-import { edit as editCapabilities } from '@/routes/student-profiles';
-import type {
-    DashboardAction,
-    DashboardPageProps,
-    DashboardProjectsRegion,
-    DashboardRecommendationRegion,
-} from '@/types';
-import type { StudentActivation } from '@/types/onboarding';
-
-type DashboardRoute = ReturnType<typeof dashboard>;
-
-function actionHref(action: DashboardAction): DashboardRoute | null {
-    switch (action.key) {
-        case 'onboarding':
-            return null;
-        case 'profile':
-            return editCapabilities();
-        case 'projects':
-            return projectsIndex({ query: { view: action.view } });
-        case 'project':
-            return action.projectId === undefined
-                ? null
-                : projectShow(action.projectId);
-        case 'workspace':
-            return action.projectId === undefined
-                ? null
-                : projectWorkspace(action.projectId, {
-                      query: { task: action.taskId ?? null },
-                  });
-        case 'contribution':
-            return action.contributionId === undefined
-                ? null
-                : contributionShow(action.contributionId);
-        case 'refresh':
-            return null;
-    }
-}
-
-function loadingProjects(): DashboardProjectsRegion {
-    return {
-        state: 'loading',
-        announcement: 'Memuat daftar proyek aktif.',
-    };
-}
-
-function loadingRecommendations(): DashboardRecommendationRegion {
-    return {
-        state: 'loading',
-        announcement: 'Memuat rekomendasi proyek.',
-    };
-}
+import { index as projectsIndex } from '@/routes/projects';
 
 export default function Dashboard() {
+    const {
+        pageProps,
+        firstName,
+        isStudent,
+        canExploreProjects,
+        isAwaitingReview,
+        useReferenceLayout,
+        refreshError,
+        uncertainRefresh,
+        dashboardForbidden,
+        processingFeedback,
+        isRefreshing,
+        handleAction,
+        handleFeedback,
+        requestRecommendations,
+    } = useDashboard();
+
     const {
         auth,
         nextAction,
@@ -98,153 +48,8 @@ export default function Dashboard() {
         recommendations,
         profileReadiness,
         institution,
-    } = usePage<DashboardPageProps>().props;
-    const firstName =
-        auth.user?.name.trim().split(/\s+/).find(Boolean) ?? 'mahasiswa';
-    const [processingFeedback, setProcessingFeedback] =
-        useState<DashboardRecommendationFeedback | null>(null);
-    const {
-        auth: sharedAuth,
         shell,
-        onboarding,
-    } = usePage<{
-        onboarding?: StudentActivation | null;
-        [key: string]: unknown;
-    }>().props;
-    const isStudent = sharedAuth.user?.workspace.role === 'student';
-    const canExploreProjects =
-        isStudent && shell.institutionMembership?.status === 'verified';
-    const isAwaitingReview =
-        isStudent &&
-        shell.institutionMembership?.status === 'pending' &&
-        isAffiliationAwaitingReview(onboarding);
-    const useReferenceLayout = isAwaitingReview || canExploreProjects;
-    const openOnboarding = useStudentOnboardingLauncher();
-    const refreshForm = useHttp<
-        { institution_id: number },
-        { data: { state: string } }
-    >({ institution_id: institution?.id ?? 0 });
-    const [refreshError, setRefreshError] = useState<string | null>(null);
-    const [uncertainRefresh, setUncertainRefresh] = useState(false);
-    const [dashboardForbidden, setDashboardForbidden] = useState(false);
-
-    function reloadRecommendations(restoreFocus = false) {
-        router.reload({
-            only: [
-                'nextAction',
-                'dashboardNotice',
-                'recommendations',
-                'refreshedAt',
-            ],
-            onSuccess: () => {
-                setRefreshError(null);
-                setUncertainRefresh(false);
-
-                if (restoreFocus) {
-                    document.getElementById('recommendation-heading')?.focus();
-                }
-            },
-            onHttpException: (response) => {
-                if (response.status === 403 || response.status === 404) {
-                    setDashboardForbidden(true);
-                }
-
-                setRefreshError(
-                    'Status terbaru belum dapat dibaca. Periksa akses dan coba muat ulang.',
-                );
-
-                return false;
-            },
-            onNetworkError: () => {
-                setRefreshError(
-                    'Status terbaru belum dapat dibaca. Periksa koneksi dan coba muat ulang.',
-                );
-
-                return false;
-            },
-        });
-    }
-
-    function requestRecommendations() {
-        if (
-            refreshForm.processing ||
-            uncertainRefresh ||
-            !institution ||
-            !canExploreProjects
-        ) {
-            return;
-        }
-
-        setRefreshError(null);
-        const restoreFocus =
-            document.activeElement?.getAttribute('data-test') ===
-            'dashboard-request-recommendations';
-        refreshForm.transform(() => ({ institution_id: institution.id }));
-        refreshForm
-            .post(refreshRecommendations().url, {
-                onSuccess: () => reloadRecommendations(restoreFocus),
-                onError: () => {
-                    setRefreshError(
-                        'Pembaruan tidak dapat diminta. Periksa status afiliasi dan kelengkapan profil.',
-                    );
-                },
-                onHttpException: (response) => {
-                    if (response.status === 403 || response.status === 404) {
-                        setDashboardForbidden(true);
-                    }
-
-                    setUncertainRefresh(true);
-                    setRefreshError(
-                        'Hasil permintaan belum dapat dipastikan. Periksa status sebelum meminta lagi.',
-                    );
-
-                    return false;
-                },
-                onNetworkError: () => {
-                    setUncertainRefresh(true);
-                    setRefreshError(
-                        'Hasil permintaan belum dapat dipastikan. Periksa koneksi, lalu periksa status sebelum meminta lagi.',
-                    );
-
-                    return false;
-                },
-            })
-            .catch(() => undefined);
-    }
-
-    function handleAction(action: DashboardAction) {
-        if (action.key === 'onboarding') {
-            openOnboarding();
-        }
-
-        if (action.key === 'refresh') {
-            reloadRecommendations();
-
-            return;
-        }
-    }
-
-    function handleFeedback(
-        recommendationId: number,
-        type: DashboardRecommendationFeedback,
-    ) {
-        const feedbackRoutes = {
-            hide: hideRecommendation,
-            notRelevant: markRecommendationNotRelevant,
-            profileFix: markRecommendationProfileFix,
-        } as const;
-
-        setProcessingFeedback(type);
-        router.post(
-            feedbackRoutes[type](recommendationId),
-            {},
-            {
-                only: ['nextAction', 'dashboardNotice', 'recommendations'],
-                preserveScroll: true,
-                onFinish: () => setProcessingFeedback(null),
-            },
-        );
-    }
+    } = pageProps;
 
     if (dashboardForbidden) {
         return (
@@ -264,7 +69,12 @@ export default function Dashboard() {
                     <Button
                         type="button"
                         className="mt-4"
-                        onClick={openOnboarding}
+                        onClick={() =>
+                            handleAction({
+                                key: 'onboarding',
+                                label: 'Periksa afiliasi',
+                            })
+                        }
                     >
                         Periksa afiliasi
                     </Button>
@@ -451,9 +261,7 @@ export default function Dashboard() {
                                         onRefreshRecommendations={
                                             requestRecommendations
                                         }
-                                        refreshingRecommendations={
-                                            refreshForm.processing
-                                        }
+                                        refreshingRecommendations={isRefreshing}
                                         refreshError={refreshError}
                                         uncertainRefresh={uncertainRefresh}
                                         getActionHref={actionHref}

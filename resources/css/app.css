@@ -274,16 +274,20 @@
 }
 
 .satu-auth-entry {
-    --auth-gutter: clamp(1.25rem, 6.5vw, 15rem);
+    --auth-gutter: clamp(1.25rem, 5vw, 10rem);
     --auth-container-max: 128rem;
     --auth-form-max: 32rem;
     --auth-control-height: 2.75rem;
-    --auth-control-font: 1rem;
+    --auth-control-font: 0.9375rem;
     --auth-help-font: 0.75rem;
     position: relative;
     isolation: isolate;
     display: flex;
     min-height: 100svh;
+    height: 100svh;
+    max-height: 100svh;
+    overflow-x: hidden;
+    overflow-y: auto;
     flex-direction: column;
     color: #17345a;
     background: #edf6ff;
@@ -306,11 +310,11 @@
 .satu-auth-entry .auth-entry-header {
     display: flex;
     flex: none;
-    min-height: 72px;
+    min-height: 56px;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding-block: 12px;
+    padding-block: 8px;
 }
 .satu-auth-entry .auth-entry-header > a,
 .satu-auth-entry .auth-entry-navigation > a {
@@ -340,11 +344,12 @@
 .satu-auth-entry .auth-entry-main {
     display: grid;
     flex: 1;
+    min-height: 0;
     grid-template-columns: minmax(0, 1fr);
     align-content: center;
     align-items: center;
     gap: 16px;
-    padding-block: 8px 24px;
+    padding-block: 8px 16px;
 }
 .satu-auth-entry .auth-entry-intro {
     width: 100%;
@@ -358,21 +363,21 @@
 }
 .satu-auth-entry .auth-entry-card {
     position: relative;
-    padding: 24px;
+    padding: 20px;
     border: 1px solid #ffffffec;
-    border-radius: 28px;
+    border-radius: 24px;
     background: linear-gradient(145deg, #fffffffc, #ffffffed);
     box-shadow: 0 24px 70px -28px rgb(50 116 186 / 0.24);
 }
 .satu-auth-entry .auth-entry-form-header {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 .satu-auth-entry.auth-entry-login .auth-entry-form-header {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 .satu-auth-entry.auth-entry-login .auth-entry-fields > form,
 .satu-auth-entry.auth-entry-login .auth-entry-fields > form > .grid {
-    gap: 20px;
+    gap: 16px;
 }
 .satu-auth-entry .auth-entry-fields {
     container-type: inline-size;
@@ -612,10 +617,11 @@
         --auth-control-height: 3rem;
     }
     .satu-auth-entry .auth-entry-header {
-        min-height: 84px;
+        min-height: 64px;
+        padding-block: 8px;
     }
     .satu-auth-entry .auth-entry-card {
-        padding: 32px;
+        padding: 28px;
     }
     .satu-auth-entry .auth-entry-navigation > a {
         font-size: 16px;
@@ -623,18 +629,20 @@
 }
 @media (min-width: 1024px) {
     .satu-auth-entry {
-        --auth-form-max: 44rem;
-        --auth-control-height: clamp(48px, 3.6vw, 60px);
-        --auth-control-font: clamp(16px, 1.1vw, 19px);
-        --auth-help-font: clamp(12px, 0.85vw, 14px);
+        --auth-form-max: 42rem;
+        --auth-control-height: clamp(48px, 3.2vw, 54px);
+        --auth-control-font: clamp(15px, 1vw, 17px);
+        --auth-help-font: clamp(12px, 0.8vw, 13px);
+        overflow: hidden;
     }
     .satu-auth-entry .auth-entry-header {
-        min-height: 88px;
+        min-height: 64px;
+        padding-block: 8px;
     }
     .satu-auth-entry .auth-entry-main {
-        grid-template-columns: minmax(0, 1.26fr) minmax(0, 1fr);
-        gap: clamp(40px, 3.5vw, 80px);
-        padding-block: 16px 32px;
+        grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+        gap: clamp(36px, 3.5vw, 64px);
+        padding-block: 8px 16px;
     }
     .satu-auth-entry .auth-entry-form {
         justify-self: end;
@@ -648,42 +656,46 @@
         font-size: clamp(26px, 1.8vw, 32px);
     }
     .satu-auth-entry .auth-entry-card {
-        padding: clamp(28px, 2.9vw, 48px);
+        padding: clamp(28px, 2.4vw, 42px);
         border-radius: 36px;
+        max-height: calc(100svh - 88px);
+        overflow-y: auto;
+        scrollbar-width: thin;
     }
     .satu-auth-entry .auth-entry-title {
-        font-size: clamp(28px, 2.4vw, 40px);
+        font-size: clamp(28px, 2.2vw, 36px);
     }
     .satu-auth-entry .auth-entry-description {
-        font-size: clamp(14px, 1.15vw, 20px);
+        font-size: clamp(14px, 1.05vw, 17px);
     }
     .satu-auth-entry .auth-entry-form-header {
-        margin-bottom: 32px;
+        margin-bottom: 24px;
     }
     .satu-auth-entry.auth-entry-login .auth-entry-form-header {
-        margin-bottom: 32px;
+        margin-bottom: 20px;
     }
     .satu-auth-entry.auth-entry-register {
         --auth-control-height: 3rem;
         --auth-control-font: 1rem;
     }
     .satu-auth-entry.auth-entry-register .auth-entry-card {
-        padding: 32px;
+        padding: clamp(24px, 2vw, 32px);
     }
     .satu-auth-entry.auth-entry-register .auth-entry-title {
-        font-size: 32px;
+        font-size: clamp(26px, 2vw, 32px);
     }
     .satu-auth-entry.auth-entry-register .auth-entry-form-header {
-        margin-bottom: 20px;
+        margin-bottom: 16px;
     }
     .satu-auth-entry.auth-entry-login .auth-entry-fields > form > .grid {
-        gap: 24px;
+        gap: 20px;
     }
     .satu-auth-entry .auth-entry-fields button[type='submit'] {
-        min-height: calc(var(--auth-control-height) + 4px);
+        min-height: calc(var(--auth-control-height) + 2px);
     }
     .satu-auth-entry .auth-entry-footer {
-        font-size: clamp(12px, 0.9vw, 14px);
+        margin-top: 12px;
+        font-size: clamp(12px, 0.85vw, 13px);
     }
     .satu-auth-entry .auth-welcome-panel {
         margin-inline: 0;
@@ -694,53 +706,59 @@
     .satu-auth-entry .auth-welcome-kicker {
         display: inline-flex;
         align-items: center;
-        gap: 12px;
-        padding: 8px 18px;
+        gap: 10px;
+        padding: 7px 16px;
         border: 1px solid #ffffffc0;
         border-radius: 999px;
         background: #ffffffc9;
         color: #1454c4;
-        font-size: clamp(12px, 0.95vw, 16px);
+        font-size: clamp(13px, 0.9vw, 15px);
         font-weight: 650;
     }
     .satu-auth-entry .auth-welcome-kicker > span {
-        width: 12px;
-        height: 12px;
+        width: 10px;
+        height: 10px;
         flex: none;
         border-radius: 50%;
         background: linear-gradient(#ffd45c, #ffb542);
         box-shadow: inset 0 1px 0 #ffffff90;
     }
     .satu-auth-entry .auth-welcome-heading {
-        margin-top: 24px;
-        font-size: clamp(44px, 4.4vw, 84px);
-        line-height: 1.02;
+        margin-top: 18px;
+        font-size: clamp(40px, 3.8vw, 68px);
+        line-height: 1.04;
         font-weight: 750;
-        letter-spacing: -0.045em;
+        letter-spacing: -0.04em;
         color: #101e36;
         overflow-wrap: anywhere;
+    }
+    .satu-auth-entry .auth-welcome-copy > .auth-welcome-heading:first-child {
+        margin-top: 0;
     }
     .satu-auth-entry .auth-welcome-heading > span {
         display: block;
         color: #1764e8;
     }
     .satu-auth-entry .auth-welcome-description {
-        max-width: 43ch;
-        margin-top: 12px;
-        font-size: clamp(16px, 1.3vw, 22px);
-        line-height: 1.6;
+        max-width: 42ch;
+        margin-top: 10px;
+        font-size: clamp(15px, 1.1vw, 19px);
+        line-height: 1.55;
         color: #526b85;
     }
     .satu-auth-entry .auth-welcome-scene {
         grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
         gap: 16px;
         max-width: none;
-        margin-top: 4px;
+        margin-top: 8px;
         padding: 0;
     }
     .satu-auth-entry .auth-welcome-bird {
-        width: clamp(280px, 25vw, 464px);
+        width: clamp(260px, 22vw, 380px);
         max-width: 100%;
+        height: auto;
+        max-height: clamp(260px, 42vh, 380px);
+        object-fit: contain;
     }
     .satu-auth-entry .auth-welcome-atmosphere {
         inset: -12% -1% 0 0;
@@ -840,120 +858,135 @@
     }
     .satu-auth-entry .auth-welcome-message {
         width: 100%;
-        max-width: 22rem;
+        max-width: 21rem;
         justify-self: start;
-        padding: clamp(16px, 1.55vw, 28px);
+        padding: clamp(16px, 1.4vw, 24px);
         border: 1px solid #ffffffec;
-        border-radius: 26px 26px 8px 26px;
+        border-radius: 24px 24px 8px 24px;
         background: linear-gradient(135deg, #fffffffc, #f1fafff0);
         box-shadow:
             0 14px 32px rgb(23 100 232 / 0.09),
             inset 0 0 0 2px #ffffff60;
     }
     .satu-auth-entry .auth-welcome-message::after {
-        right: -10px;
-        width: 18px;
-        height: 18px;
+        right: -9px;
+        width: 16px;
+        height: 16px;
         border-color: white;
         background: #f9fdff;
     }
     .satu-auth-entry .auth-welcome-message p:first-child {
         display: flex;
         align-items: center;
-        gap: 10px;
-        font-size: clamp(12px, 0.95vw, 16px);
+        gap: 9px;
+        font-size: clamp(12px, 0.9vw, 15px);
         font-weight: 600;
         color: #1764e8;
     }
     .satu-auth-entry .auth-welcome-message p:first-child > svg {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
         flex: none;
     }
     .satu-auth-entry .auth-welcome-message p:nth-child(2) {
-        margin-top: 12px;
-        font-size: clamp(14px, 1.1vw, 18px);
-        line-height: 1.55;
+        margin-top: 10px;
+        font-size: clamp(13px, 1vw, 16px);
+        line-height: 1.5;
     }
     .satu-auth-entry .auth-welcome-message > span {
         display: block;
-        margin-top: 12px;
-        font-size: clamp(12px, 0.95vw, 16px);
-        line-height: 1.5;
+        margin-top: 10px;
+        font-size: clamp(12px, 0.9vw, 14px);
+        line-height: 1.45;
         color: #526b85;
     }
     .satu-auth-entry .auth-welcome-privacy {
         display: flex;
-        align-items: start;
-        gap: 12px;
-        margin-top: 18px;
-        padding-top: 16px;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+        padding-top: 12px;
         border-top: 1px solid #b8d6f0;
-        font-size: clamp(12px, 0.85vw, 14px);
-        line-height: 1.6;
+        font-size: clamp(12px, 0.82vw, 14px);
+        line-height: 1.5;
         color: #526b85;
     }
     .satu-auth-entry .auth-welcome-privacy > svg {
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
         flex: none;
         color: #1764e8;
     }
 }
 @media (min-width: 1536px) {
     .satu-auth-entry .auth-entry-main {
-        gap: clamp(56px, 3.5vw, 80px);
+        gap: clamp(48px, 3.5vw, 72px);
     }
 }
-@media (min-width: 1024px) and (max-height: 820px) {
+@media (min-width: 1024px) and (max-height: 780px) {
     .satu-auth-entry {
-        --auth-control-height: 48px;
-        --auth-control-font: 16px;
+        --auth-control-height: 46px;
+        --auth-control-font: 14px;
         --auth-help-font: 12px;
     }
     .satu-auth-entry .auth-entry-header {
-        min-height: 72px;
+        min-height: 56px;
+        padding-block: 6px;
     }
     .satu-auth-entry .auth-entry-main {
-        padding-block: 8px 20px;
+        padding-block: 6px 14px;
+        gap: 28px;
     }
     .satu-auth-entry .auth-entry-card {
-        padding: 28px;
+        padding: 24px 28px;
     }
     .satu-auth-entry .auth-entry-form-header {
-        margin-bottom: 24px;
+        margin-bottom: 16px;
     }
     .satu-auth-entry.auth-entry-login .auth-entry-card {
-        padding: 24px;
+        padding: 24px 28px;
     }
     .satu-auth-entry.auth-entry-login .auth-entry-form-header {
-        margin-bottom: 20px;
+        margin-bottom: 16px;
     }
     .satu-auth-entry.auth-entry-login .auth-entry-fields > form {
         gap: 16px;
     }
     .satu-auth-entry.auth-entry-login .auth-entry-fields > form > .grid {
-        gap: 20px;
+        gap: 16px;
     }
     .satu-auth-entry .auth-entry-title {
-        font-size: clamp(26px, 2.2vw, 30px);
+        font-size: 26px;
     }
     .satu-auth-entry .auth-entry-description {
-        font-size: 14px;
+        font-size: 13px;
+        margin-top: 4px;
     }
     .satu-auth-entry .auth-welcome-heading {
-        margin-top: 16px;
-        font-size: clamp(40px, 4vw, 64px);
+        margin-top: 10px;
+        font-size: 38px;
+    }
+    .satu-auth-entry .auth-welcome-copy > .auth-welcome-heading:first-child {
+        margin-top: 0;
     }
     .satu-auth-entry .auth-welcome-description {
-        font-size: 16px;
-    }
-    .satu-auth-entry .auth-welcome-kicker {
-        padding: 6px 14px;
-        font-size: 12px;
+        font-size: 14px;
+        margin-top: 6px;
     }
     .satu-auth-entry .auth-welcome-bird {
-        width: clamp(260px, 23vw, 360px);
+        width: 240px;
+        max-height: 240px;
+    }
+    .satu-auth-entry .auth-welcome-message {
+        padding: 16px;
+        max-width: 18rem;
+    }
+    .satu-auth-entry .auth-welcome-privacy {
+        margin-top: 8px;
+        padding-top: 8px;
+    }
+    .satu-auth-entry .auth-entry-footer {
+        margin-top: 8px;
     }
 }
 @container auth-fields (min-width: 420px) {

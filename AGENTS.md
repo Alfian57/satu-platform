@@ -19,7 +19,6 @@ Immediately after this file, read `START_HERE.md`, then the documents relevant t
 6. The user's request and, when provided, the GitHub issue for execution scope and acceptance criteria.
 7. `docs/implementation/ROADMAP.md` for roadmap context.
 8. `docs/governance/DECISIONS.md` for accepted decisions and open gates.
-9. `docs/reference/proposal_lomba.md` is historical input, not a runtime specification.
 
 When documents conflict, the earlier source wins. Update the owning source instead of silently overriding it in code.
 
@@ -73,6 +72,8 @@ When documents conflict, the earlier source wins. Update the owning source inste
 
 ## Documentation Maintenance
 
+- Wajib memperbarui file dokumentasi pemilik yang terdampak oleh perubahan kode (Documentation Sync).
+- Dokumentasi harus selalu merefleksikan kondisi aktif sistem saat ini (present state), bukan riwayat atau sejarah perubahan lama.
 - Product change: update `PRODUCT.md`.
 - Requirement/scope change: update PRD and traceability.
 - Global visual change: update `DESIGN.md`.
@@ -84,17 +85,41 @@ When documents conflict, the earlier source wins. Update the owning source inste
 
 Do not close an `open` decision in `docs/governance/DECISIONS.md` by assumption.
 
+## Code Quality and Component Architecture
+
+- Larangan Fat Files: Pecah file yang membengkak menjadi sub-komponen atau helper terpisah.
+- Pemisahan UI & Logika: Pisahkan pengelolaan state, mutasi/request backend, validasi form, dan efek samping ke dalam custom hook (`resources/js/hooks/`), biarkan komponen UI murni untuk rendering presentasional.
+- Reusabilitas: Desain komponen, custom hook, dan helper agar modular dan dapat digunakan ulang (reusable).
+- Batas Ukuran File: Patokan batas lunak ~200–250 baris untuk file komponen UI (`.tsx`).
+- Batasan Penerapan (Scope Guard): Standar kualitas kode berlaku penuh untuk kode/fitur baru dan file yang sedang dimodifikasi pada task terkait. Dilarang melakukan refaktor massal pada file legacy yang tidak berkaitan dengan task aktif pengguna guna menghindari regresi.
+- Rujukan teknis lengkap: pelajari panduan pada `docs/engineering/CODE_QUALITY.md`.
+
+## Deployment and Container Synchronization
+
+- Setiap perubahan kode atau arsitektur yang memengaruhi lingkungan deployment WAJIB menyesuaikan file deployment terkait pada saat yang sama agar proses build container dan deployment VPS tetap berjalan lancar:
+  - Ekstensi PHP / paket sistem OS: jika menambah paket native, perbarui `RUN apk add` dan `docker-php-ext-install` pada `Dockerfile`.
+  - Proses latar belakang (Daemons & Workers): jika menambah queue worker baru, scheduler, atau server websocket (Reverb), daftarkan dan kelola di `docker/supervisor/supervisord.conf`.
+  - Web server & Reverse proxy: jika mengubah batasan upload, proxying websocket, atau konfigurasi header, sesuaikan `docker/nginx/nginx.conf`.
+  - Inisialisasi kontainer: jika menambah langkah startup seperti symlink, migrasi otomatis, atau cache warmup, sesuaikan `docker/entrypoint.sh`.
+  - Variabel lingkungan production: daftarkan variabel baru di `.env.example` dan dokumentasikan di `docs/engineering/OPERATIONS.md`.
+  - Integritas CI/CD: pastikan alur `.github/workflows/tests.yml` dan `.github/workflows/build-and-deploy.yml` tetap kompatibel dan lulus.
+
 ## Verification
 
-- Every runtime change is verified through static checks and inspection before it is considered complete.
-- Use `vendor/bin/pint --dirty --format agent` for PHP formatting, `npm run lint:check` and `npm run format:check` for frontend checks, and `npm run types:check` (Wayfinder + TypeScript) and PHPStan for static analysis.
+- Pengujian otomatis (seperti `composer test:core`, suite `.github/scripts/check-*.php`, browser E2E tests, PHPUnit `tests/Feature/`, atau skrip pengujian database MySQL) HANYA dijalankan ketika diminta atau dikonfirmasi oleh pengguna atau developer.
+- Ketika AI Agent selesai mengerjakan suatu fitur atau perbaikan kode, AI Agent dilarang menjalankan pengujian secara otomatis. AI Agent wajib bertanya terlebih dahulu kepada developer apakah ingin dilakukan pengujian atau tidak. Pengujian baru dijalankan hanya jika developer mengonfirmasi persetujuan ("ya").
+- Hal yang boleh dan wajib dijalankan AI Agent secara mandiri tanpa konfirmasi hanyalah pemeriksaan ringan (linting, formatting, static analysis, dan type check):
+  - Pemformatan kode: `vendor/bin/pint --dirty --format agent` untuk PHP dan `npm run format:check` untuk frontend.
+  - Linter: `npm run lint:check`.
+  - Static analysis dan type check: `npm run types:check` (Wayfinder + TypeScript) dan PHPStan.
+  - Dokumentasi: Prettier, internal-link dan UX-reference checks, serta `git diff --check`.
 - Jangan menjalankan `npm run build` kecuali pengguna memintanya secara eksplisit atau build diperlukan untuk mendiagnosis error Vite. Untuk perubahan biasa, lint dan typecheck yang relevan sudah cukup.
-- Documentation changes must pass Prettier, internal-link and UX-reference checks, and `git diff --check`.
-- An issue is not complete until every acceptance criterion in its body passes.
+- An issue is not complete until every acceptance criterion in its body passes, dengan eksekusi suite pengujian mengikuti konfirmasi developer.
 
 ## Workspace Hygiene and Cleanup
 
 - Setiap AI agent bertanggung jawab menjaga kebersihan workspace dan pohon repository.
+- Pembersihan Kode Usang (Dead Code Cleanup): Wajib menghapus file, folder, komponen, rute, atau skrip yang sudah tidak digunakan lagi (dead code/unused files) terkait perubahan task saat itu.
 - Dilarang meninggalkan file sementara, skrip scratch debugging (misalnya skrip bash, python, php, atau node sementara), atau file dump di dalam repository.
 - Jika membuat skrip atau file bantu sementara untuk analisis atau debugging lokal, simpan file tersebut di direktori scratch yang diabaikan git atau WAJIB DIHAPUS sebelum menyelesaikan tugas.
 - Dilarang membuat file dummy uji (seperti `.push-test`, file tes trigger commit, atau dump log) ke dalam direktori root repository.

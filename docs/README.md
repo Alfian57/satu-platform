@@ -17,7 +17,6 @@
 | 5      | `docs/engineering/`                | Architecture, data, security, privacy  |
 | 6      | GitHub issues dan roadmap          | Execution dan verification             |
 | 7      | `docs/governance/DECISIONS.md`     | Accepted decisions dan open gates      |
-| 8      | `docs/reference/proposal_lomba.md` | Historical input                       |
 
 ## Struktur
 
@@ -25,10 +24,9 @@
 docs/
 ├── product/          # PRD dan business flow/model
 ├── ux/               # IA, flows, copy, accessibility, inventory, surface behavior
-├── engineering/      # architecture, data, security/privacy
+├── engineering/      # architecture, data, security/privacy, code quality
 ├── governance/       # accepted decisions dan open gates
-├── implementation/   # GitHub automation, commit format, dan roadmap
-└── reference/        # historical source material
+└── implementation/   # GitHub automation, commit format, dan roadmap
 ```
 
 GitHub Actions menyinkronkan label status issue dan field Project dari issue serta pull request. Aturan mapping automation dijelaskan di [Implementation](implementation/README.md). GitHub Assignees tetap menjadi data ownership pada GitHub.

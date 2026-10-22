@@ -12,12 +12,12 @@ export default function AuthWelcomePanel({
     return (
         <div className="auth-welcome-panel">
             <div className="auth-welcome-copy">
-                <p className="auth-welcome-kicker">
-                    <span aria-hidden="true" />
-                    {isConfirmation
-                        ? 'Konfirmasi akses pribadi'
-                        : 'Satu tempat, banyak kemungkinan'}
-                </p>
+                {isConfirmation && (
+                    <p className="auth-welcome-kicker">
+                        <span aria-hidden="true" />
+                        Konfirmasi akses pribadi
+                    </p>
+                )}
                 <h2 className="auth-welcome-heading">
                     {isConfirmation ? 'Kendali akun.' : 'Langkah kecil.'}
                     <span>

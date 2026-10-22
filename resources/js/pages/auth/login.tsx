@@ -123,7 +123,7 @@ export default function Login({ status }: Props) {
 
                             <Button
                                 type="submit"
-                                className="auth-submit-static h-11 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-sm font-semibold text-white shadow-md shadow-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="auth-submit-static h-11 w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-base font-semibold text-white shadow-md shadow-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                                 disabled={processing}
                                 data-test="login-button"
                             >
@@ -139,11 +139,11 @@ export default function Login({ status }: Props) {
                             </Button>
                         </div>
 
-                        <div className="border-t border-slate-100 pt-3 text-center text-sm text-slate-500">
+                        <div className="border-t border-slate-100 pt-3.5 text-center text-base text-slate-600 sm:text-[17px]">
                             Belum punya akun?{' '}
                             <TextLink
                                 href={register()}
-                                className="ml-1 inline-flex min-h-11 items-center font-semibold text-blue-600 no-underline hover:text-blue-700 hover:underline"
+                                className="ml-1.5 inline-flex min-h-11 items-center font-bold text-blue-600 no-underline hover:text-blue-700 hover:underline"
                             >
                                 Daftar sekarang
                             </TextLink>

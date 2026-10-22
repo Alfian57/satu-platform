@@ -21,7 +21,7 @@ export default function ConfirmPassword() {
             <Head title="Konfirmasi password" />
 
             <form
-                className="grid gap-6"
+                className="grid gap-4 sm:gap-5"
                 onSubmit={(event) => {
                     event.preventDefault();
 
@@ -57,7 +57,7 @@ export default function ConfirmPassword() {
                     });
                 }}
             >
-                <div className="grid gap-6" aria-busy={processing}>
+                <div className="grid gap-3.5 sm:gap-4" aria-busy={processing}>
                     <SettingsFormFeedback
                         errors={errors}
                         actionError={actionError}
@@ -70,17 +70,17 @@ export default function ConfirmPassword() {
                                 : 'Konfirmasi ini tidak mengganti password atau menjalankan perubahan akun.'
                         }
                     />
-                    <div className="flex items-start gap-3 rounded-2xl border border-satu-orange-border bg-satu-orange-soft p-4 text-sm leading-6 text-muted-foreground">
+                    <div className="flex items-start gap-2.5 rounded-2xl border border-satu-orange-border bg-satu-orange-soft p-3 text-xs leading-relaxed text-muted-foreground sm:p-3.5 sm:text-sm">
                         <LockKeyhole
                             aria-hidden="true"
-                            className="mt-0.5 size-5 shrink-0 text-satu-orange-ink"
+                            className="mt-0.5 size-4 shrink-0 text-satu-orange-ink sm:size-5"
                         />
                         <p>
                             Halaman tujuan memerlukan konfirmasi ulang. Setelah
                             berhasil, kamu akan melanjutkan ke halaman tersebut.
                         </p>
                     </div>
-                    <div className="grid gap-3">
+                    <div className="grid gap-2 sm:gap-2.5">
                         <Label
                             htmlFor="password"
                             className="text-sm font-semibold"

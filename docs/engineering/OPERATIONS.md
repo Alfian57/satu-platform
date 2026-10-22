@@ -213,6 +213,10 @@ Perubahan workflow baru berlaku setelah masuk ke branch yang dipakai
 deployment. Lulusnya CI atau workflow deploy bukan bukti kesehatan server,
 ketepatan isi `update.sh` di VPS, UAT, atau keberhasilan recovery production.
 
+### 11.2 Sinkronisasi File Deployment dan Kontainer
+
+Setiap perubahan runtime aplikasi (ekstensi PHP, background worker baru di supervisor, reverse proxy Nginx, migrasi startup di entrypoint.sh, atau variabel lingkungan baru) wajib disinkronkan dengan file kontainer Docker terkait (`Dockerfile`, `docker/`, dan `docker-compose.yml`) sesuai ketentuan di [CODE_QUALITY.md](./CODE_QUALITY.md). Hal ini menjamin proses build image dan eksekusi pada VPS berjalan tanpa kegagalan dependensi.
+
 ## 12. Verification Checklist
 
 - [ ] `php artisan config:cache` sukses.

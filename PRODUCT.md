@@ -352,7 +352,7 @@ Tidak ada klaim hasil pilot, penurunan ketimpangan, peningkatan relasi, pelangga
 
 Kode dan surface sejumlah modul sudah tersedia, tetapi keberadaan halaman tidak membuktikan seluruh alur terhubung. Pembaruan dokumen ini tidak mengubah runtime atau mengklaim seluruh target telah diimplementasikan. Status pelaksanaan mengikuti issue dan bukti verifikasi, bukan daftar target dalam dokumen.
 
-Proposal pada `docs/reference/proposal_lomba.md` tetap input historis. Requirements terinci berada di [PRD](docs/product/PRD.md), alur pada [Business Flow](docs/product/BUSINESS_FLOW.md), dan tahapan pada [Roadmap](docs/implementation/ROADMAP.md).
+Requirements terinci berada di [PRD](docs/product/PRD.md), alur pada [Business Flow](docs/product/BUSINESS_FLOW.md), dan tahapan pada [Roadmap](docs/implementation/ROADMAP.md).
 
 ## Aksesibilitas dan Identitas Visual
 

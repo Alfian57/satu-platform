@@ -375,11 +375,23 @@ export default function Recover({ recovery }: Props) {
                 <RecoveryPhoneStep status={state.status} />
             )}
 
-            <div className="mt-6 text-center text-sm text-muted-foreground">
+            <div className="mt-4 border-t border-slate-100 pt-3.5 text-center text-base text-slate-600 sm:mt-5 sm:text-[17px]">
                 Ingat username dan password?{' '}
-                <TextLink href={login()}>Masuk</TextLink>
-                <span aria-hidden="true"> · </span>
-                <TextLink href={register()}>Daftar</TextLink>
+                <TextLink
+                    href={login()}
+                    className="ml-1 inline-flex min-h-11 items-center font-bold text-blue-600 no-underline hover:text-blue-700 hover:underline"
+                >
+                    Masuk
+                </TextLink>
+                <span aria-hidden="true" className="mx-1">
+                    ·
+                </span>
+                <TextLink
+                    href={register()}
+                    className="inline-flex min-h-11 items-center font-bold text-blue-600 no-underline hover:text-blue-700 hover:underline"
+                >
+                    Daftar
+                </TextLink>
             </div>
         </>
     );
