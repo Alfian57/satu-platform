@@ -10,13 +10,12 @@ import {
     portfolioVisibilityLabel,
     portfolioVisibilityOptions,
 } from '@/components/portfolio/portfolio-presentation';
-import {
-    PortfolioPrivacyRecoveryNotice,
-    usePortfolioPrivacyRecovery,
-} from '@/components/portfolio/portfolio-privacy-recovery';
+import { PortfolioPrivacyRecoveryNotice } from '@/components/portfolio/portfolio-privacy-recovery';
+import { PortfolioStaleNotice } from '@/components/portfolio/portfolio-stale-notice';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { usePortfolioPrivacyRecovery } from '@/hooks/use-portfolio-privacy-recovery';
 import { show as showEntry } from '@/routes/student-profiles/portfolio';
 import { update as updateEntryVisibility } from '@/routes/student-profiles/portfolio/visibility';
 import type {
@@ -194,25 +193,12 @@ export function PortfolioEntryVisibilityControl({
                 prefix={dataTestPrefix}
             />
             {isStale && !recovery.blocked && (
-                <div
-                    role="status"
-                    className="grid gap-3 rounded-xl border border-pending/30 bg-pending-subtle p-3 text-sm leading-6 text-pending-subtle-foreground"
-                    data-test={dataTestPrefix + '-stale'}
-                >
-                    <p>
-                        Pengaturan tersimpan berubah. Ambil pengaturan terbaru
-                        sebelum menyimpan kembali.
-                    </p>
-                    <Button
-                        variant="outline"
-                        type="button"
-                        className="h-auto min-h-11 whitespace-normal"
-                        onClick={applyLatestSettings}
-                        disabled={form.processing}
-                    >
-                        Gunakan pengaturan terbaru
-                    </Button>
-                </div>
+                <PortfolioStaleNotice
+                    message="Pengaturan tersimpan berubah. Ambil pengaturan terbaru sebelum menyimpan kembali."
+                    onApplyLatest={applyLatestSettings}
+                    processing={form.processing}
+                    dataTest={dataTestPrefix + '-stale'}
+                />
             )}
             <PortfolioFormFeedback
                 errors={errors}

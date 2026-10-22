@@ -5,6 +5,7 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import StudentLayout from '@/layouts/student-layout';
+import { SATU_COLORS } from '@/lib/tokens';
 
 const appName = import.meta.env.VITE_APP_NAME || 'SATU';
 
@@ -56,6 +57,6 @@ createInertiaApp({
         );
     },
     progress: {
-        color: '#1764E8',
+        color: SATU_COLORS.primary,
     },
 });

@@ -1,8 +1,8 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import AuthSideIntro from '@/components/auth/auth-side-intro';
 import AuthWelcomePanel from '@/components/auth/auth-welcome-panel';
-import Mascot from '@/components/mascot';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
@@ -29,7 +29,7 @@ export default function AuthSimpleLayout({
     return (
         <div
             className={cn(
-                'relative flex h-svh max-h-svh min-h-svh flex-col overflow-x-hidden overflow-y-auto bg-[#edf6ff] lg:overflow-hidden',
+                'relative flex h-svh max-h-svh min-h-svh flex-col overflow-x-hidden overflow-y-auto bg-satu-canvas lg:overflow-hidden',
                 usesEntryLayout && 'satu-auth-entry',
                 component === 'auth/login' && 'auth-entry-login',
                 component === 'auth/register' && 'auth-entry-register',
@@ -48,7 +48,7 @@ export default function AuthSimpleLayout({
             ) : (
                 <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-0 top-0 h-[36rem] bg-[radial-gradient(ellipse_at_top_left,#c9eaff,transparent_65%)]"
+                    className="pointer-events-none absolute inset-x-0 top-0 h-[36rem] bg-[radial-gradient(ellipse_at_top_left,var(--color-satu-blue-soft),transparent_65%)]"
                 />
             )}
             <header
@@ -113,51 +113,10 @@ export default function AuthSimpleLayout({
                             isConfirmation={isConfirmation}
                         />
                     ) : (
-                        <>
-                            <div className="hidden lg:block">
-                                <h2 className="max-w-[12ch] text-3xl leading-[1.06] font-bold tracking-[-0.04em] text-slate-950 xl:text-4xl">
-                                    Langkah kecil.
-                                    <br />
-                                    <span className="text-blue-600">
-                                        Cerita besar.
-                                    </span>
-                                </h2>
-                                <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-600">
-                                    Temukan teman berkarya, bangun kontribusi,
-                                    dan ceritakan kemampuanmu lewat bukti nyata.
-                                </p>
-                            </div>
-
-                            <div className="relative mx-auto mt-4 h-28 w-full max-w-sm lg:mt-6 lg:h-40 lg:max-w-none">
-                                <div
-                                    aria-hidden="true"
-                                    className="absolute inset-x-5 bottom-0 h-20 rounded-[2rem] border border-white/80 bg-gradient-to-br from-[#b9e6ff] to-[#87c9f6] shadow-[0_20px_45px_-20px_rgba(40,109,179,0.32)] lg:inset-x-0 lg:h-32"
-                                />
-                                <Mascot
-                                    pose={mascotPose}
-                                    interactive
-                                    priority
-                                    className="absolute -top-8 left-1/2 z-10 w-36 -translate-x-1/2 lg:-top-14 lg:left-[56%] lg:w-[14rem] xl:w-[16rem]"
-                                />
-                                <div className="absolute bottom-3 left-3 z-20 hidden max-w-40 -rotate-3 rounded-2xl border border-white bg-white/90 px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm lg:block">
-                                    {usesEntryLayout
-                                        ? 'Siap mulai cerita kolaborasimu?'
-                                        : 'Pelan-pelan, kita lanjutkan bersama.'}
-                                    <ArrowUpRight
-                                        aria-hidden="true"
-                                        className="mt-1.5 size-3.5 text-blue-600"
-                                    />
-                                </div>
-                            </div>
-                            <p className="mt-4 hidden items-center gap-2 text-xs leading-5 text-slate-600 lg:flex">
-                                <ShieldCheck
-                                    aria-hidden="true"
-                                    className="size-4 shrink-0 text-blue-700"
-                                />
-                                Kamu yang menentukan siapa yang melihat
-                                portofoliomu.
-                            </p>
-                        </>
+                        <AuthSideIntro
+                            mascotPose={mascotPose}
+                            usesEntryLayout={usesEntryLayout}
+                        />
                     )}
                 </section>
 
@@ -170,7 +129,7 @@ export default function AuthSimpleLayout({
                 >
                     <section
                         className={cn(
-                            'auth-entry-card rounded-[2rem] border border-white bg-white/95 shadow-[0_24px_80px_-32px_rgba(31,88,149,0.3)]',
+                            'auth-entry-card rounded-[2rem] border border-white bg-white/95 shadow-xl',
                             !usesEntryLayout &&
                                 'max-h-[calc(100svh-100px)] overflow-y-auto p-5 sm:p-7',
                         )}

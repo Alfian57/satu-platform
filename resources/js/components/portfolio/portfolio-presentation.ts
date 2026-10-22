@@ -2,18 +2,16 @@ import {
     CheckCircle2,
     CircleAlert,
     EyeOff,
-    FileText,
     Globe2,
     LockKeyhole,
-    ShieldCheck,
-    UsersRound,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import type {
-    PortfolioEntry,
     PortfolioEntryStatus,
     PortfolioVisibility,
 } from '@/types/portfolio';
+
+export { PortfolioStatusBadge } from './portfolio-status-badge';
+export { PortfolioVerificationBadge } from './portfolio-verification-badge';
 
 export const portfolioVisibilityOptions = [
     {
@@ -99,57 +97,4 @@ export function formatPortfolioDate(value: string | null): string {
               dateStyle: 'medium',
               timeZone: 'UTC',
           }).format(date);
-}
-
-export function PortfolioStatusBadge({
-    status,
-}: {
-    status: PortfolioEntryStatus;
-}) {
-    const meta = portfolioStatusMeta[status];
-    const Icon = meta.icon;
-
-    return (
-        <span
-            className={cn(
-                'inline-flex w-fit max-w-full items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold',
-                meta.className,
-            )}
-        >
-            <Icon aria-hidden="true" className="size-3.5 shrink-0" />
-            {meta.label}
-        </span>
-    );
-}
-
-export function PortfolioVerificationBadge({
-    entry,
-    className,
-}: {
-    entry: Pick<PortfolioEntry, 'verification_level' | 'verification_label'>;
-    className?: string;
-}) {
-    const Icon =
-        entry.verification_level === 'institution_verified'
-            ? ShieldCheck
-            : entry.verification_level === 'team_confirmed'
-              ? UsersRound
-              : FileText;
-
-    return (
-        <span
-            className={cn(
-                'inline-flex w-fit max-w-full min-w-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold',
-                entry.verification_level === 'institution_verified'
-                    ? 'border-verified/30 bg-verified-subtle text-verified-subtle-foreground'
-                    : 'border-border bg-muted text-muted-foreground',
-                className,
-            )}
-        >
-            <Icon aria-hidden="true" className="size-3.5 shrink-0" />
-            <span className="min-w-0 [overflow-wrap:anywhere]">
-                {entry.verification_label}
-            </span>
-        </span>
-    );
 }

@@ -1,24 +1,21 @@
 import {
-    ArrowRight,
     BookOpen,
-    Check,
     FileText,
     FolderOpen,
-    Link2,
     ShieldCheck,
     UsersRound,
 } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
+import ArchiveNode from '@/components/landing/archive-node';
 import {
     createDemoConnector,
     DEMO_EDGES,
-    DEMO_KIND_LABELS,
     DEMO_NODES,
     getDemoNode,
     getDemoRelatedIds,
 } from '@/lib/landing-demo';
-import type { DemoBox, DemoKind, DemoNode } from '@/lib/landing-demo';
-import { cn } from '@/lib/utils';
+import type { DemoBox, DemoKind } from '@/lib/landing-demo';
+import { SATU_COLORS } from '@/lib/tokens';
 
 export const DEMO_ICONS = {
     opportunity: FolderOpen,
@@ -29,117 +26,11 @@ export const DEMO_ICONS = {
     student: UsersRound,
 };
 
-type MapProps = {
+export type MapProps = {
     selectedId: string | null;
     focusedKind: DemoKind | 'all';
     onSelect: (id: string) => void;
 };
-
-function ArchiveNode({
-    node,
-    index,
-    selectedId,
-    relatedIds,
-    focusedKind,
-    onSelect,
-}: MapProps & {
-    node: DemoNode;
-    index?: number;
-    relatedIds: ReadonlySet<string>;
-}) {
-    const selected = selectedId === node.id;
-    const related = !selected && relatedIds.has(node.id);
-    const focused = focusedKind !== 'all' && node.kind === focusedKind;
-    const Icon = DEMO_ICONS[node.kind];
-
-    return (
-        <article
-            className={cn(
-                'collaboration-node',
-                node.kind === 'student' && 'collaboration-node--member',
-            )}
-            data-demo-node-box={node.id}
-            data-selected={selected || undefined}
-            data-related={related || undefined}
-            data-focused={focused || undefined}
-        >
-            <button
-                type="button"
-                className="collaboration-node-button"
-                aria-label={`Pilih arsip ${DEMO_KIND_LABELS[node.kind]}: ${node.label}`}
-                aria-pressed={selected}
-                aria-controls="demo-node-detail"
-                data-demo-node={node.id}
-                onClick={() => onSelect(node.id)}
-            >
-                <span className="collaboration-node-icon" aria-hidden="true">
-                    {node.initial ? (
-                        <span className="text-xl font-bold">
-                            {node.initial}
-                        </span>
-                    ) : (
-                        <Icon className="size-6" />
-                    )}
-                </span>
-                {index !== undefined && (
-                    <span
-                        aria-hidden="true"
-                        className="collaboration-node-index font-label"
-                    >
-                        {String(index + 1).padStart(2, '0')}
-                    </span>
-                )}
-                <span className="collaboration-node-kind">
-                    {DEMO_KIND_LABELS[node.kind]}
-                </span>
-                <span className="collaboration-node-title">{node.label}</span>
-                <span className="collaboration-node-caption">
-                    {node.caption}
-                </span>
-                <span className="collaboration-node-status">
-                    {selected ? (
-                        <>
-                            <Check aria-hidden="true" className="size-3.5" />
-                            Dipilih
-                        </>
-                    ) : related ? (
-                        <>
-                            <Link2 aria-hidden="true" className="size-3.5" />
-                            Terhubung
-                        </>
-                    ) : focused ? (
-                        'Tahap difokuskan'
-                    ) : (
-                        'Arsip contoh'
-                    )}
-                </span>
-            </button>
-            {selected ? (
-                <a
-                    href="#demo-node-detail"
-                    className="collaboration-node-inspect"
-                    onClick={() =>
-                        document
-                            .getElementById('demo-node-detail')
-                            ?.focus({ preventScroll: true })
-                    }
-                >
-                    Rincian
-                    <ArrowRight aria-hidden="true" className="size-3.5" />
-                </a>
-            ) : (
-                <span
-                    aria-hidden="true"
-                    className="collaboration-node-footnote"
-                >
-                    {node.kind === 'student'
-                        ? 'Anggota tim contoh'
-                        : 'Pilih untuk menjelajahi'}
-                </span>
-            )}
-        </article>
-    );
-}
 
 export default function LandingCollaborationMap({
     selectedId,
@@ -160,6 +51,7 @@ export default function LandingCollaborationMap({
 
         let frame = 0;
         let mounted = true;
+
         function measure() {
             if (!mounted || !board) {
                 return;
@@ -178,6 +70,7 @@ export default function LandingCollaborationMap({
                         height: rect.height,
                     });
                 });
+
             const next = DEMO_EDGES.flatMap((edge) => {
                 const source = boxes.get(edge.source);
                 const target = boxes.get(edge.target);
@@ -195,12 +88,14 @@ export default function LandingCollaborationMap({
                       ]
                     : [];
             });
+
             setPaths((current) =>
                 JSON.stringify(current) === JSON.stringify(next)
                     ? current
                     : next,
             );
         }
+
         function schedule() {
             if (!mounted) {
                 return;
@@ -209,14 +104,17 @@ export default function LandingCollaborationMap({
             cancelAnimationFrame(frame);
             frame = requestAnimationFrame(measure);
         }
+
         const observer =
             typeof ResizeObserver !== 'undefined'
                 ? new ResizeObserver(schedule)
                 : null;
+
         observer?.observe(board);
         board
             .querySelectorAll('[data-demo-node-box]')
             .forEach((element) => observer?.observe(element));
+
         window.addEventListener('resize', schedule);
         document.fonts?.ready.then(schedule);
         schedule();
@@ -269,8 +167,8 @@ export default function LandingCollaborationMap({
                                     fill="none"
                                     stroke={
                                         state === 'active'
-                                            ? '#1764E8'
-                                            : '#7892AE'
+                                            ? SATU_COLORS.primary
+                                            : SATU_COLORS.input
                                     }
                                     strokeWidth="1.5"
                                     strokeLinecap="round"
@@ -291,10 +189,11 @@ export default function LandingCollaborationMap({
                             <path
                                 key={path.id}
                                 d={path.d}
-                                className={cn(
-                                    'collaboration-connector',
-                                    active && 'collaboration-connector--active',
-                                )}
+                                className={
+                                    active
+                                        ? 'collaboration-connector collaboration-connector--active'
+                                        : 'collaboration-connector'
+                                }
                                 markerEnd={`url(#${markerId}-${active ? 'active' : 'quiet'})`}
                                 data-demo-edge={path.id}
                                 data-active={active || undefined}

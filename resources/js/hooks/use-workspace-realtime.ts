@@ -1,187 +1,20 @@
 import type { ConnectionStatus } from 'laravel-echo';
 import { useEffect, useRef, useState } from 'react';
 import { getWorkspaceEcho, resetWorkspaceEcho } from '@/lib/workspace-echo';
+import {
+    attachWindowNetworkListeners,
+    createDeltaHandlers,
+    createPresenceHandlers,
+    mapConnectionStatus,
+    setupWorkspaceChannels,
+} from '@/lib/workspace-realtime-utils';
 import type {
     WorkspacePresenceMember,
-    WorkspaceRealtimeDelta,
+    WorkspaceRealtimeOptions,
     WorkspaceRealtimeStatus,
-} from '@/types';
+} from '@/lib/workspace-realtime-utils';
 
-const TASK_EVENT = '.workspace.task.changed';
-const DISCUSSION_EVENT = '.workspace.discussion.changed';
-const ATTACHMENT_EVENT = '.workspace.attachment.changed';
-const MAX_REMEMBERED_EVENTS = 300;
-
-type WorkspaceRealtimeOptions = {
-    enabled?: boolean;
-    institutionId: number;
-    projectId: number;
-    onTaskDelta: (delta: WorkspaceRealtimeDelta) => void;
-    onDiscussionDelta: (delta: WorkspaceRealtimeDelta) => void;
-    onAttachmentDelta: (delta: WorkspaceRealtimeDelta) => void;
-    onReconnect: () => void;
-};
-
-type UnknownRecord = Record<string, unknown>;
-
-function isRecord(value: unknown): value is UnknownRecord {
-    return typeof value === 'object' && value !== null;
-}
-
-function parseDelta(
-    value: unknown,
-    resource: WorkspaceRealtimeDelta['resource'],
-    institutionId: number,
-    projectId: number,
-): WorkspaceRealtimeDelta | null {
-    if (!isRecord(value)) {
-        return null;
-    }
-
-    const resourceId = value.resource_id;
-    const eventResource = value.resource;
-    const operation = value.operation;
-    const eventInstitutionId = value.institution_id;
-    const eventProjectId = value.project_id;
-    const version = value.version;
-    const occurredAt = value.occurred_at;
-
-    if (
-        typeof resourceId !== 'number' ||
-        !Number.isInteger(resourceId) ||
-        resourceId <= 0 ||
-        eventResource !== resource ||
-        typeof operation !== 'string' ||
-        !{
-            task: [
-                'task.created',
-                'task.updated',
-                'task.assigned',
-                'task.unassigned',
-                'task.status_changed',
-                'task.deleted',
-            ],
-            discussion: [
-                'discussion.created',
-                'discussion.updated',
-                'discussion.deleted',
-                'discussion.attachment.created',
-                'discussion.attachment.deleted',
-            ],
-            attachment: ['attachment.created', 'attachment.deleted'],
-        }[resource].includes(operation) ||
-        typeof eventInstitutionId !== 'number' ||
-        typeof eventProjectId !== 'number' ||
-        eventInstitutionId !== institutionId ||
-        eventProjectId !== projectId ||
-        (typeof version !== 'string' && version !== null) ||
-        typeof occurredAt !== 'string' ||
-        Number.isNaN(Date.parse(occurredAt))
-    ) {
-        return null;
-    }
-
-    return {
-        resource,
-        operation,
-        resource_id: resourceId,
-        project_id: eventProjectId,
-        institution_id: eventInstitutionId,
-        version,
-        occurred_at: occurredAt,
-    };
-}
-
-function normalizePresenceMembers(value: unknown): WorkspacePresenceMember[] {
-    if (!Array.isArray(value)) {
-        return [];
-    }
-
-    const members = new Map<string, WorkspacePresenceMember>();
-
-    value.forEach((member) => {
-        if (
-            !isRecord(member) ||
-            (typeof member.id !== 'string' && typeof member.id !== 'number') ||
-            typeof member.name !== 'string'
-        ) {
-            return;
-        }
-
-        members.set(String(member.id), {
-            id: member.id,
-            name: member.name,
-        });
-    });
-
-    return Array.from(members.values());
-}
-
-function mapConnectionStatus(
-    status: ConnectionStatus,
-): WorkspaceRealtimeStatus {
-    return status === 'failed' ? 'unavailable' : status;
-}
-
-function eventKey(delta: WorkspaceRealtimeDelta): string {
-    return [
-        delta.resource,
-        delta.operation,
-        delta.resource_id,
-        delta.version ?? '',
-        delta.occurred_at,
-    ].join(':');
-}
-
-function eventResourceKey(delta: WorkspaceRealtimeDelta): string {
-    return `${delta.resource}:${delta.resource_id}`;
-}
-
-function rememberEvent(events: Map<string, true>, key: string): void {
-    if (events.has(key)) {
-        return;
-    }
-
-    if (events.size >= MAX_REMEMBERED_EVENTS) {
-        const oldestKey = events.keys().next().value;
-
-        if (typeof oldestKey === 'string') {
-            events.delete(oldestKey);
-        }
-    }
-
-    events.set(key, true);
-}
-
-function rememberLatestEvent(
-    events: Map<string, string>,
-    key: string,
-    occurredAt: string,
-): void {
-    if (events.size >= MAX_REMEMBERED_EVENTS && !events.has(key)) {
-        const oldestKey = events.keys().next().value;
-
-        if (typeof oldestKey === 'string') {
-            events.delete(oldestKey);
-        }
-    }
-
-    events.delete(key);
-    events.set(key, occurredAt);
-}
-
-function isOlderEvent(
-    events: Map<string, string>,
-    delta: WorkspaceRealtimeDelta,
-): boolean {
-    const previousOccurredAt = events.get(eventResourceKey(delta));
-
-    if (previousOccurredAt === undefined) {
-        return false;
-    }
-
-    return Date.parse(delta.occurred_at) < Date.parse(previousOccurredAt);
-}
+export type { WorkspaceRealtimeOptions };
 
 export function useWorkspaceRealtime({
     enabled = true,
@@ -269,8 +102,10 @@ export function useWorkspaceRealtime({
             setRetryNonce((current) => current + 1);
         };
 
-        window.addEventListener('offline', handleBrowserOffline);
-        window.addEventListener('online', handleBrowserOnline);
+        const detachNetworkListeners = attachWindowNetworkListeners(
+            handleBrowserOffline,
+            handleBrowserOnline,
+        );
 
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
             isBrowserOffline = true;
@@ -283,8 +118,7 @@ export function useWorkspaceRealtime({
 
             return () => {
                 isActive = false;
-                window.removeEventListener('offline', handleBrowserOffline);
-                window.removeEventListener('online', handleBrowserOnline);
+                detachNetworkListeners();
             };
         }
 
@@ -299,8 +133,7 @@ export function useWorkspaceRealtime({
 
             return () => {
                 isActive = false;
-                window.removeEventListener('offline', handleBrowserOffline);
-                window.removeEventListener('online', handleBrowserOnline);
+                detachNetworkListeners();
             };
         }
 
@@ -309,9 +142,6 @@ export function useWorkspaceRealtime({
                 setConnectionState('connecting');
             }
         });
-
-        const workspaceChannelName = `institutions.${institutionId}.projects.${projectId}.workspace`;
-        const presenceChannelName = `institutions.${institutionId}.projects.${projectId}.presence`;
 
         const handleConnectionChange = (status: ConnectionStatus): void => {
             if (!isActive) {
@@ -343,59 +173,6 @@ export function useWorkspaceRealtime({
             );
         };
 
-        const removeConnectionListener = echo.connector.onConnectionChange(
-            handleConnectionChange,
-        );
-
-        const handleTaskDelta = (payload: unknown): void => {
-            const delta = parseDelta(payload, 'task', institutionId, projectId);
-
-            if (delta === null || isOlderEvent(latestEvents.current, delta)) {
-                return;
-            }
-
-            const key = eventKey(delta);
-
-            if (seenEvents.current.has(key)) {
-                return;
-            }
-
-            rememberEvent(seenEvents.current, key);
-            rememberLatestEvent(
-                latestEvents.current,
-                eventResourceKey(delta),
-                delta.occurred_at,
-            );
-            callbacks.current.onTaskDelta(delta);
-        };
-
-        const handleDiscussionDelta = (payload: unknown): void => {
-            const delta = parseDelta(
-                payload,
-                'discussion',
-                institutionId,
-                projectId,
-            );
-
-            if (delta === null || isOlderEvent(latestEvents.current, delta)) {
-                return;
-            }
-
-            const key = eventKey(delta);
-
-            if (seenEvents.current.has(key)) {
-                return;
-            }
-
-            rememberEvent(seenEvents.current, key);
-            rememberLatestEvent(
-                latestEvents.current,
-                eventResourceKey(delta),
-                delta.occurred_at,
-            );
-            callbacks.current.onDiscussionDelta(delta);
-        };
-
         const handleChannelError = (): void => {
             if (isActive) {
                 if (isBrowserOffline) {
@@ -409,84 +186,46 @@ export function useWorkspaceRealtime({
             }
         };
 
-        const handleAttachmentDelta = (payload: unknown): void => {
-            const delta = parseDelta(
-                payload,
-                'attachment',
-                institutionId,
-                projectId,
-            );
+        const removeConnectionListener = echo.connector.onConnectionChange(
+            handleConnectionChange,
+        );
 
-            if (
-                delta === null ||
-                isOlderEvent(latestEvents.current, delta) ||
-                seenEvents.current.has(eventKey(delta))
-            ) {
-                return;
-            }
+        const {
+            handleTaskDelta,
+            handleDiscussionDelta,
+            handleAttachmentDelta,
+        } = createDeltaHandlers(
+            institutionId,
+            projectId,
+            seenEvents.current,
+            latestEvents.current,
+            () => callbacks.current,
+        );
 
-            rememberEvent(seenEvents.current, eventKey(delta));
-            rememberLatestEvent(
-                latestEvents.current,
-                eventResourceKey(delta),
-                delta.occurred_at,
-            );
-            callbacks.current.onAttachmentDelta(delta);
-        };
+        const presenceHandlers = createPresenceHandlers(
+            () => isActive,
+            setPresenceMembers,
+        );
 
-        const workspaceChannel = echo
-            .private(workspaceChannelName)
-            .listen(TASK_EVENT, handleTaskDelta)
-            .listen(DISCUSSION_EVENT, handleDiscussionDelta)
-            .listen(ATTACHMENT_EVENT, handleAttachmentDelta)
-            .subscribed(markConnected)
-            .error(handleChannelError);
-
-        echo.join(presenceChannelName)
-            .here((members: unknown) => {
-                if (isActive) {
-                    setPresenceMembers(normalizePresenceMembers(members));
-                }
-            })
-            .joining((member: unknown) => {
-                if (!isActive) {
-                    return;
-                }
-
-                setPresenceMembers((currentMembers) =>
-                    normalizePresenceMembers([...currentMembers, member]),
-                );
-            })
-            .leaving((member: unknown) => {
-                if (!isActive || !isRecord(member)) {
-                    return;
-                }
-
-                setPresenceMembers((currentMembers) =>
-                    currentMembers.filter(
-                        (currentMember) =>
-                            String(currentMember.id) !== String(member.id),
-                    ),
-                );
-            })
-            .error(handleChannelError);
+        const cleanupChannels = setupWorkspaceChannels(
+            echo,
+            institutionId,
+            projectId,
+            {
+                handleTaskDelta,
+                handleDiscussionDelta,
+                handleAttachmentDelta,
+                handleSubscribed: markConnected,
+                handleError: handleChannelError,
+                ...presenceHandlers,
+            },
+        );
 
         return () => {
             isActive = false;
             removeConnectionListener();
-            window.removeEventListener('offline', handleBrowserOffline);
-            window.removeEventListener('online', handleBrowserOnline);
-            workspaceChannel.stopListening(TASK_EVENT, handleTaskDelta);
-            workspaceChannel.stopListening(
-                ATTACHMENT_EVENT,
-                handleAttachmentDelta,
-            );
-            workspaceChannel.stopListening(
-                DISCUSSION_EVENT,
-                handleDiscussionDelta,
-            );
-            echo.leave(workspaceChannelName);
-            echo.leave(presenceChannelName);
+            detachNetworkListeners();
+            cleanupChannels();
         };
     }, [enabled, institutionId, projectId, retryNonce]);
 

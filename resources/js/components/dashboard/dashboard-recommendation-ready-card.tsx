@@ -1,16 +1,8 @@
-import { Link } from '@inertiajs/react';
 import type { InertiaLinkProps } from '@inertiajs/react';
-import {
-    AlertCircle,
-    ArrowRight,
-    Check,
-    EyeOff,
-    Info,
-    UserRoundCog,
-    UsersRound,
-} from 'lucide-react';
+import { UsersRound } from 'lucide-react';
+import { DashboardRecommendationFeedbackActions } from '@/components/dashboard/dashboard-recommendation-feedback-actions';
+import { DashboardRecommendationReasons } from '@/components/dashboard/dashboard-recommendation-reasons';
 import { DashboardRegionAction } from '@/components/dashboard/dashboard-region-action';
-import { Button } from '@/components/ui/button';
 import type { DashboardAction, DashboardRecommendationRegion } from '@/types';
 import type { DashboardRecommendationFeedback } from './dashboard-recommendations-card';
 
@@ -113,57 +105,11 @@ export function DashboardRecommendationReadyCard({
                 </div>
             )}
 
-            <p className="px-4 pt-4 text-xs font-semibold text-muted-foreground">
-                Mengapa disarankan
-            </p>
-            <ul
-                aria-label="Alasan kecocokan proyek"
-                className="grid gap-3 px-4 pt-3 pb-4"
-                data-test="dashboard-recommendation-reasons"
-            >
-                {recommendation.reasons.map((reason, index) => (
-                    <li
-                        key={`${index}-${reason}`}
-                        className="flex min-w-0 items-start gap-2.5 text-sm leading-6 text-foreground"
-                        data-test="dashboard-recommendation-reason"
-                    >
-                        <span className="mt-1 flex size-4 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
-                            {recommendation.reasonTypes?.[index] ===
-                            'positive' ? (
-                                <Check
-                                    aria-hidden="true"
-                                    className="size-3 stroke-[2.5]"
-                                />
-                            ) : recommendation.reasonTypes?.[index] ===
-                              'attention' ? (
-                                <AlertCircle
-                                    aria-hidden="true"
-                                    className="size-3"
-                                />
-                            ) : (
-                                <Info aria-hidden="true" className="size-3" />
-                            )}
-                        </span>
-                        <span className="min-w-0 wrap-anywhere">{reason}</span>
-                    </li>
-                ))}
-            </ul>
-
-            {recommendation.limitations?.length ? (
-                <div
-                    className="border-t border-border/60 px-4 py-3 text-xs leading-5 text-muted-foreground"
-                    data-test="dashboard-recommendation-limitations"
-                >
-                    <p className="font-semibold text-foreground">
-                        Batas pencocokan
-                    </p>
-                    <ul className="mt-2 list-disc space-y-1 pl-4">
-                        {recommendation.limitations.map((limitation) => (
-                            <li key={limitation}>{limitation}</li>
-                        ))}
-                    </ul>
-                </div>
-            ) : null}
+            <DashboardRecommendationReasons
+                reasons={recommendation.reasons}
+                reasonTypes={recommendation.reasonTypes}
+                limitations={recommendation.limitations}
+            />
 
             <dl className="grid gap-2 border-t border-border/60 px-4 py-3 text-xs">
                 {recommendation.scoreVersion && (
@@ -171,7 +117,7 @@ export function DashboardRecommendationReadyCard({
                         <dt className="text-muted-foreground">
                             Versi pencocokan
                         </dt>
-                        <dd className="min-w-0 text-right font-label text-[0.6875rem] wrap-anywhere text-foreground">
+                        <dd className="min-w-0 text-right font-label text-xs wrap-anywhere text-foreground">
                             {recommendation.scoreVersion}
                         </dd>
                     </div>
@@ -200,65 +146,16 @@ export function DashboardRecommendationReadyCard({
                 )}
             </dl>
 
-            <div className="border-t border-border/50 bg-white/65 p-4">
-                {projectHref !== null && (
-                    <Button
-                        asChild
-                        variant="outline"
-                        className="group min-h-11 w-full cursor-pointer rounded-xl border-primary/25 font-semibold text-primary hover:border-primary hover:bg-accent hover:text-primary motion-safe:transition-[background-color,border-color] motion-safe:duration-standard"
-                    >
-                        <Link href={projectHref}>
-                            {projectAction.label}
-                            <ArrowRight
-                                aria-hidden="true"
-                                className="ml-1.5 size-4 motion-safe:transition-transform motion-safe:duration-standard motion-safe:group-hover:translate-x-1"
-                            />
-                        </Link>
-                    </Button>
-                )}
-
-                <div className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1 text-xs">
-                    <button
-                        type="button"
-                        className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-lg px-2 font-medium text-muted-foreground hover:bg-accent hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 motion-safe:transition-colors motion-safe:duration-standard"
-                        disabled={isProcessing || isStale}
-                        data-test="dashboard-recommendation-hide"
-                        onClick={() => onFeedback(recommendation.id, 'hide')}
-                    >
-                        <EyeOff aria-hidden="true" className="size-3.5" />
-                        Sembunyikan
-                    </button>
-                    <button
-                        type="button"
-                        className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-lg px-2 font-medium text-muted-foreground hover:bg-accent hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 motion-safe:transition-colors motion-safe:duration-standard"
-                        disabled={isProcessing || isStale}
-                        data-test="dashboard-recommendation-not-relevant"
-                        onClick={() =>
-                            onFeedback(recommendation.id, 'notRelevant')
-                        }
-                    >
-                        Tidak relevan
-                    </button>
-                    {profileHref !== null && (
-                        <Link
-                            href={profileHref}
-                            className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-lg px-2 font-semibold text-primary hover:bg-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                        >
-                            <UserRoundCog
-                                aria-hidden="true"
-                                className="size-3.5"
-                            />
-                            {profileAction.label}
-                        </Link>
-                    )}
-                </div>
-                <p
-                    className="mt-1 min-h-5 text-xs leading-5 font-medium text-primary"
-                    role="status"
-                >
-                    {isProcessing ? 'Mengirim masukan...' : null}
-                </p>
-            </div>
+            <DashboardRecommendationFeedbackActions
+                recommendationId={recommendation.id}
+                projectHref={projectHref}
+                projectActionLabel={projectAction.label}
+                profileHref={profileHref}
+                profileActionLabel={profileAction.label}
+                isProcessing={isProcessing}
+                isStale={isStale}
+                onFeedback={onFeedback}
+            />
         </div>
     );
 }

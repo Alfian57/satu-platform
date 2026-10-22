@@ -1,30 +1,16 @@
-import { useHttp } from '@inertiajs/react';
 import { Eye, Save, ShieldCheck } from 'lucide-react';
-import { useRef, useState } from 'react';
-import {
-    PortfolioFormFeedback,
-    portfolioFieldError,
-} from '@/components/portfolio/portfolio-form-feedback';
-import type { PortfolioErrorMap } from '@/components/portfolio/portfolio-form-feedback';
+import { PortfolioFormFeedback } from '@/components/portfolio/portfolio-form-feedback';
 import {
     portfolioVisibilityLabel,
     portfolioVisibilityOptions,
 } from '@/components/portfolio/portfolio-presentation';
-import {
-    PortfolioPrivacyRecoveryNotice,
-    usePortfolioPrivacyRecovery,
-} from '@/components/portfolio/portfolio-privacy-recovery';
+import { PortfolioPrivacyRecoveryNotice } from '@/components/portfolio/portfolio-privacy-recovery';
+import { PortfolioStaleNotice } from '@/components/portfolio/portfolio-stale-notice';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { show as showProfile } from '@/routes/student-profiles';
-import { update as updateProfileVisibility } from '@/routes/student-profiles/visibility';
-import type {
-    PortfolioProfile,
-    PortfolioProfileApiResponse,
-    PortfolioProfileVisibilityPayload,
-    PortfolioVisibility,
-} from '@/types/portfolio';
+import { usePortfolioVisibilitySettings } from '@/hooks/use-portfolio-visibility-settings';
+import type { PortfolioProfile, PortfolioVisibility } from '@/types/portfolio';
 
 type Props = {
     profile: PortfolioProfile;
@@ -39,81 +25,23 @@ export function PortfolioVisibilitySettings({
     dataTestPrefix = 'portfolio-profile',
     onAccessRevoked,
 }: Props) {
-    const [actionMessage, setActionMessage] = useState<string | null>(null);
-    const commandLock = useRef(false);
-    const recovery = usePortfolioPrivacyRecovery<
-        PortfolioProfileApiResponse['data']
-    >({
-        resourceId: profile.id,
-        readUrl: showProfile(profile.id).url,
-        onRead: (latest) => onUpdated({ ...profile, ...latest }),
+    const {
+        form,
+        errors,
+        visibilityError,
+        isStale,
+        hasChanges,
+        selection,
+        actionMessage,
+        recovery,
+        applyLatestSettings,
+        submit,
+        setActionMessage,
+    } = usePortfolioVisibilitySettings({
+        profile,
+        onUpdated,
         onAccessRevoked,
     });
-    const form = useHttp<
-        PortfolioProfileVisibilityPayload,
-        PortfolioProfileApiResponse
-    >({
-        portfolio_visibility: profile.portfolio_visibility,
-        recruiter_discoverable: false,
-        expected_updated_at: profile.updated_at,
-        expected_privacy_revision: profile.privacy_revision,
-    });
-    const errors = form.errors as PortfolioErrorMap;
-    const visibilityError =
-        portfolioFieldError(errors, 'portfolio_visibility') ??
-        portfolioFieldError(errors, 'profile_visibility');
-    const isStale =
-        form.data.expected_privacy_revision !== profile.privacy_revision;
-    const hasChanges =
-        form.data.portfolio_visibility !== profile.portfolio_visibility;
-    const selection = portfolioVisibilityOptions.find(
-        (option) => option.value === form.data.portfolio_visibility,
-    );
-
-    function applyLatestSettings(): void {
-        form.setData({
-            portfolio_visibility: profile.portfolio_visibility,
-            recruiter_discoverable: false,
-            expected_updated_at: profile.updated_at,
-            expected_privacy_revision: profile.privacy_revision,
-        });
-        form.clearErrors();
-        setActionMessage(null);
-    }
-
-    function submit(event: React.FormEvent<HTMLFormElement>): void {
-        event.preventDefault();
-
-        if (
-            commandLock.current ||
-            form.processing ||
-            isStale ||
-            recovery.blocked
-        ) {
-            return;
-        }
-
-        setActionMessage(null);
-        commandLock.current = true;
-        form.patch(updateProfileVisibility(profile.id).url, {
-            onHttpException: recovery.onHttpException,
-            onNetworkError: recovery.onNetworkError,
-        })
-            .then((response) => {
-                form.setData({
-                    portfolio_visibility: response.data.portfolio_visibility,
-                    recruiter_discoverable: false,
-                    expected_updated_at: response.data.updated_at,
-                    expected_privacy_revision: response.data.privacy_revision,
-                });
-                onUpdated({ ...profile, ...response.data });
-                setActionMessage('Pengaturan portofolio sudah tersimpan.');
-            })
-            .catch(() => undefined)
-            .finally(() => {
-                commandLock.current = false;
-            });
-    }
 
     return (
         <section
@@ -192,7 +120,7 @@ export function PortfolioVisibilitySettings({
                     </select>
                     <p
                         id={dataTestPrefix + '-hint'}
-                        className="rounded-xl border border-[#F2D3A9] bg-[#FFF4E5] p-3 text-xs leading-5 text-[#C2410C]"
+                        className="rounded-xl border border-satu-orange-border bg-satu-orange-soft p-3 text-xs leading-5 text-satu-orange-ink"
                     >
                         {form.data.portfolio_visibility === 'public'
                             ? 'Halaman publik hanya menampilkan karya yang juga dipilih Publik.'
@@ -213,25 +141,12 @@ export function PortfolioVisibilitySettings({
                     prefix={dataTestPrefix}
                 />
                 {isStale && !recovery.blocked && (
-                    <div
-                        role="status"
-                        className="grid gap-3 rounded-xl border border-pending/30 bg-pending-subtle p-3 text-sm leading-6 text-pending-subtle-foreground"
-                        data-test={dataTestPrefix + '-stale'}
-                    >
-                        <p>
-                            Pengaturan profil berubah. Ambil pengaturan terbaru
-                            sebelum menyimpan kembali.
-                        </p>
-                        <Button
-                            variant="outline"
-                            type="button"
-                            className="h-auto min-h-11 whitespace-normal"
-                            onClick={applyLatestSettings}
-                            disabled={form.processing}
-                        >
-                            Gunakan pengaturan terbaru
-                        </Button>
-                    </div>
+                    <PortfolioStaleNotice
+                        message="Pengaturan profil berubah. Ambil pengaturan terbaru sebelum menyimpan kembali."
+                        onApplyLatest={applyLatestSettings}
+                        processing={form.processing}
+                        dataTest={dataTestPrefix + '-stale'}
+                    />
                 )}
                 <PortfolioFormFeedback
                     errors={errors}

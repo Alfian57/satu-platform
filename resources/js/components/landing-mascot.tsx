@@ -83,7 +83,7 @@ export default function LandingMascot({ children }: { children: ReactNode }) {
                         <button
                             key={topic.key}
                             type="button"
-                            className="landing-feature-link"
+                            className="landing-feature-link cursor-pointer"
                             data-testid={`landing-mascot-topic-${topic.key}`}
                             aria-label={`Kenali fitur: ${topic.title}`}
                             aria-haspopup="dialog"
@@ -107,7 +107,7 @@ export default function LandingMascot({ children }: { children: ReactNode }) {
                 onOpenChange={setIsExplanationOpen}
             >
                 <DialogContent
-                    className="border-[#D9E8F5] bg-white text-[#17345A] sm:max-w-md"
+                    className="border-satu-border-soft bg-white text-satu-ink sm:max-w-md"
                     style={{ colorScheme: 'light' }}
                     onCloseAutoFocus={(event) => {
                         event.preventDefault();
@@ -115,13 +115,13 @@ export default function LandingMascot({ children }: { children: ReactNode }) {
                     }}
                 >
                     <DialogHeader>
-                        <p className="mb-2 text-xs font-semibold tracking-wide text-[#526B85]">
+                        <p className="mb-2 text-xs font-semibold tracking-wide text-satu-muted">
                             Kenali alur SATU
                         </p>
-                        <DialogTitle className="text-2xl text-[#17345A]">
+                        <DialogTitle className="text-2xl text-satu-ink">
                             {activeTopic.title}
                         </DialogTitle>
-                        <DialogDescription className="pt-2 text-base leading-7 text-[#526B85]">
+                        <DialogDescription className="pt-2 text-base leading-7 text-satu-muted">
                             {activeTopic.message}
                         </DialogDescription>
                     </DialogHeader>
@@ -129,7 +129,7 @@ export default function LandingMascot({ children }: { children: ReactNode }) {
                         <DialogClose asChild>
                             <button
                                 type="button"
-                                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#1764E8] px-5 text-sm font-semibold text-white hover:bg-[#1454C4] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1746B0]"
+                                className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl bg-satu-blue px-5 text-sm font-semibold text-white hover:bg-satu-blue-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-satu-blue-focus"
                             >
                                 Mengerti
                             </button>

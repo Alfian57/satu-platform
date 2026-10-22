@@ -1,26 +1,11 @@
-import {
-    ArrowRight,
-    BookOpen,
-    Check,
-    FileText,
-    Layers3,
-    Link2,
-    List,
-    Map,
-    RotateCcw,
-} from 'lucide-react';
+import { BookOpen, Layers3, List, Map, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import LandingCollaborationMap, {
-    DEMO_ICONS,
-} from '@/components/landing-collaboration-map';
-import {
-    DEMO_KIND_LABELS,
-    DEMO_NODES,
-    getDemoNode,
-    getDemoRelations,
-} from '@/lib/landing-demo';
-import type { DemoKind, DemoNode } from '@/lib/landing-demo';
+import DemoDetails from '@/components/landing/demo-details';
+import DemoRelationsTable from '@/components/landing/demo-relations-table';
+import LandingCollaborationMap from '@/components/landing-collaboration-map';
+import { DEMO_KIND_LABELS, DEMO_NODES, getDemoNode } from '@/lib/landing-demo';
+import type { DemoKind } from '@/lib/landing-demo';
 import { cn } from '@/lib/utils';
 
 type DemoView = 'map' | 'list';
@@ -28,176 +13,6 @@ const views = [
     { key: 'map', label: 'Peta kolaborasi', icon: Map },
     { key: 'list', label: 'Daftar hubungan', icon: List },
 ] as const;
-
-const reverseRelations: Record<string, string> = {
-    'project-team': 'Proyek yang dikerjakan',
-    'team-contribution': 'Konteks pekerjaan',
-    'contribution-validation': 'Kontribusi yang ditinjau',
-    'validation-portfolio': 'Dasar karya',
-    'siti-team': 'Anggota tim',
-    'budi-team': 'Anggota tim',
-    'budi-contribution': 'Dikerjakan oleh',
-};
-
-function RelationText({ id }: { id: string }) {
-    return (
-        <ul className="space-y-2">
-            {getDemoRelations(id).map((edge) => (
-                <li key={edge.id} className="text-sm leading-6 text-[#526B85]">
-                    <span className="font-semibold text-[#17345A]">
-                        {getDemoNode(edge.source)?.label}
-                    </span>{' '}
-                    {edge.label}{' '}
-                    <span className="font-semibold text-[#17345A]">
-                        {getDemoNode(edge.target)?.label}
-                    </span>
-                    .
-                </li>
-            ))}
-        </ul>
-    );
-}
-
-function DemoDetails({
-    node,
-    onSelect,
-}: {
-    node: DemoNode | undefined;
-    onSelect: (id: string) => void;
-}) {
-    const Icon = node ? DEMO_ICONS[node.kind] : BookOpen;
-    const relations = node ? getDemoRelations(node.id) : [];
-
-    return (
-        <section
-            id="demo-node-detail"
-            tabIndex={-1}
-            aria-labelledby="demo-detail-heading"
-            className="collaboration-detail"
-            data-testid="landing-demo-detail"
-        >
-            <div className="collaboration-detail-heading">
-                <span className="collaboration-detail-icon" aria-hidden="true">
-                    <Icon className="size-6" />
-                </span>
-                <div>
-                    <p className="text-xs font-semibold text-[#1454C4]">
-                        {node
-                            ? `Rincian arsip / ${DEMO_KIND_LABELS[node.kind]}`
-                            : 'Mulai dari satu arsip'}
-                    </p>
-                    <h3
-                        id="demo-detail-heading"
-                        className="mt-1 text-2xl leading-tight font-bold tracking-[-0.025em]"
-                    >
-                        {node
-                            ? node.label
-                            : 'Kenali hubungan di balik sebuah karya.'}
-                    </h3>
-                </div>
-                <span className="collaboration-synthetic-label">
-                    Data synthetic
-                </span>
-            </div>
-            {node ? (
-                <div
-                    key={node.id}
-                    className="landing-panel-enter grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:gap-10"
-                >
-                    <div className="min-w-0">
-                        <p className="text-base leading-7 text-[#526B85]">
-                            {node.description}
-                        </p>
-                        <dl className="mt-5 grid gap-4 border-t border-[#D9E8F5] pt-5 sm:grid-cols-2">
-                            {node.facts.map(([label, value]) => (
-                                <div key={label}>
-                                    <dt className="text-xs text-[#526B85]">
-                                        {label}
-                                    </dt>
-                                    <dd className="mt-1 text-sm leading-6 font-semibold text-[#17345A]">
-                                        {value}
-                                    </dd>
-                                </div>
-                            ))}
-                        </dl>
-                        <div className="mt-5 rounded-2xl border border-[#D9E8F5] bg-white p-4">
-                            <p className="flex items-center gap-2 text-sm font-semibold text-[#1454C4]">
-                                <ArrowRight
-                                    aria-hidden="true"
-                                    className="size-4"
-                                />
-                                Langkah berikutnya
-                            </p>
-                            <p className="mt-2 text-sm leading-6 text-[#526B85]">
-                                {node.next}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="min-w-0">
-                        <h4 className="flex items-center gap-2 text-sm font-bold">
-                            <Link2
-                                aria-hidden="true"
-                                className="size-4 text-[#1764E8]"
-                            />
-                            Hubungan terdekat
-                        </h4>
-                        <ul className="mt-3 divide-y divide-[#D9E8F5]">
-                            {relations.map((edge) => {
-                                const related = getDemoNode(
-                                    edge.source === node.id
-                                        ? edge.target
-                                        : edge.source,
-                                )!;
-                                const RelatedIcon = DEMO_ICONS[related.kind];
-
-                                return (
-                                    <li key={edge.id} className="py-3">
-                                        <p className="mb-2 text-xs leading-5 text-[#526B85]">
-                                            {edge.source === node.id
-                                                ? edge.label
-                                                : reverseRelations[edge.id]}
-                                        </p>
-                                        <button
-                                            type="button"
-                                            className="collaboration-relation-button"
-                                            onClick={() => onSelect(related.id)}
-                                        >
-                                            <RelatedIcon
-                                                aria-hidden="true"
-                                                className="size-4 shrink-0"
-                                            />
-                                            <span>{related.label}</span>
-                                            <ArrowRight
-                                                aria-hidden="true"
-                                                className="ml-auto size-4 shrink-0"
-                                            />
-                                        </button>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </div>
-                </div>
-            ) : (
-                <div className="grid items-center gap-5 lg:grid-cols-[minmax(0,1fr)_auto]">
-                    <p className="max-w-2xl text-base leading-7 text-[#526B85]">
-                        Pilih lembar proyek, anggota tim, atau kontribusi untuk
-                        membaca konteksnya. Garis menampilkan hubungan, bukan
-                        peringkat atau ukuran nilai seseorang.
-                    </p>
-                    <button
-                        type="button"
-                        className="landing-control"
-                        onClick={() => onSelect('project')}
-                    >
-                        Mulai dari proyek
-                        <ArrowRight aria-hidden="true" className="size-4" />
-                    </button>
-                </div>
-            )}
-        </section>
-    );
-}
 
 export default function LandingDemoGraph() {
     const [view, setView] = useState<DemoView>('map');
@@ -267,11 +82,11 @@ export default function LandingDemoGraph() {
         >
             <div className="collaboration-toolbar">
                 <div className="flex items-start gap-3">
-                    <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-[#BFD7EC] bg-white text-[#1764E8] shadow-sm">
+                    <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-satu-border-contrast bg-white text-satu-blue shadow-sm">
                         <Layers3 aria-hidden="true" className="size-6" />
                     </span>
                     <div>
-                        <p className="font-label text-xs text-[#526B85]">
+                        <p className="font-label text-xs text-satu-muted">
                             ARSIP DEMO / 001
                         </p>
                         <h3
@@ -280,7 +95,7 @@ export default function LandingDemoGraph() {
                         >
                             Peta kolaborasi
                         </h3>
-                        <p className="mt-2 text-sm leading-6 text-[#526B85]">
+                        <p className="mt-2 text-sm leading-6 text-satu-muted">
                             Perjalanan kontribusi Budi.
                         </p>
                     </div>
@@ -309,7 +124,7 @@ export default function LandingDemoGraph() {
                                 aria-controls="demo-view-panel"
                                 tabIndex={active ? 0 : -1}
                                 className={cn(
-                                    'collaboration-view-tab',
+                                    'collaboration-view-tab cursor-pointer',
                                     active && 'collaboration-view-tab--active',
                                 )}
                                 onClick={() => setView(item.key)}
@@ -324,7 +139,7 @@ export default function LandingDemoGraph() {
                 <div className="collaboration-filter-controls">
                     <label
                         htmlFor="landing-graph-filter"
-                        className="text-xs font-semibold text-[#526B85]"
+                        className="text-xs font-semibold text-satu-muted"
                     >
                         Fokus tahap
                     </label>
@@ -347,7 +162,7 @@ export default function LandingDemoGraph() {
                     </select>
                     <button
                         type="button"
-                        className="landing-control"
+                        className="landing-control cursor-pointer"
                         onClick={() => {
                             setView('map');
                             setFocusedKind('all');
@@ -396,107 +211,18 @@ export default function LandingDemoGraph() {
                         onSelect={selectNode}
                     />
                 ) : (
-                    <div
-                        className="collaboration-ledger"
-                        aria-labelledby="ledger-heading"
-                    >
-                        <div className="collaboration-ledger-heading">
-                            <div>
-                                <h3
-                                    id="ledger-heading"
-                                    className="text-lg font-bold"
-                                >
-                                    Daftar hubungan
-                                </h3>
-                                <p className="mt-1 text-sm text-[#526B85]">
-                                    {displayedNodes.length} arsip synthetic.
-                                    Hubungan sama dengan peta.
-                                </p>
-                            </div>
-                            <FileText
-                                aria-hidden="true"
-                                className="size-6 text-[#1764E8]"
-                            />
-                        </div>
-                        <table className="collaboration-table">
-                            <caption className="sr-only">
-                                Arsip dan hubungan graf kolaborasi synthetic
-                                SATU
-                            </caption>
-                            <thead>
-                                <tr>
-                                    <th scope="col">Arsip</th>
-                                    <th scope="col">Hubungan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {displayedNodes.map((node) => {
-                                    const Icon = DEMO_ICONS[node.kind];
-
-                                    return (
-                                        <tr
-                                            key={node.id}
-                                            data-selected={
-                                                selectedId === node.id ||
-                                                undefined
-                                            }
-                                        >
-                                            <th scope="row">
-                                                <button
-                                                    type="button"
-                                                    aria-pressed={
-                                                        selectedId === node.id
-                                                    }
-                                                    aria-controls="demo-node-detail"
-                                                    className="collaboration-table-button"
-                                                    onClick={() =>
-                                                        selectNode(node.id)
-                                                    }
-                                                >
-                                                    <span className="flex items-center gap-2 text-xs font-semibold text-[#1454C4]">
-                                                        <Icon
-                                                            aria-hidden="true"
-                                                            className="size-4 shrink-0"
-                                                        />
-                                                        {
-                                                            DEMO_KIND_LABELS[
-                                                                node.kind
-                                                            ]
-                                                        }
-                                                    </span>
-                                                    <span className="mt-2 text-sm leading-6 font-bold">
-                                                        {node.label}
-                                                    </span>
-                                                    <span className="mt-2 inline-flex items-center gap-1.5 text-xs text-[#526B85]">
-                                                        {selectedId ===
-                                                            node.id && (
-                                                            <Check
-                                                                aria-hidden="true"
-                                                                className="size-3.5"
-                                                            />
-                                                        )}
-                                                        {selectedId === node.id
-                                                            ? 'Dipilih'
-                                                            : 'Pilih arsip'}
-                                                    </span>
-                                                </button>
-                                            </th>
-                                            <td>
-                                                <RelationText id={node.id} />
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                    <DemoRelationsTable
+                        displayedNodes={displayedNodes}
+                        selectedId={selectedId}
+                        onSelectNode={selectNode}
+                    />
                 )}
             </div>
             <DemoDetails node={selectedNode} onSelect={selectNode} />
             <p className="collaboration-demo-note">
                 <BookOpen
                     aria-hidden="true"
-                    className="size-4 shrink-0 text-[#1764E8]"
+                    className="size-4 shrink-0 text-satu-blue"
                 />
                 Contoh alur, bukan progres akun. Validasi tidak otomatis
                 memublikasikan portofolio.

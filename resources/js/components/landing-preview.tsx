@@ -104,43 +104,43 @@ export default function LandingPreview({
     return (
         <figure
             className={cn(
-                'landing-preview min-w-0 overflow-hidden rounded-3xl border border-[#D9E8F5] bg-white shadow-md',
+                'landing-preview min-w-0 overflow-hidden rounded-3xl border border-satu-border-soft bg-white shadow-md',
                 className,
             )}
         >
-            <figcaption className="flex flex-wrap items-center justify-between gap-2 border-b border-[#D9E8F5] px-5 py-4 sm:px-6">
-                <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#17345A]">
+            <figcaption className="flex flex-wrap items-center justify-between gap-2 border-b border-satu-border-soft px-5 py-4 sm:px-6">
+                <span className="inline-flex items-center gap-2 text-sm font-semibold text-satu-ink">
                     <Icon
                         aria-hidden="true"
-                        className="size-4 text-[#1764E8]"
+                        className="size-4 text-satu-blue"
                     />
                     {preview.label}
                 </span>
-                <span className="rounded-full bg-[#E7F2FF] px-3 py-1 text-xs font-semibold text-[#1454C4]">
+                <span className="rounded-full bg-satu-blue-soft px-3 py-1 text-xs font-semibold text-satu-blue-hover">
                     Data synthetic
                 </span>
             </figcaption>
             <div className="p-5 sm:p-6">
                 <div
                     aria-hidden="true"
-                    className="mb-5 flex h-24 items-center justify-center overflow-hidden rounded-2xl border border-[#D9E8F5] bg-[linear-gradient(125deg,#E7F2FF,#F3F9FF)]"
+                    className="mb-5 flex h-24 items-center justify-center overflow-hidden rounded-2xl border border-satu-border-soft bg-gradient-to-br from-satu-blue-soft to-satu-canvas"
                 >
-                    <div className="relative flex h-20 w-32 rotate-[-6deg] items-center justify-center rounded-t-xl border border-[#BFD7EC] bg-white shadow-sm">
-                        <Icon className="size-9 text-[#1764E8]" />
-                        <span className="absolute top-0 right-4 h-7 w-3 rounded-b-sm bg-[#FFB85C]" />
+                    <div className="relative flex h-20 w-32 rotate-[-6deg] items-center justify-center rounded-t-xl border border-satu-border-contrast bg-white shadow-sm">
+                        <Icon className="size-9 text-satu-blue" />
+                        <span className="absolute top-0 right-4 h-7 w-3 rounded-b-sm bg-satu-orange" />
                     </div>
                 </div>
-                <h3 className="text-2xl leading-tight font-bold tracking-[-0.025em] text-[#17345A]">
+                <h3 className="text-2xl leading-tight font-bold tracking-[-0.025em] text-satu-ink">
                     {preview.title}
                 </h3>
-                <p className="mt-3 text-sm leading-6 text-[#526B85]">
+                <p className="mt-3 text-sm leading-6 text-satu-muted">
                     {preview.description}
                 </p>
-                <dl className="mt-5 divide-y divide-[#D9E8F5] border-t border-[#D9E8F5]">
+                <dl className="mt-5 divide-y divide-satu-border-soft border-t border-satu-border-soft">
                     {preview.facts.map(([label, value]) => (
                         <div key={label} className="py-3">
-                            <dt className="text-xs text-[#526B85]">{label}</dt>
-                            <dd className="mt-1 text-sm leading-6 font-semibold text-[#17345A]">
+                            <dt className="text-xs text-satu-muted">{label}</dt>
+                            <dd className="mt-1 text-sm leading-6 font-semibold text-satu-ink">
                                 {value}
                             </dd>
                         </div>

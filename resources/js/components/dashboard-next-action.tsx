@@ -1,44 +1,29 @@
-import { Link } from '@inertiajs/react';
 import type { InertiaLinkProps } from '@inertiajs/react';
 import {
     AlertCircle,
-    ArrowRight,
-    Building2,
-    CalendarDays,
     CircleCheck,
     Clock3,
     Compass,
-    FileText,
-    Sparkles,
     Sparkle,
-    UserRound,
+    Sparkles,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { DashboardNextActionControl } from '@/components/dashboard/dashboard-next-action-control';
+import { DashboardNextActionFact } from '@/components/dashboard/dashboard-next-action-fact';
 import { cn } from '@/lib/utils';
 import type {
     DashboardAction,
-    DashboardDocketFact,
-    DashboardFactIcon,
-    DashboardNextAction,
+    DashboardNextAction as DashboardNextActionType,
     DashboardStatusTone,
 } from '@/types';
 
 type ActionHref = NonNullable<InertiaLinkProps['href']>;
 
 type Props = {
-    action: DashboardNextAction;
+    action: DashboardNextActionType;
     referenceLayout?: boolean;
     getActionHref: (action: DashboardAction) => ActionHref | null;
     onAction: (action: DashboardAction) => void;
-};
-
-const factIcons: Record<DashboardFactIcon, LucideIcon> = {
-    building: Building2,
-    calendar: CalendarDays,
-    file: FileText,
-    profile: UserRound,
-    user: UserRound,
 };
 
 const statusStyles: Record<
@@ -62,101 +47,6 @@ const statusStyles: Record<
         className: 'bg-verified-subtle text-verified-subtle-foreground',
     },
 };
-
-const factToneStyles = {
-    correction: 'text-correction',
-    default: 'text-foreground',
-    muted: 'text-muted-foreground',
-    pending: 'text-pending',
-    verified: 'text-verified',
-} as const;
-
-function FactRow({ fact }: { fact: DashboardDocketFact }) {
-    const Icon = fact.icon ? factIcons[fact.icon] : FileText;
-
-    return (
-        <div className="dashboard-docket__fact flex min-w-0 items-start gap-3 border-t border-border/70 pt-4">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-accent/65 text-primary">
-                <Icon aria-hidden="true" className="size-4" />
-            </span>
-            <div className="min-w-0">
-                <dt className="text-xs text-muted-foreground">{fact.label}</dt>
-                <dd
-                    className={cn(
-                        'mt-1 text-sm leading-5 font-medium wrap-anywhere',
-                        factToneStyles[fact.tone ?? 'default'],
-                    )}
-                >
-                    {fact.dateTime ? (
-                        <time dateTime={fact.dateTime}>{fact.value}</time>
-                    ) : (
-                        fact.value
-                    )}
-                    {fact.supportingValue && (
-                        <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-                            {fact.supportingValue}
-                        </span>
-                    )}
-                </dd>
-            </div>
-        </div>
-    );
-}
-
-function ActionControl({
-    action,
-    dataTest,
-    getActionHref,
-    onAction,
-    primary = false,
-}: {
-    action: DashboardAction;
-    dataTest: string;
-    getActionHref: Props['getActionHref'];
-    onAction: Props['onAction'];
-    primary?: boolean;
-}) {
-    const href = getActionHref(action);
-    const content = (
-        <>
-            <span className="min-w-0 wrap-anywhere">{action.label}</span>
-            <ArrowRight
-                aria-hidden="true"
-                className="size-4 shrink-0 motion-safe:transition-transform motion-safe:duration-standard motion-safe:group-hover:translate-x-1"
-            />
-        </>
-    );
-    const className = cn(
-        'group h-auto min-h-11 w-full cursor-pointer rounded-xl px-5 py-3 text-sm font-semibold whitespace-normal motion-safe:transition-[background-color,box-shadow,transform] motion-safe:duration-standard motion-safe:active:translate-y-0.5 sm:w-auto',
-        primary ? 'shadow-sm hover:shadow-md' : 'text-primary',
-    );
-
-    if (href !== null) {
-        return (
-            <Button
-                asChild
-                variant={primary ? 'default' : 'ghost'}
-                className={className}
-            >
-                <Link href={href} data-test={dataTest}>
-                    {content}
-                </Link>
-            </Button>
-        );
-    }
-
-    return (
-        <Button
-            type="button"
-            variant={primary ? 'default' : 'ghost'}
-            className={className}
-            data-test={dataTest}
-            onClick={() => onAction(action)}
-        >
-            {content}
-        </Button>
-    );
-}
 
 export function DashboardNextAction({
     action,
@@ -209,7 +99,7 @@ export function DashboardNextAction({
             <div className="dashboard-docket__body px-5 pt-2 pb-6 sm:px-7 sm:pb-7">
                 <h2
                     id="dashboard-next-action"
-                    className="max-w-[28ch] scroll-mt-24 text-2xl leading-tight font-bold tracking-tight wrap-anywhere text-foreground sm:text-[1.75rem]"
+                    className="max-w-sm scroll-mt-24 text-2xl leading-tight font-bold tracking-tight wrap-anywhere text-foreground sm:text-3xl"
                     tabIndex={-1}
                 >
                     {action.title}
@@ -229,7 +119,10 @@ export function DashboardNextAction({
                 {action.facts.length > 0 && (
                     <dl className="mt-6 grid gap-x-6 gap-y-4 sm:grid-cols-2">
                         {action.facts.map((fact) => (
-                            <FactRow key={fact.label} fact={fact} />
+                            <DashboardNextActionFact
+                                key={fact.label}
+                                fact={fact}
+                            />
                         ))}
                     </dl>
                 )}
@@ -238,7 +131,7 @@ export function DashboardNextAction({
             {(action.primaryAction || action.secondaryAction) && (
                 <div className="dashboard-docket__footer flex flex-col gap-2 border-t border-border/60 bg-background/50 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:px-7">
                     {action.primaryAction && (
-                        <ActionControl
+                        <DashboardNextActionControl
                             action={action.primaryAction}
                             dataTest="dashboard-primary-action"
                             getActionHref={getActionHref}
@@ -247,7 +140,7 @@ export function DashboardNextAction({
                         />
                     )}
                     {action.secondaryAction && (
-                        <ActionControl
+                        <DashboardNextActionControl
                             action={action.secondaryAction}
                             dataTest="dashboard-secondary-action"
                             getActionHref={getActionHref}
