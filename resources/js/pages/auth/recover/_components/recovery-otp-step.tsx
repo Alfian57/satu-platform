@@ -54,8 +54,8 @@ export default function RecoveryOtpStep({
                             />
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="recovery-otp">
+                        <div className="grid min-w-0 gap-1.5">
+                            <Label htmlFor="recovery-otp" required>
                                 Kode verifikasi
                             </Label>
                             <OtpInput
@@ -71,16 +71,19 @@ export default function RecoveryOtpStep({
                                 disabled={processing}
                                 autoFocus
                             />
-                            <p
-                                id="recovery-otp-help"
-                                className="text-xs leading-relaxed text-muted-foreground"
-                            >
-                                Tempel kode untuk mengisi enam digit sekaligus.
-                            </p>
-                            <InputError
-                                id="recovery-otp-error"
-                                message={errors.otp}
-                            />
+                            <div className="grid min-w-0 gap-0.5">
+                                <p
+                                    id="recovery-otp-help"
+                                    className="text-xs leading-normal text-muted-foreground"
+                                >
+                                    Tempel kode untuk mengisi enam digit
+                                    sekaligus.
+                                </p>
+                                <InputError
+                                    id="recovery-otp-error"
+                                    message={errors.otp}
+                                />
+                            </div>
                         </div>
 
                         <Button

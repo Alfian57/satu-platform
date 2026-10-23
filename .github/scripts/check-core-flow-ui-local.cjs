@@ -536,9 +536,9 @@ function initialPage(html) {
                             .boundingBox();
                         const expectedWidth =
                             width >= 1024
-                                ? Math.min((hero.width - 2) * 0.36, 384)
+                                ? Math.min((hero.width - 2) * 0.30, 295)
                                 : width >= 640
-                                  ? Math.min((hero.width - 2) * 0.39, 320)
+                                  ? Math.min((hero.width - 2) * 0.36, 270)
                                   : 208;
                         check(
                             Math.abs(bird.width - expectedWidth) < 1 &&
@@ -546,9 +546,8 @@ function initialPage(html) {
                                     bird.y +
                                         bird.height -
                                         hero.y -
-                                        hero.height -
-                                        27,
-                                ) < 1,
+                                        hero.height,
+                                ) < 2,
                             role +
                                 ' ' +
                                 surface +

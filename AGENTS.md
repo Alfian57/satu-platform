@@ -61,6 +61,13 @@ When documents conflict, the earlier source wins. Update the owning source inste
 - A local feature inherits `DESIGN.md`; do not create a new visual identity per page.
 - Design empty, loading, processing, success, validation, network, reconnect, stale, forbidden, overflow, and destructive states as applicable.
 - Meet WCAG 2.2 AA. Preserve keyboard operation, visible focus, semantic structure, reduced motion, text alternatives, and status cues beyond color.
+- Standarisasi Form Input Labels dan Placeholders:
+  - Setiap input field yang wajib diisi (required) WAJIB menyertakan tanda bintang warna merah di akhir teks label (`*`). Gunakan prop `required` pada komponen `<Label required>` atau helper `<RequiredMark />` dengan warna `text-destructive font-bold ml-1` dan `aria-hidden="true"`.
+  - Setiap input field yang opsional WAJIB menyertakan keterangan `(opsional)` di akhir teks label. Gunakan prop `optional` pada komponen `<Label optional>` atau helper `<OptionalMark />` dengan styling `text-xs font-normal text-muted-foreground ml-1`. Dilarang membiarkan status keterisian field ambigu.
+  - Setiap input field yang mendukung atribut placeholder (teks, number, time, date, textarea, tel, password) WAJIB memiliki atribut `placeholder` yang jelas, informatif, dan kontekstual bagi pengguna.
+- Standarisasi Jarak Spasi Input Field dan Deskripsi:
+  - Gunakan `grid min-w-0 gap-1.5` pada kontainer field untuk menjaga jarak konsisten dan rapat (6px) antara `<Label>`, elemen input (`<Input>`/`<textarea>`/`<select>`), dan teks bantuan/error.
+  - Kelompokkan teks deskripsi (help text) dan pesan error (`<InputError>`) ke dalam sub-kontainer `<div className="grid min-w-0 gap-0.5">` dengan tipografi `text-xs leading-normal text-muted-foreground` agar jarak input ke deskripsi tetap rapat dan tidak terpisah jauh.
 - Write product copy and first-party documentation in Indonesian using the canonical terms in `docs/ux/CONTENT_ACCESSIBILITY.md`.
 - Do not use the Unicode em dash character in first-party UI or documentation. Use a period, comma, colon, or parentheses according to the sentence meaning.
 - Every enabled clickable or tappable target must show a pointer cursor. Disabled targets must show a not-allowed cursor.

@@ -15,7 +15,6 @@ export interface SecurityPasswordFormProps {
     };
     errors: Record<string, string | undefined>;
     processing: boolean;
-    recentlySuccessful: boolean;
     actionError: string | null;
     minimumLength?: string;
     passwordRules: string;
@@ -29,7 +28,6 @@ export function SecurityPasswordForm({
     data,
     errors,
     processing,
-    recentlySuccessful,
     actionError,
     minimumLength,
     passwordRules,
@@ -48,11 +46,10 @@ export function SecurityPasswordForm({
                 id="security-settings-title"
                 icon={KeyRound}
                 title="Perbarui password"
-                description="Gunakan password yang panjang, unik, dan tidak digunakan di layanan lain."
             />
             <form
                 onSubmit={onSubmit}
-                className="grid min-w-0 gap-6 border-t border-border pt-6"
+                className="grid min-w-0 gap-5 border-t border-border pt-5"
                 aria-busy={processing}
             >
                 <SettingsFormFeedback
@@ -65,14 +62,11 @@ export function SecurityPasswordForm({
                             ? 'Kolom password dikosongkan setelah validasi gagal. Isi ulang sebelum mencoba kembali.'
                             : 'Password tidak disimpan pada penyimpanan browser. Jangan bagikan kepada orang lain.'
                     }
-                    success={
-                        recentlySuccessful
-                            ? 'Password berhasil diperbarui. Gunakan password baru pada login berikutnya.'
-                            : null
-                    }
                 />
-                <div className="grid min-w-0 gap-3">
-                    <Label htmlFor="current_password">Password saat ini</Label>
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor="current_password" required>
+                        Password saat ini
+                    </Label>
                     <PasswordInput
                         id="current_password"
                         name="current_password"
@@ -92,44 +86,48 @@ export function SecurityPasswordForm({
                                 : 'current-password-help'
                         }
                     />
-                    <p
-                        id="current-password-help"
-                        className="text-xs leading-5 text-muted-foreground"
-                    >
-                        Memastikan perubahan dilakukan oleh pemilik akun.
-                    </p>
-                    <InputError
-                        id="current-password-error"
-                        message={errors.current_password}
-                        className="text-correction-subtle-foreground"
-                    />
-                </div>
-                <div className="grid min-w-0 gap-5 rounded-2xl border border-primary/10 bg-accent/40 p-4 sm:p-5">
-                    <div className="grid min-w-0 gap-3">
-                        <Label htmlFor="password">Password baru</Label>
-                        <PasswordInput
-                            id="password"
-                            name="password"
-                            disabled={processing}
-                            value={data.password}
-                            onChange={(event) =>
-                                onPasswordChange(event.target.value)
-                            }
-                            className="h-11 bg-card pr-12 [&+button]:w-11 [&+button]:justify-center"
-                            autoComplete="new-password"
-                            required
-                            placeholder="Buat password yang unik"
-                            passwordrules={passwordRules}
-                            aria-invalid={Boolean(errors.password)}
-                            aria-describedby={
-                                errors.password
-                                    ? 'password-help password-error'
-                                    : 'password-help'
-                            }
+                    <div className="grid min-w-0 gap-0.5">
+                        <p
+                            id="current-password-help"
+                            className="text-xs leading-normal text-muted-foreground"
+                        >
+                            Memastikan perubahan dilakukan oleh pemilik akun.
+                        </p>
+                        <InputError
+                            id="current-password-error"
+                            message={errors.current_password}
+                            className="text-correction-subtle-foreground"
                         />
+                    </div>
+                </div>
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor="password" required>
+                        Password baru
+                    </Label>
+                    <PasswordInput
+                        id="password"
+                        name="password"
+                        disabled={processing}
+                        value={data.password}
+                        onChange={(event) =>
+                            onPasswordChange(event.target.value)
+                        }
+                        className="h-11 bg-background/60 pr-12 [&+button]:w-11 [&+button]:justify-center"
+                        autoComplete="new-password"
+                        required
+                        placeholder="Masukkan password baru"
+                        passwordrules={passwordRules}
+                        aria-invalid={Boolean(errors.password)}
+                        aria-describedby={
+                            errors.password
+                                ? 'password-help password-error'
+                                : 'password-help'
+                        }
+                    />
+                    <div className="grid min-w-0 gap-0.5">
                         <p
                             id="password-help"
-                            className="text-xs leading-6 text-muted-foreground"
+                            className="text-xs leading-normal text-muted-foreground"
                         >
                             {minimumLength
                                 ? 'Minimal ' + minimumLength + ' karakter. '
@@ -143,33 +141,35 @@ export function SecurityPasswordForm({
                             className="text-correction-subtle-foreground"
                         />
                     </div>
-                    <div className="grid min-w-0 gap-3">
-                        <Label htmlFor="password_confirmation">
-                            Konfirmasi password baru
-                        </Label>
-                        <PasswordInput
-                            id="password_confirmation"
-                            name="password_confirmation"
-                            disabled={processing}
-                            value={data.password_confirmation}
-                            onChange={(event) =>
-                                onPasswordConfirmationChange(event.target.value)
-                            }
-                            className="h-11 bg-card pr-12 [&+button]:w-11 [&+button]:justify-center"
-                            autoComplete="new-password"
-                            required
-                            placeholder="Ulangi password baru"
-                            passwordrules={passwordRules}
-                            aria-invalid={Boolean(errors.password_confirmation)}
-                            aria-describedby={
-                                errors.password_confirmation
-                                    ? 'password-confirmation-help password-confirmation-error'
-                                    : 'password-confirmation-help'
-                            }
-                        />
+                </div>
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor="password_confirmation" required>
+                        Konfirmasi password baru
+                    </Label>
+                    <PasswordInput
+                        id="password_confirmation"
+                        name="password_confirmation"
+                        disabled={processing}
+                        value={data.password_confirmation}
+                        onChange={(event) =>
+                            onPasswordConfirmationChange(event.target.value)
+                        }
+                        className="h-11 bg-background/60 pr-12 [&+button]:w-11 [&+button]:justify-center"
+                        autoComplete="new-password"
+                        required
+                        placeholder="Ulangi password baru"
+                        passwordrules={passwordRules}
+                        aria-invalid={Boolean(errors.password_confirmation)}
+                        aria-describedby={
+                            errors.password_confirmation
+                                ? 'password-confirmation-help password-confirmation-error'
+                                : 'password-confirmation-help'
+                        }
+                    />
+                    <div className="grid min-w-0 gap-0.5">
                         <p
                             id="password-confirmation-help"
-                            className="text-xs leading-5 text-muted-foreground"
+                            className="text-xs leading-normal text-muted-foreground"
                         >
                             Harus sama dengan password baru yang kamu masukkan.
                         </p>
@@ -180,13 +180,10 @@ export function SecurityPasswordForm({
                         />
                     </div>
                 </div>
-                <div className="flex min-w-0 flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-background/60 p-4">
-                    <p className="text-xs leading-6 text-muted-foreground">
-                        Kolom password dikosongkan setelah berhasil diperbarui.
-                    </p>
+                <div className="flex min-w-0 justify-end pt-2">
                     <Button
                         disabled={processing}
-                        className="min-h-11 w-full cursor-pointer disabled:cursor-not-allowed sm:w-auto"
+                        className="min-h-10 w-full cursor-pointer justify-center disabled:cursor-not-allowed sm:w-48"
                         data-test="update-password-button"
                     >
                         {processing ? <Spinner /> : <Save aria-hidden="true" />}

@@ -27,7 +27,7 @@ export function NavUser() {
             <DropdownMenuTrigger asChild>
                 <Button
                     aria-label={`Buka menu ${workspace.accountLabel} ${auth.user.name}`}
-                    className="h-11 min-h-11 max-w-56 min-w-11 gap-2 rounded-lg border border-border bg-card px-2 text-foreground shadow-xs data-[state=open]:bg-accent"
+                    className="h-11 min-h-11 w-11 min-w-11 gap-2 rounded-lg border border-border bg-card p-0 text-foreground shadow-xs data-[state=open]:bg-accent lg:w-56 lg:px-3"
                     data-test="user-menu-button"
                     variant="ghost"
                 >
@@ -48,8 +48,11 @@ export function NavUser() {
                             <RoleIcon className="size-2.5" />
                         </span>
                     </span>
-                    <span className="hidden min-w-0 text-left lg:grid">
-                        <span className="truncate text-sm leading-tight font-semibold">
+                    <span className="hidden min-w-0 flex-1 text-left lg:grid">
+                        <span
+                            className="truncate text-sm leading-tight font-semibold"
+                            title={auth.user.name}
+                        >
                             {auth.user.name}
                         </span>
                         <span className="truncate text-xs leading-tight font-normal text-muted-foreground">
@@ -65,7 +68,7 @@ export function NavUser() {
             <DropdownMenuContent
                 align="end"
                 sideOffset={8}
-                className="w-72 max-w-[calc(100vw-1.5rem)] rounded-2xl border-border p-2 shadow-md"
+                className="w-56 max-w-[calc(100vw-1.5rem)] rounded-2xl border-border p-1.5 shadow-md"
                 data-test="user-menu-content"
             >
                 <UserMenuContent user={auth.user} />

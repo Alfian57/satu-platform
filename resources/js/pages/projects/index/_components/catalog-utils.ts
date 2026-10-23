@@ -144,7 +144,7 @@ export const statusClasses: Record<ProjectStatus, string> = {
 };
 
 export const selectClassName =
-    'h-11 min-w-0 w-full cursor-pointer rounded-xl border border-input bg-card px-3 text-base text-foreground transition-colors duration-fast hover:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm';
+    'h-11 min-w-0 w-full cursor-pointer rounded-xl border border-input bg-card pl-4 pr-10 text-base text-foreground transition-colors duration-fast hover:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm';
 
 export const dateFormatter = new Intl.DateTimeFormat('id-ID', {
     day: 'numeric',

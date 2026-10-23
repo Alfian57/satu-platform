@@ -1,11 +1,5 @@
 import { Link } from '@inertiajs/react';
-import {
-    ArrowRight,
-    BookOpenCheck,
-    Eye,
-    FolderOpen,
-    RefreshCw,
-} from 'lucide-react';
+import { ArrowRight, BookOpenCheck, Eye, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StudentMenuHero from '@/layouts/_components/student-menu-hero';
 import { index as contributionsIndex } from '@/routes/contributions';
@@ -29,65 +23,68 @@ export function PortfolioIndexHeader({
     onRefresh,
 }: PortfolioIndexHeaderProps) {
     return (
-        <StudentMenuHero
-            theme="portfolio"
-            icon={BookOpenCheck}
-            eyebrow="Portofolio mahasiswa"
-            title="Karyamu, ceritamu."
-            description="Karya dari kontribusi yang disetujui kampus terkumpul di sini. Kamu menentukan siapa yang boleh melihatnya."
-            pose="portfolio-showcase"
-            testId="portfolio-header"
-            note={
-                <p className="flex min-w-0 items-start gap-2">
-                    <FolderOpen
-                        aria-hidden="true"
-                        className="mt-0.5 size-4 shrink-0 text-primary"
-                    />
-                    <span className="min-w-0 wrap-anywhere">
-                        {!isForbidden && resolvedProfile
-                            ? resolvedProfile.institution.name
-                            : 'Karya dari kontribusi yang disetujui kampus'}
-                    </span>
-                </p>
-            }
-        >
-            {!isForbidden && resolvedProfile && canManage && (
-                <Button asChild variant="outline" className="min-h-11 bg-card">
-                    <a
-                        href="#portfolio-profile-title"
-                        data-test="portfolio-profile-jump"
-                    >
-                        <Eye aria-hidden="true" />
-                        Kendali profil
-                    </a>
-                </Button>
-            )}
-            {!isForbidden && profile && (
-                <Button asChild className="student-menu-hero__primary min-h-11">
-                    <Link href={contributionsIndex()}>
-                        Lihat kontribusi
-                        <ArrowRight aria-hidden="true" />
-                    </Link>
-                </Button>
-            )}
-            <Button
-                type="button"
-                variant="outline"
-                className="min-h-11 bg-card"
-                onClick={onRefresh}
-                disabled={isRefreshing}
-                data-test="portfolio-refresh"
+        <div className="grid gap-4">
+            <StudentMenuHero
+                theme="portfolio"
+                icon={BookOpenCheck}
+                eyebrow="Portofolio mahasiswa"
+                title="Karyamu, ceritamu."
+                description="Karya dari kontribusi yang disetujui kampus terkumpul di sini. Kamu menentukan siapa yang boleh melihatnya."
+                pose="portfolio-showcase"
+                testId="portfolio-header"
+            />
+            <div
+                className="flex flex-wrap items-center justify-between gap-3"
+                data-test="portfolio-action-bar"
             >
-                <RefreshCw
-                    aria-hidden="true"
-                    className={
-                        isRefreshing
-                            ? 'animate-spin motion-reduce:animate-none'
-                            : ''
-                    }
-                />
-                Muat ulang
-            </Button>
-        </StudentMenuHero>
+                <div className="flex flex-wrap items-center gap-2.5">
+                    {!isForbidden && resolvedProfile && canManage && (
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="min-h-11 bg-card"
+                            data-test="portfolio-profile-jump"
+                        >
+                            <a href="#portfolio-profile-title">
+                                <Eye aria-hidden="true" className="size-4" />
+                                Kendali profil
+                            </a>
+                        </Button>
+                    )}
+                    {!isForbidden && profile && (
+                        <Button
+                            asChild
+                            className="student-menu-hero__primary min-h-11"
+                        >
+                            <Link href={contributionsIndex()}>
+                                Lihat kontribusi
+                                <ArrowRight
+                                    aria-hidden="true"
+                                    className="size-4"
+                                />
+                            </Link>
+                        </Button>
+                    )}
+                </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11 bg-card"
+                    onClick={onRefresh}
+                    disabled={isRefreshing}
+                    data-test="portfolio-refresh"
+                >
+                    <RefreshCw
+                        aria-hidden="true"
+                        className={
+                            isRefreshing
+                                ? 'animate-spin motion-reduce:animate-none'
+                                : ''
+                        }
+                    />
+                    Muat ulang
+                </Button>
+            </div>
+        </div>
     );
 }

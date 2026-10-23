@@ -23,10 +23,11 @@ export default function LoginForm() {
             {({ processing, errors }) => (
                 <>
                     <div className="grid gap-6">
-                        <div className="grid gap-2">
+                        <div className="grid min-w-0 gap-1.5">
                             <Label
                                 htmlFor="username"
                                 className="text-sm font-semibold text-slate-700"
+                                required
                             >
                                 Nama pengguna
                             </Label>
@@ -48,23 +49,26 @@ export default function LoginForm() {
                                     aria-invalid={Boolean(errors.username)}
                                 />
                             </AuthInputFrame>
-                            <p
-                                id="username-help"
-                                className="text-xs leading-relaxed text-slate-500"
-                            >
-                                Hanya untuk masuk, tidak tampil di profil
-                                publik.
-                            </p>
-                            <InputError
-                                id="login-username-error"
-                                message={errors.username}
-                            />
+                            <div className="grid min-w-0 gap-0.5">
+                                <p
+                                    id="username-help"
+                                    className="text-xs leading-normal text-slate-500"
+                                >
+                                    Hanya untuk masuk, tidak tampil di profil
+                                    publik.
+                                </p>
+                                <InputError
+                                    id="login-username-error"
+                                    message={errors.username}
+                                />
+                            </div>
                         </div>
 
-                        <div className="grid gap-2">
+                        <div className="grid min-w-0 gap-1.5">
                             <Label
                                 htmlFor="password"
                                 className="text-sm font-semibold text-slate-700"
+                                required
                             >
                                 Password
                             </Label>

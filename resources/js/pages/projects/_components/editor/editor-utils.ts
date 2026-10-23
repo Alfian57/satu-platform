@@ -28,7 +28,7 @@ export type TaxonomyResponse = {
 export type FormErrorMap = Record<string, string | string[] | undefined>;
 
 export const selectClassName =
-    'h-11 min-w-0 w-full cursor-pointer rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger hover:border-ring focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50';
+    'h-11 min-w-0 w-full cursor-pointer rounded-xl border border-input bg-background pl-4 pr-10 text-sm text-foreground outline-none transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger hover:border-ring focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50';
 
 export const textAreaClassName =
     'min-h-32 min-w-0 w-full resize-y rounded-xl border border-input bg-background px-3 py-2 text-base text-foreground outline-none transition-[color,background-color,border-color,box-shadow] duration-fast ease-ledger placeholder:text-muted-foreground hover:border-ring focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm';

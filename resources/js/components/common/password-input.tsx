@@ -17,6 +17,7 @@ export default function PasswordInput({
                 type={showPassword ? 'text' : 'password'}
                 className={cn('pr-10', className)}
                 ref={ref}
+                placeholder={props.placeholder ?? 'Masukkan password'}
                 {...props}
             />
             <button

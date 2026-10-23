@@ -1,3 +1,4 @@
+import { OptionalMark } from '@/components/common';
 import { cn } from '@/lib/utils';
 import type {
     NotificationCategory,
@@ -37,6 +38,7 @@ export function NotificationsFilterNav({
                 <label className="grid gap-1 text-sm">
                     <span className="text-xs text-muted-foreground">
                         Status
+                        <OptionalMark />
                     </span>
                     <select
                         value={filter}
@@ -47,7 +49,7 @@ export function NotificationsFilterNav({
                                     .value as NotificationPageProps['filter'],
                             )
                         }
-                        className="h-control-md cursor-pointer rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                        className="h-control-md cursor-pointer rounded-md border border-input bg-background pr-10 pl-4 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                         data-test="notifications-status-filter"
                     >
                         <option value="all">Semua status</option>

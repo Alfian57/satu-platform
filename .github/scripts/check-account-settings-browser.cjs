@@ -88,7 +88,7 @@ function check(value, message) {
     };
     const commands = [],
         errors = [];
-    function payload(url, formErrors = {}) {
+    function payload(url, formErrors = {}, flashToast = null) {
         return {
             ...initial,
             component: 'settings/' + url.pathname.split('/').at(-1),
@@ -99,6 +99,7 @@ function check(value, message) {
                 errors: formErrors,
                 onboarding: null,
                 sidebarOpen: true,
+                flash: flashToast ? { toast: flashToast } : {},
                 auth: {
                     user: {
                         id: 99003,
@@ -126,12 +127,12 @@ function check(value, message) {
             },
         };
     }
-    async function inertia(route, url, formErrors = {}) {
+    async function inertia(route, url, formErrors = {}, flashToast = null) {
         return route.fulfill({
             status: 200,
             contentType: 'application/json',
             headers: { 'X-Inertia': 'true' },
-            body: JSON.stringify(payload(url, formErrors)),
+            body: JSON.stringify(payload(url, formErrors, flashToast)),
         });
     }
     await context.route('**/*', async (route) => {
@@ -221,6 +222,18 @@ function check(value, message) {
 
             if (url.pathname === '/settings/profile') {
                 account = request.postDataJSON();
+
+                return inertia(route, current, {}, {
+                    type: 'success',
+                    message: 'Profil berhasil diperbarui.',
+                });
+            }
+
+            if (url.pathname === '/settings/password') {
+                return inertia(route, current, {}, {
+                    type: 'success',
+                    message: 'Password berhasil diperbarui.',
+                });
             }
 
             return inertia(route, current);
@@ -228,7 +241,7 @@ function check(value, message) {
 
         if (
             url.origin !== qaOrigin ||
-            !/^\/settings\/(profile|security|appearance|data-rights)$/.test(
+            !/^\/settings\/(profile|security|data-rights)$/.test(
                 url.pathname,
             )
         ) {
@@ -355,7 +368,6 @@ function check(value, message) {
 
         for (const section of [
             'security',
-            'appearance',
             'data-rights',
             'profile',
         ]) {
@@ -427,7 +439,7 @@ function check(value, message) {
         failure = 'validation';
         await save.click();
         await page
-            .locator('[data-test="profile-settings-error-summary"]')
+            .locator('#username[aria-invalid="true"]')
             .waitFor();
         check(
             (await name.inputValue()) === 'Nama baru. Data synthetic' &&
@@ -436,8 +448,8 @@ function check(value, message) {
         );
         check(
             (await page.evaluate(() => document.activeElement.id)) ===
-                'profile-settings-error-summary',
-            'Error summary profil menerima fokus.',
+                'username',
+            'Kolom input yang bermasalah menerima fokus.',
         );
         failure = null;
         delay = 500;
@@ -452,10 +464,10 @@ function check(value, message) {
                 (await page.locator('form[aria-busy="true"]').count()) === 1,
             'Processing mencegah pengiriman ganda dan memiliki aria-busy.',
         );
-        await page.locator('[data-test="profile-settings-success"]').waitFor();
+        await page.locator('[data-sonner-toast][data-type="success"]').waitFor();
         check(
             await page
-                .getByText('Identitas akun berhasil diperbarui.', {
+                .getByText('Profil berhasil diperbarui.', {
                     exact: true,
                 })
                 .isVisible(),
@@ -482,7 +494,7 @@ function check(value, message) {
             .waitFor();
         check(
             (await page
-                .locator('[data-test="profile-settings-success"]')
+                .locator('[data-sonner-toast][data-type="success"]')
                 .count()) === 0,
             'Akses ditolak tidak menampilkan sukses.',
         );
@@ -510,7 +522,7 @@ function check(value, message) {
         failure = 'validation';
         await page.locator('[data-test="update-password-button"]').click();
         await page
-            .locator('[data-test="security-settings-error-summary"]')
+            .locator('#password[aria-invalid="true"]')
             .waitFor();
         check(
             (await page.locator('#password').inputValue()) === '' &&
@@ -528,13 +540,13 @@ function check(value, message) {
             .waitFor();
         check(
             (await page
-                .locator('[data-test="security-settings-success"]')
+                .locator('[data-sonner-toast][data-type="success"]')
                 .count()) === 0,
             'Batas percobaan tampil tanpa sukses palsu.',
         );
         failure = null;
         await page.locator('[data-test="update-password-button"]').click();
-        await page.locator('[data-test="security-settings-success"]').waitFor();
+        await page.locator('[data-sonner-toast][data-type="success"]').waitFor();
         check(
             (await page.locator('#password').inputValue()) === '' &&
                 (await page.locator('#password_confirmation').inputValue()) ===
@@ -546,17 +558,7 @@ function check(value, message) {
             fullPage: true,
         });
 
-        await visit('appearance');
-        check(
-            (await page
-                .locator('#settings-content form, #settings-content button')
-                .count()) === 0 &&
-                (await page
-                    .getByText('Oranye SATU', { exact: true })
-                    .isVisible()),
-            'Tampilan hanya-baca, palet oranye tampil tanpa pengaturan palsu.',
-        );
-        await visit('data-rights');
+        await visit('profile');
         const before = commands.length;
         await page.locator('[data-test="delete-user-button"]').click();
         await page
@@ -574,6 +576,14 @@ function check(value, message) {
             'Batal membersihkan password dialog hapus.',
         );
         await page.keyboard.press('Escape');
+        const download = page.waitForEvent('download');
+        await page.locator('[data-test="export-user-data-button"]').click();
+        check(
+            (await download).suggestedFilename().endsWith('.json'),
+            'Ekspor arsip tetap menghasilkan unduhan JSON synthetic.',
+        );
+
+        await visit('data-rights');
         const withdrawal = page.getByRole('button', {
             name: 'Tarik persetujuan ketentuan layanan',
             exact: true,
@@ -618,18 +628,12 @@ function check(value, message) {
             .getByRole('button', { name: 'Kirim permintaan', exact: true })
             .waitFor();
         await page.getByRole('button', { name: 'Batal', exact: true }).click();
-        const download = page.waitForEvent('download');
-        await page.locator('[data-test="export-user-data-button"]').click();
-        check(
-            (await download).suggestedFilename().endsWith('.json'),
-            'Ekspor arsip tetap menghasilkan unduhan JSON synthetic.',
-        );
         await page.screenshot({
             path: path.join(artifacts, 'data-rights-desktop.png'),
             fullPage: true,
         });
 
-        for (const section of ['security', 'appearance', 'data-rights']) {
+        for (const section of ['security', 'data-rights']) {
             await page.setViewportSize({ width: 320, height: 700 });
             await visit(section);
             check(

@@ -1,4 +1,5 @@
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 import type { UseContributionDetailReturn } from '@/pages/contributions/show/_hooks/use-contribution-detail';
 
 export interface ContributionActionAlertsProps {
@@ -12,42 +13,24 @@ export function ContributionActionAlerts({
 }: ContributionActionAlertsProps) {
     const { actionMessage, actionError, submitErrors, revisionError } = state;
 
-    if (
-        !actionMessage &&
-        !actionError &&
-        submitErrors.length === 0 &&
-        !revisionError
-    ) {
+    useEffect(() => {
+        if (actionMessage) {
+            toast.success(actionMessage);
+        }
+    }, [actionMessage]);
+
+    useEffect(() => {
+        if (actionError) {
+            toast.error(actionError);
+        }
+    }, [actionError]);
+
+    if (submitErrors.length === 0 && !revisionError) {
         return null;
     }
 
     return (
         <div className="min-h-0 text-sm" data-test="contribution-action-status">
-            {actionMessage && (
-                <div
-                    role="status"
-                    className="flex items-start gap-3 rounded-2xl border border-verified/30 bg-verified-subtle px-4 py-3 text-verified-subtle-foreground"
-                >
-                    <CheckCircle2
-                        aria-hidden="true"
-                        className="mt-1 size-4 shrink-0"
-                    />
-                    <p>{actionMessage}</p>
-                </div>
-            )}
-            {actionError && (
-                <div
-                    role="alert"
-                    className="flex items-start gap-3 rounded-2xl border border-correction/30 bg-correction-subtle px-4 py-3 [overflow-wrap:anywhere] text-correction-subtle-foreground"
-                    data-test="contribution-action-error"
-                >
-                    <AlertCircle
-                        aria-hidden="true"
-                        className="mt-1 size-4 shrink-0"
-                    />
-                    <p>{actionError}</p>
-                </div>
-            )}
             {submitErrors.length > 0 && (
                 <div
                     ref={submitErrorSummaryRef}

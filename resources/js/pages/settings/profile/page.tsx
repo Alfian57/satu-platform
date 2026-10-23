@@ -13,7 +13,6 @@ export default function Profile() {
         actionError,
         isStudent,
         processing,
-        recentlySuccessful,
         isDirty,
         errors,
         actions,
@@ -28,7 +27,6 @@ export default function Profile() {
                         data={form.data}
                         errors={errors}
                         processing={processing}
-                        recentlySuccessful={recentlySuccessful}
                         isDirty={isDirty}
                         actionError={actionError}
                         onNameChange={actions.setName}

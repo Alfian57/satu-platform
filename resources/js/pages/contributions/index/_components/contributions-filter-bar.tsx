@@ -45,7 +45,9 @@ export function ContributionsFilterBar({
             </div>
             <div className="grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_14rem]">
                 <div className="grid min-w-0 gap-2">
-                    <Label htmlFor="contribution-search">Cari catatan</Label>
+                    <Label htmlFor="contribution-search" optional>
+                        Cari catatan
+                    </Label>
                     <div className="relative">
                         <Search
                             aria-hidden="true"
@@ -63,12 +65,12 @@ export function ContributionsFilterBar({
                     </div>
                 </div>
                 <div className="grid min-w-0 gap-2">
-                    <Label htmlFor="contribution-status-filter">
+                    <Label htmlFor="contribution-status-filter" optional>
                         Status validasi
                     </Label>
                     <select
                         id="contribution-status-filter"
-                        className="h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:text-sm"
+                        className="h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-background pr-10 pl-4 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:text-sm"
                         value={status}
                         onChange={(event) =>
                             onStatusChange(

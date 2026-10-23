@@ -21,11 +21,11 @@ export function AppHeader({ breadcrumbs = [], children }: Props) {
     return (
         <header
             data-test="app-header"
-            className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border/80 bg-background/95 px-3 backdrop-blur-xl sm:gap-4 sm:px-6 lg:px-8"
+            className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border/80 bg-background/95 pr-3 pl-2 backdrop-blur-xl sm:gap-4 sm:pr-6 sm:pl-3 lg:pr-8 lg:pl-3"
         >
             <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                 <SidebarTrigger
-                    className="size-11 shrink-0 cursor-pointer rounded-lg border border-border bg-card text-primary shadow-xs hover:bg-accent"
+                    className="size-9 shrink-0 cursor-pointer rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                     data-test="sidebar-trigger"
                 />
 

@@ -1,6 +1,7 @@
 import { router, useForm } from '@inertiajs/react';
 import { FileEdit, RotateCcw, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
     correction,
     restriction,
@@ -63,9 +64,10 @@ export function useDataRightsForm() {
             form.reset();
         }
 
-        setMessage(
-            'Hasil permintaan belum dapat dikonfirmasi. Periksa status melalui muat ulang sebelum mengirim lagi.',
-        );
+        const errorMsg =
+            'Hasil permintaan belum dapat dikonfirmasi. Periksa status melalui muat ulang sebelum mengirim lagi.';
+        setMessage(errorMsg);
+        toast.error(errorMsg);
 
         return false;
     }

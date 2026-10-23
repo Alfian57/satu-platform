@@ -1,16 +1,14 @@
-import { Link } from '@inertiajs/react';
-import { Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import InputError from '@/components/common/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { CapabilityWindow } from '@/lib/student-capabilities';
 import type { UseCapabilityProfileReturn } from '@/pages/student/profile/_hooks/useCapabilityProfile';
-import { index as projectsIndex } from '@/routes/projects';
 
 const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 const selectClass =
-    'h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-card px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50';
+    'h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-card pl-4 pr-10 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50';
 
 export interface ProfileProjectsSectionProps {
     institution: { id: number; name: string; timezone: string } | null;
@@ -19,20 +17,11 @@ export interface ProfileProjectsSectionProps {
 }
 
 export function ProfileProjectsSection({
-    institution,
     state,
     actions,
 }: ProfileProjectsSectionProps) {
     const { availability_windows: availabilityWindows } = state.formData;
-    const {
-        savedProfile,
-        isDirty,
-        isProcessing,
-        mustReconcile,
-        busy,
-        message,
-        errors,
-    } = state;
+    const { isProcessing, mustReconcile, busy, errors } = state;
 
     return (
         <div className="space-y-6">
@@ -86,7 +75,6 @@ export function ProfileProjectsSection({
                                         'day_of_week',
                                         'starts_at',
                                         'ends_at',
-                                        'timezone',
                                     ] as const
                                 ).map((field) => {
                                     const id = `window-${index}-${field}`;
@@ -96,16 +84,20 @@ export function ProfileProjectsSection({
                                             ? 'Hari'
                                             : field === 'starts_at'
                                               ? 'Mulai'
-                                              : field === 'ends_at'
-                                                ? 'Selesai'
-                                                : 'Zona waktu';
+                                              : 'Selesai';
 
                                     return (
                                         <div
                                             key={field}
-                                            className="min-w-0 space-y-2"
+                                            className={
+                                                field === 'day_of_week'
+                                                    ? 'min-w-0 space-y-2 sm:col-span-2'
+                                                    : 'min-w-0 space-y-2 sm:col-span-1'
+                                            }
                                         >
-                                            <Label htmlFor={id}>{label}</Label>
+                                            <Label htmlFor={id} required>
+                                                {label}
+                                            </Label>
                                             {field === 'day_of_week' ? (
                                                 <select
                                                     id={id}
@@ -141,16 +133,13 @@ export function ProfileProjectsSection({
                                             ) : (
                                                 <Input
                                                     id={id}
-                                                    type={
-                                                        field === 'timezone'
-                                                            ? 'text'
-                                                            : 'time'
+                                                    type="time"
+                                                    placeholder={
+                                                        field === 'starts_at'
+                                                            ? '08:00'
+                                                            : '17:00'
                                                     }
-                                                    step={
-                                                        field === 'timezone'
-                                                            ? undefined
-                                                            : 1
-                                                    }
+                                                    step={1}
                                                     disabled={busy}
                                                     className="max-w-full min-w-0"
                                                     value={window[field]}
@@ -179,69 +168,42 @@ export function ProfileProjectsSection({
                                     );
                                 })}
                             </div>
+                            <InputError
+                                message={
+                                    errors[
+                                        `availability_windows.${index}.timezone`
+                                    ]
+                                }
+                            />
                         </div>
                     ))}
                 </div>
 
-                <Button
-                    id="capability-add-window"
-                    type="button"
-                    variant="outline"
-                    disabled={busy || availabilityWindows.length >= 14}
-                    onClick={actions.addAvailabilityWindow}
-                >
-                    <Plus aria-hidden="true" />
-                    Tambah jadwal
-                </Button>
-            </section>
-
-            <footer className="space-y-3 rounded-3xl border border-primary/15 bg-linear-to-br from-card to-accent/50 p-5 shadow-sm">
-                <div className="flex flex-wrap gap-3">
+                <div className="flex justify-end">
                     <Button
-                        type="submit"
-                        disabled={busy || mustReconcile}
-                        data-test="capability-save"
-                    >
-                        {isProcessing
-                            ? 'Menyimpan profil...'
-                            : 'Simpan profil kemampuan'}
-                    </Button>
-                    <Button
+                        id="capability-add-window"
                         type="button"
                         variant="outline"
-                        disabled={busy}
-                        onClick={actions.reloadProfile}
+                        disabled={busy || availabilityWindows.length >= 14}
+                        onClick={actions.addAvailabilityWindow}
                     >
-                        <RefreshCw aria-hidden="true" />
-                        Muat data tersimpan
-                    </Button>
-                    <Button asChild variant="ghost">
-                        <Link
-                            href={projectsIndex({
-                                query: { institution_id: institution?.id },
-                            })}
-                        >
-                            Jelajahi peluang
-                        </Link>
+                        <Plus aria-hidden="true" />
+                        Tambah jadwal
                     </Button>
                 </div>
-                <p
-                    role="status"
-                    className="min-h-5 text-sm leading-6 text-muted-foreground"
+            </section>
+
+            <div className="flex justify-end pt-2">
+                <Button
+                    type="submit"
+                    disabled={busy || mustReconcile}
+                    data-test="capability-save"
                 >
                     {isProcessing
-                        ? 'Profil dan jadwal sedang disimpan. Tunggu konfirmasi server.'
-                        : (message ??
-                          (isDirty
-                              ? 'Ada perubahan yang belum disimpan.'
-                              : savedProfile
-                                ? 'Menampilkan profil tersimpan.'
-                                : 'Profil belum tersimpan.'))}
-                </p>
-                <p className="text-xs leading-5 text-muted-foreground">
-                    Simpan kemampuan tidak mengubah jangkauan portofolio.
-                </p>
-            </footer>
+                        ? 'Menyimpan profil...'
+                        : 'Simpan profil kemampuan'}
+                </Button>
+            </div>
         </div>
     );
 }

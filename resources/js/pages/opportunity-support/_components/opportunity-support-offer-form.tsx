@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { campusControlClass } from '@/pages/campus/_components/campus-operation-layout';
 import type { SupportCase } from './opportunity-support-constants';
 
@@ -45,19 +46,14 @@ export function OpportunitySupportOfferForm({
         >
             <fieldset disabled={blocked} className="min-w-0 space-y-4">
                 {canOffer && (
-                    <div>
-                        <label
-                            htmlFor="support-role"
-                            className="text-sm font-semibold"
-                        >
+                    <div className="grid min-w-0 gap-1.5">
+                        <Label htmlFor="support-role" required>
                             Peran yang ditawarkan
-                        </label>
+                        </Label>
                         <select
                             id="support-role"
                             aria-errormessage="support-errors"
-                            className={
-                                campusControlClass + ' mt-2 cursor-pointer'
-                            }
+                            className={campusControlClass + ' cursor-pointer'}
                             value={role}
                             onChange={(e) => onRoleChange(e.target.value)}
                             aria-invalid={!!errors.project_role_id}
@@ -75,37 +71,40 @@ export function OpportunitySupportOfferForm({
                                     </option>
                                 ))}
                         </select>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            Maksimal 100 peran terbuka ditampilkan. Server
-                            memeriksa ulang izin dan kapasitas saat mengirim.
-                        </p>
+                        <div className="grid min-w-0 gap-0.5">
+                            <p className="text-xs leading-normal text-muted-foreground">
+                                Maksimal 100 peran terbuka ditampilkan. Server
+                                memeriksa ulang izin dan kapasitas saat
+                                mengirim.
+                            </p>
+                        </div>
                     </div>
                 )}
-                <div>
-                    <label
-                        htmlFor="support-reason"
-                        className="text-sm font-semibold"
-                    >
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor="support-reason" required>
                         Alasan atau catatan untuk mahasiswa
-                    </label>
+                    </Label>
                     <textarea
                         id="support-reason"
                         aria-errormessage="support-errors"
+                        placeholder="Tuliskan rencana atau rincian tawaran dukungan kolaborasi"
                         value={reason}
                         onChange={(e) => onReasonChange(e.target.value)}
                         maxLength={1000}
-                        className={campusControlClass + ' mt-2 min-h-28'}
+                        className={campusControlClass + ' min-h-28'}
                         aria-invalid={!!errors.reason}
                         aria-describedby="support-note-help"
                     />
-                    <p
-                        id="support-note-help"
-                        className="mt-2 text-sm text-muted-foreground"
-                    >
-                        Jelaskan relevansi peluang atau tindakan yang
-                        benar-benar dilakukan. Catatan terbaca pemilik; bukan
-                        hasil dukungan terverifikasi.
-                    </p>
+                    <div className="grid min-w-0 gap-0.5">
+                        <p
+                            id="support-note-help"
+                            className="text-xs leading-normal text-muted-foreground"
+                        >
+                            Jelaskan relevansi peluang atau tindakan yang
+                            benar-benar dilakukan. Catatan terbaca pemilik;
+                            bukan hasil dukungan terverifikasi.
+                        </p>
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap gap-3">

@@ -56,35 +56,34 @@ export default function ExportUserData() {
     return (
         <section
             aria-labelledby="data-rights-title"
-            className="grid min-w-0 gap-5 rounded-2xl border border-border bg-card p-5 sm:p-6"
+            className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5"
             data-test="data-rights-card"
         >
-            <header className="flex items-start gap-3">
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-satu-orange-border bg-satu-orange-soft text-satu-orange-ink">
+            <header className="flex min-w-0 items-start gap-3 sm:items-center">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-satu-orange-border bg-satu-orange-soft text-satu-orange-ink">
                     <FileText aria-hidden="true" className="size-5" />
                 </span>
-                <div className="grid min-w-0 gap-2">
+                <div className="min-w-0">
                     <h2
                         id="data-rights-title"
-                        className="text-title font-semibold text-foreground"
+                        className="text-sm font-semibold text-foreground sm:text-base"
                     >
                         Hak akses data
                     </h2>
-                    <p className="text-sm leading-6 text-muted-foreground">
-                        Unduh salinan data pribadi, profil, riwayat afiliasi,
-                        dan persetujuan yang tersimpan pada akunmu dalam format
-                        JSON.
+                    <p className="mt-0.5 text-xs leading-normal text-muted-foreground">
+                        Unduh salinan data pribadi dan riwayat aktivitas akun
+                        dalam format JSON.
                     </p>
                 </div>
             </header>
 
-            <div>
+            <div className="flex shrink-0 flex-col items-stretch sm:items-end">
                 <Button
                     type="button"
                     variant="outline"
                     onClick={handleExport}
                     disabled={isExporting}
-                    className="min-h-11 w-full cursor-pointer whitespace-normal disabled:cursor-not-allowed sm:w-fit"
+                    className="min-h-10 w-full cursor-pointer justify-center whitespace-normal disabled:cursor-not-allowed sm:w-48"
                     data-test="export-user-data-button"
                 >
                     {isExporting ? (

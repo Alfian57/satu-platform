@@ -5,7 +5,7 @@ export default function RequiredMark({ className }: { className?: string }) {
         <span
             aria-hidden="true"
             className={cn(
-                'auth-required-marker font-bold text-satu-orange-ink',
+                'auth-required-marker ml-1 font-bold text-destructive',
                 className,
             )}
         >

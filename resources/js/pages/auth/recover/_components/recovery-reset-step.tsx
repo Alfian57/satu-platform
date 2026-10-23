@@ -33,8 +33,10 @@ export default function RecoveryResetStep() {
                         />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">Password baru</Label>
+                    <div className="grid min-w-0 gap-1.5">
+                        <Label htmlFor="password" required>
+                            Password baru
+                        </Label>
                         <PasswordInput
                             id="password"
                             name="password"
@@ -49,14 +51,16 @@ export default function RecoveryResetStep() {
                                     : undefined
                             }
                         />
-                        <InputError
-                            id="recover-password-error"
-                            message={errors.password}
-                        />
+                        <div className="grid min-w-0 gap-0.5">
+                            <InputError
+                                id="recover-password-error"
+                                message={errors.password}
+                            />
+                        </div>
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">
+                    <div className="grid min-w-0 gap-1.5">
+                        <Label htmlFor="password_confirmation" required>
                             Konfirmasi password baru
                         </Label>
                         <PasswordInput
@@ -72,10 +76,12 @@ export default function RecoveryResetStep() {
                                     : undefined
                             }
                         />
-                        <InputError
-                            id="recover-password_confirmation-error"
-                            message={errors.password_confirmation}
-                        />
+                        <div className="grid min-w-0 gap-0.5">
+                            <InputError
+                                id="recover-password_confirmation-error"
+                                message={errors.password_confirmation}
+                            />
+                        </div>
                     </div>
 
                     <Button

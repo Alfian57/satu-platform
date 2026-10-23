@@ -33,8 +33,10 @@ export function ProjectEditorBasicInfo({
                 </h2>
             </div>
 
-            <div className="grid min-w-0 gap-2">
-                <Label htmlFor="project-title">Judul proyek</Label>
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor="project-title" required>
+                    Judul proyek
+                </Label>
                 <Input
                     id="project-title"
                     aria-describedby={
@@ -48,11 +50,13 @@ export function ProjectEditorBasicInfo({
                     maxLength={160}
                     required
                 />
-                <InputError id="project-title-error" message={titleError} />
+                <div className="grid min-w-0 gap-0.5">
+                    <InputError id="project-title-error" message={titleError} />
+                </div>
             </div>
 
-            <div className="grid min-w-0 gap-2">
-                <Label htmlFor="project-description">
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor="project-description" optional>
                     Tujuan dan hasil proyek
                 </Label>
                 <textarea
@@ -72,10 +76,12 @@ export function ProjectEditorBasicInfo({
                     placeholder="Jelaskan tujuan, ruang lingkup, dan hasil yang diharapkan."
                     maxLength={5000}
                 />
-                <InputError
-                    id="project-description-error"
-                    message={descriptionError}
-                />
+                <div className="grid min-w-0 gap-0.5">
+                    <InputError
+                        id="project-description-error"
+                        message={descriptionError}
+                    />
+                </div>
             </div>
         </section>
     );

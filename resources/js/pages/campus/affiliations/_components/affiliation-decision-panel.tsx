@@ -1,4 +1,5 @@
 import type { FormEvent, RefObject } from 'react';
+import { Label } from '@/components/ui/label';
 import { AffiliationDecisionActions } from '@/pages/campus/affiliations/_components/affiliation-decision-actions';
 import { AffiliationDecisionEmptyState } from '@/pages/campus/affiliations/_components/affiliation-decision-empty-state';
 import { AffiliationDecisionHeader } from '@/pages/campus/affiliations/_components/affiliation-decision-header';
@@ -69,12 +70,9 @@ export function AffiliationDecisionPanel({
                     isDisabled={isDisabled}
                 />
                 <div className="space-y-2">
-                    <label
-                        htmlFor="reason_code"
-                        className="text-sm font-semibold"
-                    >
+                    <Label htmlFor="reason_code" required>
                         Alasan keputusan
-                    </label>
+                    </Label>
                     <select
                         id="reason_code"
                         name="reason_code"
@@ -106,15 +104,9 @@ export function AffiliationDecisionPanel({
                     )}
                 </div>
                 <div className="space-y-2">
-                    <label
-                        htmlFor="review_note"
-                        className="text-sm font-semibold"
-                    >
-                        Catatan tambahan{' '}
-                        <span className="font-normal text-muted-foreground">
-                            (opsional)
-                        </span>
-                    </label>
+                    <Label htmlFor="review_note" optional>
+                        Catatan tambahan
+                    </Label>
                     <textarea
                         id="review_note"
                         name="note"

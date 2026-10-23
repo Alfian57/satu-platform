@@ -2,6 +2,7 @@ import { Filter, RefreshCw, RotateCcw } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 
 interface OverviewFilterFormProps {
@@ -53,15 +54,13 @@ export function OverviewFilterForm({
             >
                 <legend className="sr-only">Periode dan program studi</legend>
                 <div className="min-w-0 space-y-2">
-                    <label
-                        htmlFor="campus-overview-date-from"
-                        className="text-sm font-semibold"
-                    >
+                    <Label htmlFor="campus-overview-date-from" optional>
                         Tanggal mulai
-                    </label>
+                    </Label>
                     <Input
                         id="campus-overview-date-from"
                         type="date"
+                        placeholder="YYYY-MM-DD"
                         className="h-11 cursor-pointer text-base md:text-base"
                         value={dateFrom}
                         onChange={(event) => setDateFrom(event.target.value)}
@@ -82,15 +81,13 @@ export function OverviewFilterForm({
                     )}
                 </div>
                 <div className="min-w-0 space-y-2">
-                    <label
-                        htmlFor="campus-overview-date-to"
-                        className="text-sm font-semibold"
-                    >
+                    <Label htmlFor="campus-overview-date-to" optional>
                         Tanggal selesai
-                    </label>
+                    </Label>
                     <Input
                         id="campus-overview-date-to"
                         type="date"
+                        placeholder="YYYY-MM-DD"
                         className="h-11 cursor-pointer text-base md:text-base"
                         value={dateTo}
                         onChange={(event) => setDateTo(event.target.value)}
@@ -109,12 +106,9 @@ export function OverviewFilterForm({
                     )}
                 </div>
                 <div className="min-w-0 space-y-2 @min-[28rem]:col-span-2 @min-[44rem]:col-span-1">
-                    <label
-                        htmlFor="campus-overview-program"
-                        className="text-sm font-semibold"
-                    >
+                    <Label htmlFor="campus-overview-program" optional>
                         Program studi
-                    </label>
+                    </Label>
                     <Input
                         id="campus-overview-program"
                         type="text"

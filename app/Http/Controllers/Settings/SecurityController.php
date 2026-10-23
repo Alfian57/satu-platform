@@ -17,7 +17,16 @@ class SecurityController extends Controller
      */
     public function edit(TwoFactorAuthenticationRequest $request): Response
     {
+        $confirmedAt = now()->unix() - (int) $request->session()->get('auth.password_confirmed_at', 0);
+        $passwordTimeout = (int) config('auth.password_timeout', 10800);
+        $isConfirmed = $confirmedAt <= $passwordTimeout;
+
+        if (! $isConfirmed) {
+            $request->session()->put('url.intended', route('security.edit'));
+        }
+
         $props = [
+            'isConfirmed' => $isConfirmed,
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
         ];
 
@@ -35,6 +44,8 @@ class SecurityController extends Controller
         $user->update([
             'password' => $request->password,
         ]);
+
+        $request->session()->put('auth.password_confirmed_at', now()->unix());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Password berhasil diperbarui.')]);
 

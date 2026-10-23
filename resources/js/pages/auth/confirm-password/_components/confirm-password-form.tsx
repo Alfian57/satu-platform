@@ -77,15 +77,13 @@ export default function ConfirmPasswordForm() {
                         berhasil, kamu akan melanjutkan ke halaman tersebut.
                     </p>
                 </div>
-                <div className="grid gap-2 sm:gap-2.5">
-                    <Label htmlFor="password" className="text-sm font-semibold">
-                        Password saat ini{' '}
-                        <span
-                            aria-hidden="true"
-                            className="auth-required-marker"
-                        >
-                            *
-                        </span>
+                <div className="grid min-w-0 gap-1.5">
+                    <Label
+                        htmlFor="password"
+                        required
+                        className="text-sm font-semibold"
+                    >
+                        Password saat ini
                     </Label>
                     <AuthInputFrame icon={LockKeyhole}>
                         <PasswordInput
@@ -109,18 +107,20 @@ export default function ConfirmPasswordForm() {
                             className="h-11 rounded-xl border-input bg-white text-base"
                         />
                     </AuthInputFrame>
-                    <p
-                        id="confirm-password-help"
-                        className="text-xs leading-5 text-muted-foreground"
-                    >
-                        Wajib diisi. Gunakan password yang kamu pakai untuk
-                        masuk, bukan password baru.
-                    </p>
+                    <div className="grid min-w-0 gap-0.5">
+                        <p
+                            id="confirm-password-help"
+                            className="text-xs leading-normal text-muted-foreground"
+                        >
+                            Wajib diisi. Gunakan password yang kamu pakai untuk
+                            masuk, bukan password baru.
+                        </p>
 
-                    <InputError
-                        id="confirm-password-password-error"
-                        message={errors.password}
-                    />
+                        <InputError
+                            id="confirm-password-password-error"
+                            message={errors.password}
+                        />
+                    </div>
                 </div>
 
                 <div className="grid gap-3">

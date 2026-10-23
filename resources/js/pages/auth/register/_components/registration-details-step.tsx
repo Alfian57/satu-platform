@@ -103,7 +103,7 @@ export default function RegistrationDetailsStep({
                             />
                         </div>
 
-                        <div className="grid gap-1.5">
+                        <div className="grid min-w-0 gap-1.5">
                             <Label
                                 htmlFor="phone"
                                 className="text-sm font-semibold text-slate-700"
@@ -129,17 +129,19 @@ export default function RegistrationDetailsStep({
                                     aria-invalid={Boolean(errors.phone)}
                                 />
                             </AuthInputFrame>
-                            <p
-                                id="register-phone-help"
-                                className="text-xs leading-relaxed text-slate-500"
-                            >
-                                Untuk verifikasi. Nomor disamarkan setelah
-                                dikirim.
-                            </p>
-                            <InputError
-                                id="register-phone-error"
-                                message={errors.phone}
-                            />
+                            <div className="grid min-w-0 gap-0.5">
+                                <p
+                                    id="register-phone-help"
+                                    className="text-xs leading-normal text-slate-500"
+                                >
+                                    Untuk verifikasi. Nomor disamarkan setelah
+                                    dikirim.
+                                </p>
+                                <InputError
+                                    id="register-phone-error"
+                                    message={errors.phone}
+                                />
+                            </div>
                         </div>
 
                         <RegistrationPasswordFields

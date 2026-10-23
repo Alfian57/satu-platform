@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Menu } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Sidebar,
@@ -12,7 +12,6 @@ import { CampusWorkspaceContext } from '@/layouts/_components/app-sidebar/campus
 import { InstitutionMembershipContext } from '@/layouts/_components/app-sidebar/institution-membership-context';
 import { NavMain } from '@/layouts/_components/nav-main';
 import { useAppSidebar } from '@/layouts/_hooks/use-app-sidebar';
-import { DashboardArchiveArt as ArchiveArt } from '@/pages/dashboard/_components/dashboard-archive-art';
 import { dashboard } from '@/routes';
 import { show as campusOverview } from '@/routes/campus/overview';
 
@@ -22,8 +21,6 @@ export function AppSidebar() {
         auth,
         shell,
         role,
-        roleContext,
-        RoleIcon,
         isMobile,
         campusInstitution,
         isCampusWorkspace,
@@ -37,9 +34,8 @@ export function AppSidebar() {
             variant="sidebar"
             className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
         >
-            <SidebarHeader className="relative isolate shrink-0 gap-4 border-b border-primary/10 bg-linear-to-br from-accent/80 via-card to-card px-4 pt-5 pb-4">
-                <ArchiveArt className="absolute -top-1 right-2 w-20 rotate-12 opacity-35" />
-                <div className="relative flex items-start gap-2">
+            <SidebarHeader className="flex h-16 shrink-0 flex-row items-center justify-between border-b border-sidebar-border/80 bg-sidebar px-4">
+                <div className="flex w-full min-w-0 items-center justify-between gap-2.5">
                     <Link
                         aria-label={
                             isCampusWorkspace
@@ -54,7 +50,7 @@ export function AppSidebar() {
                                 : dashboard()
                         }
                         prefetch
-                        className="flex min-h-14 min-w-0 flex-1 cursor-pointer items-center rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                        className="flex min-w-0 flex-1 cursor-pointer items-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                         data-test="sidebar-brand"
                     >
                         <AppLogo
@@ -67,29 +63,22 @@ export function AppSidebar() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="size-11 shrink-0 rounded-xl border border-white/80 bg-card/70 text-muted-foreground"
+                            className="size-8 shrink-0 cursor-pointer rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
                             aria-label="Tutup navigasi"
                             data-test="sidebar-close"
                             onClick={() => actions.setOpenMobile(false)}
                         >
-                            <Menu
+                            <X
                                 aria-hidden="true"
-                                className="size-5"
-                                strokeWidth={1.75}
+                                className="size-4"
+                                strokeWidth={2}
                             />
                         </Button>
                     )}
                 </div>
-                <p
-                    className="relative flex w-fit max-w-full items-center gap-2 rounded-full border border-primary/10 bg-card/85 px-3 py-1.5 text-xs font-semibold text-primary shadow-xs"
-                    data-test="sidebar-role"
-                >
-                    <RoleIcon aria-hidden="true" className="size-3.5" />
-                    {roleContext.accountLabel}
-                </p>
             </SidebarHeader>
 
-            <SidebarContent className="gap-6 pt-5">
+            <SidebarContent className="gap-6 pt-4">
                 <NavMain
                     items={visibleMainNavItems}
                     ariaLabel={
@@ -120,16 +109,17 @@ export function AppSidebar() {
                         collapsible
                     />
                 )}
-                <SidebarFooter className="mt-auto shrink-0 border-t border-primary/10 bg-linear-to-b from-card to-accent/35 p-3">
-                    {isCampusWorkspace ? (
-                        <CampusWorkspaceContext
-                            institutionName={campusInstitution!.name}
-                        />
-                    ) : (
-                        <InstitutionMembershipContext shell={shell} />
-                    )}
-                </SidebarFooter>
             </SidebarContent>
+
+            <SidebarFooter className="shrink-0 border-t border-sidebar-border/80 bg-sidebar/95 p-3">
+                {isCampusWorkspace ? (
+                    <CampusWorkspaceContext
+                        institutionName={campusInstitution!.name}
+                    />
+                ) : (
+                    <InstitutionMembershipContext shell={shell} />
+                )}
+            </SidebarFooter>
         </Sidebar>
     );
 }

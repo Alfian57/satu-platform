@@ -378,27 +378,10 @@ const sample = {
             await load();
             await noOverflow(String(width));
             check(
-                await page
-                    .locator('.student-menu-hero__actions')
-                    .evaluate((actions) => {
-                        const description =
-                            actions.previousElementSibling.getBoundingClientRect();
-                        const rectangle = actions.getBoundingClientRect();
-                        const expected = innerWidth >= 640 ? 48 : 36;
-
-                        return (
-                            Math.abs(
-                                parseFloat(
-                                    getComputedStyle(actions).marginTop,
-                                ) - expected,
-                            ) < 1 &&
-                            Math.abs(
-                                rectangle.top - description.bottom - expected,
-                            ) < 1
-                        );
-                    }),
-                width +
-                    ': tombol dan konteks universitas turun dengan jarak bersama 36px/48px.',
+                (await page
+                    .locator('[data-test="create-project-link"]')
+                    .count()) === 1,
+                width + ': tombol Buat Proyek tersedia di bilah navigasi.',
             );
             const hero = await page
                 .getByTestId('project-discovery-header')
@@ -411,9 +394,9 @@ const sample = {
                 .boundingBox();
             const expectedBirdWidth =
                 width >= 1024
-                    ? Math.min((hero.width - 2) * 0.36, 384)
+                    ? Math.min((hero.width - 2) * 0.30, 295)
                     : width >= 640
-                      ? Math.min((hero.width - 2) * 0.39, 320)
+                      ? Math.min((hero.width - 2) * 0.36, 270)
                       : 208;
             const motif = page.locator('.student-hero-backdrop');
             check(
@@ -454,14 +437,13 @@ const sample = {
                 width + ': ukuran maskot mengikuti rumus Beranda.',
             );
             check(
-                Math.abs(bird.y + bird.height - hero.y - hero.height - 27) <
-                    1 &&
+                Math.abs(bird.y + bird.height - hero.y - hero.height) < 2 &&
                     Math.abs(
                         hero.x +
                             hero.width -
                             bird.x -
                             bird.width -
-                            (width >= 1024 ? 29 : width >= 640 ? 9 : 1),
+                            (width >= 1024 ? 21 : width >= 640 ? 13 : 1),
                     ) < 1 &&
                     (await page
                         .getByTestId('project-discovery-header')

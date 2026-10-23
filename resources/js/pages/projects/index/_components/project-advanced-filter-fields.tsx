@@ -67,7 +67,7 @@ export function ProjectAdvancedFilterFields({
                 />
             </summary>
             <div className="mt-4 grid gap-5 lg:grid-cols-2">
-                <div className="min-w-0 space-y-2">
+                <div className="grid min-w-0 gap-1.5">
                     <Label htmlFor="project-beginner-filter">
                         Penerimaan pemula
                     </Label>
@@ -86,15 +86,17 @@ export function ProjectAdvancedFilterFields({
                         <option value="all">Semua peran</option>
                         <option value="accepting">Menerima pemula</option>
                     </select>
-                    <p
-                        id="project-beginner-help"
-                        className="text-xs leading-5 text-muted-foreground"
-                    >
-                        Mengikuti pernyataan pemilik. Bukan jaminan diterima dan
-                        tidak mensyaratkan karya terdahulu.
-                    </p>
+                    <div className="grid min-w-0 gap-0.5">
+                        <p
+                            id="project-beginner-help"
+                            className="text-xs leading-normal text-muted-foreground"
+                        >
+                            Mengikuti pernyataan pemilik. Bukan jaminan diterima
+                            dan tidak mensyaratkan karya terdahulu.
+                        </p>
+                    </div>
                 </div>
-                <div className="min-w-0 space-y-2">
+                <div className="grid min-w-0 gap-1.5">
                     <Label htmlFor="project-availability-filter">
                         Tempat tersedia
                     </Label>
@@ -115,13 +117,15 @@ export function ProjectAdvancedFilterFields({
                             Masih menerima pengajuan
                         </option>
                     </select>
-                    <p
-                        id="project-availability-help"
-                        className="text-xs leading-5 text-muted-foreground"
-                    >
-                        Tenggat belum lewat dan ada tempat pada tim serta peran.
-                        Pengajuan pending tidak memesan tempat.
-                    </p>
+                    <div className="grid min-w-0 gap-0.5">
+                        <p
+                            id="project-availability-help"
+                            className="text-xs leading-normal text-muted-foreground"
+                        >
+                            Tenggat belum lewat dan ada tempat pada tim serta
+                            peran. Pengajuan pending tidak memesan tempat.
+                        </p>
+                    </div>
                 </div>
                 <fieldset className="min-w-0 space-y-3">
                     <legend className="text-xs font-bold tracking-wider text-muted-foreground uppercase">

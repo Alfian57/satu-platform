@@ -46,8 +46,13 @@ export function ProfileAcademicSection({
                     errors={errors}
                     onChange={actions.setFacultyAndProgram}
                 />
-                <div className="min-w-0 space-y-2">
-                    <Label htmlFor="capability-year">Angkatan masuk</Label>
+                <div className="grid min-w-0 gap-1.5 sm:col-span-2">
+                    <Label
+                        htmlFor="capability-year"
+                        optional={!admissionYearReadOnly}
+                    >
+                        Angkatan masuk
+                    </Label>
                     <Input
                         id="capability-year"
                         type="number"
@@ -74,24 +79,29 @@ export function ProfileAcademicSection({
                                 : undefined
                         }
                     />
-                    <p
-                        id="capability-year-help"
-                        className="text-xs leading-5 text-muted-foreground"
-                    >
-                        {admissionYearReadOnly
-                            ? 'Data yang sudah tercatat tidak dapat diubah dari menu mahasiswa.'
-                            : 'Tahun pertama masuk kuliah, bukan tingkat studi saat ini. Setelah tercatat, data tidak dapat diubah dari menu mahasiswa.'}
-                    </p>
-                    <InputError
-                        id="capability-year-error"
-                        message={errors.admission_year}
-                    />
+                    <div className="grid min-w-0 gap-0.5">
+                        <p
+                            id="capability-year-help"
+                            className="text-xs leading-normal text-muted-foreground"
+                        >
+                            {admissionYearReadOnly
+                                ? 'Data yang sudah tercatat tidak dapat diubah dari menu mahasiswa.'
+                                : 'Tahun pertama masuk kuliah, bukan tingkat studi saat ini. Setelah tercatat, data tidak dapat diubah dari menu mahasiswa.'}
+                        </p>
+                        <InputError
+                            id="capability-year-error"
+                            message={errors.admission_year}
+                        />
+                    </div>
                 </div>
             </div>
-            <div className="space-y-2">
-                <Label htmlFor="capability-bio">Cerita singkat</Label>
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor="capability-bio" optional>
+                    Cerita singkat
+                </Label>
                 <textarea
                     id="capability-bio"
+                    placeholder="Ceritakan latar belakang, fokus studi, atau tujuan kolaborasimu"
                     value={formData.bio}
                     maxLength={2000}
                     rows={3}
@@ -100,14 +110,19 @@ export function ProfileAcademicSection({
                     aria-invalid={Boolean(errors.bio)}
                     aria-describedby="capability-bio-help capability-bio-error"
                 />
-                <p
-                    id="capability-bio-help"
-                    className="text-xs leading-5 text-muted-foreground"
-                >
-                    Ceritakan hal yang ingin kamu kerjakan, tanpa perlu menulis
-                    kontak pribadi.
-                </p>
-                <InputError id="capability-bio-error" message={errors.bio} />
+                <div className="grid min-w-0 gap-0.5">
+                    <p
+                        id="capability-bio-help"
+                        className="text-xs leading-normal text-muted-foreground"
+                    >
+                        Ceritakan hal yang ingin kamu kerjakan, tanpa perlu
+                        menulis kontak pribadi.
+                    </p>
+                    <InputError
+                        id="capability-bio-error"
+                        message={errors.bio}
+                    />
+                </div>
             </div>
         </section>
     );

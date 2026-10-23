@@ -1,3 +1,4 @@
+import { OptionalMark } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import { campusControlClass } from '@/pages/campus/_components/campus-operation-layout';
 import { sheetClass } from './skills-types';
@@ -36,9 +37,13 @@ export function SkillsFilterForm({
             }
         >
             <label className="grid gap-2 text-sm font-semibold">
-                Cari keahlian
+                <span>
+                    Cari keahlian
+                    <OptionalMark />
+                </span>
                 <input
                     className={campusControlClass}
+                    placeholder="Cari nama atau kategori keahlian..."
                     value={q}
                     maxLength={100}
                     disabled={actionBusy}
@@ -46,7 +51,10 @@ export function SkillsFilterForm({
                 />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
-                Kategori
+                <span>
+                    Kategori
+                    <OptionalMark />
+                </span>
                 <select
                     className={campusControlClass + ' cursor-pointer'}
                     value={category}

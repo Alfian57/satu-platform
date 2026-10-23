@@ -1,6 +1,7 @@
 import { LoaderCircle, UserCheck } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { campusControlClass } from '@/pages/campus/_components/campus-operation-layout';
 import { conclusions } from '@/pages/campus/inclusion/_types/inclusion-types';
@@ -37,13 +38,10 @@ export function InclusionDecisionForm({
             className="space-y-4 border-t border-border pt-4"
         >
             <h3 className="text-base font-bold">Catat tinjauan</h3>
-            <div className="grid gap-2">
-                <label
-                    htmlFor="human-conclusion"
-                    className="text-sm font-semibold"
-                >
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor="human-conclusion" required>
                     Kesimpulan peninjau
-                </label>
+                </Label>
                 <select
                     id="human-conclusion"
                     value={form.data.human_conclusion}
@@ -66,22 +64,21 @@ export function InclusionDecisionForm({
                     ))}
                 </select>
                 {form.errors.human_conclusion && (
-                    <p
-                        id="conclusion-error"
-                        role="alert"
-                        className="text-sm text-correction-subtle-foreground"
-                    >
-                        {form.errors.human_conclusion}
-                    </p>
+                    <div className="grid min-w-0 gap-0.5">
+                        <p
+                            id="conclusion-error"
+                            role="alert"
+                            className="text-sm text-correction-subtle-foreground"
+                        >
+                            {form.errors.human_conclusion}
+                        </p>
+                    </div>
                 )}
             </div>
-            <div className="grid gap-2">
-                <label
-                    htmlFor="support-action"
-                    className="text-sm font-semibold"
-                >
-                    Tindakan pendukung (opsional)
-                </label>
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor="support-action" optional>
+                    Tindakan pendukung
+                </Label>
                 <input
                     id="support-action"
                     value={form.data.support_action}
@@ -95,29 +92,28 @@ export function InclusionDecisionForm({
                     aria-describedby="support-help support-error"
                     className={campusControlClass}
                 />
-                <p
-                    id="support-help"
-                    className="text-xs leading-5 text-muted-foreground"
-                >
-                    Catatan ini tidak mengirim pesan atau kontak otomatis.
-                </p>
-                {form.errors.support_action && (
+                <div className="grid min-w-0 gap-0.5">
                     <p
-                        id="support-error"
-                        role="alert"
-                        className="text-sm text-correction-subtle-foreground"
+                        id="support-help"
+                        className="text-xs leading-normal text-muted-foreground"
                     >
-                        {form.errors.support_action}
+                        Catatan ini tidak mengirim pesan atau kontak otomatis.
                     </p>
-                )}
+                    {form.errors.support_action && (
+                        <p
+                            id="support-error"
+                            role="alert"
+                            className="text-sm text-correction-subtle-foreground"
+                        >
+                            {form.errors.support_action}
+                        </p>
+                    )}
+                </div>
             </div>
-            <div className="grid gap-2">
-                <label
-                    htmlFor="inclusion-reason"
-                    className="text-sm font-semibold"
-                >
-                    Alasan keputusan (wajib)
-                </label>
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor="inclusion-reason" required>
+                    Alasan keputusan
+                </Label>
                 <textarea
                     id="inclusion-reason"
                     rows={3}
@@ -135,21 +131,24 @@ export function InclusionDecisionForm({
                     aria-describedby="inclusion-reason-help inclusion-reason-error"
                     className={cn(campusControlClass, 'resize-y')}
                 />
-                <p
-                    id="inclusion-reason-help"
-                    className="text-xs leading-5 text-muted-foreground"
-                >
-                    Maksimum 1.000 karakter. Riwayat peninjauan tidak ditimpa.
-                </p>
-                {form.errors.reason && (
+                <div className="grid min-w-0 gap-0.5">
                     <p
-                        id="inclusion-reason-error"
-                        role="alert"
-                        className="text-sm text-correction-subtle-foreground"
+                        id="inclusion-reason-help"
+                        className="text-xs leading-normal text-muted-foreground"
                     >
-                        {form.errors.reason}
+                        Maksimum 1.000 karakter. Riwayat peninjauan tidak
+                        ditimpa.
                     </p>
-                )}
+                    {form.errors.reason && (
+                        <p
+                            id="inclusion-reason-error"
+                            role="alert"
+                            className="text-sm text-correction-subtle-foreground"
+                        >
+                            {form.errors.reason}
+                        </p>
+                    )}
+                </div>
             </div>
             <Button
                 type="submit"

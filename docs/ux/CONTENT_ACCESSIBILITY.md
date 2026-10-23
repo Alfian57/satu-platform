@@ -79,12 +79,7 @@ atau mengalihkan halaman untuk validasi gagal atau hasil
 penyimpanan yang belum dapat dipastikan; pertahankan draft dan minta mahasiswa
 memuat data tersimpan sebelum mencoba kembali.
 
-Pada bagian `Tentang dirimu` di Profil kemampuan, label akademik serta kolom
-Cerita singkat tidak memakai akhiran `(opsional)`, tetapi kolom tetap boleh
-kosong. Data yang sudah tercatat ditampilkan sebagai nilai hanya-baca dengan
-penjelasan singkat bahwa data tidak dapat diubah dari menu mahasiswa. Nilai yang
-belum tercatat dapat dilengkapi satu kali. Status tidak dibedakan melalui warna
-saja.
+Pada bagian `Tentang dirimu` di Profil kemampuan, data yang sudah tercatat ditampilkan sebagai nilai hanya-baca dengan penjelasan singkat bahwa data tidak dapat diubah dari menu mahasiswa. Nilai yang belum tercatat dapat dilengkapi satu kali. Field opsional seperti Cerita singkat dan Angkatan masuk (jika belum tercatat) menyertakan penanda `(opsional)`. Status tidak dibedakan melalui warna saja.
 
 ## Error Formula
 
@@ -92,18 +87,11 @@ saja.
 
 Jangan mengekspos token, stack trace, provider payload, keberadaan account lain, atau detail authorization.
 
-## Accessibility Target
+## Accessibility Target & Form Standardization
 
-Pada registrasi, bintang jingga gelap setelah label menandai isian wajib,
-termasuk persetujuan dan kode OTP. Petunjuk menjelaskan arti bintang dan atribut
-required tetap dipertahankan untuk pembaca layar serta validasi native.
-Bintang dekoratif memakai aria-hidden agar tidak dibaca sebagai bagian nama
-field. Login tidak memakai penanda ini. Warna bukan satu-satunya petunjuk.
+Pada seluruh formulir sistem SATU, tanda bintang merah (`*`) setelah teks label menandai isian wajib (menggunakan token `text-destructive` dengan `aria-hidden="true"`). Field yang bersifat opsional ditandai dengan keterangan `(opsional)` berwarna redup (`text-muted-foreground text-xs font-normal`) di akhir teks label. Atribut required dan aria-invalid tetap dipertahankan untuk pembaca layar serta validasi native. Setiap elemen input yang mendukung placeholder wajib memiliki placeholder dengan contoh isian yang jelas dan kontekstual.
 
-Pop-up pengajuan afiliasi memakai penanda yang sama untuk NIM, angkatan masuk,
-fakultas dan program studi yang wajib serta masih dapat diisi. Pengantar
-menjelaskan arti bintang. Nama universitas dan data akademik yang sudah
-terkunci tidak memerlukan penanda isian wajib.
+Nama universitas dan data akademik yang sudah terkunci tidak memerlukan penanda isian wajib.
 
 - WCAG 2.2 AA.
 - Landmark, heading, label, description, status, dan error semantics yang benar.

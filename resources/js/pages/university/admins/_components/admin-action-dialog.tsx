@@ -1,3 +1,4 @@
+import { RequiredMark } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -116,12 +117,16 @@ export function AdminActionDialog({
                         </div>
                     )}
                     {decision?.kind === 'invite' ? (
-                        <label className="grid gap-2 text-sm font-semibold">
-                            Nomor WhatsApp
+                        <label className="grid min-w-0 gap-1.5 text-sm font-semibold">
+                            <span>
+                                Nomor WhatsApp
+                                <RequiredMark />
+                            </span>
                             <input
                                 className={campusControlClass}
                                 type="tel"
                                 autoComplete="tel"
+                                placeholder="Contoh: 081234567890"
                                 value={phone}
                                 maxLength={20}
                                 onChange={(event) =>
@@ -138,11 +143,15 @@ export function AdminActionDialog({
                             />
                         </label>
                     ) : (
-                        <label className="grid gap-2 text-sm font-semibold">
-                            Alasan tindakan
+                        <label className="grid min-w-0 gap-1.5 text-sm font-semibold">
+                            <span>
+                                Alasan tindakan
+                                <RequiredMark />
+                            </span>
                             <textarea
                                 className={campusControlClass}
                                 aria-label="Alasan tindakan"
+                                placeholder="Tuliskan alasan tindakan administrasi ini"
                                 value={reason}
                                 minLength={3}
                                 maxLength={1000}
@@ -162,12 +171,16 @@ export function AdminActionDialog({
                         </label>
                     )}
                     {!confirmed ? (
-                        <label className="grid gap-2 text-sm font-semibold">
-                            Sandi saat ini
+                        <label className="grid min-w-0 gap-1.5 text-sm font-semibold">
+                            <span>
+                                Sandi saat ini
+                                <RequiredMark />
+                            </span>
                             <input
                                 className={campusControlClass}
                                 type="password"
                                 aria-label="Sandi saat ini"
+                                placeholder="Masukkan sandi saat ini untuk konfirmasi"
                                 aria-describedby={
                                     confirmationErrors.password
                                         ? 'admin-password-help admin-command-errors'
@@ -184,12 +197,14 @@ export function AdminActionDialog({
                                     confirmationErrors.password,
                                 )}
                             />
-                            <span
-                                id="admin-password-help"
-                                className="text-xs leading-5 font-normal text-muted-foreground"
-                            >
-                                Memeriksa sandi belum mengirim tindakan.
-                            </span>
+                            <div className="grid min-w-0 gap-0.5">
+                                <span
+                                    id="admin-password-help"
+                                    className="text-xs leading-normal font-normal text-muted-foreground"
+                                >
+                                    Memeriksa sandi belum mengirim tindakan.
+                                </span>
+                            </div>
                         </label>
                     ) : (
                         <p

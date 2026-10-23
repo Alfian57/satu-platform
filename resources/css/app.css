@@ -170,7 +170,7 @@
     position: absolute;
     z-index: 10;
     right: 0;
-    bottom: -28px;
+    bottom: 0;
     width: 208px;
 }
 .student-menu-hero__scene {
@@ -244,32 +244,37 @@
     }
 }
 @media (min-width: 640px) {
-    .student-menu-hero {
-        min-height: 320px;
-        margin-top: 16px;
-        padding: 36px 32px;
+    .student-menu-hero,
+    .student-hero-home {
+        min-height: 230px;
+        margin-top: 28px;
+        padding: 28px 32px;
     }
     .student-menu-hero__copy {
-        max-width: 55%;
+        max-width: 62%;
     }
     .student-hero-mascot {
-        right: 8px;
-        width: 39%;
-        max-width: 320px;
+        right: 12px;
+        bottom: 0;
+        width: 36%;
+        max-width: 270px;
     }
 }
 @media (min-width: 1024px) {
-    .student-menu-hero {
-        margin-top: 24px;
-        padding: 40px;
+    .student-menu-hero,
+    .student-hero-home {
+        margin-top: 36px;
+        min-height: 240px;
+        padding: 32px 40px;
     }
     .student-menu-hero__copy {
-        max-width: 60%;
+        max-width: 64%;
     }
     .student-hero-mascot {
-        right: 28px;
-        width: 36%;
-        max-width: 384px;
+        right: 20px;
+        bottom: 0;
+        width: 30%;
+        max-width: 295px;
     }
 }
 
@@ -474,7 +479,7 @@
 }
 .satu-auth-entry .auth-required-marker {
     margin-left: 0.25em;
-    color: #c2410c;
+    color: var(--destructive, #dc2626);
     font-weight: 700;
 }
 .satu-auth-entry .auth-entry-fields button[type='submit']:disabled {
@@ -1121,7 +1126,7 @@
     min-height: 48px;
     border-color: #7892ae;
     border-radius: 12px;
-    background: white;
+    background-color: white;
     color: #17345a;
     font-size: 16px;
 }
@@ -1144,7 +1149,7 @@
 }
 .satu-affiliation-dialog .affiliation-required-marker {
     margin-left: 0.25em;
-    color: #c2410c;
+    color: var(--destructive, #dc2626);
     font-weight: 700;
 }
 .satu-affiliation-dialog .onboarding-body p[id$='help'] {
@@ -2422,8 +2427,8 @@
         max-width: 100%;
         border: 1px solid #7892ae;
         border-radius: 12px;
-        background: white;
-        padding: 8px 12px;
+        background-color: white;
+        padding: 8px 40px 8px 16px;
         font-size: 14px;
     }
 
@@ -6504,4 +6509,41 @@
     [data-disabled]
 ) {
     cursor: not-allowed;
+}
+
+select:not([multiple]) {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23526b85' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem 1rem;
+    padding-left: 1rem;
+    padding-right: 2.75rem;
+}
+
+.dark select:not([multiple]) {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a9b7cc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* Sonner Toast Minimalist Left Border */
+[data-sonner-toast] {
+    border-left-width: 4px !important;
+}
+
+[data-sonner-toast][data-type='success'] {
+    border-left-color: var(--color-verified, #16a34a) !important;
+}
+
+[data-sonner-toast][data-type='error'] {
+    border-left-color: var(--color-destructive, #dc2626) !important;
+}
+
+[data-sonner-toast][data-type='warning'] {
+    border-left-color: #f59e0b !important;
+}
+
+[data-sonner-toast][data-type='info'] {
+    border-left-color: var(--color-primary, #2563eb) !important;
 }

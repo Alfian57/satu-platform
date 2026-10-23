@@ -1,21 +1,16 @@
 import { LockKeyhole, UserRoundCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DashboardArchiveArt } from '@/pages/dashboard/_components/dashboard-archive-art';
+import StudentMenuHero from '@/layouts/_components/student-menu-hero';
 import type { UseCapabilityProfileReturn } from '@/pages/student/profile/_hooks/useCapabilityProfile';
 
 export interface ProfileHeaderProps {
-    institution: { id: number; name: string; timezone: string } | null;
+    institution?: { id: number; name: string; timezone: string } | null;
     state: UseCapabilityProfileReturn['state'];
     actions: UseCapabilityProfileReturn['actions'];
     helpers: UseCapabilityProfileReturn['helpers'];
 }
 
-export function ProfileHeader({
-    institution,
-    state,
-    actions,
-    helpers,
-}: ProfileHeaderProps) {
+export function ProfileHeader({ state, actions, helpers }: ProfileHeaderProps) {
     const {
         canEdit,
         blocked,
@@ -29,34 +24,15 @@ export function ProfileHeader({
 
     return (
         <div className="space-y-6">
-            <header className="relative overflow-hidden rounded-3xl border border-border bg-linear-to-br from-card to-accent/60 p-5 shadow-sm sm:p-6">
-                <DashboardArchiveArt className="pointer-events-none absolute top-0 right-3 hidden w-28 opacity-40 sm:block" />
-                <div className="relative min-w-0 space-y-3 sm:pr-28">
-                    <div className="flex items-center gap-3">
-                        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-accent text-primary">
-                            <UserRoundCog aria-hidden="true" />
-                        </span>
-                        <div className="min-w-0">
-                            <p className="text-xs font-semibold text-primary">
-                                Bekal untuk berkolaborasi
-                            </p>
-                            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                                Profil kemampuan
-                            </h1>
-                        </div>
-                    </div>
-                    <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                        Mulai dari yang ingin kamu pelajari dan kemampuan yang
-                        kamu miliki. Tidak wajib mempunyai karya atau pengalaman
-                        proyek.
-                    </p>
-                    {institution && (
-                        <p className="text-sm font-medium wrap-anywhere">
-                            {institution.name}
-                        </p>
-                    )}
-                </div>
-            </header>
+            <StudentMenuHero
+                icon={UserRoundCog}
+                eyebrow="Bekal untuk berkolaborasi"
+                title="Profil kemampuan."
+                description="Mulai dari yang ingin kamu pelajari dan kemampuan yang kamu miliki. Tidak wajib mempunyai karya atau pengalaman proyek."
+                pose="account-care"
+                theme="settings"
+                testId="capability-header"
+            />
 
             {issue && (
                 <div

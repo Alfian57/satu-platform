@@ -1,3 +1,4 @@
+import { RequiredMark } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -56,9 +57,10 @@ export function IntegrationCreateConnectionModal({
                         mahasiswa.
                     </DialogDescription>
                 </DialogHeader>
-                <label className="grid gap-1.5">
+                <label className="grid min-w-0 gap-1.5">
                     <span className="font-label text-label font-semibold text-muted-foreground">
                         Kunci penyedia (Provider Key)
+                        <RequiredMark />
                     </span>
                     <input
                         type="text"
@@ -73,20 +75,22 @@ export function IntegrationCreateConnectionModal({
                         placeholder="Contoh: siakad, feeder, atau pd_dikti"
                         className="min-h-11 rounded-xl border border-input bg-transparent px-3 text-base shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                     />
-                    <span className="text-xs text-muted-foreground">
-                        Koneksi dibuat dalam mode Sandbox untuk pengujian
-                        lingkungan terpisah.
-                    </span>
+                    <div className="grid min-w-0 gap-0.5">
+                        <span className="text-xs leading-normal text-muted-foreground">
+                            Koneksi dibuat dalam mode Sandbox untuk pengujian
+                            lingkungan terpisah.
+                        </span>
+                        {providerError && (
+                            <p
+                                id="provider-error"
+                                role="alert"
+                                className="text-sm text-correction-subtle-foreground"
+                            >
+                                {providerError}
+                            </p>
+                        )}
+                    </div>
                 </label>
-                {providerError && (
-                    <p
-                        id="provider-error"
-                        role="alert"
-                        className="text-sm text-correction-subtle-foreground"
-                    >
-                        {providerError}
-                    </p>
-                )}
                 {feedback && (
                     <p
                         role="alert"

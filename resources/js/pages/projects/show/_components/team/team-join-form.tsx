@@ -106,9 +106,9 @@ export function TeamJoinForm({
                 disabled={blocked}
                 className="grid min-w-0 gap-4 disabled:opacity-70"
             >
-                <div className="grid gap-2">
-                    <Label htmlFor="team-request-role">
-                        Peran yang diminati (opsional)
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor="team-request-role" optional>
+                        Peran yang diminati
                     </Label>
                     <Select
                         value={data.project_role_id?.toString() ?? 'none'}
@@ -157,17 +157,21 @@ export function TeamJoinForm({
                         </SelectContent>
                     </Select>
                     {Boolean(errors.project_role_id) && (
-                        <p className="text-sm text-destructive">
-                            {firstError({
-                                role: errors.project_role_id,
-                            })}
-                        </p>
+                        <div className="grid min-w-0 gap-0.5">
+                            <p className="text-sm text-destructive">
+                                {firstError({
+                                    role: errors.project_role_id,
+                                })}
+                            </p>
+                        </div>
                     )}
                 </div>
                 {selectedRole && <TeamCriteriaCard role={selectedRole} />}
                 {inputFields.map(([key, label, maxLength, placeholder]) => (
-                    <div key={key} className="grid gap-2">
-                        <Label htmlFor={`team-request-${key}`}>{label}</Label>
+                    <div key={key} className="grid min-w-0 gap-1.5">
+                        <Label htmlFor={`team-request-${key}`} required>
+                            {label}
+                        </Label>
                         <textarea
                             aria-required="true"
                             id={`team-request-${key}`}
@@ -182,15 +186,17 @@ export function TeamJoinForm({
                             aria-invalid={Boolean(errors[key])}
                             aria-describedby={`team-request-${key}-hint`}
                         />
-                        <p
-                            id={`team-request-${key}-hint`}
-                            className="text-xs leading-5 text-muted-foreground"
-                        >
-                            {firstError({
-                                [key]: errors[key],
-                            }) ??
-                                `Maksimal ${maxLength} karakter. Hindari kontak dan data pribadi yang tidak diperlukan.`}
-                        </p>
+                        <div className="grid min-w-0 gap-0.5">
+                            <p
+                                id={`team-request-${key}-hint`}
+                                className="text-xs leading-normal text-muted-foreground"
+                            >
+                                {firstError({
+                                    [key]: errors[key],
+                                }) ??
+                                    `Maksimal ${maxLength} karakter. Hindari kontak dan data pribadi yang tidak diperlukan.`}
+                            </p>
+                        </div>
                     </div>
                 ))}
             </fieldset>

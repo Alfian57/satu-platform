@@ -64,17 +64,9 @@ export function OnboardingAffiliationStep({
                         </p>
                     </div>
                 </section>
-                <div className="grid content-start gap-2">
-                    <Label htmlFor="nim">
+                <div className="grid content-start gap-1.5">
+                    <Label htmlFor="nim" required={!isVerified}>
                         Nomor Induk Mahasiswa
-                        {!isVerified && (
-                            <span
-                                aria-hidden="true"
-                                className="affiliation-required-marker"
-                            >
-                                *
-                            </span>
-                        )}
                     </Label>
                     <Input
                         id="nim"
@@ -92,26 +84,23 @@ export function OnboardingAffiliationStep({
                         }
                         className="h-12 rounded-xl"
                     />
-                    <p
-                        id="onboarding-nim-help"
-                        className="text-sm leading-6 text-muted-foreground"
-                    >
-                        {isVerified
-                            ? 'Afiliasi sudah terverifikasi. NIM tidak diubah melalui profil.'
-                            : 'Gunakan NIM yang tercatat pada roster mahasiswa.'}
-                    </p>
+                    <div className="grid min-w-0 gap-0.5">
+                        <p
+                            id="onboarding-nim-help"
+                            className="text-xs leading-normal text-muted-foreground"
+                        >
+                            {isVerified
+                                ? 'Afiliasi sudah terverifikasi. NIM tidak diubah melalui profil.'
+                                : 'Gunakan NIM yang tercatat pada roster mahasiswa.'}
+                        </p>
+                    </div>
                 </div>
-                <div className="grid content-start gap-2">
-                    <Label htmlFor="admission_year">
+                <div className="grid content-start gap-1.5">
+                    <Label
+                        htmlFor="admission_year"
+                        required={!hasStoredAdmissionYear}
+                    >
                         Angkatan masuk
-                        {!hasStoredAdmissionYear && (
-                            <span
-                                aria-hidden="true"
-                                className="affiliation-required-marker"
-                            >
-                                *
-                            </span>
-                        )}
                     </Label>
                     <Input
                         id="admission_year"
@@ -133,18 +122,20 @@ export function OnboardingAffiliationStep({
                         aria-describedby="admission-year-help admission-year-error"
                         className={`h-12 rounded-xl ${hasStoredAdmissionYear ? 'cursor-default bg-muted/50' : ''}`}
                     />
-                    <p
-                        id="admission-year-help"
-                        className="text-xs leading-5 text-muted-foreground"
-                    >
-                        {hasStoredAdmissionYear
-                            ? 'Data yang sudah tercatat tidak dapat diubah dari menu mahasiswa.'
-                            : 'Tahun pertama masuk kuliah, bukan tingkat studi saat ini.'}
-                    </p>
-                    <InputError
-                        id="admission-year-error"
-                        message={fieldErrors.admission_year}
-                    />
+                    <div className="grid min-w-0 gap-0.5">
+                        <p
+                            id="admission-year-help"
+                            className="text-xs leading-normal text-muted-foreground"
+                        >
+                            {hasStoredAdmissionYear
+                                ? 'Data yang sudah tercatat tidak dapat diubah dari menu mahasiswa.'
+                                : 'Tahun pertama masuk kuliah, bukan tingkat studi saat ini.'}
+                        </p>
+                        <InputError
+                            id="admission-year-error"
+                            message={fieldErrors.admission_year}
+                        />
+                    </div>
                 </div>
                 <AcademicProgramFields
                     prefix="onboarding"

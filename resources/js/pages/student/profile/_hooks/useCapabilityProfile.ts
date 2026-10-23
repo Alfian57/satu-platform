@@ -12,8 +12,7 @@ import type {
     EvidenceLink,
     Proficiency,
 } from '@/lib/student-capabilities';
-import { dashboard } from '@/routes';
-import { show, store, update } from '@/routes/student-profiles';
+import { edit, show, store, update } from '@/routes/student-profiles';
 import type { StudentActivation } from '@/types/onboarding';
 
 function isAcademicValueSet(
@@ -60,6 +59,8 @@ export function useCapabilityProfile({
         profile,
     );
     const [skillChoice, setSkillChoice] = useState('');
+    const [proficiencyChoice, setProficiencyChoice] =
+        useState<Proficiency>('beginner');
     const [interestChoice, setInterestChoice] = useState('');
     const [message, setMessage] = useState<string | null>(null);
     const [issue, setIssue] = useState<string | null>(null);
@@ -225,7 +226,7 @@ export function useCapabilityProfile({
 
             acceptProfile(result.data);
             toast.success('Data profil berhasil tersimpan.');
-            router.visit(dashboard.url());
+            router.visit(edit.url());
         } catch (error) {
             const status = (error as { response?: { status?: number } })
                 .response?.status;
@@ -368,24 +369,31 @@ export function useCapabilityProfile({
             ...form.data.skills,
             {
                 taxonomy_id: Number(skillChoice),
-                proficiency: 'beginner',
+                proficiency: proficiencyChoice,
                 evidence_metadata: [],
             },
         ]);
         setSkillChoice('');
+        setProficiencyChoice('beginner');
         focusSelector('capability-skill-choice');
     }
 
     async function removeSkill(index: number) {
         const skill = form.data.skills[index];
 
-        if (
-            (skill?.evidence_metadata?.length ||
-                skill?.evidence_metadata === undefined) &&
-            !(await confirmChanges(
-                'Hapus keahlian ini beserta tautan bukti awalnya saat profil disimpan?',
-            ))
-        ) {
+        if (!skill) {
+            return;
+        }
+
+        const skillName = lookup.get(skill.taxonomy_id) ?? 'keahlian ini';
+        const hasEvidence =
+            (skill.evidence_metadata?.length ?? 0) > 0 ||
+            skill.evidence_metadata === undefined;
+        const confirmMessage = hasEvidence
+            ? `Hapus keahlian ${skillName} beserta bukti awalnya saat profil disimpan?`
+            : `Hapus keahlian ${skillName} saat profil disimpan?`;
+
+        if (!(await confirmChanges(confirmMessage))) {
             return;
         }
 
@@ -409,7 +417,17 @@ export function useCapabilityProfile({
         focusSelector('capability-interest-choice');
     }
 
-    function removeInterest(id: number) {
+    async function removeInterest(id: number) {
+        const interestName = lookup.get(id) ?? 'minat ini';
+
+        if (
+            !(await confirmChanges(
+                `Hapus minat ${interestName} saat profil disimpan?`,
+            ))
+        ) {
+            return;
+        }
+
         form.setData(
             'interests',
             form.data.interests.filter((val) => val !== id),
@@ -436,7 +454,34 @@ export function useCapabilityProfile({
         focusSelector(`window-${index}-day_of_week`);
     }
 
-    function removeAvailabilityWindow(index: number) {
+    async function removeAvailabilityWindow(index: number) {
+        const window = form.data.availability_windows[index];
+
+        if (!window) {
+            return;
+        }
+
+        const dayNames = [
+            'Minggu',
+            'Senin',
+            'Selasa',
+            'Rabu',
+            'Kamis',
+            'Jumat',
+            'Sabtu',
+        ];
+        const dayName =
+            window.day_of_week >= 0 && window.day_of_week < 7
+                ? dayNames[window.day_of_week]
+                : null;
+        const label = dayName
+            ? `Jadwal ${index + 1} (${dayName})`
+            : `Jadwal ${index + 1}`;
+
+        if (!(await confirmChanges(`Hapus ${label} saat profil disimpan?`))) {
+            return;
+        }
+
         form.setData(
             'availability_windows',
             form.data.availability_windows.filter(
@@ -491,19 +536,44 @@ export function useCapabilityProfile({
         });
     }
 
-    function removeEvidence(skillIndex: number, evidenceIndex: number) {
+    async function removeEvidence(skillIndex: number, evidenceIndex: number) {
         const skill = form.data.skills[skillIndex];
 
         if (!skill) {
             return;
         }
 
+        const evidence = skill.evidence_metadata?.[evidenceIndex];
+        const evidenceTitle = evidence?.title
+            ? `"${evidence.title}"`
+            : `tautan bukti ${evidenceIndex + 1}`;
+
+        if (
+            !(await confirmChanges(
+                `Hapus ${evidenceTitle} saat profil disimpan?`,
+            ))
+        ) {
+            return;
+        }
+
+        const remainingEvidenceCount =
+            (skill.evidence_metadata?.length ?? 1) - 1;
+
         changeSkill(skillIndex, {
             evidence_metadata: skill.evidence_metadata?.filter(
                 (_, position) => position !== evidenceIndex,
             ),
         });
-        focusSelector(`capability-level-${skillIndex}`);
+
+        if (remainingEvidenceCount > 0) {
+            const nextIndex = Math.min(
+                evidenceIndex,
+                remainingEvidenceCount - 1,
+            );
+            focusSelector(`proof-title-${skillIndex}-${nextIndex}`);
+        } else {
+            focusSelector('evidence-add-link');
+        }
     }
 
     async function replaceLegacyEvidence(skillIndex: number) {
@@ -529,6 +599,7 @@ export function useCapabilityProfile({
         state: {
             savedProfile,
             skillChoice,
+            proficiencyChoice,
             interestChoice,
             message,
             issue,
@@ -553,6 +624,7 @@ export function useCapabilityProfile({
             save,
             reloadProfile,
             setSkillChoice,
+            setProficiencyChoice,
             setInterestChoice,
             addSkill,
             removeSkill,

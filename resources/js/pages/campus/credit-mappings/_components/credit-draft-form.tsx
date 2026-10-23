@@ -1,6 +1,7 @@
 import { FilePlus2, LoaderCircle, Plus } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { campusControlClass } from '@/pages/campus/_components/campus-operation-layout';
 import { activityLabels } from '@/pages/campus/credit-mappings/_types/credit-types';
@@ -45,13 +46,10 @@ export function CreditDraftForm({
                 </div>
             </div>
             <div className="mt-5 grid gap-4 @min-[32rem]:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-                <div className="grid min-w-0 content-start gap-2">
-                    <label
-                        htmlFor="credit-activity"
-                        className="text-sm font-semibold"
-                    >
+                <div className="grid min-w-0 content-start gap-1.5">
+                    <Label htmlFor="credit-activity" required>
                         Jenis aktivitas
-                    </label>
+                    </Label>
                     <select
                         id="credit-activity"
                         value={form.data.activity_type}
@@ -76,28 +74,28 @@ export function CreditDraftForm({
                         )}
                     </select>
                     {form.errors.activity_type && (
-                        <p
-                            role="alert"
-                            id="credit-activity-error"
-                            className="text-sm text-correction-subtle-foreground"
-                        >
-                            {form.errors.activity_type}
-                        </p>
+                        <div className="grid min-w-0 gap-0.5">
+                            <p
+                                role="alert"
+                                id="credit-activity-error"
+                                className="text-sm text-correction-subtle-foreground"
+                            >
+                                {form.errors.activity_type}
+                            </p>
+                        </div>
                     )}
                 </div>
-                <div className="grid min-w-0 content-start gap-2">
-                    <label
-                        htmlFor="credit-amount"
-                        className="text-sm font-semibold"
-                    >
+                <div className="grid min-w-0 content-start gap-1.5">
+                    <Label htmlFor="credit-amount" required>
                         Jumlah kredit (SKS)
-                    </label>
+                    </Label>
                     <input
                         id="credit-amount"
                         type="number"
                         min="0.5"
                         max="24"
                         step="0.5"
+                        placeholder="Contoh: 3"
                         required
                         value={form.data.credit_amount}
                         onChange={(event) =>
@@ -108,29 +106,28 @@ export function CreditDraftForm({
                         aria-invalid={Boolean(form.errors.credit_amount)}
                         aria-describedby="credit-amount-help credit-amount-error"
                     />
-                    <p
-                        id="credit-amount-help"
-                        className="text-xs leading-5 text-muted-foreground"
-                    >
-                        0,5 sampai 24 SKS.
-                    </p>
-                    {form.errors.credit_amount && (
+                    <div className="grid min-w-0 gap-0.5">
                         <p
-                            role="alert"
-                            id="credit-amount-error"
-                            className="text-sm text-correction-subtle-foreground"
+                            id="credit-amount-help"
+                            className="text-xs leading-normal text-muted-foreground"
                         >
-                            {form.errors.credit_amount}
+                            0,5 sampai 24 SKS.
                         </p>
-                    )}
+                        {form.errors.credit_amount && (
+                            <p
+                                role="alert"
+                                id="credit-amount-error"
+                                className="text-sm text-correction-subtle-foreground"
+                            >
+                                {form.errors.credit_amount}
+                            </p>
+                        )}
+                    </div>
                 </div>
-                <div className="grid gap-2 @min-[32rem]:col-span-2">
-                    <label
-                        htmlFor="credit-reason"
-                        className="text-sm font-semibold"
-                    >
-                        Catatan aturan (opsional)
-                    </label>
+                <div className="grid min-w-0 gap-1.5 @min-[32rem]:col-span-2">
+                    <Label htmlFor="credit-reason" optional>
+                        Catatan aturan
+                    </Label>
                     <textarea
                         id="credit-reason"
                         rows={3}
@@ -145,21 +142,23 @@ export function CreditDraftForm({
                         aria-invalid={Boolean(form.errors.reason)}
                         aria-describedby="credit-reason-help credit-reason-error"
                     />
-                    <p
-                        id="credit-reason-help"
-                        className="text-xs leading-5 text-muted-foreground"
-                    >
-                        Maksimum 1.000 karakter.
-                    </p>
-                    {form.errors.reason && (
+                    <div className="grid min-w-0 gap-0.5">
                         <p
-                            role="alert"
-                            id="credit-reason-error"
-                            className="text-sm text-correction-subtle-foreground"
+                            id="credit-reason-help"
+                            className="text-xs leading-normal text-muted-foreground"
                         >
-                            {form.errors.reason}
+                            Maksimum 1.000 karakter.
                         </p>
-                    )}
+                        {form.errors.reason && (
+                            <p
+                                role="alert"
+                                id="credit-reason-error"
+                                className="text-sm text-correction-subtle-foreground"
+                            >
+                                {form.errors.reason}
+                            </p>
+                        )}
+                    </div>
                 </div>
             </div>
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">

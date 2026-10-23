@@ -25,7 +25,6 @@ class DataRightsController extends Controller
 
         return Inertia::render('settings/data-rights', [
             'summary' => $summary,
-            'status' => $request->session()->get('status'),
         ]);
     }
 
@@ -49,6 +48,11 @@ class DataRightsController extends Controller
             request: $request,
         );
 
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Permintaan koreksi data Anda telah direkam untuk diproses oleh petugas.',
+        ]);
+
         return back()->with('status', 'Permintaan koreksi data Anda telah direkam untuk diproses oleh petugas.');
     }
 
@@ -71,6 +75,11 @@ class DataRightsController extends Controller
             reason: $validated['reason'],
             request: $request,
         );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Permintaan pembatasan pemrosesan data Anda telah dicatat.',
+        ]);
 
         return back()->with('status', 'Permintaan pembatasan pemrosesan data Anda telah dicatat.');
     }
@@ -101,6 +110,11 @@ class DataRightsController extends Controller
             reason: 'Pengguna menarik persetujuan privasi secara mandiri.',
             request: $request,
         );
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Persetujuan data telah berhasil ditarik.',
+        ]);
 
         return back()->with('status', 'Persetujuan data telah berhasil ditarik.');
     }

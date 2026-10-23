@@ -1,6 +1,7 @@
 import { FileWarning, LockKeyhole, ShieldCheck, XCircle } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { campusControlClass } from '@/pages/campus/_components/campus-operation-layout';
@@ -108,18 +109,13 @@ export function ContributionDecisionForm({
 
             {/* Alasan */}
             <div className="grid gap-1.5">
-                <label
+                <Label
                     htmlFor="campus-contribution-review-reason"
-                    className="text-sm font-semibold text-foreground"
+                    required={selectedDecision !== 'approved'}
+                    optional={selectedDecision === 'approved'}
                 >
                     Alasan Keputusan
-                    {selectedDecision !== 'approved' && (
-                        <span className="text-correction-subtle-foreground">
-                            {' '}
-                            *
-                        </span>
-                    )}
-                </label>
+                </Label>
                 <textarea
                     id="campus-contribution-review-reason"
                     disabled={blocked}
@@ -148,12 +144,9 @@ export function ContributionDecisionForm({
 
             {/* Catatan internal */}
             <div className="grid gap-1.5">
-                <label
-                    htmlFor="campus-contribution-review-note"
-                    className="text-sm font-semibold text-foreground"
-                >
-                    Catatan untuk pemilik (opsional)
-                </label>
+                <Label htmlFor="campus-contribution-review-note" optional>
+                    Catatan untuk pemilik
+                </Label>
                 <textarea
                     id="campus-contribution-review-note"
                     disabled={blocked}

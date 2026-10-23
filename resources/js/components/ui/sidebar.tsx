@@ -1,7 +1,7 @@
 import { Slot } from "@radix-ui/react-slot"
 import type { VariantProps} from "class-variance-authority";
 import { cva } from "class-variance-authority"
-import { MenuIcon } from "lucide-react"
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
@@ -266,24 +266,21 @@ function Sidebar({
 function SidebarTrigger({
   className,
   onClick,
+  children,
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { toggleSidebar, isMobile, state, openMobile, navigationId } = useSidebar()
-  const label = isMobile
-    ? openMobile
-      ? "Tutup navigasi"
-      : "Buka navigasi"
-    : state === "collapsed"
-      ? "Buka navigasi"
-      : "Tutup navigasi"
+  const isExpanded = isMobile ? openMobile : state === "expanded"
+  const label = isExpanded ? "Tutup navigasi" : "Buka navigasi"
 
   return (
     <Button
       aria-label={label}
-      aria-expanded={isMobile ? openMobile : state === "expanded"}
+      aria-expanded={isExpanded}
       aria-controls={navigationId}
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
+      data-state={isExpanded ? "expanded" : "collapsed"}
       variant="ghost"
       size="icon"
       className={cn("h-7 w-7", className)}
@@ -293,7 +290,13 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      <MenuIcon aria-hidden="true" className="size-5" strokeWidth={1.75} />
+      {children ?? (
+        isExpanded ? (
+          <PanelLeftClose aria-hidden="true" className="size-5" strokeWidth={1.75} />
+        ) : (
+          <PanelLeftOpen aria-hidden="true" className="size-5" strokeWidth={1.75} />
+        )
+      )}
       <span className="sr-only">{label}</span>
     </Button>
   )

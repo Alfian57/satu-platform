@@ -5,8 +5,14 @@ import { cn } from "@/lib/utils"
 
 function Label({
   className,
+  required,
+  optional,
+  children,
   ...props
-}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+}: React.ComponentProps<typeof LabelPrimitive.Root> & {
+  required?: boolean
+  optional?: boolean
+}) {
   return (
     <LabelPrimitive.Root
       data-slot="label"
@@ -15,7 +21,19 @@ function Label({
         className
       )}
       {...props}
-    />
+    >
+      {children}
+      {required && (
+        <span aria-hidden="true" className="text-destructive font-bold ml-1">
+          *
+        </span>
+      )}
+      {optional && (
+        <span className="text-xs font-normal text-muted-foreground ml-1">
+          (opsional)
+        </span>
+      )}
+    </LabelPrimitive.Root>
   )
 }
 

@@ -65,6 +65,7 @@ export default function OtpInput({
                     id={id}
                     name={name}
                     type="text"
+                    placeholder="000000"
                     value={value}
                     onChange={handleChange}
                     onPaste={handlePaste}

@@ -44,7 +44,7 @@ export function OnboardingSkillsStep({
 
     return (
         <div className="space-y-5">
-            <div className="grid gap-2">
+            <div className="grid min-w-0 gap-1.5">
                 <Label htmlFor="skill-search">Keahlianmu</Label>
                 <div className="relative">
                     <Search
@@ -63,13 +63,15 @@ export function OnboardingSkillsStep({
                         disabled={busy}
                     />
                 </div>
-                <p
-                    id="skill-search-help"
-                    className="text-xs leading-5 text-slate-600"
-                >
-                    Keahlian boleh kosong dan dapat dilengkapi lewat Profil
-                    kemampuan. Kamu bisa menambahkan yang belum tersedia.
-                </p>
+                <div className="grid min-w-0 gap-0.5">
+                    <p
+                        id="skill-search-help"
+                        className="text-xs leading-normal text-slate-600"
+                    >
+                        Keahlian boleh kosong dan dapat dilengkapi lewat Profil
+                        kemampuan. Kamu bisa menambahkan yang belum tersedia.
+                    </p>
+                </div>
             </div>
             {searchQuery.trim() && (
                 <div

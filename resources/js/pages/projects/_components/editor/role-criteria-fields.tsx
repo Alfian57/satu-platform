@@ -24,8 +24,8 @@ export function RoleCriteriaFields({
 }: Props) {
     return (
         <div className="grid min-w-0 gap-4 sm:grid-cols-2">
-            <div className="min-w-0 space-y-2">
-                <Label htmlFor={`project-role-${index}-beginner`}>
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor={`project-role-${index}-beginner`} optional>
                     Penerimaan pemula
                 </Label>
                 <select
@@ -54,22 +54,24 @@ export function RoleCriteriaFields({
                     <option value="yes">Menerima pemula</option>
                     <option value="no">Membutuhkan pengalaman</option>
                 </select>
-                <p
-                    id={`project-role-${index}-beginner-help`}
-                    className="text-xs leading-5 text-muted-foreground"
-                >
-                    Nyatakan kebutuhan peran. Jangan mensyaratkan jumlah relasi
-                    atau popularitas. Pemula tetap mengikuti kriteria yang kamu
-                    jelaskan.
-                </p>
-                <InputError
-                    id={`project-role-${index}-beginner-error`}
-                    message={beginnerError}
-                />
+                <div className="grid min-w-0 gap-0.5">
+                    <p
+                        id={`project-role-${index}-beginner-help`}
+                        className="text-xs leading-normal text-muted-foreground"
+                    >
+                        Nyatakan kebutuhan peran. Jangan mensyaratkan jumlah
+                        relasi atau popularitas. Pemula tetap mengikuti kriteria
+                        yang kamu jelaskan.
+                    </p>
+                    <InputError
+                        id={`project-role-${index}-beginner-error`}
+                        message={beginnerError}
+                    />
+                </div>
             </div>
-            <div className="min-w-0 space-y-2">
-                <Label htmlFor={`project-role-${index}-criteria`}>
-                    Kriteria pemilihan (opsional)
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor={`project-role-${index}-criteria`} optional>
+                    Kriteria pemilihan
                 </Label>
                 <textarea
                     id={`project-role-${index}-criteria`}
@@ -86,18 +88,20 @@ export function RoleCriteriaFields({
                     aria-invalid={Boolean(criteriaError)}
                     aria-describedby={`project-role-${index}-criteria-help project-role-${index}-criteria-error`}
                 />
-                <p
-                    id={`project-role-${index}-criteria-help`}
-                    className="text-xs leading-5 text-muted-foreground"
-                >
-                    Maksimal 2000 karakter. Jelaskan kebutuhan kerja, bukan
-                    kepribadian, IPK atau jumlah teman. Ini bukan skor atau
-                    keputusan otomatis.
-                </p>
-                <InputError
-                    id={`project-role-${index}-criteria-error`}
-                    message={criteriaError}
-                />
+                <div className="grid min-w-0 gap-0.5">
+                    <p
+                        id={`project-role-${index}-criteria-help`}
+                        className="text-xs leading-normal text-muted-foreground"
+                    >
+                        Maksimal 2000 karakter. Jelaskan kebutuhan kerja, bukan
+                        kepribadian, IPK atau jumlah teman. Ini bukan skor atau
+                        keputusan otomatis.
+                    </p>
+                    <InputError
+                        id={`project-role-${index}-criteria-error`}
+                        message={criteriaError}
+                    />
+                </div>
             </div>
         </div>
     );

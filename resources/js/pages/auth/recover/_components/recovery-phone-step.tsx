@@ -28,8 +28,10 @@ export default function RecoveryPhoneStep({ status }: Props) {
                         />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="phone">Nomor WhatsApp</Label>
+                    <div className="grid min-w-0 gap-1.5">
+                        <Label htmlFor="phone" required>
+                            Nomor WhatsApp
+                        </Label>
                         <Input
                             id="phone"
                             type="tel"
@@ -46,18 +48,20 @@ export default function RecoveryPhoneStep({ status }: Props) {
                             }
                             aria-invalid={Boolean(errors.phone)}
                         />
-                        <p
-                            id="recovery-phone-help"
-                            className="text-xs leading-relaxed text-muted-foreground"
-                        >
-                            Masukkan nomor yang pernah diverifikasi. Jika
-                            terdaftar, kode recovery akan dikirim melalui
-                            WhatsApp.
-                        </p>
-                        <InputError
-                            id="recover-phone-error"
-                            message={errors.phone}
-                        />
+                        <div className="grid min-w-0 gap-0.5">
+                            <p
+                                id="recovery-phone-help"
+                                className="text-xs leading-normal text-muted-foreground"
+                            >
+                                Masukkan nomor yang pernah diverifikasi. Jika
+                                terdaftar, kode recovery akan dikirim melalui
+                                WhatsApp.
+                            </p>
+                            <InputError
+                                id="recover-phone-error"
+                                message={errors.phone}
+                            />
+                        </div>
                     </div>
 
                     <Button

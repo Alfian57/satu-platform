@@ -47,7 +47,7 @@ export function RosterUploadCard({
 
             <form onSubmit={onSubmit} className="mt-5 grid gap-5">
                 <div className="grid min-w-0 gap-4 @min-[32rem]:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)]">
-                    <div className="space-y-1.5">
+                    <div className="grid min-w-0 gap-1.5">
                         <Label
                             htmlFor="roster-file"
                             className="text-sm font-semibold text-foreground"
@@ -72,23 +72,25 @@ export function RosterUploadCard({
                                 'cursor-pointer file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-accent file:px-3 file:py-1 file:text-sm file:font-semibold file:text-primary',
                             )}
                         />
-                        <p
-                            id="roster-file-help"
-                            className="text-xs text-muted-foreground"
-                        >
-                            Maksimum 10 MB. Format .csv atau .txt.
-                        </p>
-                        {form.errors.file && (
+                        <div className="grid min-w-0 gap-0.5">
                             <p
-                                id="roster-file-error"
-                                className="text-xs font-semibold text-correction-subtle-foreground"
+                                id="roster-file-help"
+                                className="text-xs leading-normal text-muted-foreground"
                             >
-                                {form.errors.file}
+                                Maksimum 10 MB. Format .csv atau .txt.
                             </p>
-                        )}
+                            {form.errors.file && (
+                                <p
+                                    id="roster-file-error"
+                                    className="text-xs font-semibold text-correction-subtle-foreground"
+                                >
+                                    {form.errors.file}
+                                </p>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="grid min-w-0 gap-1.5">
                         <Label
                             htmlFor="roster-semester"
                             className="text-sm font-semibold text-foreground"
@@ -115,13 +117,15 @@ export function RosterUploadCard({
                             className={campusControlClass}
                         />
                         {form.errors.semester && (
-                            <p
-                                id="roster-semester-error"
-                                role="alert"
-                                className="text-xs font-semibold text-correction-subtle-foreground"
-                            >
-                                {form.errors.semester}
-                            </p>
+                            <div className="grid min-w-0 gap-0.5">
+                                <p
+                                    id="roster-semester-error"
+                                    role="alert"
+                                    className="text-xs font-semibold text-correction-subtle-foreground"
+                                >
+                                    {form.errors.semester}
+                                </p>
+                            </div>
                         )}
                     </div>
                 </div>

@@ -44,8 +44,10 @@ export function ProjectEditorSettings({
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
-                <div className="grid min-w-0 gap-2">
-                    <Label htmlFor="project-capacity">Kapasitas total</Label>
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor="project-capacity" required>
+                        Kapasitas total
+                    </Label>
                     <Input
                         id="project-capacity"
                         aria-describedby={
@@ -55,6 +57,7 @@ export function ProjectEditorSettings({
                         type="number"
                         min={1}
                         max={20}
+                        placeholder="Contoh: 5"
                         aria-invalid={capacityError !== undefined}
                         value={capacity}
                         onChange={(event) =>
@@ -62,14 +65,18 @@ export function ProjectEditorSettings({
                         }
                         required
                     />
-                    <InputError
-                        id="project-capacity-error"
-                        message={capacityError}
-                    />
+                    <div className="grid min-w-0 gap-0.5">
+                        <InputError
+                            id="project-capacity-error"
+                            message={capacityError}
+                        />
+                    </div>
                 </div>
 
-                <div className="grid min-w-0 gap-2">
-                    <Label htmlFor="project-deadline">Batas waktu</Label>
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor="project-deadline" required>
+                        Batas waktu
+                    </Label>
                     <Input
                         id="project-deadline"
                         aria-describedby={
@@ -77,6 +84,7 @@ export function ProjectEditorSettings({
                         }
                         data-test="project-deadline"
                         type="datetime-local"
+                        placeholder="Pilih batas waktu proyek"
                         aria-invalid={deadlineError !== undefined}
                         value={deadline}
                         onChange={(event) =>
@@ -84,14 +92,18 @@ export function ProjectEditorSettings({
                         }
                         required
                     />
-                    <InputError
-                        id="project-deadline-error"
-                        message={deadlineError}
-                    />
+                    <div className="grid min-w-0 gap-0.5">
+                        <InputError
+                            id="project-deadline-error"
+                            message={deadlineError}
+                        />
+                    </div>
                 </div>
 
-                <div className="grid gap-2 sm:col-span-2">
-                    <Label htmlFor="project-visibility">Visibilitas</Label>
+                <div className="grid min-w-0 gap-1.5 sm:col-span-2">
+                    <Label htmlFor="project-visibility" required>
+                        Visibilitas
+                    </Label>
                     <select
                         id="project-visibility"
                         aria-describedby={
@@ -115,13 +127,15 @@ export function ProjectEditorSettings({
                             </option>
                         ))}
                     </select>
-                    <p className="text-xs leading-5 text-muted-foreground">
-                        Proyek pribadi hanya dapat dilihat oleh pemilik.
-                    </p>
-                    <InputError
-                        id="project-visibility-error"
-                        message={visibilityError}
-                    />
+                    <div className="grid min-w-0 gap-0.5">
+                        <p className="text-xs leading-normal text-muted-foreground">
+                            Proyek pribadi hanya dapat dilihat oleh pemilik.
+                        </p>
+                        <InputError
+                            id="project-visibility-error"
+                            message={visibilityError}
+                        />
+                    </div>
                 </div>
             </div>
         </section>

@@ -8,6 +8,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { campusControlClass } from '@/pages/campus/_components/campus-operation-layout';
 import type { SyncItem } from '@/pages/campus/integrations/_types/integration-types';
@@ -79,12 +80,9 @@ export function IntegrationReconcileDialog({
                     className="grid gap-4"
                 >
                     <div className="grid gap-2">
-                        <label
-                            htmlFor="sync-reconcile-reason"
-                            className="text-sm font-semibold"
-                        >
-                            Alasan rekonsiliasi (wajib)
-                        </label>
+                        <Label htmlFor="sync-reconcile-reason" required>
+                            Alasan rekonsiliasi
+                        </Label>
                         <textarea
                             id="sync-reconcile-reason"
                             required

@@ -34,7 +34,7 @@ export default function AppLogo({
                 className={cn(
                     'size-8 shrink-0 rounded-lg object-contain shadow-2xs',
                     isSidebar &&
-                        'size-14 rounded-2xl border border-primary/10 bg-card p-0.5 shadow-sm',
+                        'size-9 rounded-xl border border-primary/10 bg-card p-0.5 shadow-2xs',
                     logoClassName,
                 )}
             />
@@ -43,7 +43,7 @@ export default function AppLogo({
                     className={cn(
                         'truncate text-xl leading-none font-bold tracking-[-0.025em]',
                         isSidebar &&
-                            'text-[1.625rem] leading-tight tracking-[-0.035em]',
+                            'text-base leading-none font-bold tracking-tight',
                     )}
                 >
                     {name}
@@ -53,7 +53,7 @@ export default function AppLogo({
                         className={cn(
                             'mt-1 max-w-44 font-label text-[0.5625rem] leading-[1.45] tracking-[0.025em] opacity-60',
                             isSidebar &&
-                                'max-w-40 font-sans text-[0.6875rem] leading-[1.45] tracking-normal text-muted-foreground opacity-100',
+                                'mt-0.5 max-w-none truncate font-sans text-[0.6875rem] leading-tight font-medium tracking-normal text-muted-foreground opacity-100',
                         )}
                     >
                         Sistem Aktivitas Talenta Universitas

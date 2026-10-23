@@ -1,4 +1,4 @@
-import { BookOpenCheck, LockKeyhole, RefreshCw, Users } from 'lucide-react';
+import { BookOpenCheck, LockKeyhole, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StudentMenuHero from '@/layouts/_components/student-menu-hero';
 import { cn } from '@/lib/utils';
@@ -58,61 +58,61 @@ export function LeaderboardHero({
     }
 
     return (
-        <StudentMenuHero
-            theme="rankings"
-            icon={BookOpenCheck}
-            eyebrow="Peringkat kontribusi"
-            title="Konteks, bukan sekadar angka."
-            description="Bandingkan kontribusi terverifikasi berdasarkan kelompok dan semester, dengan dasar perhitungan yang transparan."
-            pose="ranking-context"
-            testId="leaderboard-header"
-            note={
-                <p className="flex min-w-0 items-start gap-2">
-                    <Users
-                        aria-hidden="true"
-                        className="mt-0.5 size-4 shrink-0 text-primary"
-                    />
-                    <span>
-                        Peringkat dihitung dari kontribusi terverifikasi per
-                        anggota aktif. Bukan ukuran kemampuan seluruh mahasiswa.
-                    </span>
-                </p>
-            }
-        >
-            <Button asChild variant="outline" className="min-h-11 bg-card">
-                <a href="#leaderboard-method">
-                    <BookOpenCheck aria-hidden="true" />
-                    Lihat panduan
-                </a>
-            </Button>
-            {individual && (
+        <div className="grid gap-4">
+            <StudentMenuHero
+                theme="rankings"
+                icon={BookOpenCheck}
+                eyebrow="Peringkat kontribusi"
+                title="Konteks, bukan sekadar angka."
+                description="Bandingkan kontribusi terverifikasi berdasarkan kelompok dan semester, dengan dasar perhitungan yang transparan."
+                pose="ranking-context"
+                testId="leaderboard-header"
+            />
+            <div
+                className="flex flex-wrap items-center justify-between gap-3"
+                data-test="leaderboard-action-bar"
+            >
+                <div className="flex flex-wrap items-center gap-2.5">
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="min-h-11 bg-card"
+                    >
+                        <a href="#leaderboard-method">
+                            <BookOpenCheck aria-hidden="true" />
+                            Lihat panduan
+                        </a>
+                    </Button>
+                    {individual && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="min-h-11 bg-card"
+                            onClick={onOpenPreference}
+                            data-test="leaderboard-individual-settings"
+                        >
+                            <LockKeyhole aria-hidden="true" />
+                            Pengaturan individual
+                        </Button>
+                    )}
+                </div>
                 <Button
                     type="button"
                     variant="outline"
                     className="min-h-11 bg-card"
-                    onClick={onOpenPreference}
-                    data-test="leaderboard-individual-settings"
+                    onClick={onRefresh}
+                    disabled={busy}
+                    data-test="leaderboard-refresh"
                 >
-                    <LockKeyhole aria-hidden="true" />
-                    Pengaturan individual
+                    <RefreshCw
+                        aria-hidden="true"
+                        className={cn(
+                            busy && 'animate-spin motion-reduce:animate-none',
+                        )}
+                    />
+                    Muat ulang
                 </Button>
-            )}
-            <Button
-                type="button"
-                variant="outline"
-                className="min-h-11 bg-card"
-                onClick={onRefresh}
-                disabled={busy}
-                data-test="leaderboard-refresh"
-            >
-                <RefreshCw
-                    aria-hidden="true"
-                    className={cn(
-                        busy && 'animate-spin motion-reduce:animate-none',
-                    )}
-                />
-                Muat ulang
-            </Button>
-        </StudentMenuHero>
+            </div>
+        </div>
     );
 }

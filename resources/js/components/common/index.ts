@@ -10,3 +10,4 @@ export { default as InputError } from './input-error';
 export * from './academic-program-fields';
 export { default as PasswordInput } from './password-input';
 export { default as TextLink } from './text-link';
+export * from './form-label-helpers';

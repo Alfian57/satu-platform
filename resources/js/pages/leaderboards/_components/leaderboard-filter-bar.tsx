@@ -1,4 +1,5 @@
 import { GraduationCap, UserRound, Users } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import type {
     LeaderboardPageData,
@@ -54,15 +55,16 @@ export function LeaderboardFilterBar({
                     </h2>
                 </div>
                 <div className="grid min-w-0 gap-1.5 sm:min-w-64">
-                    <label
+                    <Label
                         htmlFor="leaderboard-semester-select"
+                        optional
                         className="text-xs font-medium text-muted-foreground"
                     >
                         Semester akademik
-                    </label>
+                    </Label>
                     <select
                         id="leaderboard-semester-select"
-                        className="h-11 min-w-0 cursor-pointer rounded-xl border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        className="h-11 min-w-0 cursor-pointer rounded-xl border border-input bg-background pr-10 pl-4 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
                         value={selectedSemester}
                         disabled={busy}
                         onChange={(event) =>

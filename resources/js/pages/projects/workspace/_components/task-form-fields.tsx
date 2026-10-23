@@ -1,6 +1,7 @@
 import InputError from '@/components/common/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import type { TaskPriority } from '@/types';
 import {
     firstError,
@@ -31,13 +32,10 @@ export function TaskFormFields({
 
     return (
         <div className="grid gap-5">
-            <div className="grid gap-2">
-                <label
-                    htmlFor={`${idPrefix}-title`}
-                    className="text-sm font-semibold"
-                >
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor={`${idPrefix}-title`} required>
                     Judul tugas
-                </label>
+                </Label>
                 <Input
                     id={`${idPrefix}-title`}
                     data-test={`${idPrefix}-title`}
@@ -49,19 +47,18 @@ export function TaskFormFields({
                     aria-describedby={`${idPrefix}-title-error`}
                     placeholder="Contoh: Susun alur onboarding"
                 />
-                <InputError
-                    id={`${idPrefix}-title-error`}
-                    message={titleError}
-                />
+                <div className="grid min-w-0 gap-0.5">
+                    <InputError
+                        id={`${idPrefix}-title-error`}
+                        message={titleError}
+                    />
+                </div>
             </div>
 
-            <div className="grid gap-2">
-                <label
-                    htmlFor={`${idPrefix}-description`}
-                    className="text-sm font-semibold"
-                >
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor={`${idPrefix}-description`} optional>
                     Catatan kerja
-                </label>
+                </Label>
                 <textarea
                     id={`${idPrefix}-description`}
                     data-test={`${idPrefix}-description`}
@@ -76,18 +73,20 @@ export function TaskFormFields({
                     aria-describedby={`${idPrefix}-description-help ${idPrefix}-description-error`}
                     placeholder="Konteks singkat, hasil yang diharapkan, atau catatan handoff"
                 />
-                <InputError
-                    id={`${idPrefix}-description-error`}
-                    message={descriptionError}
-                />
-                <p
-                    id={`${idPrefix}-description-help`}
-                    className="text-sm leading-6 text-muted-foreground"
-                >
-                    Jelaskan hasil, bagian pekerjaanmu dan koordinasi dengan
-                    rekan. Bukti serta pengakuan individual tetap diajukan
-                    melalui Kontribusi.
-                </p>
+                <div className="grid min-w-0 gap-0.5">
+                    <p
+                        id={`${idPrefix}-description-help`}
+                        className="text-xs leading-normal text-muted-foreground"
+                    >
+                        Jelaskan hasil, bagian pekerjaanmu dan koordinasi dengan
+                        rekan. Bukti serta pengakuan individual tetap diajukan
+                        melalui Kontribusi.
+                    </p>
+                    <InputError
+                        id={`${idPrefix}-description-error`}
+                        message={descriptionError}
+                    />
+                </div>
                 <details
                     className="rounded-2xl border border-primary/15 bg-accent/40 p-3"
                     data-test={`${idPrefix}-collaboration-guidance`}
@@ -141,13 +140,10 @@ export function TaskFormFields({
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
-                <div className="grid gap-2">
-                    <label
-                        htmlFor={`${idPrefix}-priority`}
-                        className="text-sm font-semibold"
-                    >
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor={`${idPrefix}-priority`} optional>
                         Prioritas
-                    </label>
+                    </Label>
                     <select
                         id={`${idPrefix}-priority`}
                         data-test={`${idPrefix}-priority`}
@@ -169,23 +165,23 @@ export function TaskFormFields({
                             </option>
                         ))}
                     </select>
-                    <InputError
-                        id={`${idPrefix}-priority-error`}
-                        message={priorityError}
-                    />
+                    <div className="grid min-w-0 gap-0.5">
+                        <InputError
+                            id={`${idPrefix}-priority-error`}
+                            message={priorityError}
+                        />
+                    </div>
                 </div>
 
-                <div className="grid gap-2">
-                    <label
-                        htmlFor={`${idPrefix}-due-at`}
-                        className="text-sm font-semibold"
-                    >
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor={`${idPrefix}-due-at`} optional>
                         Batas waktu
-                    </label>
+                    </Label>
                     <Input
                         id={`${idPrefix}-due-at`}
                         data-test={`${idPrefix}-due-at`}
                         type="datetime-local"
+                        placeholder="Pilih tenggat waktu tugas"
                         value={data.due_at}
                         onChange={(event) =>
                             onChange('due_at', event.target.value)
@@ -194,10 +190,12 @@ export function TaskFormFields({
                         aria-invalid={Boolean(dueAtError)}
                         aria-describedby={`${idPrefix}-due-at-error`}
                     />
-                    <InputError
-                        id={`${idPrefix}-due-at-error`}
-                        message={dueAtError}
-                    />
+                    <div className="grid min-w-0 gap-0.5">
+                        <InputError
+                            id={`${idPrefix}-due-at-error`}
+                            message={dueAtError}
+                        />
+                    </div>
                 </div>
             </div>
         </div>

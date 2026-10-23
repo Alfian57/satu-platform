@@ -24,6 +24,8 @@ export function ProfileEditModal({
     onConfirm,
     onCancel,
 }: ProfileEditModalProps) {
+    const isDelete = description?.startsWith('Hapus');
+
     return (
         <Dialog
             open={open}
@@ -34,29 +36,34 @@ export function ProfileEditModal({
             }}
         >
             <DialogContent
+                className="z-[60]"
                 onCloseAutoFocus={(event) => {
-                    event.preventDefault();
-                    requestAnimationFrame(() => {
-                        if (confirmationFocusRef.current?.isConnected) {
-                            confirmationFocusRef.current.focus();
-                        } else {
-                            document
-                                .getElementById('capability-skill-choice')
-                                ?.focus();
-                        }
-                    });
+                    if (confirmationFocusRef.current?.isConnected) {
+                        event.preventDefault();
+                        requestAnimationFrame(() => {
+                            confirmationFocusRef.current?.focus();
+                        });
+                    }
                 }}
             >
                 <DialogHeader>
-                    <DialogTitle>Konfirmasi perubahan draft</DialogTitle>
+                    <DialogTitle>
+                        {isDelete
+                            ? 'Konfirmasi hapus draft'
+                            : 'Konfirmasi perubahan draft'}
+                    </DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={onCancel}>
                         Batal
                     </Button>
-                    <Button type="button" onClick={onConfirm}>
-                        Lanjutkan
+                    <Button
+                        type="button"
+                        variant={isDelete ? 'destructive' : 'default'}
+                        onClick={onConfirm}
+                    >
+                        {isDelete ? 'Hapus' : 'Lanjutkan'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

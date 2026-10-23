@@ -3,7 +3,6 @@
 use App\Http\Controllers\DataRightsController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
-use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
@@ -19,7 +18,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('profile.destroy');
 
     Route::get('settings/security', [SecurityController::class, 'edit'])
-        ->middleware(RequirePassword::class)
         ->name('security.edit');
 
     Route::put('settings/password', [SecurityController::class, 'update'])
@@ -28,6 +26,4 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/data-rights', [DataRightsController::class, 'edit'])
         ->name('data-rights.edit');
-
-    Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
 });

@@ -13,7 +13,9 @@ export function OnboardingProfileStep({
 }: OnboardingProfileStepProps) {
     return (
         <div className="grid gap-2">
-            <Label htmlFor="bio">Tentang dirimu</Label>
+            <Label htmlFor="bio" optional>
+                Tentang dirimu
+            </Label>
             <textarea
                 id="bio"
                 value={bio}

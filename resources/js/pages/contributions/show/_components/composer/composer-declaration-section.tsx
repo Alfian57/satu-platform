@@ -20,12 +20,13 @@ export function ComposerDeclarationSection({
 }: ComposerDeclarationSectionProps) {
     return (
         <div className="grid min-w-0 gap-2 border-t border-border/70 pt-5">
-            <Label htmlFor={`contribution-${mode}-declaration`}>
+            <Label htmlFor={`contribution-${mode}-declaration`} required>
                 Pernyataan pemilik (privat)
             </Label>
             <textarea
                 id={`contribution-${mode}-declaration`}
                 className={textAreaClassName}
+                placeholder="Ceritakan peranmu, pekerjaan yang kamu selesaikan, dan bukti nyata kontribusimu"
                 value={declaration}
                 maxLength={2000}
                 onChange={(event) => onDeclarationChange(event.target.value)}

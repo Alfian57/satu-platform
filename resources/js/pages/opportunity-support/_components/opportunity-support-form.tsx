@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { campusControlClass } from '@/pages/campus/_components/campus-operation-layout';
 import { needs, sheetClass } from './opportunity-support-constants';
 
@@ -39,18 +40,15 @@ export function OpportunitySupportForm({
         >
             <h2 className="text-xl font-bold">Apa yang ingin dibantu?</h2>
             <fieldset disabled={blocked} className="mt-4 min-w-0 space-y-4">
-                <div>
-                    <label
-                        htmlFor="support-need"
-                        className="text-sm font-semibold"
-                    >
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor="support-need" required>
                         Kebutuhan pilihan Anda
-                    </label>
+                    </Label>
                     <select
                         id="support-need"
                         aria-invalid={!!errors.need}
                         aria-errormessage="support-errors"
-                        className={campusControlClass + ' mt-2 cursor-pointer'}
+                        className={campusControlClass + ' cursor-pointer'}
                         value={need}
                         onChange={(e) => onNeedChange(e.target.value)}
                     >
@@ -61,30 +59,31 @@ export function OpportunitySupportForm({
                         ))}
                     </select>
                 </div>
-                <div>
-                    <label
-                        htmlFor="support-explanation"
-                        className="text-sm font-semibold"
-                    >
-                        Penjelasan tambahan (opsional)
-                    </label>
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor="support-explanation" optional>
+                        Penjelasan tambahan
+                    </Label>
                     <textarea
                         id="support-explanation"
                         aria-errormessage="support-errors"
-                        className={campusControlClass + ' mt-2 min-h-28'}
+                        placeholder="Jelaskan kebutuhan dukungan atau kendala kolaborasi yang kamu hadapi"
+                        className={campusControlClass + ' min-h-28'}
                         maxLength={1000}
                         value={explanation}
                         onChange={(e) => onExplanationChange(e.target.value)}
                         aria-describedby="support-private-help"
                         aria-invalid={!!errors.explanation}
                     />
-                    <p
-                        id="support-private-help"
-                        className="mt-2 text-sm text-muted-foreground"
-                    >
-                        Ceritakan kebutuhan peran atau belajar. Jangan sertakan
-                        nomor kontak, rahasia tim atau tautan bukti privat.
-                    </p>
+                    <div className="grid min-w-0 gap-0.5">
+                        <p
+                            id="support-private-help"
+                            className="text-xs leading-normal text-muted-foreground"
+                        >
+                            Ceritakan kebutuhan peran atau belajar. Jangan
+                            sertakan nomor kontak, rahasia tim atau tautan bukti
+                            privat.
+                        </p>
+                    </div>
                 </div>
                 <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-input p-3 text-sm leading-6 focus-within:ring-2 focus-within:ring-ring has-[:disabled]:cursor-not-allowed">
                     <input

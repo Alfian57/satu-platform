@@ -2,6 +2,7 @@ import { FileText, Paperclip, Send, X } from 'lucide-react';
 import type { RefObject } from 'react';
 import InputError from '@/components/common/input-error';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import {
     ACCEPTED_FILE_TYPES,
@@ -49,13 +50,10 @@ export function DiscussionComposer({
             onSubmit={onSubmit}
             data-test="discussion-composer"
         >
-            <div className="grid gap-2">
-                <label
-                    htmlFor="discussion-body"
-                    className="text-sm font-semibold"
-                >
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor="discussion-body" required>
                     Tambahkan catatan
-                </label>
+                </Label>
                 <textarea
                     id="discussion-body"
                     data-test="discussion-body"
@@ -73,28 +71,31 @@ export function DiscussionComposer({
                         isUploading
                     }
                 />
-                <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
-                    <p id="discussion-body-help">
-                        Catatan disimpan di database setelah server
-                        mengonfirmasi.
-                    </p>
-                    <span>{body.length}/5000</span>
+                <div className="grid min-w-0 gap-0.5">
+                    <div className="flex flex-wrap justify-between gap-2 text-xs leading-normal text-muted-foreground">
+                        <p id="discussion-body-help">
+                            Catatan disimpan di database setelah server
+                            mengonfirmasi.
+                        </p>
+                        <span>{body.length}/5000</span>
+                    </div>
+                    <InputError
+                        id="discussion-body-error"
+                        message={firstError(discussionErrors, 'body')}
+                    />
                 </div>
-                <InputError
-                    id="discussion-body-error"
-                    message={firstError(discussionErrors, 'body')}
-                />
             </div>
 
             <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-                <div className="grid gap-2">
-                    <label
+                <div className="grid min-w-0 gap-1.5">
+                    <Label
                         htmlFor="discussion-file"
+                        optional
                         className="flex w-fit cursor-pointer items-center gap-2 text-sm font-semibold text-foreground"
                     >
                         <Paperclip aria-hidden="true" className="size-4" />
-                        Lampirkan bukti (opsional)
-                    </label>
+                        Lampirkan bukti
+                    </Label>
                     <input
                         ref={fileInputRef}
                         id="discussion-file"
@@ -110,10 +111,12 @@ export function DiscussionComposer({
                             isUploading
                         }
                     />
-                    <p className="text-xs leading-5 text-muted-foreground">
-                        PDF, dokumen, spreadsheet, presentasi, gambar, atau
-                        text. Maksimal 10 MB.
-                    </p>
+                    <div className="grid min-w-0 gap-0.5">
+                        <p className="text-xs leading-normal text-muted-foreground">
+                            PDF, dokumen, spreadsheet, presentasi, gambar, atau
+                            text. Maksimal 10 MB.
+                        </p>
+                    </div>
                     {selectedFile && (
                         <p className="flex items-center gap-2 text-sm text-foreground">
                             <FileText aria-hidden="true" className="size-4" />

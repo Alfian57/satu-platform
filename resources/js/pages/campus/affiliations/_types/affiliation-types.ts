@@ -136,4 +136,4 @@ export function formatDate(value: string | null): string {
 }
 
 export const controlClassName =
-    'h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-white px-3 text-base text-foreground outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50';
+    'h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-white pl-4 pr-10 text-base text-foreground outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50';

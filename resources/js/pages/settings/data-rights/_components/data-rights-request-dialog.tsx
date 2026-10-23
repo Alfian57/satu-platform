@@ -53,6 +53,7 @@ export function DataRightsRequestDialog({
             }}
         >
             <DialogContent
+                className="min-w-0 [overflow-wrap:anywhere]"
                 closeButtonDisabled={busy}
                 onEscapeKeyDown={(event) => {
                     if (busy) {
@@ -65,16 +66,22 @@ export function DataRightsRequestDialog({
                     }
                 }}
             >
-                <DialogHeader>
-                    <DialogTitle>{operation?.title}</DialogTitle>
-                    <DialogDescription>
+                <DialogHeader className="text-left">
+                    <DialogTitle className="text-base leading-tight font-semibold sm:text-lg">
+                        {operation?.title}
+                    </DialogTitle>
+                    <DialogDescription className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
                         {operation?.description}
                     </DialogDescription>
                 </DialogHeader>
-                <form className="grid gap-5" onSubmit={onSubmit}>
+                <form className="grid min-w-0 gap-4" onSubmit={onSubmit}>
                     {active !== 'withdrawal' && (
-                        <div className="grid gap-2">
-                            <Label htmlFor="data-rights-reason">
+                        <div className="grid min-w-0 gap-1.5">
+                            <Label
+                                htmlFor="data-rights-reason"
+                                className="text-xs font-medium sm:text-sm"
+                                required
+                            >
                                 Keterangan dan alasan
                             </Label>
                             <textarea
@@ -83,7 +90,14 @@ export function DataRightsRequestDialog({
                                 required
                                 maxLength={500}
                                 disabled={busy}
-                                className="min-h-28 rounded-xl border border-input bg-transparent p-3 text-base focus-visible:outline-2 focus-visible:outline-ring disabled:cursor-not-allowed"
+                                placeholder={
+                                    active === 'correction'
+                                        ? 'Jelaskan bagian data yang perlu dikoreksi dan informasi yang seharusnya...'
+                                        : active === 'restriction'
+                                          ? 'Jelaskan batasan pemrosesan yang kamu inginkan dan alasannya...'
+                                          : 'Tuliskan keterangan dan alasan permohonanmu di sini...'
+                                }
+                                className="min-h-24 rounded-xl border border-input bg-background/60 p-3 text-sm placeholder:text-muted-foreground/60 focus-visible:outline-2 focus-visible:outline-ring disabled:cursor-not-allowed"
                                 value={reason}
                                 onChange={(event) =>
                                     onReasonChange(event.target.value)
@@ -102,18 +116,18 @@ export function DataRightsRequestDialog({
                         </div>
                     )}
                     {message && (
-                        <p
+                        <div
                             role="alert"
-                            className="text-sm leading-6 text-correction-subtle-foreground"
+                            className="rounded-xl border border-destructive/20 bg-destructive/[0.04] px-4 py-3 text-xs leading-relaxed text-foreground/80 sm:text-sm dark:bg-destructive/10 dark:text-foreground/90"
                         >
                             {message}
-                        </p>
+                        </div>
                     )}
-                    <DialogFooter>
+                    <DialogFooter className="gap-2 sm:gap-2">
                         <Button
                             type="button"
                             variant="outline"
-                            className="min-h-11 cursor-pointer"
+                            className="min-h-10 cursor-pointer px-4"
                             disabled={busy}
                             onClick={onClose}
                         >
@@ -123,7 +137,7 @@ export function DataRightsRequestDialog({
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="min-h-11 cursor-pointer"
+                                className="min-h-10 cursor-pointer px-4"
                                 disabled={busy}
                                 onClick={onRefresh}
                             >
@@ -132,7 +146,7 @@ export function DataRightsRequestDialog({
                         ) : (
                             <Button
                                 type="submit"
-                                className="min-h-11 cursor-pointer disabled:cursor-not-allowed"
+                                className="min-h-10 cursor-pointer px-4 disabled:cursor-not-allowed"
                                 disabled={
                                     busy ||
                                     (active !== 'withdrawal' && !reason.trim())

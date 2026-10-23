@@ -1,4 +1,5 @@
 import type { RefObject } from 'react';
+import { OptionalMark, RequiredMark } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -109,13 +110,27 @@ export function SkillsDialog({
                                         key={field}
                                         className="grid gap-2 text-sm font-semibold"
                                     >
-                                        {field === 'name'
-                                            ? 'Nama keahlian'
-                                            : field === 'category'
-                                              ? 'Kategori'
-                                              : 'Uraian (opsional)'}
+                                        <span>
+                                            {field === 'name'
+                                                ? 'Nama keahlian'
+                                                : field === 'category'
+                                                  ? 'Kategori'
+                                                  : 'Uraian'}
+                                            {field === 'description' ? (
+                                                <OptionalMark />
+                                            ) : (
+                                                <RequiredMark />
+                                            )}
+                                        </span>
                                         <input
                                             className={campusControlClass}
+                                            placeholder={
+                                                field === 'name'
+                                                    ? 'Contoh: Machine Learning'
+                                                    : field === 'category'
+                                                      ? 'Contoh: Teknologi Informasi'
+                                                      : 'Jelaskan cakupan keahlian ini'
+                                            }
                                             value={form.data[field]}
                                             maxLength={
                                                 field === 'description'

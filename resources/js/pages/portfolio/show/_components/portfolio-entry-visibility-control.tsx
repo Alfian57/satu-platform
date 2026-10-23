@@ -147,7 +147,7 @@ export function PortfolioEntryVisibilityControl({
             </div>
             <select
                 id={dataTestPrefix + '-visibility'}
-                className="h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                className="h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-background pr-10 pl-4 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                 value={form.data.visibility}
                 onChange={(event) => {
                     form.setData(

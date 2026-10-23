@@ -93,21 +93,22 @@ export function DeleteUserDialog({
                     }
                 }}
             >
-                <DialogHeader>
-                    <span className="mb-2 grid size-12 place-items-center rounded-2xl bg-correction-subtle text-correction-subtle-foreground">
-                        <ShieldAlert aria-hidden="true" className="size-6" />
+                <DialogHeader className="flex flex-row items-center gap-3 space-y-0 text-left">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-correction-subtle text-correction-subtle-foreground">
+                        <ShieldAlert aria-hidden="true" className="size-5" />
                     </span>
-                    <DialogTitle>Yakin ingin menghapus akun?</DialogTitle>
-                    <DialogDescription>
-                        Akun akan dihapus dan sesi ini akan diakhiri. Masukkan
-                        password saat ini untuk mengonfirmasi tindakan.
+                    <DialogTitle className="text-base leading-tight font-semibold sm:text-lg">
+                        Yakin ingin menghapus akun?
+                    </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Konfirmasi penghapusan akun
                     </DialogDescription>
                 </DialogHeader>
-                <p className="rounded-2xl border border-correction/25 bg-correction-subtle p-4 text-sm leading-6 text-correction-subtle-foreground">
+                <div className="rounded-xl border border-destructive/20 bg-destructive/[0.04] px-4 py-3 text-xs leading-relaxed text-foreground/80 sm:text-sm dark:bg-destructive/10 dark:text-foreground/90">
                     Lanjutkan hanya jika kamu benar-benar ingin menghapus akun,
                     bukan sekadar keluar atau mengubah pengaturannya.
-                </p>
-                <form onSubmit={handleSubmit} className="grid min-w-0 gap-5">
+                </div>
+                <form onSubmit={handleSubmit} className="grid min-w-0 gap-4">
                     <SettingsFormFeedback
                         errors={errors}
                         actionError={actionError}
@@ -115,8 +116,8 @@ export function DeleteUserDialog({
                         prefix="delete-account"
                         errorHint="Periksa password dan hasil server sebelum melanjutkan. Membuka dialog saja tidak menghapus akun."
                     />
-                    <div className="grid min-w-0 gap-3">
-                        <Label htmlFor="delete-account-password">
+                    <div className="grid min-w-0 gap-1.5">
+                        <Label htmlFor="delete-account-password" required>
                             Password saat ini
                         </Label>
                         <PasswordInput
@@ -138,18 +139,20 @@ export function DeleteUserDialog({
                                     : 'delete-password-help'
                             }
                         />
-                        <p
-                            id="delete-password-help"
-                            className="text-xs leading-5 text-muted-foreground"
-                        >
-                            Password digunakan untuk memastikan tindakan
-                            dilakukan oleh pemilik akun.
-                        </p>
-                        <InputError
-                            id="delete-password-error"
-                            message={errors.password}
-                            className="text-correction-subtle-foreground"
-                        />
+                        <div className="grid min-w-0 gap-0.5">
+                            <p
+                                id="delete-password-help"
+                                className="text-xs leading-normal text-muted-foreground"
+                            >
+                                Password digunakan untuk memastikan tindakan
+                                dilakukan oleh pemilik akun.
+                            </p>
+                            <InputError
+                                id="delete-password-error"
+                                message={errors.password}
+                                className="text-correction-subtle-foreground"
+                            />
+                        </div>
                     </div>
                     {processing && (
                         <p
@@ -161,12 +164,12 @@ export function DeleteUserDialog({
                             sebelum menutup dialog.
                         </p>
                     )}
-                    <DialogFooter>
+                    <DialogFooter className="gap-2 sm:gap-2">
                         <DialogClose asChild>
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="min-h-11 cursor-pointer"
+                                className="min-h-10 cursor-pointer px-4"
                                 disabled={processing}
                             >
                                 Batal
@@ -175,7 +178,7 @@ export function DeleteUserDialog({
                         <Button
                             type="submit"
                             variant="destructive"
-                            className="min-h-11 cursor-pointer disabled:cursor-not-allowed"
+                            className="min-h-10 cursor-pointer px-4 disabled:cursor-not-allowed"
                             disabled={processing}
                             data-test="confirm-delete-user-button"
                         >

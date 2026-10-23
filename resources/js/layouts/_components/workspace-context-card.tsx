@@ -8,6 +8,7 @@ export function WorkspaceContextCard({
     icon: Icon,
     logoSrc,
     showLabel = true,
+    actionIndicator,
     children,
 }: {
     label: string;
@@ -15,15 +16,16 @@ export function WorkspaceContextCard({
     icon: LucideIcon;
     logoSrc?: string;
     showLabel?: boolean;
+    actionIndicator?: ReactNode;
     children?: ReactNode;
 }) {
     return (
         <div
             aria-label={label}
             data-test="workspace-context"
-            className="flex min-w-0 items-start gap-3 rounded-2xl border border-primary/10 bg-linear-to-br from-card to-accent/65 p-3.5 shadow-sm"
+            className="group relative flex min-w-0 items-center gap-3 rounded-2xl border border-sidebar-border/80 bg-sidebar-accent/50 p-2.5 shadow-2xs transition-all duration-200 hover:border-primary/20 hover:bg-sidebar-accent hover:shadow-xs"
         >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-card text-primary">
+            <div className="relative flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-background/90 p-1 shadow-2xs">
                 {logoSrc ? (
                     <img
                         src={logoSrc}
@@ -31,31 +33,37 @@ export function WorkspaceContextCard({
                         aria-hidden="true"
                         width={256}
                         height={256}
-                        className="size-8 object-contain"
+                        className="size-7.5 object-contain"
                         decoding="async"
                         draggable={false}
                         data-test="university-logo"
                     />
                 ) : (
-                    <Icon aria-hidden="true" className="size-[1.125rem]" />
+                    <Icon aria-hidden="true" className="size-5 text-primary" />
                 )}
-            </span>
+            </div>
             <div className="min-w-0 flex-1">
                 {showLabel && (
-                    <p className="text-[0.6875rem] leading-4 font-medium text-muted-foreground">
+                    <p className="text-[0.625rem] leading-none font-semibold tracking-wider text-muted-foreground/80 uppercase">
                         {label}
                     </p>
                 )}
                 <p
                     className={cn(
-                        'text-sm leading-6 font-semibold [overflow-wrap:anywhere] text-foreground',
-                        showLabel && 'mt-1',
+                        'text-xs leading-snug font-bold [overflow-wrap:anywhere] text-foreground transition-colors group-hover:text-primary',
+                        showLabel ? 'mt-1 line-clamp-1' : 'line-clamp-2',
                     )}
+                    title={name}
                 >
                     {name}
                 </p>
-                {children && <div className="mt-2">{children}</div>}
+                {children && (
+                    <div className="mt-1 flex items-center">{children}</div>
+                )}
             </div>
+            {actionIndicator && (
+                <div className="shrink-0">{actionIndicator}</div>
+            )}
         </div>
     );
 }

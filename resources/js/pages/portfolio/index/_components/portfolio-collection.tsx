@@ -105,7 +105,7 @@ export function PortfolioCollection({
                             </Label>
                             <select
                                 id="portfolio-status-filter"
-                                className="h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:text-sm"
+                                className="h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-background pr-10 pl-4 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:text-sm"
                                 value={status}
                                 onChange={(event) =>
                                     setStatus(
@@ -130,7 +130,7 @@ export function PortfolioCollection({
                             </Label>
                             <select
                                 id="portfolio-visibility-filter"
-                                className="h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:text-sm"
+                                className="h-11 w-full min-w-0 cursor-pointer rounded-xl border border-input bg-background pr-10 pl-4 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:text-sm"
                                 value={visibility}
                                 onChange={(event) =>
                                     setVisibility(

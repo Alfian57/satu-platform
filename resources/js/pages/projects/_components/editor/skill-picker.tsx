@@ -45,6 +45,7 @@ export function SkillPicker({
             <Label
                 htmlFor={`project-role-${roleIndex}-skill-search`}
                 className="text-xs text-muted-foreground"
+                optional
             >
                 Keahlian minimum
             </Label>

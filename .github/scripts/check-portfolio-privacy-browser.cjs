@@ -306,14 +306,10 @@ function check(value, message) {
         for (const width of [320, 768, 1366, 1920, 3440]) {
             await page.setViewportSize({ width, height: 960 });
             check(
-                await page
-                    .locator('.student-menu-hero__actions')
-                    .evaluate(
-                        (actions) =>
-                            parseFloat(getComputedStyle(actions).marginTop) ===
-                            (innerWidth >= 640 ? 48 : 36),
-                    ),
-                'Portofolio: jarak tombol hero selaras pada ' + width + 'px.',
+                (await page
+                    .locator('[data-test="portfolio-action-bar"]')
+                    .count()) === 1,
+                'Portofolio: bilah tindakan mandiri tersedia pada ' + width + 'px.',
             );
             check(
                 await page.evaluate(

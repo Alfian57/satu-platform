@@ -29,8 +29,8 @@ export function RoleBasicFields({
     return (
         <>
             <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_9rem]">
-                <div className="grid min-w-0 gap-2">
-                    <Label htmlFor={`project-role-${index}-title`}>
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor={`project-role-${index}-title`} required>
                         Nama peran
                     </Label>
                     <Input
@@ -52,14 +52,16 @@ export function RoleBasicFields({
                         maxLength={120}
                         required
                     />
-                    <InputError
-                        id={`project-role-${index}-title-error`}
-                        message={titleError}
-                    />
+                    <div className="grid min-w-0 gap-0.5">
+                        <InputError
+                            id={`project-role-${index}-title-error`}
+                            message={titleError}
+                        />
+                    </div>
                 </div>
 
-                <div className="grid min-w-0 gap-2">
-                    <Label htmlFor={`project-role-${index}-capacity`}>
+                <div className="grid min-w-0 gap-1.5">
+                    <Label htmlFor={`project-role-${index}-capacity`} required>
                         Kapasitas peran
                     </Label>
                     <Input
@@ -73,6 +75,7 @@ export function RoleBasicFields({
                         type="number"
                         min={1}
                         max={20}
+                        placeholder="Contoh: 1"
                         aria-invalid={capacityError !== undefined}
                         value={capacity}
                         onChange={(event) =>
@@ -82,15 +85,17 @@ export function RoleBasicFields({
                         }
                         required
                     />
-                    <InputError
-                        id={`project-role-${index}-capacity-error`}
-                        message={capacityError}
-                    />
+                    <div className="grid min-w-0 gap-0.5">
+                        <InputError
+                            id={`project-role-${index}-capacity-error`}
+                            message={capacityError}
+                        />
+                    </div>
                 </div>
             </div>
 
-            <div className="grid min-w-0 gap-2">
-                <Label htmlFor={`project-role-${index}-description`}>
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor={`project-role-${index}-description`} optional>
                     Catatan peran
                 </Label>
                 <textarea
@@ -112,10 +117,12 @@ export function RoleBasicFields({
                     placeholder="Jelaskan tugas dan hasil yang diharapkan dari peran ini."
                     maxLength={5000}
                 />
-                <InputError
-                    id={`project-role-${index}-description-error`}
-                    message={descriptionError}
-                />
+                <div className="grid min-w-0 gap-0.5">
+                    <InputError
+                        id={`project-role-${index}-description-error`}
+                        message={descriptionError}
+                    />
+                </div>
             </div>
         </>
     );

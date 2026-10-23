@@ -79,11 +79,14 @@ export function OnboardingAvailabilityStep({
                     ))}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                    <div className="grid gap-2">
-                        <Label htmlFor="availability-start">Jam mulai</Label>
+                    <div className="grid min-w-0 gap-1.5">
+                        <Label htmlFor="availability-start" required>
+                            Jam mulai
+                        </Label>
                         <Input
                             id="availability-start"
                             type="time"
+                            placeholder="08:00"
                             value={startsAt}
                             onChange={(event) =>
                                 actions.setStartsAt(event.target.value)
@@ -93,11 +96,14 @@ export function OnboardingAvailabilityStep({
                             className="h-12 rounded-xl"
                         />
                     </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="availability-end">Jam selesai</Label>
+                    <div className="grid min-w-0 gap-1.5">
+                        <Label htmlFor="availability-end" required>
+                            Jam selesai
+                        </Label>
                         <Input
                             id="availability-end"
                             type="time"
+                            placeholder="17:00"
                             value={endsAt}
                             onChange={(event) =>
                                 actions.setEndsAt(event.target.value)
@@ -108,7 +114,7 @@ export function OnboardingAvailabilityStep({
                         />
                     </div>
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs leading-normal text-slate-600">
                     Zona waktu: {timezone}. Jam yang sama berlaku pada hari
                     pilihanmu. Jadwal boleh kosong dan dapat dilengkapi nanti.
                 </p>

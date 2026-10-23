@@ -8,6 +8,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import type { TransitionAction } from '@/pages/projects/show/_components/show-utils';
 
@@ -47,12 +48,9 @@ export function ProjectTransitionDialog({
                         : 'Proyek akan dipindahkan menjadi riwayat baca-saja. Pastikan status proyek memang sudah selesai.'}
                 </DialogDescription>
                 <div className="grid gap-2">
-                    <label
-                        htmlFor="project-transition-reason"
-                        className="text-sm font-semibold"
-                    >
-                        Alasan (opsional)
-                    </label>
+                    <Label htmlFor="project-transition-reason" optional>
+                        Alasan
+                    </Label>
                     <Input
                         id="project-transition-reason"
                         data-test="project-transition-reason"

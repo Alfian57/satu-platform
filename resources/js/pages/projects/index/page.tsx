@@ -1,6 +1,5 @@
-import { Head, Link } from '@inertiajs/react';
-import { BriefcaseBusiness, GraduationCap, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Head } from '@inertiajs/react';
+import { BriefcaseBusiness } from 'lucide-react';
 import { AppPage } from '@/layouts/_components/app-page';
 import StudentMenuHero from '@/layouts/_components/student-menu-hero';
 import type { ProjectIndexProps } from '@/pages/projects/index/_components/catalog-utils';
@@ -9,10 +8,7 @@ import { ProjectResultsLedger } from '@/pages/projects/index/_components/project
 import { ProjectSupportBanner } from '@/pages/projects/index/_components/project-support-banner';
 import { ProjectViewNav } from '@/pages/projects/index/_components/project-view-nav';
 import { useProjectCatalog } from '@/pages/projects/index/_hooks/use-project-catalog';
-import {
-    create as projectsCreate,
-    index as projectsIndex,
-} from '@/routes/projects';
+import { index as projectsIndex } from '@/routes/projects';
 
 export default function ProjectIndex({
     institution,
@@ -65,35 +61,12 @@ export default function ProjectIndex({
                         }
                         pose="project-plan"
                         testId="project-discovery-header"
-                    >
-                        <Button
-                            asChild
-                            className="student-menu-hero__primary min-h-11 rounded-xl px-4"
-                            data-test="create-project-link"
-                        >
-                            <Link
-                                href={projectsCreate({
-                                    query: { institution_id: institution.id },
-                                })}
-                            >
-                                <Plus aria-hidden="true" className="size-4" />
-                                Buat proyek
-                            </Link>
-                        </Button>
-                        <p className="flex min-w-0 items-start gap-2 text-xs leading-5 text-muted-foreground">
-                            <GraduationCap
-                                aria-hidden="true"
-                                className="mt-0.5 size-4 shrink-0 text-primary"
-                            />
-                            <span className="min-w-0 wrap-anywhere">
-                                {institution.name}
-                            </span>
-                        </p>
-                    </StudentMenuHero>
+                    />
 
                     <ProjectViewNav
                         isMine={isMine}
                         isPending={isPending}
+                        institutionId={institution.id}
                         onChangeView={actions.changeView}
                     />
 

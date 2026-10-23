@@ -83,11 +83,13 @@ export function ProfileEvidenceModal({
                                         <div className="space-y-2">
                                             <Label
                                                 htmlFor={`proof-title-${skillIndex}-${evidenceIndex}`}
+                                                required
                                             >
                                                 Judul bukti {evidenceIndex + 1}
                                             </Label>
                                             <Input
                                                 id={`proof-title-${skillIndex}-${evidenceIndex}`}
+                                                placeholder="Contoh: Repositori Proyek Akhir"
                                                 value={evidence.title}
                                                 maxLength={120}
                                                 required
@@ -114,12 +116,14 @@ export function ProfileEvidenceModal({
                                         <div className="space-y-2">
                                             <Label
                                                 htmlFor={`proof-url-${skillIndex}-${evidenceIndex}`}
+                                                required
                                             >
                                                 Tautan HTTPS
                                             </Label>
                                             <Input
                                                 id={`proof-url-${skillIndex}-${evidenceIndex}`}
                                                 type="url"
+                                                placeholder="https://github.com/username/project"
                                                 value={evidence.url}
                                                 maxLength={2048}
                                                 required
@@ -145,6 +149,7 @@ export function ProfileEvidenceModal({
                                         <Button
                                             type="button"
                                             variant="ghost"
+                                            disabled={state.busy}
                                             onClick={() =>
                                                 actions.removeEvidence(
                                                     skillIndex,
@@ -160,9 +165,12 @@ export function ProfileEvidenceModal({
                             })}
 
                             <Button
+                                id="evidence-add-link"
                                 type="button"
                                 variant="outline"
-                                disabled={evidenceList.length >= 10}
+                                disabled={
+                                    state.busy || evidenceList.length >= 10
+                                }
                                 onClick={() => actions.addEvidence(skillIndex)}
                             >
                                 <Plus aria-hidden="true" />

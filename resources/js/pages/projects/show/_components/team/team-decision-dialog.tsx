@@ -115,15 +115,20 @@ export function TeamDecisionDialog({
                     onReload={onReload}
                 />
                 {(isJoinDecision || (!withdrawing && !accepting)) && (
-                    <div className="grid gap-2">
-                        <Label htmlFor="owner-decision-reason">
+                    <div className="grid min-w-0 gap-1.5">
+                        <Label
+                            htmlFor="owner-decision-reason"
+                            required={isJoinDecision}
+                            optional={!isJoinDecision}
+                        >
                             {isJoinDecision
                                 ? 'Alasan keputusan (dibagikan kepada pemohon)'
-                                : 'Catatan opsional'}
+                                : 'Catatan'}
                         </Label>
                         <textarea
                             id="owner-decision-reason"
                             aria-required={isJoinDecision}
+                            placeholder="Tuliskan alasan keputusan atau catatan pendukung"
                             value={reason}
                             disabled={busy || mustCheck}
                             onChange={(event) =>
@@ -135,17 +140,19 @@ export function TeamDecisionDialog({
                             aria-invalid={Boolean(decisionErrors.reason)}
                             aria-describedby="decision-reason-hint"
                         />
-                        <p
-                            id="decision-reason-hint"
-                            className="text-xs leading-5 text-muted-foreground"
-                        >
-                            {firstError({
-                                reason: decisionErrors.reason,
-                            }) ??
-                                (isJoinDecision
-                                    ? 'Wajib diisi. Jelaskan kebutuhan yang sesuai atau belum terpenuhi, maksimal 1000 karakter.'
-                                    : 'Maksimal 1000 karakter.')}
-                        </p>
+                        <div className="grid min-w-0 gap-0.5">
+                            <p
+                                id="decision-reason-hint"
+                                className="text-xs leading-normal text-muted-foreground"
+                            >
+                                {firstError({
+                                    reason: decisionErrors.reason,
+                                }) ??
+                                    (isJoinDecision
+                                        ? 'Wajib diisi. Jelaskan kebutuhan yang sesuai atau belum terpenuhi, maksimal 1000 karakter.'
+                                        : 'Maksimal 1000 karakter.')}
+                            </p>
+                        </div>
                     </div>
                 )}
                 <DialogFooter>

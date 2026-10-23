@@ -41,8 +41,8 @@ export function ComposerNotesSection({
                     Ceritakan peran dan hasil pekerjaanmu.
                 </h2>
             </div>
-            <div className="grid min-w-0 gap-2">
-                <Label htmlFor={`contribution-${mode}-claim`}>
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor={`contribution-${mode}-claim`} required>
                     Judul kontribusi
                 </Label>
                 <Input
@@ -61,25 +61,27 @@ export function ComposerNotesSection({
                     }
                     data-test="contribution-claim"
                 />
-                <div className="flex justify-between gap-3 text-xs text-muted-foreground">
-                    <span>
-                        Ringkas, spesifik, dan terkait dengan tugas yang kamu
-                        kerjakan.
-                    </span>
-                    <span>{claim.length}/160</span>
+                <div className="grid min-w-0 gap-0.5">
+                    <div className="flex justify-between gap-3 text-xs leading-normal text-muted-foreground">
+                        <span>
+                            Ringkas, spesifik, dan terkait dengan tugas yang
+                            kamu kerjakan.
+                        </span>
+                        <span>{claim.length}/160</span>
+                    </div>
+                    {claimError && (
+                        <p
+                            id={`contribution-${mode}-claim-error`}
+                            className="text-sm text-correction-subtle-foreground"
+                        >
+                            {claimError}
+                        </p>
+                    )}
                 </div>
-                {claimError && (
-                    <p
-                        id={`contribution-${mode}-claim-error`}
-                        className="text-sm text-correction-subtle-foreground"
-                    >
-                        {claimError}
-                    </p>
-                )}
             </div>
 
-            <div className="grid min-w-0 gap-2">
-                <Label htmlFor={`contribution-${mode}-summary`}>
+            <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor={`contribution-${mode}-summary`} required>
                     Ringkasan karya yang dapat dibagikan
                 </Label>
                 <textarea
@@ -98,22 +100,24 @@ export function ComposerNotesSection({
                     }
                     data-test="contribution-summary"
                 />
-                <p className="text-sm leading-6 text-muted-foreground">
-                    Ringkasan menjadi isi portofolio setelah disetujui. Karya
-                    tetap privat sampai kamu memilih jangkauan. Jangan sertakan
-                    kontak atau informasi rahasia.
-                </p>
-                <div className="flex justify-end text-xs text-muted-foreground">
-                    <span>{summary.length}/5000</span>
+                <div className="grid min-w-0 gap-0.5">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs leading-normal text-muted-foreground">
+                        <p>
+                            Ringkasan menjadi isi portofolio setelah disetujui.
+                            Karya tetap privat sampai kamu memilih jangkauan.
+                            Jangan sertakan kontak atau informasi rahasia.
+                        </p>
+                        <span className="shrink-0">{summary.length}/5000</span>
+                    </div>
+                    {summaryError && (
+                        <p
+                            id={`contribution-${mode}-summary-error`}
+                            className="text-sm text-correction-subtle-foreground"
+                        >
+                            {summaryError}
+                        </p>
+                    )}
                 </div>
-                {summaryError && (
-                    <p
-                        id={`contribution-${mode}-summary-error`}
-                        className="text-sm text-correction-subtle-foreground"
-                    >
-                        {summaryError}
-                    </p>
-                )}
             </div>
         </section>
     );

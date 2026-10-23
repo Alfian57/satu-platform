@@ -41,6 +41,23 @@ Untuk menjaga kode antarmuka React dan Inertia tetap modular, mudah dirawat, dan
 - Standar kualitas kode dan batas ukuran file berlaku penuh untuk file baru serta file yang sedang dimodifikasi dalam lingkup task aktif.
 - AI Agent dilarang melakukan refaktor massal secara sepihak pada file legacy yang tidak berkaitan dengan task aktif pengguna, guna mencegah terjadinya regresi di luar ruang lingkup pekerjaan.
 
+### 3.6 Form Input Labels, Penanda Keterisian (Required & Optional), dan Placeholders
+Untuk menjaga konsistensi antarmuka pengguna di seluruh platform SATU:
+- **Penanda Wajib (Required)**:
+  - Setiap input field yang wajib diisi wajib memiliki tanda bintang warna merah di akhir teks label (`*`).
+  - Gunakan prop `required` pada komponen `<Label required>` (`resources/js/components/ui/label.tsx`) atau helper `<RequiredMark />` (`resources/js/components/common/form-label-helpers.tsx`) untuk native label.
+  - Tanda bintang wajib berbobot tebal dengan warna merah (`text-destructive font-bold ml-1`) dan memiliki atribut aksesibilitas `aria-hidden="true"`.
+- **Penanda Opsional (Optional)**:
+  - Setiap input field yang tidak wajib (opsional) wajib memiliki keterangan `(opsional)` di akhir teks label.
+  - Gunakan prop `optional` pada komponen `<Label optional>` atau helper `<OptionalMark />` untuk native label.
+  - Keterangan opsional dirender dengan bobot normal dan warna redup (`text-xs font-normal text-muted-foreground ml-1`).
+  - Dilarang membiarkan field input tanpa kejelasan status keterisian.
+- **Atribut Placeholder**:
+  - Seluruh elemen input yang mendukung placeholder (`input[type="text"]`, `type="number"`, `type="password"`, `type="tel"`, `type="time"`, `type="datetime-local"`, dan `textarea`) wajib menyertakan atribut `placeholder` yang jelas, informatif, dan kontekstual bagi pengguna (misalnya contoh format pengisian yang valid).
+- **Spasi Input Field dan Deskripsi**:
+  - Gunakan `grid min-w-0 gap-1.5` pada kontainer field untuk menjaga jarak vertikal konsisten dan rapat (6px) antara `<Label>`, elemen input (`<Input>`, `<textarea>`, `<select>`), dan teks bantuan/error.
+  - Teks deskripsi (help text) dan pesan kesalahan (`<InputError>`) wajib dikelompokkan ke dalam sub-kontainer `<div className="grid min-w-0 gap-0.5">` dengan tipografi `text-xs leading-normal text-muted-foreground` agar jarak antara input dan deskripsinya tidak terlalu renggang serta hierarki pesan kesalahan tetap terhubung langsung.
+
 ## 4. Sinkronisasi Deployment dan Docker (Deployment & CI/CD Alignment)
 
 Setiap perubahan aplikasi yang memengaruhi lingkungan operasional production, runtime server, dependensi sistem, atau background processing wajib menyinkronkan file infrastruktur terkait:

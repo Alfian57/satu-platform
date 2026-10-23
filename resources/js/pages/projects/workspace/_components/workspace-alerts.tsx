@@ -1,4 +1,6 @@
-import { AlertCircle, CheckCircle2, LockKeyhole, X } from 'lucide-react';
+import { AlertCircle, LockKeyhole, X } from 'lucide-react';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import type { UseWorkspaceReturn } from '@/pages/projects/workspace/_hooks/use-workspace';
 
@@ -16,6 +18,12 @@ export function WorkspaceAlerts({ workspace, canManageTasks }: Props) {
         actionError,
         commandBusy,
     } = state;
+
+    useEffect(() => {
+        if (actionMessage) {
+            toast.success(actionMessage);
+        }
+    }, [actionMessage]);
 
     return (
         <div className="grid gap-3">
@@ -41,21 +49,6 @@ export function WorkspaceAlerts({ workspace, canManageTasks }: Props) {
                     className="border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary"
                 >
                     {realtimeNotice}
-                </p>
-            )}
-
-            {actionMessage && (
-                <p
-                    role="status"
-                    aria-live="polite"
-                    data-test="workspace-action-success"
-                    className="flex items-start gap-2 border border-verified/40 bg-verified-subtle px-4 py-3 text-sm text-verified-subtle-foreground"
-                >
-                    <CheckCircle2
-                        aria-hidden="true"
-                        className="mt-0.5 size-4 shrink-0"
-                    />
-                    {actionMessage}
                 </p>
             )}
 

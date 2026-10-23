@@ -312,26 +312,11 @@ function check(value, message) {
 
         for (const width of [320, 375, 768, 1280, 1920, 3440]) {
             await page.setViewportSize({ width, height: 960 });
-            await page.waitForFunction(() => {
-                const actions = document.querySelector(
-                    '.student-menu-hero__actions',
-                );
-
-                return (
-                    actions &&
-                    parseFloat(getComputedStyle(actions).marginTop) ===
-                        (innerWidth >= 640 ? 48 : 36)
-                );
-            });
             check(
-                await page
-                    .locator('.student-menu-hero__actions')
-                    .evaluate(
-                        (actions) =>
-                            parseFloat(getComputedStyle(actions).marginTop) ===
-                            (innerWidth >= 640 ? 48 : 36),
-                    ),
-                'Peringkat: jarak tombol hero selaras pada ' + width + 'px.',
+                (await page
+                    .locator('[data-test="leaderboard-action-bar"]')
+                    .count()) === 1,
+                'Peringkat: bilah tindakan mandiri tersedia pada ' + width + 'px.',
             );
             check(
                 await page.evaluate(

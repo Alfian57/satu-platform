@@ -58,6 +58,7 @@ export function WorkspaceDraftBanner({ workspace, taskForm }: Props) {
                     <textarea
                         id="missing-task-draft"
                         readOnly
+                        placeholder="Draf catatan tugas..."
                         value={taskForm.forms.editForm.data.description}
                         className={textAreaClassName}
                     />

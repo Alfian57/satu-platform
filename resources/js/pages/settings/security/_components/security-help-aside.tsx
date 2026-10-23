@@ -3,47 +3,69 @@ import { SettingsHelpCard } from '@/pages/settings/_components/settings-panel';
 
 export function SecurityHelpAside() {
     return (
-        <SettingsHelpCard
-            icon={ShieldCheck}
-            eyebrow="Kebiasaan sederhana"
-            title="Jaga akses pribadimu"
-        >
-            <ul className="grid gap-4 text-sm leading-6 text-muted-foreground">
-                <li className="flex items-start gap-3">
-                    <LockKeyhole
-                        aria-hidden="true"
-                        className="mt-1 size-4 shrink-0 text-primary"
-                    />
-                    <span>
+        <SettingsHelpCard icon={ShieldCheck} title="Jaga akses pribadimu">
+            <div className="grid gap-5 text-sm leading-6 text-muted-foreground">
+                <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                        <LockKeyhole
+                            aria-hidden="true"
+                            className="size-4 shrink-0 text-primary"
+                        />
+                        <h3 className="font-semibold text-foreground">
+                            Kerahasiaan akun
+                        </h3>
+                    </div>
+                    <p className="text-sm leading-6 text-muted-foreground">
                         Jangan bagikan password, termasuk kepada teman satu tim
                         atau pihak yang mengaku sebagai petugas.
-                    </span>
-                </li>
-                <li className="flex items-start gap-3">
-                    <CheckCircle2
-                        aria-hidden="true"
-                        className="mt-1 size-4 shrink-0 text-primary"
-                    />
-                    <span>
+                    </p>
+                </div>
+                <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                        <CheckCircle2
+                            aria-hidden="true"
+                            className="size-4 shrink-0 text-primary"
+                        />
+                        <h3 className="font-semibold text-foreground">
+                            Pengelolaan aman
+                        </h3>
+                    </div>
+                    <p className="text-sm leading-6 text-muted-foreground">
                         Password manager dapat membantu menyimpan password yang
                         unik untuk setiap layanan.
-                    </span>
-                </li>
-                <li className="flex items-start gap-3">
-                    <KeyRound
-                        aria-hidden="true"
-                        className="mt-1 size-4 shrink-0 text-primary"
-                    />
-                    <span>
+                    </p>
+                </div>
+                <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                        <KeyRound
+                            aria-hidden="true"
+                            className="size-4 shrink-0 text-primary"
+                        />
+                        <h3 className="font-semibold text-foreground">
+                            Pemeriksaan teliti
+                        </h3>
+                    </div>
+                    <p className="text-sm leading-6 text-muted-foreground">
                         Periksa ulang password baru sebelum menyimpan. Tombol
                         mata dapat menampilkan atau menyembunyikan isian.
-                    </span>
-                </li>
-            </ul>
-            <p className="rounded-2xl border border-satu-orange-border bg-card/80 p-4 text-xs leading-6 text-muted-foreground">
-                Mengubah password tidak mengubah karya, afiliasi kampus, atau
-                pilihan visibilitasmu.
-            </p>
+                    </p>
+                </div>
+                <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                        <ShieldCheck
+                            aria-hidden="true"
+                            className="size-4 shrink-0 text-primary"
+                        />
+                        <h3 className="font-semibold text-foreground">
+                            Cakupan pengaturan
+                        </h3>
+                    </div>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                        Mengubah password tidak mengubah karya, afiliasi kampus,
+                        atau pilihan visibilitasmu.
+                    </p>
+                </div>
+            </div>
         </SettingsHelpCard>
     );
 }

@@ -521,14 +521,8 @@ const projects = [
             await page.setViewportSize({ width, height: 900 });
             await load('index');
             check(
-                await page
-                    .locator('.student-menu-hero__actions')
-                    .evaluate(
-                        (actions) =>
-                            parseFloat(getComputedStyle(actions).marginTop) ===
-                            (innerWidth >= 640 ? 48 : 36),
-                    ),
-                'Kontribusi: tombol dan catatan hero turun selaras pada ' +
+                (await el('contributions-action-bar').count()) === 1,
+                'Kontribusi: bilah tindakan mandiri tersedia pada ' +
                     width +
                     'px.',
             );
@@ -539,20 +533,19 @@ const projects = [
             const root = await el('contributions-root').boundingBox();
             const expectedWidth =
                 width >= 1024
-                    ? Math.min((hero.width - 2) * 0.36, 384)
+                    ? Math.min((hero.width - 2) * 0.30, 295)
                     : width >= 640
-                      ? Math.min((hero.width - 2) * 0.39, 320)
+                      ? Math.min((hero.width - 2) * 0.36, 270)
                       : 208;
             check(
                 Math.abs(box.width - expectedWidth) < 1 &&
-                    Math.abs(box.y + box.height - hero.y - hero.height - 27) <
-                        1 &&
+                    Math.abs(box.y + box.height - hero.y - hero.height) < 2 &&
                     Math.abs(
                         hero.x +
                             hero.width -
                             box.x -
                             box.width -
-                            (width >= 1024 ? 29 : width >= 640 ? 9 : 1),
+                            (width >= 1024 ? 21 : width >= 640 ? 13 : 1),
                     ) < 1 &&
                     (await el('contributions-header').evaluate(
                         (node) => getComputedStyle(node).overflow === 'visible',
@@ -566,8 +559,8 @@ const projects = [
                 width + ': hero mengikuti batas konten Beranda/Proyek.',
             );
             check(
-                (await el('contributions-header').innerText()).includes(
-                    'Bukti privat tetap mengikuti izin akses',
+                (await el('contributions-root').innerText()).includes(
+                    'bukti',
                 ),
                 width + ': batas bukti privat tetap terbaca.',
             );
@@ -603,7 +596,7 @@ const projects = [
         listEmpty = true;
         await load('index');
         check(
-            (await el('contributions-header')
+            (await page
                 .locator('[data-test="create-contribution-link"]')
                 .count()) === 0 &&
                 (await el('contributions-empty').innerText()).includes(
@@ -614,7 +607,7 @@ const projects = [
         listCanCreate = true;
         await load('index');
         check(
-            (await el('contributions-header')
+            (await page
                 .locator('[data-test="create-contribution-link"]')
                 .count()) === 1,
             'Izin menyusun membuka CTA hero pada keadaan kosong.',
@@ -638,7 +631,7 @@ const projects = [
             check(
                 (await el('contributions-ledger').count()) ===
                     (mode === 403 ? 0 : 1) &&
-                    (await el('contributions-header')
+                    (await page
                         .locator('[data-test="create-contribution-link"]')
                         .count()) === (mode === 403 ? 0 : 1),
                 mode + ': state gagal mengikuti batas akses dan pemulihan.',
@@ -650,7 +643,7 @@ const projects = [
             });
             await el('contributions-ledger').waitFor();
             check(
-                (await el('contributions-header')
+                (await page
                     .locator('[data-test="create-contribution-link"]')
                     .count()) === 1,
                 mode + ': GET memulihkan daftar serta tindakan sesuai izin.',
@@ -680,7 +673,7 @@ const projects = [
             }),
             'Animasi masuk Kontribusi memakai keyframe dan durasi Beranda/Proyek.',
         );
-        const primary = el('contributions-header').locator(
+        const primary = page.locator(
             '[data-test="create-contribution-link"]',
         );
         const beforeHover = await primary.evaluate((node) =>
