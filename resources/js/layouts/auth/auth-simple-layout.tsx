@@ -1,9 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
-import AppLogo from '@/components/app-logo';
-import AuthSideIntro from '@/components/auth/auth-side-intro';
-import AuthWelcomePanel from '@/components/auth/auth-welcome-panel';
+import AppLogo from '@/layouts/_components/app-logo';
 import { cn } from '@/lib/utils';
+import AuthSideIntro from '@/pages/auth/_components/auth-side-intro';
+import AuthWelcomePanel from '@/pages/auth/_components/auth-welcome-panel';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 

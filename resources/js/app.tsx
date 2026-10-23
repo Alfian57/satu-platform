@@ -32,6 +32,27 @@ if (typeof document !== 'undefined') {
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
+    resolve: async (name) => {
+        const pages = import.meta.glob<Record<string, any>>([
+            './pages/**/*.tsx',
+            '!./pages/**/_*/**',
+            '!./pages/**/_*',
+        ]);
+        const normalized = name.replace(/\/index$/, '');
+        const pageLoader =
+            pages[`./pages/${name}/page.tsx`] ??
+            pages[`./pages/${normalized}/page.tsx`] ??
+            pages[`./pages/${name}.tsx`] ??
+            pages[`./pages/${name}/index.tsx`];
+
+        if (!pageLoader) {
+            throw new Error(`Page not found: ${name}`);
+        }
+
+        const module = await pageLoader();
+
+        return module.default ?? module;
+    },
     layout: (name) => {
         switch (true) {
             case name === 'welcome':

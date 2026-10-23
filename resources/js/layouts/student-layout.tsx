@@ -1,10 +1,10 @@
 import { usePage } from '@inertiajs/react';
-import { AppContent } from '@/components/app-content';
-import { AppShell } from '@/components/app-shell';
-import { StudentHeader } from '@/components/student-header';
-import { StudentMenuTourProvider } from '@/components/student-menu-tour';
-import { StudentOnboardingProvider } from '@/components/student-onboarding-context';
-import { StudentSidebar } from '@/components/student-sidebar';
+import { StudentOnboardingProvider } from '@/components/onboarding/student-onboarding-context';
+import { StudentMenuTourProvider } from '@/components/student-tour';
+import { AppContent } from '@/layouts/_components/app-content';
+import { AppShell } from '@/layouts/_components/app-shell';
+import { StudentHeader } from '@/layouts/_components/student-header';
+import { StudentSidebar } from '@/layouts/_components/student-sidebar';
 import AppLayout from '@/layouts/app-layout';
 import type { AppLayoutProps } from '@/types';
 

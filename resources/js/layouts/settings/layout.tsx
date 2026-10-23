@@ -9,11 +9,11 @@ import {
     Sun,
 } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
-import { AppPage } from '@/components/app-page';
-import { CampusOperationHeader } from '@/components/campus-operation-layout';
-import StudentMenuHero from '@/components/student-menu-hero';
 import { useCurrentUrl } from '@/hooks/use-current-url';
+import { AppPage } from '@/layouts/_components/app-page';
+import StudentMenuHero from '@/layouts/_components/student-menu-hero';
 import { cn } from '@/lib/utils';
+import { CampusOperationHeader } from '@/pages/campus/_components/campus-operation-layout';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit as editDataRights } from '@/routes/data-rights';
 import { edit as editProfile } from '@/routes/profile';
